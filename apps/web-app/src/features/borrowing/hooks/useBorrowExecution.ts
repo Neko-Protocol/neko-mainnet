@@ -4,10 +4,7 @@ import { useState, useCallback } from "react";
 import { Networks } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
-import {
-  addCollateral,
-  borrowFromPool,
-} from "@/lib/helpers/stellar/lending";
+import { addCollateral, borrowFromPool } from "@/lib/helpers/stellar/lending";
 import {
   signAndSendTransaction,
   type SignTransactionFn,
@@ -17,6 +14,7 @@ import { rpcUrl } from "@/lib/constants/network";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import type { BorrowExecutionParams } from "../types/borrowing";
+import { auditService } from "@/lib/services/audit.service";
 
 export function useBorrowExecution() {
   const { addNotification } = useToast();
@@ -104,9 +102,18 @@ export function useBorrowExecution() {
           address,
           lendingContractId
         );
-        await signAndSend(borrowXdr);
+        const { hash: txHash } = await signAndSend(borrowXdr);
 
         showSuccess(`Successfully borrowed ${borrowNum} ${assetCode}`);
+        auditService.log({
+          wallet_address: address,
+          action_type: "borrow_deposit",
+          asset_in: collateralTokenCode,
+          asset_out: assetCode,
+          amount_in: collateralNum,
+          amount_out: borrowNum,
+          tx_hash: txHash,
+        });
         return { success: true as const };
       } catch (err) {
         const friendlyError = extractContractErrorOrNull(err);
