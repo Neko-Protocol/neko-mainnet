@@ -20,6 +20,7 @@ import type { PoolInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolData } from "../types/lending";
+import { auditService } from "@/lib/services/audit.service";
 
 function toBTokens(tokensAmount: string, bTokenRate: string): string {
   if (
@@ -183,6 +184,19 @@ export function useLend() {
 
       setIsLoading(true);
 
+      const logAction = (poolId: string, txHash?: string) => {
+        auditService.log({
+          wallet_address: address,
+          action_type: isDeposit ? "lend_deposit" : "lend_withdraw",
+          asset_in: isDeposit ? selectedPool.assetCode : undefined,
+          asset_out: isDeposit ? undefined : selectedPool.assetCode,
+          amount_in: isDeposit ? parseFloat(amount) : undefined,
+          amount_out: isDeposit ? undefined : parseFloat(amount),
+          pool_id: poolId,
+          tx_hash: txHash,
+        });
+      };
+
       try {
         if (selectedPool.isAggregated && selectedPool.orchestratorId) {
           const decimals = 7;
@@ -190,11 +204,13 @@ export function useLend() {
             Math.floor(parseFloat(amount) * 10 ** decimals)
           );
 
-          await executePoolAction({
+          const txHash = await executePoolAction({
             poolId: selectedPool.orchestratorId,
             action: isDeposit ? "deposit" : "withdraw",
             amount: rawAmount,
           });
+
+          logAction(selectedPool.orchestratorId, txHash);
 
           await refetchPools();
           showSuccess(
@@ -218,6 +234,7 @@ export function useLend() {
         });
 
         const lendingContractId = selectedPool.contractId;
+        let txHash: string | undefined;
 
         if (isDeposit) {
           const depositXdr = await depositToPool(
@@ -232,9 +249,10 @@ export function useLend() {
             networkPassphrase: passphrase,
             address,
           });
-          await sorobanServer.sendTransaction(
+          const sendResult = await sorobanServer.sendTransaction(
             TransactionBuilder.fromXDR(signedDeposit.signedTxXdr, passphrase)
           );
+          txHash = sendResult.hash;
         } else {
           if (!selectedPool.bTokenRate)
             throw new Error("Unable to calculate bTokens. Please try again.");
@@ -251,9 +269,10 @@ export function useLend() {
             networkPassphrase: passphrase,
             address,
           });
-          await sorobanServer.sendTransaction(
+          const sendResult = await sorobanServer.sendTransaction(
             TransactionBuilder.fromXDR(signedWithdraw.signedTxXdr, passphrase)
           );
+          txHash = sendResult.hash;
         }
 
         await new Promise((r) => setTimeout(r, 3000));
@@ -264,6 +283,7 @@ export function useLend() {
             ? `Successfully deposited ${amount} ${selectedPool.assetCode}`
             : `Successfully withdrew ${amount} ${selectedPool.assetCode}`
         );
+        logAction(selectedPool.id, txHash);
         closeModal();
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
