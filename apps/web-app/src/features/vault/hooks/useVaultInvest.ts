@@ -17,22 +17,29 @@ interface InvestStatus {
   allocations: StrategyAllocation[];
 }
 
-async function fetchInvestStatus(): Promise<InvestStatus> {
-  const res = await fetch("/api/vault/invest");
+async function fetchInvestStatus({
+  queryKey,
+}: {
+  queryKey: readonly unknown[];
+}): Promise<InvestStatus> {
+  const id = queryKey[1] as string | undefined;
+  const q = id ? `?vault=${encodeURIComponent(id)}` : "";
+  const res = await fetch(`/api/vault/invest${q}`);
   if (!res.ok) throw new Error("Failed to fetch invest status");
   return res.json();
 }
 
-export function useVaultInvest() {
+export function useVaultInvest(vaultContractId: string | null | undefined) {
   const [isInvesting, setIsInvesting] = useState(false);
   const [lastResult, setLastResult] = useState<string | null>(null);
-  const { refetch: refetchVaultData } = useVaultData();
+  const { refetch: refetchVaultData } = useVaultData(vaultContractId);
 
   const { data, refetch: refetchStatus } = useQuery({
-    queryKey: ["vault-invest-status"],
+    queryKey: ["vault-invest-status", vaultContractId],
     queryFn: fetchInvestStatus,
     refetchInterval: 30_000,
     staleTime: 15_000,
+    enabled: !!vaultContractId,
   });
 
   const triggerInvest = useCallback(async () => {
@@ -41,7 +48,11 @@ export function useVaultInvest() {
     setLastResult(null);
 
     try {
-      const res = await fetch("/api/vault/invest", { method: "POST" });
+      const res = await fetch("/api/vault/invest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vault: vaultContractId }),
+      });
       const json = await res.json();
 
       if (!res.ok && res.status !== 207) {
@@ -66,7 +77,7 @@ export function useVaultInvest() {
     } finally {
       setIsInvesting(false);
     }
-  }, [isInvesting, refetchStatus, refetchVaultData]);
+  }, [isInvesting, refetchStatus, refetchVaultData, vaultContractId]);
 
   return {
     idleAmount: data?.idle ?? 0,

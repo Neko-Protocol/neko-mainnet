@@ -16,34 +16,48 @@ import { useVaultData } from "../../hooks/useVaultData";
 import { useVaultInvest } from "../../hooks/useVaultInvest";
 import { useVaultApy } from "../../hooks/useVaultApy";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
-import { VAULT_REGISTRY } from "../../const/vaults";
+import type { VaultView } from "../../types/vault";
 
-const STRATEGY_NAMES: Record<string, { name: string; color: string }> = {
-  CCCEWBCYSIHTGBJ2TUOAFQY63UJ4SWDYTYNAEGXWPB7FP6PRHHGVZJIR: {
-    name: "Neko",
-    color: "#229EDF",
-  },
-  CCGV5QSAFRT6OGBZNCE72I6BAODXLDMWEUYAOBI5ZBLHOURSEGVGFTTZ: {
-    name: "Aquarius",
-    color: "#9B51E0",
-  },
-  CCY5WW3VXVJDBBXNYXCCH33XTQICHPU6RPFWYJJCT4PTYPN3SXJN2XBJ: {
-    name: "Soroswap",
-    color: "#00C2A8",
-  },
-  CBP5FUVUB4XWQ4ZUUDYR26CGHGLPN4FSHGCTRMTF4Z7V4H3DZFICOES3: {
-    name: "Blend",
-    color: "#F59E0B",
-  },
-};
+const STRATEGY_COLORS = [
+  "#229EDF",
+  "#9B51E0",
+  "#00C2A8",
+  "#F59E0B",
+  "#EF4444",
+  "#10B981",
+];
 
-const MyVaultPositions: React.FC = () => {
-  const { userShares, isLoading, hasWallet } = useVaultBalance();
-  const { data: vaultData } = useVaultData();
-  const { idleAmount, totalAmount, allocations } = useVaultInvest();
-  const { data: apyData } = useVaultApy();
+function buildStrategyMeta(
+  vault: VaultView | null
+): Record<string, { name: string; color: string }> {
+  const strategies = vault?.detail?.contracts?.strategies ?? {};
+  // strategies is name → address; invert to address → { name, color }
+  const entries = Object.entries(strategies);
+  const result: Record<string, { name: string; color: string }> = {};
+  entries.forEach(([name, address], i) => {
+    result[address] = {
+      name,
+      color: STRATEGY_COLORS[i % STRATEGY_COLORS.length],
+    };
+  });
+  return result;
+}
 
-  const vault = VAULT_REGISTRY["neko-usdc-cetes"];
+interface MyVaultPositionsProps {
+  vaultContractId: string | null;
+  vault: VaultView | null;
+}
+
+const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
+  vaultContractId,
+  vault,
+}) => {
+  const { userShares, isLoading, hasWallet } = useVaultBalance(vaultContractId);
+  const { data: vaultData } = useVaultData(vaultContractId);
+  const { idleAmount, totalAmount, allocations } =
+    useVaultInvest(vaultContractId);
+  const { data: apyData } = useVaultApy(vaultContractId);
+  const strategyMeta = buildStrategyMeta(vault);
 
   const cetesValue =
     vaultData && userShares > 0n
@@ -73,12 +87,11 @@ const MyVaultPositions: React.FC = () => {
 
   const hasIdle = parseFloat(userIdleCetes) > 0;
 
-  // Strategy breakdown: only show strategies with amount > 0
   const activeAllocations = allocations
     .filter((a) => a.amount > 0)
     .map((a) => ({
       ...a,
-      meta: STRATEGY_NAMES[a.strategy] ?? {
+      meta: strategyMeta[a.strategy] ?? {
         name: a.strategy.slice(0, 6),
         color: "#666",
       },
@@ -91,6 +104,17 @@ const MyVaultPositions: React.FC = () => {
         <Wallet className="h-8 w-8 text-white/20 mx-auto mb-3" />
         <p className="text-white/40 text-sm">
           Connect your wallet to see your vault positions
+        </p>
+      </div>
+    );
+  }
+
+  if (!vaultContractId || !vault) {
+    return (
+      <div className="w-full rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
+        <Coins className="h-8 w-8 text-white/20 mx-auto mb-3" />
+        <p className="text-white/40 text-sm">
+          No vault is configured for this network yet.
         </p>
       </div>
     );
@@ -166,7 +190,6 @@ const MyVaultPositions: React.FC = () => {
         </thead>
         <tbody>
           <tr className="hover:bg-white/[0.02] transition-colors">
-            {/* Vault */}
             <td className="px-4 py-4">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-[#222] flex items-center justify-center overflow-hidden">
@@ -184,7 +207,6 @@ const MyVaultPositions: React.FC = () => {
               </div>
             </td>
 
-            {/* Value */}
             <td className="px-4 py-4 text-center">
               <span className="text-white font-bold text-sm tabular-nums">
                 {cetesValue}
@@ -192,7 +214,6 @@ const MyVaultPositions: React.FC = () => {
               <span className="text-white/40 text-xs font-normal">CETES</span>
             </td>
 
-            {/* Pool Share */}
             <td className="px-4 py-4 text-center">
               <span className="text-sm font-semibold text-[#229EDF]">
                 {poolSharePct}%
@@ -200,7 +221,6 @@ const MyVaultPositions: React.FC = () => {
               <p className="text-white/30 text-xs mt-0.5">of TVL</p>
             </td>
 
-            {/* Status */}
             <td className="px-4 py-4 text-center">
               {hasIdle ? (
                 <div>
@@ -218,7 +238,6 @@ const MyVaultPositions: React.FC = () => {
               )}
             </td>
 
-            {/* APY */}
             <td className="px-4 py-4 text-center">
               {apyData?.vaultApy != null ? (
                 <div>
@@ -241,7 +260,6 @@ const MyVaultPositions: React.FC = () => {
               )}
             </td>
 
-            {/* Allocated to */}
             <td className="px-4 py-4">
               {activeAllocations.length > 0 ? (
                 <div className="flex flex-col gap-1.5">

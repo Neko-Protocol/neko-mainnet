@@ -9,9 +9,6 @@ import {
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import type { VaultLiveStats } from "../types/vault";
 
-const VAULT_CONTRACT_ID =
-  "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
-
 const ONE_SHARE = 1_000_000_000_000n;
 
 function formatTvl(stroops: bigint): string {
@@ -38,21 +35,24 @@ function unwrapResult<T>(result: unknown, fallback: T): T {
   return result as T;
 }
 
-export function useVaultData() {
+export function useVaultData(contractId: string | null | undefined) {
   const client = useMemo(
     () =>
-      new DefindexVaultClient({
-        contractId: VAULT_CONTRACT_ID,
-        rpcUrl,
-        networkPassphrase,
-        ...(allowHttpForSoroban && { allowHttp: true }),
-      }),
-    []
+      contractId
+        ? new DefindexVaultClient({
+            contractId,
+            rpcUrl,
+            networkPassphrase,
+            ...(allowHttpForSoroban && { allowHttp: true }),
+          })
+        : null,
+    [contractId]
   );
 
   return useQuery<VaultLiveStats & { tvlFormatted: string }>({
-    queryKey: ["vaultData", VAULT_CONTRACT_ID],
+    queryKey: ["vaultData", contractId],
     queryFn: async () => {
+      if (!client) throw new Error("No vault configured");
       const [totalManagedTx, totalSupplyTx] = await Promise.all([
         client.fetch_total_managed_funds({ simulate: true }),
         client.total_supply({ simulate: true }),
@@ -89,5 +89,6 @@ export function useVaultData() {
     placeholderData: (prev) => prev,
     retry: false,
     throwOnError: false,
+    enabled: !!contractId && !!client,
   });
 }

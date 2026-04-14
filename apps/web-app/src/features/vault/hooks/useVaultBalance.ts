@@ -8,22 +8,20 @@ import {
 } from "@/lib/constants/network";
 import { useWallet } from "@/hooks/useWallet";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
-
-const VAULT_CONTRACT_ID =
-  "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
-
-export function useVaultBalance() {
+export function useVaultBalance(contractId: string | null | undefined) {
   const { address } = useWallet();
 
   const client = useMemo(
     () =>
-      new DefindexVaultClient({
-        contractId: VAULT_CONTRACT_ID,
-        rpcUrl,
-        networkPassphrase,
-        ...(allowHttpForSoroban && { allowHttp: true }),
-      }),
-    []
+      contractId
+        ? new DefindexVaultClient({
+            contractId,
+            rpcUrl,
+            networkPassphrase,
+            ...(allowHttpForSoroban && { allowHttp: true }),
+          })
+        : null,
+    [contractId]
   );
 
   const {
@@ -31,13 +29,13 @@ export function useVaultBalance() {
     isLoading,
     refetch,
   } = useQuery<bigint>({
-    queryKey: ["vaultBalance", VAULT_CONTRACT_ID, address],
+    queryKey: ["vaultBalance", contractId, address],
     queryFn: async () => {
-      if (!address) return 0n;
+      if (!address || !client) return 0n;
       const tx = await client.balance({ id: address }, { simulate: true });
       return BigInt(tx.result?.toString() ?? "0");
     },
-    enabled: !!address,
+    enabled: !!address && !!contractId && !!client,
     staleTime: 30_000,
     gcTime: 5 * 60_000,
     refetchOnWindowFocus: false,

@@ -1,0 +1,7 @@
+const MAINNET_VAULT_IDS = [
+  "CCFWKCD52JNSQLN5OS4F7EG6BPDT4IRJV6KODIEIZLWPM35IKHOKT6S2",
+];
+
+export function parseDefindexVaultIds(): string[] {
+  return MAINNET_VAULT_IDS;
+}

@@ -21,9 +21,6 @@ import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { useVaultBalance } from "./useVaultBalance";
 import { useVaultData } from "./useVaultData";
 
-const VAULT_CONTRACT_ID =
-  "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
-
 const SLIPPAGE = 0.01;
 
 /**
@@ -52,7 +49,7 @@ async function signAndSubmit(
   );
 }
 
-export function useVaultAction() {
+export function useVaultAction(vaultContractId: string | null | undefined) {
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -61,8 +58,8 @@ export function useVaultAction() {
     networkPassphrase: walletPassphrase,
   } = useWallet();
   const { addNotification } = useToast();
-  const { refetch: refetchBalance } = useVaultBalance();
-  const { refetch: refetchVaultData } = useVaultData();
+  const { refetch: refetchBalance } = useVaultBalance(vaultContractId);
+  const { refetch: refetchVaultData } = useVaultData(vaultContractId);
 
   const showError = useCallback(
     (msg: string) =>
@@ -84,6 +81,7 @@ export function useVaultAction() {
   const handleDeposit = useCallback(
     async (amount: string) => {
       if (!address || !amount || parseFloat(amount) <= 0) return;
+      if (!vaultContractId) return;
       setIsLoading(true);
 
       try {
@@ -91,7 +89,7 @@ export function useVaultAction() {
 
         // Client needs publicKey so simulation uses the real user account
         const client = new DefindexVaultClient({
-          contractId: VAULT_CONTRACT_ID,
+          contractId: vaultContractId,
           rpcUrl,
           networkPassphrase,
           publicKey: address,
@@ -139,19 +137,21 @@ export function useVaultAction() {
       refetchVaultData,
       showError,
       showSuccess,
+      vaultContractId,
     ]
   );
 
   const handleWithdraw = useCallback(
     async (shares: string) => {
       if (!address || !shares || parseFloat(shares) <= 0) return;
+      if (!vaultContractId) return;
       setIsLoading(true);
 
       try {
         const passphrase = walletPassphrase || Networks.TESTNET;
 
         const client = new DefindexVaultClient({
-          contractId: VAULT_CONTRACT_ID,
+          contractId: vaultContractId,
           rpcUrl,
           networkPassphrase,
           publicKey: address,
@@ -193,6 +193,7 @@ export function useVaultAction() {
       refetchVaultData,
       showError,
       showSuccess,
+      vaultContractId,
     ]
   );
 
