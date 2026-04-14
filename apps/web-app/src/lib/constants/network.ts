@@ -23,8 +23,13 @@ const envSchema = z.object({
   PUBLIC_STELLAR_HORIZON_URL: z.string(),
 });
 
+const stellarNetworkEnv =
+  process.env.NEXT_PUBLIC_STELLAR_NETWORK === "MAINNET"
+    ? "PUBLIC"
+    : process.env.NEXT_PUBLIC_STELLAR_NETWORK;
+
 const envVars = {
-  PUBLIC_STELLAR_NETWORK: process.env.NEXT_PUBLIC_STELLAR_NETWORK,
+  PUBLIC_STELLAR_NETWORK: stellarNetworkEnv,
   PUBLIC_STELLAR_NETWORK_PASSPHRASE:
     process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE,
   PUBLIC_STELLAR_RPC_URL: process.env.NEXT_PUBLIC_STELLAR_RPC_URL,
