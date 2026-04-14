@@ -5,6 +5,7 @@ import {
   rpcUrl,
   networkPassphrase,
   allowHttpForSoroban,
+  stellarNetwork,
 } from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
@@ -13,14 +14,7 @@ import { RWA_TOKENS } from "@/lib/constants/wallet";
 import type { BorrowPool } from "../types/borrowing";
 
 /** Debt assets borrowable from Pool 2 (collateral = USDC/XLM) */
-const POOL2_DEBT_ASSETS = [
-  "USTRY",
-  "TESOURO",
-  "CETES",
-  "USDY",
-  "PYUSD",
-  "KTB",
-];
+const POOL2_DEBT_ASSETS = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD", "KTB"];
 /** Collateral assets accepted by Pool 2 */
 const POOL2_COLLATERAL_ASSETS = ["USDC", "XLM"];
 
@@ -190,6 +184,7 @@ export const useBorrowPools = () => {
   return useQuery<BorrowPool[]>({
     queryKey: ["borrowPools"],
     queryFn,
+    enabled: stellarNetwork !== "PUBLIC",
     staleTime: 2 * 60_000,
     gcTime: 10 * 60_000,
     refetchInterval: 2 * 60_000,

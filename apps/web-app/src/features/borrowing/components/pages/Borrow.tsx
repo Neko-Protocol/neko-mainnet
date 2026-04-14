@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
+import { stellarNetwork } from "@/lib/constants/network";
 import { useBorrow } from "../../hooks/useBorrow";
 import { BorrowTable } from "../ui/BorrowTable";
 import { BorrowModal } from "../ui/BorrowModal";
 import MyBorrowPositions from "../ui/MyBorrowPositions";
 import LiquidationsSection from "../ui/LiquidationsSection";
-import { GetTestTokensBanner } from "@/features/wallet/components/GetTestTokensBanner";
 
 type PageTab = "pools" | "liquidations" | "positions";
+
+const showLiquidations = stellarNetwork !== "PUBLIC";
 
 const Borrow: React.FC = () => {
   const [activeTab, setActiveTab] = useState<PageTab>("pools");
@@ -33,6 +35,12 @@ const Borrow: React.FC = () => {
     handleSubmit,
   } = useBorrow();
 
+  useEffect(() => {
+    if (!showLiquidations && activeTab === "liquidations") {
+      setActiveTab("pools");
+    }
+  }, [showLiquidations, activeTab]);
+
   return (
     <PageContainer maxWidth="6xl">
       <BannerPage
@@ -43,8 +51,6 @@ const Borrow: React.FC = () => {
         imageAlt="Borrow illustration"
         className="mb-8"
       />
-
-      <GetTestTokensBanner className="mb-6" />
 
       <div className="flex items-center gap-1 rounded-xl bg-[#1C1C1C] p-1 w-fit mb-6">
         <button
@@ -57,16 +63,18 @@ const Borrow: React.FC = () => {
         >
           Pools
         </button>
-        <button
-          onClick={() => setActiveTab("liquidations")}
-          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === "liquidations"
-              ? "bg-[#229EDF] text-white"
-              : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          Liquidations
-        </button>
+        {showLiquidations && (
+          <button
+            onClick={() => setActiveTab("liquidations")}
+            className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+              activeTab === "liquidations"
+                ? "bg-[#229EDF] text-white"
+                : "text-white/40 hover:text-white/70"
+            }`}
+          >
+            Liquidations
+          </button>
+        )}
         <button
           onClick={() => setActiveTab("positions")}
           className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
@@ -107,7 +115,9 @@ const Borrow: React.FC = () => {
         </>
       )}
 
-      {activeTab === "liquidations" && <LiquidationsSection />}
+      {showLiquidations && activeTab === "liquidations" && (
+        <LiquidationsSection />
+      )}
 
       {activeTab === "positions" && <MyBorrowPositions />}
     </PageContainer>

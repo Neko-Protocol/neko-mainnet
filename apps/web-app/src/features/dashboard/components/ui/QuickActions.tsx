@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeftRight,
@@ -11,8 +11,9 @@ import {
 } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
+import { stellarNetwork } from "@/lib/constants/network";
 
-const actions = [
+const allActions = [
   {
     label: "Swap Tokens",
     description: "Exchange tokens instantly",
@@ -42,6 +43,13 @@ const actions = [
 const QuickActions: React.FC = () => {
   const { address } = useWallet();
   const [showModal, setShowModal] = useState(false);
+
+  const actions = useMemo(() => {
+    if (stellarNetwork === "PUBLIC") {
+      return allActions.filter((a) => a.href !== "/borrowing?tab=liquidations");
+    }
+    return [...allActions];
+  }, []);
 
   if (!address) {
     return (
