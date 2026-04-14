@@ -3,6 +3,7 @@
 import { useQueries } from "@tanstack/react-query";
 import { networks } from "@neko/lending";
 import { lendingService } from "@/lib/services/lending.service";
+import { stellarNetwork } from "@/lib/constants/network";
 
 export function getHealthFactorColor(hf: number | null): string {
   if (hf === null) return "text-white/40";
@@ -43,7 +44,7 @@ export function useHealthFactor(borrower: string | undefined) {
     queries: POOLS.map((pool) => ({
       queryKey: ["health-factor", pool.key, borrower],
       queryFn: () => lendingService.getHealthFactor(borrower!, pool.contractId),
-      enabled: Boolean(borrower),
+      enabled: stellarNetwork !== "PUBLIC" && Boolean(borrower),
       staleTime: 15_000,
       refetchInterval: 15_000,
     })),

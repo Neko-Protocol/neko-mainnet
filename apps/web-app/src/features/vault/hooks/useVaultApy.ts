@@ -14,20 +14,27 @@ interface VaultApyData {
   note?: string;
 }
 
-async function fetchVaultApy(): Promise<VaultApyData> {
-  const res = await fetch("/api/vault/apy");
+async function fetchVaultApy({
+  queryKey,
+}: {
+  queryKey: readonly unknown[];
+}): Promise<VaultApyData> {
+  const id = queryKey[1] as string | undefined;
+  const q = id ? `?vault=${encodeURIComponent(id)}` : "";
+  const res = await fetch(`/api/vault/apy${q}`);
   if (!res.ok) throw new Error("Failed to fetch APY");
   return res.json();
 }
 
-export function useVaultApy() {
+export function useVaultApy(vaultContractId: string | null | undefined) {
   return useQuery({
-    queryKey: ["vault-apy"],
+    queryKey: ["vault-apy", vaultContractId],
     queryFn: fetchVaultApy,
-    staleTime: 5 * 60_000, // 5 min — rates don't change that fast
-    refetchInterval: 10 * 60_000, // refresh every 10 min
+    staleTime: 5 * 60_000,
+    refetchInterval: 10 * 60_000,
     refetchOnWindowFocus: false,
     retry: false,
     throwOnError: false,
+    enabled: !!vaultContractId,
   });
 }

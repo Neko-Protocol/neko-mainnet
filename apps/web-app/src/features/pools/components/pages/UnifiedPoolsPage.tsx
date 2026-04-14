@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
-import { GetTestTokensBanner } from "@/features/wallet/components/GetTestTokensBanner";
+import { stellarNetwork } from "@/lib/constants/network";
 
 import { useLend } from "@/features/lending/hooks/useLend";
 import { LendTable } from "@/features/lending/components/ui/LendTable";
@@ -20,6 +20,9 @@ import LiquidationsSection from "@/features/borrowing/components/ui/Liquidations
 type Mode = "lending" | "borrowing";
 type LendTab = "pools" | "backstop" | "positions";
 type BorrowTab = "pools" | "liquidations" | "positions";
+
+const showBackstop = stellarNetwork !== "PUBLIC";
+const showLiquidations = stellarNetwork !== "PUBLIC";
 
 const BANNER_CONFIG: Record<
   Mode,
@@ -42,6 +45,17 @@ const BANNER_CONFIG: Record<
 
 function LendingPanel() {
   const [activeTab, setActiveTab] = useState<LendTab>("pools");
+  const lendTabs = useMemo(
+    () =>
+      [
+        { key: "pools" as const, label: "Pools" },
+        ...(showBackstop
+          ? [{ key: "backstop" as const, label: "Backstop" }]
+          : []),
+        { key: "positions" as const, label: "My Positions" },
+      ] as const,
+    [showBackstop]
+  );
   const {
     pools,
     isLoadingPools,
@@ -59,14 +73,16 @@ function LendingPanel() {
     refreshBalance,
   } = useLend();
 
+  useEffect(() => {
+    if (!showBackstop && activeTab === "backstop") {
+      setActiveTab("pools");
+    }
+  }, [showBackstop, activeTab]);
+
   return (
     <>
       <SubTabs
-        tabs={[
-          { key: "pools", label: "Pools" },
-          { key: "backstop", label: "Backstop" },
-          { key: "positions", label: "My Positions" },
-        ]}
+        tabs={[...lendTabs]}
         active={activeTab}
         onChange={setActiveTab}
       />
@@ -96,7 +112,7 @@ function LendingPanel() {
         </>
       )}
 
-      {activeTab === "backstop" && <BackstopPanel />}
+      {showBackstop && activeTab === "backstop" && <BackstopPanel />}
       {activeTab === "positions" && <MyLendingPositions />}
     </>
   );
@@ -104,6 +120,17 @@ function LendingPanel() {
 
 function BorrowingPanel() {
   const [activeTab, setActiveTab] = useState<BorrowTab>("pools");
+  const borrowTabs = useMemo(
+    () =>
+      [
+        { key: "pools" as const, label: "Pools" },
+        ...(showLiquidations
+          ? [{ key: "liquidations" as const, label: "Liquidations" }]
+          : []),
+        { key: "positions" as const, label: "My Positions" },
+      ] as const,
+    [showLiquidations]
+  );
   const {
     assets,
     paginatedAssets,
@@ -123,14 +150,16 @@ function BorrowingPanel() {
     handleSubmit,
   } = useBorrow();
 
+  useEffect(() => {
+    if (!showLiquidations && activeTab === "liquidations") {
+      setActiveTab("pools");
+    }
+  }, [showLiquidations, activeTab]);
+
   return (
     <>
       <SubTabs
-        tabs={[
-          { key: "pools", label: "Pools" },
-          { key: "liquidations", label: "Liquidations" },
-          { key: "positions", label: "My Positions" },
-        ]}
+        tabs={[...borrowTabs]}
         active={activeTab}
         onChange={setActiveTab}
       />
@@ -162,7 +191,9 @@ function BorrowingPanel() {
         </>
       )}
 
-      {activeTab === "liquidations" && <LiquidationsSection />}
+      {showLiquidations && activeTab === "liquidations" && (
+        <LiquidationsSection />
+      )}
       {activeTab === "positions" && <MyBorrowPositions />}
     </>
   );
@@ -210,8 +241,6 @@ export default function UnifiedPoolsPage() {
         imageAlt={`${mode} illustration`}
         className="mb-8"
       />
-
-      <GetTestTokensBanner className="mb-6" />
 
       {/* Top-level mode toggle */}
       <div className="flex items-center gap-0 rounded-2xl border border-white/10 bg-[#181818] p-1.5 w-fit mb-8">

@@ -8,46 +8,93 @@ import { VaultDetailModal } from "../ui/VaultDetailModal";
 import { VaultTabs, type VaultTabKey } from "../ui/VaultTabs";
 import { VaultActionModal } from "../ui/VaultActionModal";
 import MyVaultPositions from "../ui/MyVaultPositions";
-import { VAULT_REGISTRY } from "../../const/vaults";
+import { useDefindexVaults } from "../../hooks/useDefindexVaults";
 import { useVaultData } from "../../hooks/useVaultData";
-import { useVaultApy } from "../../hooks/useVaultApy";
 import type { VaultView } from "../../types/vault";
 
 const Vault: React.FC = () => {
   const [selectedVault, setSelectedVault] = useState<VaultView | null>(null);
+  /** Keeps the vault for deposit/withdraw after closing the detail modal */
+  const [pendingActionVault, setPendingActionVault] =
+    useState<VaultView | null>(null);
   const [activeTab, setActiveTab] = useState<VaultTabKey>("vaults");
   const [actionModal, setActionModal] = useState<{
     open: boolean;
     isDeposit: boolean;
   }>({ open: false, isDeposit: true });
 
-  const { data: vaultData, isLoading } = useVaultData();
-  const { data: apyData } = useVaultApy();
+  const { data: defindexPayload, isLoading, isFetching } = useDefindexVaults();
+  const vaultsFromApi = defindexPayload?.vaults ?? [];
 
-  const vaults = useMemo<VaultView[]>(
-    () =>
-      Object.values(VAULT_REGISTRY).map((config) => ({
-        ...config,
-        tvl: isLoading
-          ? "Loading..."
-          : vaultData && vaultData.tvl > 0n
-            ? vaultData.tvlFormatted
-            : "—",
-        apy7d:
-          apyData?.vaultApy != null ? `${apyData.vaultApy.toFixed(2)}%` : "—",
-        utilization: "—",
+  const emptyVaultSubtitle = useMemo(() => {
+    if (defindexPayload?.error === "missing_defindex_api_key") {
+      return (
+        defindexPayload.hint ??
+        "Set DEFINDEX_API_KEY in .env.local (server-only). DeFindex returns 403 without it."
+      );
+    }
+    if (defindexPayload?.error === "unsupported_network") {
+      return "Unsupported Stellar network for DeFindex. Use PUBLIC (mainnet) or TESTNET.";
+    }
+    if (defindexPayload?.error === "no_vault_ids") {
+      return (
+        defindexPayload.hint ??
+        "Set DEFINDEX_VAULT_IDS or NEXT_PUBLIC_DEFINDEX_VAULT_IDS with vault contract addresses."
+      );
+    }
+    if (
+      vaultsFromApi.length === 0 &&
+      defindexPayload?.fetchErrors &&
+      defindexPayload.fetchErrors.length > 0
+    ) {
+      const first = defindexPayload.fetchErrors[0];
+      return `DeFindex API: ${first.message} (vault ${first.contractId.slice(0, 8)}…). Check DEFINDEX_API_KEY and network.`;
+    }
+    return "Try adjusting your filters";
+  }, [defindexPayload, vaultsFromApi.length]);
+
+  const activeContractId = useMemo(() => {
+    return (
+      pendingActionVault?.detail?.contracts?.vault ??
+      selectedVault?.detail?.contracts?.vault ??
+      vaultsFromApi[0]?.detail?.contracts?.vault ??
+      null
+    );
+  }, [pendingActionVault, selectedVault, vaultsFromApi]);
+
+  const { data: liveVaultData, isLoading: isLoadingLive } =
+    useVaultData(activeContractId);
+
+  const vaults = useMemo<VaultView[]>(() => {
+    if (vaultsFromApi.length === 0) return [];
+    if (!liveVaultData || !activeContractId) return vaultsFromApi;
+
+    return vaultsFromApi.map((v) => {
+      if (v.detail?.contracts?.vault !== activeContractId) return v;
+      return {
+        ...v,
+        tvl: liveVaultData.tvl > 0n ? liveVaultData.tvlFormatted : v.tvl,
         totalSupply:
-          vaultData && vaultData.totalShares > 0n
-            ? `${(Number(vaultData.totalShares) / 1e7).toLocaleString()} dfTokens`
-            : "—",
-      })),
-    [vaultData, apyData, isLoading]
-  );
+          liveVaultData.totalShares > 0n
+            ? `${(Number(liveVaultData.totalShares) / 1e7).toLocaleString()} dfTokens`
+            : v.totalSupply,
+      };
+    });
+  }, [vaultsFromApi, liveVaultData, activeContractId]);
+
+  const displayVault =
+    pendingActionVault ?? selectedVault ?? vaultsFromApi[0] ?? null;
+
+  const gridLoading = isLoading || isFetching;
+  const rowLoading = isLoadingLive && !!activeContractId;
 
   const openDepositModal = () =>
     setActionModal({ open: true, isDeposit: true });
-  const openWithdrawModal = () =>
-    setActionModal({ open: true, isDeposit: false });
+
+  const closeActionModal = () => {
+    setPendingActionVault(null);
+    setActionModal({ open: false, isDeposit: true });
+  };
 
   return (
     <PageContainer maxWidth="6xl">
@@ -67,12 +114,20 @@ const Vault: React.FC = () => {
       {activeTab === "vaults" ? (
         <VaultGrid
           vaults={vaults}
-          isLoading={isLoading}
+          isLoading={gridLoading || rowLoading}
           onDetailsClick={setSelectedVault}
-          onDepositClick={openDepositModal}
+          onDepositClick={(v) => {
+            setPendingActionVault(null);
+            setSelectedVault(v);
+            openDepositModal();
+          }}
+          emptySubtitle={emptyVaultSubtitle}
         />
       ) : (
-        <MyVaultPositions />
+        <MyVaultPositions
+          vaultContractId={activeContractId}
+          vault={displayVault}
+        />
       )}
 
       {selectedVault && (
@@ -80,16 +135,18 @@ const Vault: React.FC = () => {
           vault={selectedVault}
           onClose={() => setSelectedVault(null)}
           onDeposit={() => {
+            setPendingActionVault(selectedVault);
             setSelectedVault(null);
             openDepositModal();
           }}
         />
       )}
 
-      {actionModal.open && (
+      {actionModal.open && activeContractId && (
         <VaultActionModal
+          vaultContractId={activeContractId}
           isDeposit={actionModal.isDeposit}
-          onClose={() => setActionModal({ open: false, isDeposit: true })}
+          onClose={closeActionModal}
         />
       )}
     </PageContainer>

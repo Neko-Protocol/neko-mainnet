@@ -5,6 +5,7 @@ import {
   rpcUrl,
   networkPassphrase,
   allowHttpForSoroban,
+  stellarNetwork,
 } from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
@@ -23,14 +24,7 @@ export interface LendingPool {
 
 /** Deposit assets for each pool */
 const POOL1_ASSETS = ["USDC", "XLM"];
-const POOL2_ASSETS = [
-  "USTRY",
-  "TESOURO",
-  "CETES",
-  "USDY",
-  "PYUSD",
-  "KTB",
-];
+const POOL2_ASSETS = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD", "KTB"];
 
 async function fetchLendingPools(
   client: RwaLendingClient,
@@ -163,6 +157,7 @@ export const useLendingPools = () => {
   return useQuery<LendingPool[]>({
     queryKey: ["lendingPools"],
     queryFn,
+    enabled: stellarNetwork !== "PUBLIC",
     staleTime: 2 * 60_000,
     gcTime: 10 * 60_000,
     refetchInterval: 2 * 60_000,

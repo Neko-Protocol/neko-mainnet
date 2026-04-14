@@ -96,7 +96,7 @@ export function BorrowTable({
                     {asset.borrowApr}
                   </td>
                   <td className="px-4 py-4 align-middle text-center text-white text-sm">
-                    {asset.isAggregated ? "—" : asset.collateralFactorDisplay}
+                    {asset.collateralFactorDisplay}
                   </td>
                   <td className="px-4 py-4 align-middle text-center text-white text-sm">
                     {asset.liquidity}
@@ -161,9 +161,7 @@ export function BorrowTable({
                     />
                     <StatCell
                       label="Collateral"
-                      value={
-                        asset.isAggregated ? "—" : asset.collateralFactorDisplay
-                      }
+                      value={asset.collateralFactorDisplay}
                       icon={Shield}
                     />
                     <StatCell

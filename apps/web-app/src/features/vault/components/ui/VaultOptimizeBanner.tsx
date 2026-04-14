@@ -3,7 +3,13 @@
 import React from "react";
 import { useVaultInvest } from "../../hooks/useVaultInvest";
 
-export function VaultOptimizeBanner() {
+interface VaultOptimizeBannerProps {
+  vaultContractId: string | null;
+}
+
+export function VaultOptimizeBanner({
+  vaultContractId,
+}: VaultOptimizeBannerProps) {
   const {
     idleAmount,
     canInvest,
@@ -11,7 +17,7 @@ export function VaultOptimizeBanner() {
     isInvesting,
     lastResult,
     triggerInvest,
-  } = useVaultInvest();
+  } = useVaultInvest(vaultContractId);
 
   if (idleAmount <= 0 && !lastResult) return null;
 

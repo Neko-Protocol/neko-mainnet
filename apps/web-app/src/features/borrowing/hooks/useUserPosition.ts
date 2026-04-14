@@ -10,6 +10,7 @@ import { useHealthFactor } from "./useHealthFactor";
 import type { PoolHealthFactor } from "./useHealthFactor";
 import { lendingService } from "@/lib/services/lending.service";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
+import { stellarNetwork } from "@/lib/constants/network";
 
 export type { LendingPosition, BorrowPosition, PoolHealthFactor };
 
@@ -77,7 +78,7 @@ export function useUserPosition(
           borrowerAddress!,
           networks.testnet.pool1ContractId
         ),
-      enabled: Boolean(borrowerAddress),
+      enabled: stellarNetwork !== "PUBLIC" && Boolean(borrowerAddress),
       staleTime: 30_000,
       gcTime: 5 * 60_000,
       retry: 1,
@@ -89,7 +90,7 @@ export function useUserPosition(
       queryKey: ["borrowLimit", pool.key, borrowerAddress],
       queryFn: () =>
         lendingService.getBorrowLimitForPool(borrowerAddress!, pool.contractId),
-      enabled: Boolean(borrowerAddress),
+      enabled: stellarNetwork !== "PUBLIC" && Boolean(borrowerAddress),
       staleTime: 30_000,
       gcTime: 5 * 60_000,
       retry: 1,

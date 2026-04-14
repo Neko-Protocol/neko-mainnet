@@ -47,24 +47,34 @@ export async function getStellarWalletKit(): Promise<Kit> {
 
       const network = getCurrentNetworkPassphrase() as Networks;
 
-      StellarWalletsKit.init({
-        network,
-        modules: [
-          new FreighterModule(),
-          new AlbedoModule(),
-          new xBullModule(),
-          new LedgerModule(),
-          new LobstrModule(),
+      const walletConnectProjectId =
+        process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID?.trim() ?? "";
+
+      const modules = [
+        new FreighterModule(),
+        new AlbedoModule(),
+        new xBullModule(),
+        new LedgerModule(),
+        new LobstrModule(),
+      ];
+
+      if (walletConnectProjectId) {
+        modules.push(
           new WalletConnectModule({
-            projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
+            projectId: walletConnectProjectId,
             metadata: {
               name: "Neko",
               description: "Neko — All-in-one platform for RWAs on Stellar",
               url: "https://nekoprotocol.xyz",
               icons: ["/Neko.svg"],
             },
-          }),
-        ],
+          })
+        );
+      }
+
+      StellarWalletsKit.init({
+        network,
+        modules,
         theme: {
           background: "#1C1C1C",
           "background-secondary": "#121212",

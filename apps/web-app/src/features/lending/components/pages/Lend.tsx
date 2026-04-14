@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
+import { stellarNetwork } from "@/lib/constants/network";
 import { useLend } from "../../hooks/useLend";
 import { LendTable } from "../ui/LendTable";
 import { LendModal } from "../ui/LendModal";
 import MyLendingPositions from "../ui/MyLendingPositions";
 import { BackstopPanel } from "../ui/BackstopPanel";
-import { GetTestTokensBanner } from "@/features/wallet/components/GetTestTokensBanner";
 
 type PageTab = "pools" | "positions" | "backstop";
+
+const showBackstop = stellarNetwork !== "PUBLIC";
 
 const Lend: React.FC = () => {
   const [activeTab, setActiveTab] = useState<PageTab>("pools");
@@ -31,6 +33,12 @@ const Lend: React.FC = () => {
     refreshBalance,
   } = useLend();
 
+  useEffect(() => {
+    if (!showBackstop && activeTab === "backstop") {
+      setActiveTab("pools");
+    }
+  }, [showBackstop, activeTab]);
+
   return (
     <PageContainer maxWidth="6xl">
       <BannerPage
@@ -41,8 +49,6 @@ const Lend: React.FC = () => {
         imageAlt="Lend illustration"
         className="mb-8"
       />
-
-      <GetTestTokensBanner className="mb-6" />
 
       <div className="flex items-center gap-1 rounded-xl bg-[#1C1C1C] p-1 w-fit mb-6">
         <button
@@ -55,16 +61,18 @@ const Lend: React.FC = () => {
         >
           Pools
         </button>
-        <button
-          onClick={() => setActiveTab("backstop")}
-          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === "backstop"
-              ? "bg-[#229EDF] text-white"
-              : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          Backstop
-        </button>
+        {showBackstop && (
+          <button
+            onClick={() => setActiveTab("backstop")}
+            className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+              activeTab === "backstop"
+                ? "bg-[#229EDF] text-white"
+                : "text-white/40 hover:text-white/70"
+            }`}
+          >
+            Backstop
+          </button>
+        )}
         <button
           onClick={() => setActiveTab("positions")}
           className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
@@ -105,7 +113,7 @@ const Lend: React.FC = () => {
 
       {activeTab === "positions" && <MyLendingPositions />}
 
-      {activeTab === "backstop" && <BackstopPanel />}
+      {showBackstop && activeTab === "backstop" && <BackstopPanel />}
     </PageContainer>
   );
 };

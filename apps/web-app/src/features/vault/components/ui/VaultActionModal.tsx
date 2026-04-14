@@ -14,11 +14,13 @@ const CETES_CONTRACT =
   "CC72F57YTPX76HAA64JQOEGHQAPSADQWSY5DWVBR66JINPFDLNCQYHIC";
 
 interface VaultActionModalProps {
+  vaultContractId: string;
   isDeposit: boolean;
   onClose: () => void;
 }
 
 export function VaultActionModal({
+  vaultContractId,
   isDeposit,
   onClose,
 }: VaultActionModalProps) {
@@ -29,8 +31,9 @@ export function VaultActionModal({
   );
 
   const { address } = useWallet();
-  const { sharesFormatted, userShares } = useVaultBalance();
-  const { isLoading, handleDeposit, handleWithdraw } = useVaultAction();
+  const { sharesFormatted, userShares } = useVaultBalance(vaultContractId);
+  const { isLoading, handleDeposit, handleWithdraw } =
+    useVaultAction(vaultContractId);
 
   const { data: cetesBalance = "0" } = useQuery({
     queryKey: ["cetesBalance", address],
@@ -96,7 +99,6 @@ export function VaultActionModal({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Close */}
           <button
             aria-label="Close modal"
             onClick={handleClose}
@@ -105,7 +107,6 @@ export function VaultActionModal({
             <X className="h-4 w-4" />
           </button>
 
-          {/* Header with toggle */}
           <div className="px-5 pt-5 pb-4 border-b border-white/5 flex justify-center">
             <div className="flex bg-[#2A2A2A] rounded-xl p-1 gap-1 w-full max-w-xs">
               <button
@@ -137,9 +138,7 @@ export function VaultActionModal({
             </div>
           </div>
 
-          {/* Body */}
           <div className="px-5 py-5 space-y-4">
-            {/* Balance info */}
             <div className="flex items-center justify-between text-xs">
               <span className="text-white/40">
                 {mode === "deposit" ? "CETES Balance" : "dfTokens Balance"}
@@ -149,7 +148,6 @@ export function VaultActionModal({
               </span>
             </div>
 
-            {/* Amount input */}
             <div className="flex items-center gap-2 rounded-xl bg-white/[0.04] border border-white/10 px-4 py-3">
               <input
                 type="text"
@@ -167,7 +165,6 @@ export function VaultActionModal({
               </button>
             </div>
 
-            {/* Info rows */}
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-white/40">Slippage tolerance</span>
@@ -186,7 +183,6 @@ export function VaultActionModal({
             </div>
           </div>
 
-          {/* CTA */}
           <div className="px-5 py-4 border-t border-white/5">
             <button
               onClick={handleConfirm}

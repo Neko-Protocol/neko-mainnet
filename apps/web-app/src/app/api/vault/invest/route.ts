@@ -10,12 +10,10 @@ import {
   xdr,
 } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { resolveVaultIdForApi } from "@/lib/defindex/vaultContract";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
-
-const VAULT_CONTRACT_ID =
-  "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
 const STRATEGIES = [
   {
     name: "Neko",
@@ -94,7 +92,8 @@ async function sendTx(
 async function harvestAquarius(
   keypair: Keypair,
   server: rpc.Server,
-  networkPassphrase: string
+  networkPassphrase: string,
+  vaultContractId: string
 ): Promise<{ hash: string; status: string }> {
   const AQUARIUS_STRATEGY =
     "CCGV5QSAFRT6OGBZNCE72I6BAODXLDMWEUYAOBI5ZBLHOURSEGVGFTTZ";
@@ -110,7 +109,7 @@ async function harvestAquarius(
           contract: AQUARIUS_STRATEGY,
           function: "harvest",
           args: [
-            new Address(VAULT_CONTRACT_ID).toScVal(), // from = vault address
+            new Address(vaultContractId).toScVal(), // from = vault address
             xdr.ScVal.scvVoid(), // data = None
           ],
         })
@@ -216,13 +215,26 @@ async function collectFees(
 
 // ─── GET — current vault state ───────────────────────────────────────────────
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const vaultId = resolveVaultIdForApi(
+      request.nextUrl.searchParams.get("vault")
+    );
+    if (!vaultId) {
+      return NextResponse.json({
+        idle: 0,
+        total: 0,
+        allocations: [],
+        canInvest: false,
+        cooldownRemaining: 0,
+      });
+    }
+
     const { secretKey, rpcUrl, networkPassphrase } = getEnv();
     const keypair = Keypair.fromSecret(secretKey);
 
     const client = new DefindexVaultClient({
-      contractId: VAULT_CONTRACT_ID,
+      contractId: vaultId,
       rpcUrl,
       networkPassphrase,
       publicKey: keypair.publicKey(),
@@ -262,6 +274,21 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    let bodyVault: string | null = null;
+    try {
+      const body = await request.json();
+      bodyVault = typeof body?.vault === "string" ? body.vault : null;
+    } catch {
+      bodyVault = null;
+    }
+    const vaultId = resolveVaultIdForApi(bodyVault);
+    if (!vaultId) {
+      return NextResponse.json(
+        { error: "No vault configured for this network" },
+        { status: 503 }
+      );
+    }
+
     const isCron = request.headers.get("x-vercel-cron") === "1";
 
     if (!isCron) {
@@ -280,7 +307,7 @@ export async function POST(request: NextRequest) {
     const keypair = Keypair.fromSecret(secretKey);
     const server = new rpc.Server(rpcUrl);
     const client = new DefindexVaultClient({
-      contractId: VAULT_CONTRACT_ID,
+      contractId: vaultId,
       rpcUrl,
       networkPassphrase,
       publicKey: keypair.publicKey(),
@@ -290,7 +317,8 @@ export async function POST(request: NextRequest) {
     const harvestResult = await harvestAquarius(
       keypair,
       server,
-      networkPassphrase
+      networkPassphrase,
+      vaultId
     );
 
     // 2. Invest idle funds (includes any AQUA-converted idle if applicable)

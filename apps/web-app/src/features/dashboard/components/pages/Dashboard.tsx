@@ -8,7 +8,6 @@ import QuickActions from "@/features/dashboard/components/ui/QuickActions";
 import DiscoverAssets from "@/features/dashboard/components/ui/DiscoverAssets";
 import AssetBreakdown from "@/features/dashboard/components/ui/AssetBreakdown";
 import YourPositions from "@/features/dashboard/components/ui/YourPositions";
-import { GetTestTokensBanner } from "@/features/wallet/components/GetTestTokensBanner";
 
 const Dashboard: React.FC = () => {
   return (
@@ -21,7 +20,6 @@ const Dashboard: React.FC = () => {
           imageSrc="/banners/oracle.svg"
           imageAlt="Dashboard illustration"
         />
-        <GetTestTokensBanner className="mb-4" />
         <MainStats />
         <QuickActions />
         <DiscoverAssets />
