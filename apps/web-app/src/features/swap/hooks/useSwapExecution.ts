@@ -11,6 +11,7 @@ import {
   MAX_HOPS,
 } from "@/features/swap/constants/swapConfig";
 import { useWallet } from "@/hooks/useWallet";
+import { auditService } from "@/lib/services/audit.service";
 
 export interface SwapExecutionParams {
   amountIn: string;
@@ -94,6 +95,22 @@ export function useSwapExecution() {
       });
 
       if (sendResult.txHash) {
+        auditService.log({
+          wallet_address: address,
+          action_type: "swap",
+          asset_in:
+            typeof tokenIn === "string"
+              ? tokenIn
+              : (tokenIn.code ??
+                (tokenIn.type === "native" ? "XLM" : tokenIn.contract)),
+          asset_out:
+            typeof tokenOut === "string"
+              ? tokenOut
+              : (tokenOut.code ??
+                (tokenOut.type === "native" ? "XLM" : tokenOut.contract)),
+          amount_in: parseFloat(amountIn),
+          tx_hash: sendResult.txHash,
+        });
         return { orderId: sendResult.txHash, txHash: sendResult.txHash };
       }
 
