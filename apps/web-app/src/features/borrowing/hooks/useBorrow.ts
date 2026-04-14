@@ -61,6 +61,8 @@ export function useBorrow() {
             ? p.metadata.borrowApy
             : p.apy;
         const contractId = p.id.split(":")[1] ?? p.id;
+        const cFactor =
+          typeof p.metadata?.cFactor === "number" ? p.metadata.cFactor : null;
         return {
           id: `agg-borrow-${i}`,
           pool: {
@@ -69,12 +71,13 @@ export function useBorrow() {
             fee: "0%",
           },
           borrowApr: borrowApy > 0 ? `${borrowApy.toFixed(2)}%` : "0.00%",
-          collateralFactorDisplay: "Aggregated",
+          collateralFactorDisplay:
+            cFactor !== null ? `${(cFactor * 100).toFixed(0)}%` : "—",
           liquidity,
           isActive: p.state === "active",
           assetCode: token?.code ?? "?",
           collateralTokenCode: "",
-          collateralFactor: 0,
+          collateralFactor: cFactor ?? 0,
           contractId,
           isAggregated: true,
           orchestratorId: p.id,
