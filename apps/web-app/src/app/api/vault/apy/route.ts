@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import {
   Keypair,
   TransactionBuilder,
@@ -9,12 +9,12 @@ import {
   rpc,
 } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { resolveVaultIdForApi } from "@/lib/defindex/vaultContract";
+import { createDefindexServerSdk } from "@/lib/defindex/createServerSdk";
+import { defindexNetworkFromEnv } from "@/lib/defindex/network";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
-
-const VAULT_CONTRACT_ID =
-  "CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S";
 const NEKO_POOL_CONTRACT =
   "CB4HAFD6ECCOQZXOD6FXUVDM3E773LKR5JHVGA3DBJXIWHZUWX2THEDJ";
 const AQUARIUS_POOL =
@@ -146,10 +146,35 @@ async function getAllocations(
   return result;
 }
 
+// ─── DefIndex SDK APY ─────────────────────────────────────────────────────────
+
+async function getDefindexVaultApy(vaultId: string): Promise<number | null> {
+  try {
+    const sdk = createDefindexServerSdk();
+    const network = defindexNetworkFromEnv();
+    if (!network) return null;
+    const result = await sdk.getVaultAPY(vaultId, network);
+    return typeof result?.apy === "number" ? result.apy : null;
+  } catch {
+    return null;
+  }
+}
+
 // ─── GET /api/vault/apy ───────────────────────────────────────────────────────
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const vaultId = resolveVaultIdForApi(
+      request.nextUrl.searchParams.get("vault")
+    );
+    if (!vaultId) {
+      return NextResponse.json({
+        vaultApy: null,
+        strategies: [],
+        note: "No vault configured for this network.",
+      });
+    }
+
     const secretKey = process.env.VAULT_MANAGER_SECRET_KEY;
     if (!secretKey) {
       return NextResponse.json({ error: "Not configured" }, { status: 503 });
@@ -160,19 +185,21 @@ export async function GET() {
     const server = new rpc.Server(rpcUrl);
 
     const client = new DefindexVaultClient({
-      contractId: VAULT_CONTRACT_ID,
+      contractId: vaultId,
       rpcUrl,
       networkPassphrase,
       publicKey: keypair.publicKey(),
     });
 
     // Fetch all in parallel
-    const [nekoApy, aquariusApy, soroswapApy, allocations] = await Promise.all([
-      getNekoApy(server, networkPassphrase, keypair.publicKey()),
-      getAquariusApy(),
-      getSoroswapApy(),
-      getAllocations(client),
-    ]);
+    const [nekoApy, aquariusApy, soroswapApy, allocations, defindexApy] =
+      await Promise.all([
+        getNekoApy(server, networkPassphrase, keypair.publicKey()),
+        getAquariusApy(),
+        getSoroswapApy(),
+        getAllocations(client),
+        getDefindexVaultApy(vaultId),
+      ]);
 
     const strategies = [
       {
@@ -202,13 +229,16 @@ export async function GET() {
       0
     );
 
-    let vaultApy: number | null = null;
+    let manualVaultApy: number | null = null;
     if (knownStrategies.length > 0 && totalKnownWeight > 0) {
-      vaultApy = knownStrategies.reduce((sum, s) => {
+      manualVaultApy = knownStrategies.reduce((sum, s) => {
         const normalizedWeight = s.weight / totalKnownWeight;
         return sum + s.apy! * normalizedWeight;
       }, 0);
     }
+
+    // Use DefIndex SDK APY if available, fall back to manual weighted calculation
+    const vaultApy = defindexApy ?? manualVaultApy;
 
     return NextResponse.json({
       vaultApy: vaultApy !== null ? parseFloat(vaultApy.toFixed(2)) : null,
