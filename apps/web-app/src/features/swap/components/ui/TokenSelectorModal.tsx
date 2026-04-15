@@ -168,8 +168,7 @@ function PopularTokenRow({
   onClick: () => void;
 }) {
   const { price, isLoading } = useTokenPrice(code);
-  const usdValue =
-    isLoading ? "—" : price > 0 ? price.toFixed(2) : "—";
+  const usdValue = isLoading ? "—" : price > 0 ? price.toFixed(2) : "—";
 
   return (
     <TokenItem
@@ -315,12 +314,9 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                       : false;
                     const tokenInfo = availableTokens[code];
                     const tokenName = tokenInfo?.name || code;
-                    const tokenIcon =
-                      code === "XLM"
-                        ? "/assets/xlm-negro-logo.png"
-                        : tokenInfo?.contract
-                          ? getTokenIcon(tokenInfo.contract)
-                          : null;
+                    const tokenIcon = tokenInfo?.contract
+                      ? getTokenIcon(tokenInfo.contract)
+                      : null;
 
                     return (
                       <UserTokenRow
@@ -349,12 +345,9 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                       : false;
                     const tokenInfo = availableTokens[code];
                     const tokenName = tokenInfo?.name || code;
-                    const tokenIcon =
-                      code === "XLM"
-                        ? "/assets/xlm-negro-logo.png"
-                        : tokenInfo?.contract
-                          ? getTokenIcon(tokenInfo.contract)
-                          : null;
+                    const tokenIcon = tokenInfo?.contract
+                      ? getTokenIcon(tokenInfo.contract)
+                      : null;
 
                     return (
                       <PopularTokenRow

@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { formatUsdPrice } from "../../utils/assetPriceUtils";
 import { ROUTES } from "../../constants/discover";
 import { STOCK_INFO } from "../../utils/stockInfo";
@@ -23,19 +24,26 @@ export function AssetPriceCard({
   const codeUpper = tokenCode.toUpperCase();
   const { price, isLoading } = useTokenPrice(tokenCode);
   const fromStatic = useStockInfo(codeUpper);
-  const stockInfo =
-    stockInfoProp ?? fromStatic ?? STOCK_INFO[codeUpper];
+  const stockInfo = stockInfoProp ?? fromStatic ?? STOCK_INFO[codeUpper];
+
+  const assetConfig = React.useMemo(
+    () => getAvailableTokens()[codeUpper],
+    [codeUpper]
+  );
+
+  const displayName = stockInfo?.name ?? assetConfig?.name ?? codeUpper;
+  const logoSrc = stockInfo?.logo ?? assetConfig?.icon;
 
   return (
     <Link href={ROUTES.stockDetail(codeUpper)} className="block h-full group">
       <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 h-full flex flex-col transition-all duration-200 hover:border-white/10 hover:bg-[#222222] cursor-pointer">
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">
-            {stockInfo && (
+            {logoSrc && (
               <div className="relative w-10 h-10 rounded-xl bg-[#2A2A2A] overflow-hidden shrink-0">
                 <Image
-                  src={stockInfo.logo || "/assets/xlm-logo.png"}
-                  alt={stockInfo.name}
+                  src={logoSrc}
+                  alt={displayName}
                   fill
                   unoptimized
                   className="object-contain p-1.5"
@@ -44,7 +52,7 @@ export function AssetPriceCard({
             )}
             <div>
               <h3 className="text-white font-semibold text-sm leading-tight">
-                {stockInfo ? stockInfo.name : codeUpper}
+                {displayName}
               </h3>
               <span
                 className="inline-flex items-center mt-1 px-2 py-0.5 rounded-md text-[10px] font-semibold"
