@@ -12,6 +12,8 @@ export type {
   GetPoolRequest,
 } from "../../../types/soroswapTypes";
 
+export { TrustlineRequiredError } from "../../../types/soroswapTypes";
+
 export {
   getAvailableTokens,
   getTokens,
@@ -34,4 +36,5 @@ export {
   buildTransaction,
   sendTransaction,
   addLiquidity,
+  submitClassicTrustlineToHorizon,
 } from "./quotes";

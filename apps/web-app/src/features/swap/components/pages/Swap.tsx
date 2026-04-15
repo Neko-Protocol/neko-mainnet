@@ -84,6 +84,8 @@ const TokenSelectorBtn: React.FC<TokenSelectorBtnProps> = ({
 
 interface BalanceCardProps {
   balance?: string;
+  /** For XLM: amount after reserve; Max fills this. Defaults to balance. */
+  maxSpendable?: string;
   usdValue?: string;
   isLoadingBalance?: boolean;
   isLoadingPrice?: boolean;
@@ -93,43 +95,51 @@ interface BalanceCardProps {
 
 const BalanceCard: React.FC<BalanceCardProps> = ({
   balance,
+  maxSpendable,
   usdValue,
   isLoadingBalance,
   isLoadingPrice,
   onMaxClick,
   isReadOnly,
-}) => (
-  <div className="bg-[#252525] rounded-xl p-3.5">
-    <div className="text-white font-bold text-xl">
-      {isLoadingPrice ? (
-        <span className="text-white/40 text-sm animate-pulse">Loading…</span>
-      ) : (
-        <>
-          {usdValue || "0.00"}{" "}
-          <span className="text-white/40 text-xs font-normal">USD</span>
-        </>
-      )}
+}) => {
+  const maxAmt = maxSpendable ?? balance;
+
+  return (
+    <div className="bg-[#252525] rounded-xl p-3.5">
+      <div className="text-white font-bold text-xl">
+        {isLoadingPrice ? (
+          <span className="text-white/40 text-sm animate-pulse">Loading…</span>
+        ) : (
+          <>
+            {usdValue || "0.00"}{" "}
+            <span className="text-white/40 text-xs font-normal">USD</span>
+          </>
+        )}
+      </div>
+      <div className="flex items-center justify-between mt-1 gap-2">
+        <span className="text-white/40 text-xs shrink-0">Your balance</span>
+        <button
+          onClick={isReadOnly ? undefined : onMaxClick}
+          disabled={
+            isReadOnly ||
+            !maxAmt ||
+            parseFloat(maxAmt) <= 0 ||
+            isLoadingBalance
+          }
+          className={`text-xs transition-colors shrink-0 ${
+            isReadOnly
+              ? "invisible"
+              : "text-white/40 hover:text-white/70 disabled:cursor-not-allowed"
+          }`}
+        >
+          {isLoadingBalance
+            ? "..."
+            : `${formatSwapAmount(maxAmt || "0", 6)} Max`}
+        </button>
+      </div>
     </div>
-    <div className="flex items-center justify-between mt-1">
-      <span className="text-white/40 text-xs">Your balance</span>
-      <button
-        onClick={isReadOnly ? undefined : onMaxClick}
-        disabled={
-          isReadOnly || !balance || parseFloat(balance) <= 0 || isLoadingBalance
-        }
-        className={`text-xs transition-colors ${
-          isReadOnly
-            ? "invisible"
-            : "text-white/40 hover:text-white/70 disabled:cursor-not-allowed"
-        }`}
-      >
-        {isLoadingBalance
-          ? "..."
-          : `${formatSwapAmount(balance || "0", 6)} Max`}
-      </button>
-    </div>
-  </div>
-);
+  );
+};
 
 const Swap: React.FC = () => {
   const { address, network, networkPassphrase, refetchBalances } = useWallet();
@@ -180,8 +190,11 @@ const Swap: React.FC = () => {
     getTokenIconUrl,
   } = tokenSelection;
 
-  const { balance: tokenInBalance, isLoading: isLoadingBalance } =
-    useTokenBalance(tokenIn as Token | string | undefined);
+  const {
+    balance: tokenInSpendable,
+    totalBalance: tokenInTotal,
+    isLoading: isLoadingBalance,
+  } = useTokenBalance(tokenIn as Token | string | undefined);
 
   const {
     amountOut: quoteAmountOut,
@@ -287,8 +300,8 @@ const Swap: React.FC = () => {
   };
 
   const handleMaxClick = () => {
-    if (tokenInBalance && parseFloat(tokenInBalance) > 0) {
-      setAmountIn(tokenInBalance);
+    if (tokenInSpendable && parseFloat(tokenInSpendable) > 0) {
+      setAmountIn(tokenInSpendable);
     }
   };
 
@@ -296,8 +309,8 @@ const Swap: React.FC = () => {
 
   const isInsufficientBalance =
     !!amountIn &&
-    !!tokenInBalance &&
-    parseFloat(amountIn) > parseFloat(tokenInBalance);
+    !!tokenInSpendable &&
+    parseFloat(amountIn) > parseFloat(tokenInSpendable);
 
   return (
     <PageContainer maxWidth="4xl">
@@ -358,7 +371,8 @@ const Swap: React.FC = () => {
             </div>
 
             <BalanceCard
-              balance={tokenInBalance}
+              balance={tokenInTotal ?? tokenInSpendable}
+              maxSpendable={tokenInSpendable}
               usdValue={usdValue}
               isLoadingBalance={isLoadingBalance}
               isLoadingPrice={isLoadingPrice}

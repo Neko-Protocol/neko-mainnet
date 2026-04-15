@@ -71,3 +71,25 @@ export interface GetPoolRequest {
   tokenB: Token | string;
   protocols?: string[];
 }
+
+export class TrustlineRequiredError extends Error {
+  readonly trustlineXdr: string;
+  readonly signer: string;
+  readonly assetCode: string;
+  readonly assetIssuer: string;
+
+  constructor(data: {
+    message: string;
+    trustlineXdr: string;
+    signer: string;
+    assetCode: string;
+    assetIssuer: string;
+  }) {
+    super(data.message);
+    this.name = "TrustlineRequiredError";
+    this.trustlineXdr = data.trustlineXdr;
+    this.signer = data.signer;
+    this.assetCode = data.assetCode;
+    this.assetIssuer = data.assetIssuer;
+  }
+}

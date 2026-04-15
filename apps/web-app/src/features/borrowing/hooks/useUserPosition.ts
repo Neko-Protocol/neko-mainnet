@@ -66,7 +66,7 @@ export function useUserPosition(
     useHealthFactor(borrowerAddress);
 
   const rwaTokens = Object.values(getAssetsConfig()).filter(
-    (a) => a.priceSource === "oracle"
+    (a) => a.priceSource === "soroswap"
   );
 
   const collateralQueries = useQueries({

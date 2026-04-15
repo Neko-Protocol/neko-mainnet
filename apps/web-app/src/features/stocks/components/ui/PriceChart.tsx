@@ -11,7 +11,7 @@ import {
   Tooltip,
 } from "recharts";
 import type { PriceChartDatum } from "../../types/stocks";
-import { CHART_ACCENT_COLOR } from "../../constants/oracle";
+import { CHART_ACCENT_COLOR } from "../../constants/discover";
 
 export interface PriceChartProps {
   data: PriceChartDatum[];

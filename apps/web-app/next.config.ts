@@ -6,7 +6,6 @@ const nextConfig: NextConfig = {
     "@neko/backstop",
     "@neko/defindex-vault",
     "@neko/lending",
-    "@neko/oracle",
   ],
 };
 

@@ -9,7 +9,11 @@ import {
   nativeToScVal,
   xdr,
 } from "@stellar/stellar-sdk";
-import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
+import {
+  horizonUrl,
+  networkPassphrase,
+  rpcUrl,
+} from "@/lib/constants/network";
 import { getCurrentNetwork, getAvailableTokens } from "./tokens";
 import {
   getApiKey,
@@ -20,6 +24,9 @@ import {
   isValidContractAddress,
   formatTokenForAPI,
 } from "./utils";
+import {
+  TrustlineRequiredError,
+} from "../../../types/soroswapTypes";
 import type {
   QuoteRequest,
   QuoteResponse,
@@ -35,22 +42,25 @@ import type {
 
 const SOROSWAP_API_URL = "https://api.soroswap.finance";
 
+export async function submitClassicTrustlineToHorizon(
+  signedXdr: string
+): Promise<void> {
+  const res = await fetch(`${horizonUrl}/transactions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ tx: signedXdr }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Horizon rejected trustline transaction: ${body}`);
+  }
+}
+
 /**
  * Pairs that the Soroswap API has rejected with "no path found".
  * Cached so subsequent quote refreshes skip the slow API call entirely.
  */
 const apiRejectedPairs = new Set<string>();
-
-/**
- * Returns true if a token address belongs to Soroswap's curated token list.
- * Only standard tokens (XLM, USDC) are known to Soroswap on testnet.
- */
-function isSoroswapListed(address: string): boolean {
-  const tokens = getAvailableTokens();
-  const token = Object.values(tokens).find((t) => t.contract === address);
-  if (!token) return false;
-  return token.code === "XLM" || token.code === "USDC";
-}
 
 /**
  * Computes a swap quote from on-chain pair reserves using the Uniswap v2 AMM formula.
@@ -275,16 +285,6 @@ export const getQuote = async (
 
   const pairKey = `${assetIn}-${assetOut}`;
 
-  // Always use on-chain simulation directly — the Soroswap REST API rejects
-  // all our token contracts (including USDC/XLM) with 400 "no path found".
-  return getDirectPoolQuote(
-    assetIn,
-    assetOut,
-    amountInSmallestUnit,
-    request.slippageBps ?? 500
-  );
-
-  // Dead code kept for reference — the REST API path below is bypassed.
   try {
     const apiKey = getApiKey();
     if (!apiKey) {
@@ -410,7 +410,6 @@ export const getQuote = async (
 export const buildTransaction = async (
   request: BuildRequest
 ): Promise<BuildResponse> => {
-  const soroswapSDK = getSoroswapSDK();
   const sdkNetwork = getSDKNetwork();
 
   try {
@@ -475,16 +474,80 @@ export const buildTransaction = async (
       return { xdr: preparedTx.toXDR() };
     }
 
-    const buildResponse = await soroswapSDK.build(
-      {
-        quote: sdkQuote as any,
-        from: request.from,
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      throw new Error("Soroswap API key not configured");
+    }
+
+    const buildUrl = `${SOROSWAP_API_URL}/quote/build?network=${sdkNetwork}`;
+    const buildBody: Record<string, unknown> = {
+      quote: sdkQuote,
+      from: request.from,
+    };
+    if (request.to) {
+      buildBody.to = request.to;
+    }
+
+    const buildRes = await fetch(buildUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       },
-      sdkNetwork
-    );
+      body: JSON.stringify(buildBody, (_, v) =>
+        typeof v === "bigint" ? v.toString() : v
+      ),
+    });
+
+    if (buildRes.status === 428) {
+      const errData = (await buildRes.json().catch(() => null)) as {
+        message?: string;
+        action?: string;
+        actionData?: {
+          xdr?: string;
+          signer?: string;
+          assetCode?: string;
+          assetIssuer?: string;
+        };
+      } | null;
+      const ad = errData?.actionData;
+      if (
+        errData?.action === "CREATE_TRUSTLINE" &&
+        typeof ad?.xdr === "string" &&
+        typeof ad?.signer === "string"
+      ) {
+        throw new TrustlineRequiredError({
+          message:
+            errData.message ??
+            "A trustline is required before this swap can be built.",
+          trustlineXdr: ad.xdr,
+          signer: ad.signer,
+          assetCode: ad.assetCode ?? "",
+          assetIssuer: ad.assetIssuer ?? "",
+        });
+      }
+      throw new Error(
+        `Quote build failed: 428 Precondition Required. ${JSON.stringify(errData)}`
+      );
+    }
+
+    if (!buildRes.ok) {
+      const errorData = await buildRes.json().catch(() => ({}));
+      throw new Error(
+        `Quote build failed: ${buildRes.status} ${buildRes.statusText}. ${JSON.stringify(errorData)}`
+      );
+    }
+
+    const buildResponse = (await buildRes.json()) as { xdr: string };
+    if (!buildResponse.xdr) {
+      throw new Error("No XDR returned from quote build API");
+    }
 
     return { xdr: buildResponse.xdr };
   } catch (error) {
+    if (error instanceof TrustlineRequiredError) {
+      throw error;
+    }
     if (error instanceof Error) {
       throw new Error(`Failed to build transaction: ${error.message}`);
     }

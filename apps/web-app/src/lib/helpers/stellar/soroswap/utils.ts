@@ -129,7 +129,7 @@ export const isValidContractAddress = (address: string): boolean => {
 
 export const getTokenExplorerUrl = (
   contractAddress: string,
-  network: string = "testnet"
+  network: string = getCurrentNetwork()
 ): string => {
   const networkParam = network === "mainnet" ? "" : `/${network}`;
   return `https://stellar.expert/explorer${networkParam}/contract/${contractAddress}`;

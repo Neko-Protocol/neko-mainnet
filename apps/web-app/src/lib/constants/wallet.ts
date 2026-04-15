@@ -1,7 +1,6 @@
 import { getRwaTokenCodes } from "./assets.config";
 
 export const RWA_TOKENS = getRwaTokenCodes();
-export const STABLECOIN_FALLBACK_USD = 1;
 
 export const STORAGE_KEYS = {
   walletId: "walletId",

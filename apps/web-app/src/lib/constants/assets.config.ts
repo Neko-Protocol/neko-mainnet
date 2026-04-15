@@ -4,8 +4,13 @@ export interface AssetConfig {
   contract: string;
   decimals: number;
   icon: string;
-  priceSource: "oracle";
+  priceSource: "soroswap";
   isStablecoin?: boolean;
+  /**
+   * CoinGecko `/simple/price` id (e.g. `stellar`, `usd-coin`).
+   * Used only when Soroswap returns no price — not a substitute for on-chain parity.
+   */
+  coinGeckoId?: string;
 }
 
 type NetworkId = "testnet" | "standalone" | "mainnet";
@@ -18,7 +23,8 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
       decimals: 7,
       icon: "/assets/xlm-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
+      coinGeckoId: "stellar",
     },
     USDC: {
       code: "USDC",
@@ -26,8 +32,9 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
       decimals: 7,
       icon: "/assets/usdc-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: true,
+      coinGeckoId: "usd-coin",
     },
     USTRY: {
       code: "USTRY",
@@ -35,7 +42,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CCAYGJWQI5NJN7XRVNSENF47PICNSNTG4FAQHHFOJWZIRTEAC5JPMLGN",
       decimals: 7,
       icon: "/assets/ustry-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: false,
     },
     TESOURO: {
@@ -44,7 +51,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CAPFX3QEAHE7JVT6E7PYZQTFSVS5Z7AV4RE7GRJRVCPKXGQHCWSCOMTW",
       decimals: 7,
       icon: "/assets/tesouro-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: false,
     },
     CETES: {
@@ -53,7 +60,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CAJ4B2ZWU2GA7UYQZ7N7QQCTZAUSSXNKKQ326ADYVH3ALN4FFQ6LPO4U",
       decimals: 7,
       icon: "/assets/cetes-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: false,
     },
     USDY: {
@@ -62,8 +69,9 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CDRQV3D3GLWF73MWTEQWFZWMBQ47KZ3KECYPOBKBDRQBWQQ74KDH5ECT",
       decimals: 7,
       icon: "/assets/usdy-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: true,
+      coinGeckoId: "ondo-us-dollar-yield",
     },
     PYUSD: {
       code: "PYUSD",
@@ -71,8 +79,9 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CBNHH37BJ2G4ZT6PLWDXPOWHKLR75IGNLBRCXZNOS7YPAYS53JPEPSSS",
       decimals: 7,
       icon: "/assets/pyusd-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: true,
+      coinGeckoId: "paypal-usd",
     },
     KTB: {
       code: "KTB",
@@ -80,7 +89,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CCACIMR6I2XR35HSQSPYNTIZSK7IRVLPKAMSZPHW57SSUC44IZGN3TCX",
       decimals: 7,
       icon: "/assets/ktb.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: false,
     },
   },
@@ -91,7 +100,8 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
       decimals: 7,
       icon: "/assets/xlm-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
+      coinGeckoId: "stellar",
     },
     USDC: {
       code: "USDC",
@@ -99,8 +109,9 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
       decimals: 7,
       icon: "/assets/usdc-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: true,
+      coinGeckoId: "usd-coin",
     },
   },
   mainnet: {
@@ -110,7 +121,8 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
       decimals: 7,
       icon: "/assets/xlm-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
+      coinGeckoId: "stellar",
     },
     USDC: {
       code: "USDC",
@@ -118,8 +130,9 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
       decimals: 7,
       icon: "/assets/usdc-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: true,
+      coinGeckoId: "usd-coin",
     },
     USTRY: {
       code: "USTRY",
@@ -127,7 +140,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR",
       decimals: 7,
       icon: "/assets/ustry-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: false,
     },
     TESOURO: {
@@ -136,7 +149,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CD6M4R2322BYCY2LNWM74PEBQAQ63SA3DUJLI3L4225U4ZVCLMSCBCIS",
       decimals: 7,
       icon: "/assets/tesouro-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: false,
     },
     CETES: {
@@ -145,7 +158,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CAL6ER2TI6CTRAY6BFXWNWA7WTYXUXTQCHUBCIBU5O6KM3HJFG6Z6VXV",
       decimals: 7,
       icon: "/assets/cetes-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: false,
     },
     USDY: {
@@ -154,8 +167,9 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CB3YA656OYIHU57657I5KGSBRHE5I3OZU4VFC22PYAOANFZHEWNYGAGP",
       decimals: 7,
       icon: "/assets/usdy-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: true,
+      coinGeckoId: "ondo-us-dollar-yield",
     },
     PYUSD: {
       code: "PYUSD",
@@ -163,8 +177,9 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CCCRWH6Q3FNP3I2I57BDLM5AFAT7O6OF6GKQOC6SSJNDAVRZ57SPHGU2",
       decimals: 7,
       icon: "/assets/pyusd-logo.png",
-      priceSource: "oracle",
+      priceSource: "soroswap",
       isStablecoin: true,
+      coinGeckoId: "paypal-usd",
     },
   },
 };
@@ -183,10 +198,16 @@ export function getAssetsConfig(): Record<string, AssetConfig> {
   return ASSETS_BY_NETWORK[networkId] ?? ASSETS_BY_NETWORK.testnet;
 }
 
+/** CoinGecko `ids` value for `/simple/price`, if configured for this network. */
+export function getCoinGeckoIdForToken(code: string): string | undefined {
+  const assets = getAssetsConfig();
+  return assets[code]?.coinGeckoId;
+}
+
 export function getRwaTokenCodes(): string[] {
   const assets = getAssetsConfig();
   return Object.values(assets)
-    .filter((a) => a.priceSource === "oracle")
+    .filter((a) => a.priceSource === "soroswap")
     .map((a) => a.code);
 }
 
