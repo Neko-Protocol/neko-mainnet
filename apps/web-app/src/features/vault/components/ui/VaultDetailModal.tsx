@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, Copy, Check, Droplets, Zap, FileText } from "lucide-react";
+import { X, Copy, Check, Droplets, Zap, FileText, Coins } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import type { VaultView } from "../../types/vault";
 
@@ -166,6 +166,54 @@ export function VaultDetailModal({
               </section>
             )}
 
+            {detail?.strategyAllocations &&
+              detail.strategyAllocations.length > 0 && (
+                <section>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Coins className="h-3.5 w-3.5 text-[#229EDF]" />
+                    <h3 className="text-white text-sm font-semibold">
+                      Strategy allocations
+                    </h3>
+                  </div>
+                  <p className="text-white/35 text-[11px] leading-relaxed mb-3">
+                    Amounts deployed per strategy contract (from total managed
+                    funds). The API does not list separate AMM pool addresses —
+                    liquidity is routed through these strategies.
+                  </p>
+                  <div className="rounded-xl bg-white/3 border border-white/5 overflow-hidden divide-y divide-white/5">
+                    {detail.strategyAllocations.map((row) => (
+                      <div
+                        key={`${row.strategyAddress}-${row.assetSymbol}-${row.amountLabel}`}
+                        className="px-4 py-3 space-y-2"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-white/80 text-xs font-semibold truncate">
+                              {row.strategyName}
+                              {row.paused && (
+                                <span className="ml-2 text-amber-400/90 text-[10px] font-medium">
+                                  Paused
+                                </span>
+                              )}
+                            </p>
+                            <p className="text-white/35 text-[10px] mt-0.5">
+                              Asset {row.assetSymbol}
+                            </p>
+                          </div>
+                          <span className="text-white text-xs font-mono tabular-nums shrink-0">
+                            {row.amountLabel}
+                          </span>
+                        </div>
+                        <CopyableAddress
+                          label="strategy"
+                          address={row.strategyAddress}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
             {/* Contracts */}
             {detail?.contracts && (
               <section>
@@ -184,16 +232,22 @@ export function VaultDetailModal({
                     address={detail.contracts.vault}
                   />
                 </div>
-                <div className="rounded-xl bg-white/3 border border-white/5 px-4 py-1 mb-2">
-                  <p className="text-white/20 text-[10px] font-medium uppercase tracking-wide pt-2 pb-1">
-                    Pools
-                  </p>
-                  {Object.entries(detail.contracts.pools).map(
-                    ([name, addr]) => (
-                      <CopyableAddress key={name} label={name} address={addr} />
-                    )
-                  )}
-                </div>
+                {Object.keys(detail.contracts.pools).length > 0 && (
+                  <div className="rounded-xl bg-white/3 border border-white/5 px-4 py-1 mb-2">
+                    <p className="text-white/20 text-[10px] font-medium uppercase tracking-wide pt-2 pb-1">
+                      Pools
+                    </p>
+                    {Object.entries(detail.contracts.pools).map(
+                      ([name, addr]) => (
+                        <CopyableAddress
+                          key={name}
+                          label={name}
+                          address={addr}
+                        />
+                      )
+                    )}
+                  </div>
+                )}
                 <div className="rounded-xl bg-white/3 border border-white/5 px-4 py-1">
                   <p className="text-white/20 text-[10px] font-medium uppercase tracking-wide pt-2 pb-1">
                     Strategies

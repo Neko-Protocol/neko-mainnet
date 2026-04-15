@@ -24,11 +24,25 @@ export interface VaultContracts {
   strategies: Record<string, string>;
 }
 
+/**
+ * Per-strategy deployed amount from DeFindex `totalManagedFunds` (via
+ * `fetch_total_managed_funds`). The API does not expose separate AMM pool
+ * contract IDs; liquidity is routed through these strategy contracts.
+ */
+export interface VaultStrategyAllocation {
+  assetSymbol: string;
+  strategyName: string;
+  strategyAddress: string;
+  amountLabel: string;
+  paused: boolean;
+}
+
 export interface VaultDetail {
   description: string;
   strategies: VaultStrategy[];
   contracts: VaultContracts;
   liquidity: string;
+  strategyAllocations?: VaultStrategyAllocation[];
 }
 
 /** Static metadata — defined by the protocol, never changes at runtime. */

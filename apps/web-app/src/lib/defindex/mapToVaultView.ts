@@ -3,6 +3,7 @@ import type {
   VaultAsset,
   VaultConfig,
   VaultView,
+  VaultStrategyAllocation,
 } from "@/features/vault/types/vault";
 
 const DEFAULT_ICON = "/assets/vault-assets/usdc.svg";
@@ -16,6 +17,54 @@ function toVaultAsset(symbol: string, name: string): VaultAsset {
     logoSrc: DEFAULT_ICON,
     network: "Stellar",
   };
+}
+
+function shortAddr(addr: string): string {
+  if (addr.length <= 14) return addr;
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+}
+
+function formatManagedAmount(amountStr: string): string {
+  const n = Number(amountStr) / 1e7;
+  if (Number.isNaN(n)) return "—";
+  if (n <= 0) return "0";
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(2)}k`;
+  if (n < 0.0001) return n.toExponential(2);
+  return n.toLocaleString(undefined, { maximumFractionDigits: 6 });
+}
+
+function buildStrategyAllocations(
+  info: VaultInfoResponse
+): VaultStrategyAllocation[] | undefined {
+  const funds = info.totalManagedFunds;
+  if (!funds?.length) return undefined;
+
+  const assets = info.assets ?? [];
+  const assetByAddr = new Map(assets.map((a) => [a.address, a]));
+  const strategyNameByAddr = new Map<string, string>();
+  for (const a of assets) {
+    for (const s of a.strategies ?? []) {
+      strategyNameByAddr.set(s.address, s.name);
+    }
+  }
+
+  const rows: VaultStrategyAllocation[] = [];
+  for (const mf of funds) {
+    const asset = assetByAddr.get(mf.asset);
+    const symbol = asset?.symbol ?? shortAddr(mf.asset);
+    for (const alloc of mf.strategy_allocations ?? []) {
+      rows.push({
+        assetSymbol: symbol,
+        strategyName:
+          strategyNameByAddr.get(alloc.strategy_address) ?? "Strategy",
+        strategyAddress: alloc.strategy_address,
+        amountLabel: formatManagedAmount(alloc.amount),
+        paused: alloc.paused,
+      });
+    }
+  }
+  return rows.length ? rows : undefined;
 }
 
 function formatTvl(info: VaultInfoResponse): string {
@@ -58,11 +107,18 @@ export function defindexInfoToVaultView(
   );
 
   const strategyRecord: Record<string, string> = {};
+  const strategyNameCount = new Map<string, number>();
   for (const a of assets) {
     for (const s of a.strategies ?? []) {
-      strategyRecord[s.name] = s.address;
+      const n = (strategyNameCount.get(s.name) ?? 0) + 1;
+      strategyNameCount.set(s.name, n);
+      const label =
+        n === 1 ? s.name : `${s.name} (${s.address.slice(0, 5)}…)`;
+      strategyRecord[label] = s.address;
     }
   }
+
+  const strategyAllocations = buildStrategyAllocations(info);
 
   const apyStr =
     info.apy != null && !Number.isNaN(Number(info.apy))
@@ -78,7 +134,7 @@ export function defindexInfoToVaultView(
     supplyAsset,
     collateralAssets,
     createdBy: "DeFindex",
-    creatorIconSrc: "/neko-logo.png",
+    creatorIconSrc: "/defindex-logo.svg",
     variant: "light",
     featured: true,
     detail: {
@@ -89,6 +145,7 @@ export function defindexInfoToVaultView(
         pools: {},
         strategies: strategyRecord,
       },
+      strategyAllocations,
       liquidity:
         "Liquidity depends on underlying strategies and DeFindex vault rules.",
     },
