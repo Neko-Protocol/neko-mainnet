@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
@@ -8,6 +8,24 @@ import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import type { MappedBalances } from "@/lib/helpers/stellar/wallet";
+
+function parseBalanceString(raw: string | undefined): number {
+  if (!raw) return 0;
+  return parseFloat(raw.replace(/,/g, "")) || 0;
+}
+
+/** Horizon XLM + Soroban balances (`soroban:CODE`), same keys as `fetchBalances`. */
+function getHoldingsAmount(balances: MappedBalances, code: string): number {
+  if (code === "XLM" && balances.xlm) {
+    return parseBalanceString(balances.xlm.balance);
+  }
+  const soroban = balances[`soroban:${code}`];
+  if (soroban?.balance) {
+    return parseBalanceString(String(soroban.balance));
+  }
+  return 0;
+}
 
 interface TokenSelectorModalProps {
   isOpen: boolean;
@@ -25,6 +43,8 @@ interface TokenItemProps {
   isSelected: boolean;
   onClick: () => void;
   showBalance?: boolean;
+  bottomLabel?: string;
+  approximate?: boolean;
 }
 
 const TokenItem: React.FC<TokenItemProps> = ({
@@ -36,9 +56,11 @@ const TokenItem: React.FC<TokenItemProps> = ({
   isSelected,
   onClick,
   showBalance = true,
+  bottomLabel,
+  approximate = false,
 }) => {
-  const formatBalance = (balance: string): string => {
-    const num = parseFloat(balance);
+  const formatBalance = (b: string): string => {
+    const num = parseFloat(b);
     if (num === 0) return "0";
     if (num < 0.000001) return num.toExponential(2);
     if (num < 0.001) return num.toFixed(6);
@@ -85,15 +107,85 @@ const TokenItem: React.FC<TokenItemProps> = ({
 
       {showBalance && (
         <div className="text-right shrink-0">
-          <div className="font-semibold text-white text-sm">${usdValue}</div>
+          <div className="font-semibold text-white text-sm">
+            {approximate && (
+              <span className="text-white/45 font-normal text-xs">≈&nbsp;</span>
+            )}
+            <span>${usdValue}</span>
+          </div>
           <div className="text-xs text-white/50 mt-0.5">
-            {formatBalance(balance)}
+            {bottomLabel ?? formatBalance(balance)}
           </div>
         </div>
       )}
     </button>
   );
 };
+
+function UserTokenRow({
+  code,
+  name,
+  icon,
+  isSelected,
+  onClick,
+}: {
+  code: string;
+  name: string;
+  icon: string | null;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const { balances } = useWallet();
+  const { price, isLoading } = useTokenPrice(code);
+  const balanceNum = getHoldingsAmount(balances, code);
+  const usdValue =
+    isLoading || price <= 0 ? "—" : (balanceNum * price).toFixed(2);
+
+  return (
+    <TokenItem
+      code={code}
+      name={name}
+      icon={icon}
+      balance={balanceNum.toString()}
+      usdValue={usdValue}
+      isSelected={isSelected}
+      onClick={onClick}
+    />
+  );
+}
+
+function PopularTokenRow({
+  code,
+  name,
+  icon,
+  isSelected,
+  onClick,
+}: {
+  code: string;
+  name: string;
+  icon: string | null;
+  isSelected: boolean;
+  onClick: () => void;
+}) {
+  const { price, isLoading } = useTokenPrice(code);
+  const usdValue =
+    isLoading ? "—" : price > 0 ? price.toFixed(2) : "—";
+
+  return (
+    <TokenItem
+      code={code}
+      name={name}
+      icon={icon}
+      balance="0"
+      usdValue={usdValue}
+      isSelected={isSelected}
+      onClick={onClick}
+      showBalance
+      bottomLabel="per token"
+      approximate
+    />
+  );
+}
 
 const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
   isOpen,
@@ -102,7 +194,6 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
   selectedToken,
 }) => {
   const { balances } = useWallet();
-  const { price: xlmPrice } = useTokenPrice("XLM");
   const availableTokens = useMemo(() => getAvailableTokens(), []);
   const tokenCodes = Object.keys(availableTokens);
   const [searchQuery, setSearchQuery] = useState("");
@@ -139,37 +230,17 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
     });
   }, [searchQuery, availableTokens, tokenCodes]);
 
-  const getTokenBalance = useCallback(
-    (code: string): { balance: string; usdValue: string } => {
-      if (code === "XLM" && balances.xlm) {
-        const balance = parseFloat(
-          balances.xlm.balance?.replace(/,/g, "") || "0"
-        );
-        const usdValue = balance * xlmPrice;
-        return {
-          balance: balance.toString(),
-          usdValue: usdValue.toFixed(2),
-        };
-      }
-
-      return { balance: "0", usdValue: "0" };
-    },
-    [balances, xlmPrice]
-  );
-
   const userTokens = useMemo(() => {
-    return filteredTokens.filter((code) => {
-      const { balance } = getTokenBalance(code);
-      return parseFloat(balance) > 0;
-    });
-  }, [filteredTokens, getTokenBalance]);
+    return filteredTokens.filter(
+      (code) => getHoldingsAmount(balances, code) > 0
+    );
+  }, [filteredTokens, balances]);
 
   const popularTokens = useMemo(() => {
-    return filteredTokens.filter((code) => {
-      const { balance } = getTokenBalance(code);
-      return parseFloat(balance) === 0;
-    });
-  }, [filteredTokens, getTokenBalance]);
+    return filteredTokens.filter(
+      (code) => getHoldingsAmount(balances, code) === 0
+    );
+  }, [filteredTokens, balances]);
 
   const handleTokenClick = (tokenCode: string) => {
     const token = availableTokens[tokenCode].contract;
@@ -189,7 +260,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
     <ModalPortal>
       <div
         className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate__animated animate__fadeIn animate__faster"
-        onClick={onClose}
+        onClick={handleClose}
       >
         <div
           className="relative w-full max-w-md bg-[#1C1C1C] border border-white/10 rounded-2xl shadow-2xl max-h-[85vh] flex flex-col overflow-hidden animate__animated animate__fadeInUp animate__faster"
@@ -198,7 +269,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
           <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 shrink-0">
             <h2 className="text-lg font-bold text-white">Select a token</h2>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-white/40 hover:text-white transition-colors -mr-1"
               aria-label="Close"
             >
@@ -242,7 +313,6 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                     const isSelected = selectedToken
                       ? getTokenId(selectedToken) === code
                       : false;
-                    const { balance, usdValue } = getTokenBalance(code);
                     const tokenInfo = availableTokens[code];
                     const tokenName = tokenInfo?.name || code;
                     const tokenIcon =
@@ -253,13 +323,11 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                           : null;
 
                     return (
-                      <TokenItem
+                      <UserTokenRow
                         key={code}
                         code={code}
                         name={tokenName}
                         icon={tokenIcon}
-                        balance={balance}
-                        usdValue={usdValue}
                         isSelected={isSelected}
                         onClick={() => handleTokenClick(code)}
                       />
@@ -289,16 +357,13 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                           : null;
 
                     return (
-                      <TokenItem
+                      <PopularTokenRow
                         key={code}
                         code={code}
                         name={tokenName}
                         icon={tokenIcon}
-                        balance="0"
-                        usdValue="0"
                         isSelected={isSelected}
                         onClick={() => handleTokenClick(code)}
-                        showBalance={false}
                       />
                     );
                   })}

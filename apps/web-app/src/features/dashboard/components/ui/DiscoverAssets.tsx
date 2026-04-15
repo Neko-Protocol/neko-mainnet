@@ -3,20 +3,15 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import type { Asset } from "@neko/oracle";
-import { useOracle } from "@/features/stocks/hooks/useOracle";
-import { formatAsset } from "@/features/stocks/utils/oracleUtils";
+import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { AssetPriceCard } from "@/features/stocks/components/ui/AssetPriceCard";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 const DASHBOARD_ASSET_LIMIT = 3;
 
 const DiscoverAssets: React.FC = () => {
-  const { assets, decimals, isLoading } = useOracle();
-
-  const filteredAssets = React.useMemo(
-    () => (assets ?? []).filter((asset: Asset) => formatAsset(asset) !== "0"),
-    [assets]
+  const tokenCodes = React.useMemo(
+    () => Object.keys(getAvailableTokens()),
+    []
   );
 
   return (
@@ -27,7 +22,7 @@ const DiscoverAssets: React.FC = () => {
             Discover Assets
           </h2>
           <p className="text-white/40 text-sm">
-            Live price feeds from the oracle
+            Spot USD via Soroswap (mainnet)
           </p>
         </div>
         <Link
@@ -39,30 +34,15 @@ const DiscoverAssets: React.FC = () => {
         </Link>
       </div>
 
-      {isLoading ? (
-        <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 flex flex-col items-center justify-center gap-4">
-          <LoadingSpinner variant="dots" size="lg" />
-          <span className="text-white/60 text-base font-medium">
-            Loading assets...
-          </span>
-        </div>
-      ) : filteredAssets.length === 0 ? (
+      {tokenCodes.length === 0 ? (
         <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
-          <p className="text-white/40 text-base">
-            No assets found in the oracle
-          </p>
+          <p className="text-white/40 text-base">No assets configured</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-          {filteredAssets
-            .slice(0, DASHBOARD_ASSET_LIMIT)
-            .map((asset: Asset) => (
-              <AssetPriceCard
-                key={formatAsset(asset)}
-                asset={asset}
-                decimals={decimals}
-              />
-            ))}
+          {tokenCodes.slice(0, DASHBOARD_ASSET_LIMIT).map((code) => (
+            <AssetPriceCard key={code} tokenCode={code} />
+          ))}
         </div>
       )}
     </div>

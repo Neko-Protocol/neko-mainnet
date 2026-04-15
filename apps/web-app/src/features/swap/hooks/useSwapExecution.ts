@@ -4,6 +4,8 @@ import {
   getQuote,
   buildTransaction,
   sendTransaction,
+  submitClassicTrustlineToHorizon,
+  TrustlineRequiredError,
   type QuoteRequest,
 } from "@/lib/helpers/stellar/soroswap";
 import {
@@ -59,11 +61,54 @@ export function useSwapExecution() {
         );
       }
 
-      const buildResult = await buildTransaction({
-        quote: newQuote,
-        from: address,
-        to: address,
-      });
+      const maxTrustlineRounds = 3;
+      let buildResult: Awaited<ReturnType<typeof buildTransaction>> | undefined;
+      for (let round = 0; round < maxTrustlineRounds; round++) {
+        try {
+          buildResult = await buildTransaction({
+            quote: newQuote,
+            from: address,
+            to: address,
+          });
+          break;
+        } catch (err) {
+          if (!(err instanceof TrustlineRequiredError)) {
+            throw err;
+          }
+
+          let signedTrustline;
+          try {
+            signedTrustline = await signTransaction(err.trustlineXdr, {
+              networkPassphrase: networkPassphrase,
+              address: address,
+            });
+          } catch (signErr) {
+            if (
+              signErr instanceof Error &&
+              (signErr.message?.includes("rejected") ||
+                signErr.message?.includes("denied") ||
+                signErr.message?.includes("User rejected"))
+            ) {
+              throw new Error("USER_REJECTED");
+            }
+            throw signErr;
+          }
+
+          const trustlineSignedXdr =
+            signedTrustline.signedTxXdr ||
+            (typeof signedTrustline === "string"
+              ? signedTrustline
+              : JSON.stringify(signedTrustline));
+
+          await submitClassicTrustlineToHorizon(trustlineSignedXdr);
+        }
+      }
+
+      if (!buildResult) {
+        throw new Error(
+          "Could not build the swap after adding the required trustline(s)."
+        );
+      }
 
       let signedResult;
       try {

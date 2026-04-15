@@ -7,7 +7,20 @@ import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalanc
 
 const BASE_RESERVE = 0.5;
 
-const getXlmBalance = (
+/** Full XLM balance (Horizon), same notion as Freighter “balance”. */
+const getTotalXlm = (
+  balances: Record<string, { balance?: string } | undefined>
+): string => {
+  const xlmBalance = balances.xlm?.balance;
+  if (xlmBalance) {
+    const n = parseFloat(xlmBalance.replace(/,/g, "") || "0");
+    return n.toString();
+  }
+  return "0";
+};
+
+/** XLM available to send after base + per-entry reserves (Stellar protocol). */
+const getSpendableXlm = (
   balances: Record<string, { balance?: string } | undefined>,
   subentryCount: number
 ): string => {
@@ -77,9 +90,13 @@ export const useTokenBalance = (
   });
 
   if (isXlm) {
-    const balance = getXlmBalance(balances, subentryCount);
+    const totalBalance = getTotalXlm(balances);
+    const spendable = getSpendableXlm(balances, subentryCount);
     return {
-      balance,
+      /** Amount you can spend in a tx (after reserve); use for Max + validation. */
+      balance: spendable,
+      /** Full wallet balance (matches explorers / Freighter). Omitted when same as spendable. */
+      totalBalance: totalBalance,
       isLoading: false,
       error: null,
     };
@@ -87,6 +104,7 @@ export const useTokenBalance = (
 
   return {
     balance: contractBalance,
+    totalBalance: contractBalance,
     isLoading,
     error: error ? error.message : null,
   };
