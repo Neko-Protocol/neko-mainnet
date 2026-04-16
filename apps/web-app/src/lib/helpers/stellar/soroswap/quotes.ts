@@ -208,8 +208,8 @@ export const getPool = async (request: GetPoolRequest): Promise<PoolInfo[]> => {
   try {
     const pools = await makeAPIRequest<PoolInfo[]>(endpoint, {
       method: "GET",
-      timeoutMs: poolRequestTimeoutMs,
-    });
+      timeout: poolRequestTimeoutMs,
+    } as RequestInit & { timeout?: number });
 
     if (
       process.env.NODE_ENV === "development" &&
