@@ -12,15 +12,3 @@ export interface StockInfo {
     description?: string;
   };
 }
-
-export interface AssetPricePoint {
-  price: bigint;
-  timestamp: bigint;
-}
-
-export interface PriceChartDatum {
-  timestamp: string;
-  price: number;
-  fullTimestamp: number;
-  date: Date;
-}
