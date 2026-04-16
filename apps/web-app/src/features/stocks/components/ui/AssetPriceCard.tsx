@@ -52,16 +52,16 @@ export function AssetPriceCard({
             )}
             <div>
               <h3 className="text-white font-semibold text-sm leading-tight">
-                {displayName}
+                {codeUpper}
               </h3>
               <span
-                className="inline-flex items-center mt-1 px-2 py-0.5 rounded-md text-[10px] font-semibold"
+                className="inline-flex items-center mt-1 -ml-0.5 px-2 py-0.5 rounded-md text-[10px] font-semibold"
                 style={{
                   color: "#229EDF",
                   backgroundColor: "rgba(34,158,223,0.10)",
                 }}
               >
-                {codeUpper}
+                {displayName}
               </span>
             </div>
           </div>
