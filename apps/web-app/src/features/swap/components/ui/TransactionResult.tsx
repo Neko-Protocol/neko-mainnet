@@ -9,11 +9,8 @@ interface TransactionResultProps {
 
 export const TransactionResult: React.FC<TransactionResultProps> = ({
   txHash,
-  network,
   orderType,
 }) => {
-  const explorerUrl = network ? getExplorerUrl(txHash, network) : "#";
-
   return (
     <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl">
       <h3 className="text-sm font-semibold text-green-700 mb-2">
@@ -26,7 +23,7 @@ export const TransactionResult: React.FC<TransactionResultProps> = ({
           </span>
         </div>
         <a
-          href={explorerUrl}
+          href={getExplorerUrl(txHash)}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm text-green-700 hover:text-green-800 font-semibold"
