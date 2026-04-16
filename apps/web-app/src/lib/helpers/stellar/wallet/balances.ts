@@ -3,6 +3,7 @@ import { stellarNetwork, horizonUrl } from "@/lib/constants/network";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap/tokens";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 import { parseBalance } from "@/lib/helpers/formatUtils";
+import { horizonNativeBalanceToStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
 
 const getHorizon = (): Horizon.Server | null => {
   if (typeof window === "undefined") {
@@ -39,20 +40,22 @@ export type MappedBalances = Record<
 export type FetchBalancesResult = {
   balances: MappedBalances;
   subentryCount: number;
+  nativeBalanceStroops: bigint;
 };
 
 export const fetchBalances = async (
   address: string
 ): Promise<FetchBalancesResult> => {
   if (typeof window === "undefined") {
-    return { balances: {}, subentryCount: 0 };
+    return { balances: {}, subentryCount: 0, nativeBalanceStroops: 0n };
   }
   const horizonInstance = getHorizon();
   if (!horizonInstance) {
-    return { balances: {}, subentryCount: 0 };
+    return { balances: {}, subentryCount: 0, nativeBalanceStroops: 0n };
   }
   const mapped: MappedBalances = {};
   let subentryCount = 0;
+  let nativeBalanceStroops = 0n;
 
   try {
     const { balances, subentry_count } = await horizonInstance
@@ -61,6 +64,9 @@ export const fetchBalances = async (
       .call();
     subentryCount = subentry_count ?? 0;
     for (const b of balances) {
+      if (b.asset_type === "native") {
+        nativeBalanceStroops = horizonNativeBalanceToStroops(b.balance);
+      }
       const formattedBalance = formatter.format(Number(b.balance));
       const balanceEntry = { ...b, balance: formattedBalance };
       const key =
@@ -73,6 +79,7 @@ export const fetchBalances = async (
     }
   } catch (err) {
     console.warn("Horizon balance fetch failed, continuing with Soroban:", err);
+    nativeBalanceStroops = 0n;
   }
 
   try {
@@ -111,5 +118,5 @@ export const fetchBalances = async (
     console.warn("Soroban balance fetch failed:", err);
   }
 
-  return { balances: mapped, subentryCount };
+  return { balances: mapped, subentryCount, nativeBalanceStroops };
 };

@@ -16,7 +16,7 @@ function isLendingPoolType(type: string): boolean {
 function matchesTypeFilter(poolType: string, filter: PoolTypeFilter): boolean {
   if (filter === "all") return true;
   if (filter === "lending") return isLendingPoolType(poolType);
-  if (filter === "amm") return poolType === "soroswap";
+  if (filter === "amm") return poolType === "soroswap" || poolType === "aqua";
   return true;
 }
 

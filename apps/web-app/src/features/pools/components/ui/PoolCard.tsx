@@ -15,6 +15,7 @@ interface PoolCardProps {
 function typeLabel(type: string): string {
   if (type === "blend" || type === "neko") return "Lending";
   if (type === "soroswap") return "AMM";
+  if (type === "aqua") return "Aqua AMM";
   return type;
 }
 
