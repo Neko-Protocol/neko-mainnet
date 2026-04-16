@@ -127,12 +127,8 @@ export const isValidContractAddress = (address: string): boolean => {
   return address.startsWith("C") && address.length === 56;
 };
 
-export const getTokenExplorerUrl = (
-  contractAddress: string,
-  network: string = getCurrentNetwork()
-): string => {
-  const networkParam = network === "mainnet" ? "" : `/${network}`;
-  return `https://stellar.expert/explorer${networkParam}/contract/${contractAddress}`;
+export const getTokenExplorerUrl = (contractAddress: string): string => {
+  return `https://stellar.expert/explorer/public/contract/${contractAddress}`;
 };
 
 export const formatTokenForAPI = (token: Token | string): string => {

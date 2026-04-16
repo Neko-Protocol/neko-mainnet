@@ -50,9 +50,8 @@ export const fromSmallestUnit = (
   return `${whole}.${trimmedFractional}`;
 };
 
-export const getExplorerUrl = (txHash: string, network?: string): string => {
-  const networkParam = network === "PUBLIC" ? "" : `/${network?.toLowerCase()}`;
-  return `https://stellar.expert/explorer${networkParam}/tx/${txHash}`;
+export const getExplorerUrl = (txHash: string): string => {
+  return `https://stellar.expert/explorer/public/tx/${txHash}`;
 };
 
 export const sanitizeAmountInput = (value: string): string => {
