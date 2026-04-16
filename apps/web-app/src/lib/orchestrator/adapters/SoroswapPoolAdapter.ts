@@ -130,7 +130,7 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
         return {
           id: `soroswap:${poolId}`,
           type: "soroswap",
-          name: `${codeA} / ${codeB}`,
+          name: `${codeA} / ${codeB} Soroswap Pool`,
           tokens: [tokenA, tokenB],
           tvl: 0n,
           apy: 0,
@@ -147,7 +147,7 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       return {
         id: `soroswap:${poolId}`,
         type: "soroswap",
-        name: `${codeA} / ${codeB}`,
+        name: `${codeA} / ${codeB} Soroswap Pool`,
         tokens: [tokenA, tokenB],
         tvl: reserveA + reserveB,
         apy: 0,
