@@ -21,6 +21,12 @@ export function useWallet() {
     queryKey: ["stellar-balances", address],
     queryFn: () => fetchBalances(address!),
     enabled: Boolean(address),
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    retry: 1,
   });
 
   const signTransaction = async (
