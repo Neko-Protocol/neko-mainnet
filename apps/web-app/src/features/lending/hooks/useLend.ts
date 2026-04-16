@@ -64,6 +64,7 @@ export function useLend() {
   const {
     data: lendingPools = [],
     isLoading: isLoadingNekoPools,
+    isFetching: isFetchingNekoPools,
     error: nekoPoolsError,
     refetch: refetchPools,
   } = useLendingPools();
@@ -71,12 +72,15 @@ export function useLend() {
   const {
     data: orchestratorPools = [],
     isLoading: isLoadingOrchestratorPools,
+    isFetching: isFetchingOrchestratorPools,
     error: orchestratorPoolsError,
   } = usePools();
 
   const { mutateAsync: executePoolAction } = usePoolAction();
 
-  const isLoadingPools = isLoadingNekoPools || isLoadingOrchestratorPools;
+  const hasAnyPools = lendingPools.length > 0 || orchestratorPools.length > 0;
+  const isLoadingPools = isLoadingNekoPools && !hasAnyPools;
+  const isFetchingPools = isFetchingNekoPools || isFetchingOrchestratorPools;
   const poolsError = nekoPoolsError || orchestratorPoolsError;
 
   const pools: PoolData[] = useMemo(() => {
@@ -312,6 +316,7 @@ export function useLend() {
   return {
     pools,
     isLoadingPools,
+    isFetchingPools,
     poolsError,
     selectedPool,
     isModalOpen,

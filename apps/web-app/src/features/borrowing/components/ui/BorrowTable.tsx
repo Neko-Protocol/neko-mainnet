@@ -9,6 +9,7 @@ interface BorrowTableProps {
   assets: BorrowTableAsset[];
   paginatedAssets: BorrowTableAsset[];
   isLoading: boolean;
+  isFetching?: boolean;
   poolsError: unknown;
   page: number;
   totalRows: number;
@@ -23,6 +24,7 @@ export function BorrowTable({
   assets,
   paginatedAssets,
   isLoading,
+  isFetching = false,
   poolsError,
   page,
   totalRows,
@@ -65,7 +67,7 @@ export function BorrowTable({
           </thead>
           <tbody>
             {isLoading ? (
-              <EmptyRow colSpan={5} message="Loading borrow pools…" />
+              <LoadingRow colSpan={5} message="Loading borrow pools..." />
             ) : poolsError ? (
               <EmptyRow
                 colSpan={5}
@@ -73,14 +75,11 @@ export function BorrowTable({
                 variant="error"
               />
             ) : assets.length === 0 ? (
-              <EmptyRow
-                colSpan={5}
-                message="No active borrow pools available"
-              />
+              <EmptyRow colSpan={5} message="Loading borrow pools..." />
             ) : (
               paginatedAssets.map((asset) => (
                 <tr
-                  key={asset.contractId}
+                  key={asset.rowId}
                   className="border-b border-white/5 hover:bg-white/2 transition-colors"
                 >
                   <td className="px-4 py-4 align-middle w-[280px]">
@@ -126,22 +125,28 @@ export function BorrowTable({
         )}
       </div>
 
+      {isFetching && !isLoading && assets.length > 0 && (
+        <div className="border-t border-white/5 px-4 py-3">
+          <BottomFetchingIndicator />
+        </div>
+      )}
+
       {/* Mobile */}
       <div className="md:hidden">
         {isLoading ? (
-          <MobileEmptyState message="Loading borrow pools…" />
+          <MobileLoadingState message="Loading borrow pools..." />
         ) : poolsError ? (
           <MobileEmptyState
             message={`Error loading borrow pools: ${String(poolsError)}`}
             variant="error"
           />
         ) : isEmpty ? (
-          <MobileEmptyState message="No active borrow pools available" />
+          <MobileEmptyState message="Loading borrow pools..." />
         ) : (
           <>
             <ul className="divide-y divide-white/5">
               {paginatedAssets.map((asset) => (
-                <li key={asset.contractId} className="px-4 py-4">
+                <li key={asset.rowId} className="px-4 py-4">
                   <div className="flex items-center justify-between mb-3">
                     <PoolCell
                       token1={asset.pool.token1}
@@ -193,6 +198,29 @@ export function BorrowTable({
   );
 }
 
+function LoadingRow({
+  colSpan,
+  message,
+}: {
+  colSpan: number;
+  message: string;
+}) {
+  return (
+    <tr>
+      <td colSpan={colSpan} className="px-4 py-12">
+        <div className="flex items-center justify-center gap-3 text-sm text-white/50">
+          <span
+            className="inline-block animate-spin rounded-full border-2 border-white/20 border-t-[#229EDF]"
+            style={{ width: 16, height: 16 }}
+            aria-hidden="true"
+          />
+          <span>{message}</span>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 function EmptyRow({
   colSpan,
   message,
@@ -227,6 +255,34 @@ function MobileEmptyState({
     >
       {message}
     </p>
+  );
+}
+
+function MobileLoadingState({ message }: { message: string }) {
+  return (
+    <div className="px-4 py-12">
+      <div className="flex items-center justify-center gap-3 text-sm text-white/50">
+        <span
+          className="inline-block animate-spin rounded-full border-2 border-white/20 border-t-[#229EDF]"
+          style={{ width: 16, height: 16 }}
+          aria-hidden="true"
+        />
+        <span>{message}</span>
+      </div>
+    </div>
+  );
+}
+
+function BottomFetchingIndicator() {
+  return (
+    <div className="flex items-center justify-center gap-2 text-sm text-white/50">
+      <span
+        className="inline-block animate-spin rounded-full border-2 border-white/20 border-t-[#229EDF]"
+        style={{ width: 14, height: 14 }}
+        aria-hidden="true"
+      />
+      <span>fetching more pools</span>
+    </div>
   );
 }
 

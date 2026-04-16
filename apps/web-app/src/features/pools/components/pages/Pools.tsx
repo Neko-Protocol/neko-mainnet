@@ -24,6 +24,7 @@ const Pools: React.FC = () => {
   const {
     pools,
     isLoading,
+    isFetching,
     error,
     typeFilter,
     setTypeFilter,
@@ -102,11 +103,13 @@ const Pools: React.FC = () => {
 
           {}
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <div className="w-full max-w-md rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-4 border-white/10 border-t-[#229EDF] mx-auto mb-4" />
-                <p className="text-white/40 text-sm">Loading pools...</p>
-              </div>
+            <div className="mb-8 flex items-center justify-center gap-2 py-16 text-sm text-white/50">
+              <span
+                className="inline-block animate-spin rounded-full border-2 border-white/20 border-t-[#229EDF]"
+                style={{ width: 14, height: 14 }}
+                aria-hidden="true"
+              />
+              <span>fetching more pools</span>
             </div>
           ) : error ? (
             <div className="flex items-center justify-center py-16">
@@ -131,25 +134,38 @@ const Pools: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
-              {pools.map((pool) => (
-                <PoolCard
-                  key={pool.id}
-                  pool={pool}
-                  onDetailsClick={() => router.push(`/pools/${pool.id}`)}
-                  onLendClick={
-                    isLendingType(pool.type)
-                      ? () => router.push("/lending")
-                      : undefined
-                  }
-                  onSwapClick={
-                    pool.type === "soroswap"
-                      ? () => router.push("/swap")
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
+                {pools.map((pool) => (
+                  <PoolCard
+                    key={pool.id}
+                    pool={pool}
+                    onDetailsClick={() => router.push(`/pools/${pool.id}`)}
+                    onLendClick={
+                      isLendingType(pool.type)
+                        ? () => router.push("/lending")
+                        : undefined
+                    }
+                    onSwapClick={
+                      pool.type === "soroswap"
+                        ? () => router.push("/swap")
+                        : undefined
+                    }
+                  />
+                ))}
+              </div>
+
+              {isFetching && (
+                <div className="mb-8 flex items-center justify-center gap-2 text-sm text-white/50">
+                  <span
+                    className="inline-block animate-spin rounded-full border-2 border-white/20 border-t-[#229EDF]"
+                    style={{ width: 14, height: 14 }}
+                    aria-hidden="true"
+                  />
+                  <span>fetching more pools</span>
+                </div>
+              )}
+            </>
           )}
         </>
       )}

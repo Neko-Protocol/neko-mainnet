@@ -59,6 +59,7 @@ function LendingPanel() {
   const {
     pools,
     isLoadingPools,
+    isFetchingPools,
     poolsError,
     selectedPool,
     isModalOpen,
@@ -92,6 +93,7 @@ function LendingPanel() {
           <LendTable
             pools={pools}
             isLoading={isLoadingPools}
+            isFetching={isFetchingPools}
             error={poolsError}
             onDeposit={(pool) => openModal(pool, true)}
             onWithdraw={(pool) => openModal(pool, false)}
@@ -135,6 +137,7 @@ function BorrowingPanel() {
     assets,
     paginatedAssets,
     isLoading,
+    isFetching,
     poolsError,
     selectedAsset,
     isProcessing,
@@ -170,6 +173,7 @@ function BorrowingPanel() {
             assets={assets}
             paginatedAssets={paginatedAssets}
             isLoading={isLoading}
+            isFetching={isFetching}
             poolsError={poolsError}
             page={page}
             totalRows={totalRows}

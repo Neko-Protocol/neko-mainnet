@@ -21,7 +21,7 @@ function matchesTypeFilter(poolType: string, filter: PoolTypeFilter): boolean {
 }
 
 export function usePoolsData() {
-  const { data: allPools = [], isLoading, error } = usePools();
+  const { data: allPools = [], isLoading, isFetching, error } = usePools();
   const [typeFilter, setTypeFilter] = useState<PoolTypeFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -79,6 +79,7 @@ export function usePoolsData() {
   return {
     pools,
     isLoading,
+    isFetching,
     error,
     typeFilter,
     setTypeFilter: handleSetTypeFilter,

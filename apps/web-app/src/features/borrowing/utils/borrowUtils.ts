@@ -14,8 +14,9 @@ export function calculateBorrowLimit(
 export function poolsToTableAssets(pools: BorrowPool[]): BorrowTableAsset[] {
   return pools.map((pool, index) => {
     const liquidity = formatLiquidity(pool.poolBalance);
+    const uniqueBase = `${pool.contractId}-${pool.assetCode}-${pool.collateralTokenCode}`;
     return {
-      id: `borrow-${index}`,
+      rowId: `borrow-${uniqueBase}-${index}`,
       pool: {
         token1: pool.assetCode,
         token2: pool.collateralTokenCode,

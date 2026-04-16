@@ -22,12 +22,14 @@ export function useBorrow() {
   const {
     data: borrowPools = [],
     isLoading: isLoadingNeko,
+    isFetching: isFetchingNeko,
     error: nekoError,
   } = useBorrowPools();
 
   const {
     data: orchestratorPools = [],
     isLoading: isLoadingOrchestrator,
+    isFetching: isFetchingOrchestrator,
     error: orchestratorError,
   } = usePools();
 
@@ -39,7 +41,9 @@ export function useBorrow() {
     isWalletConnected,
   } = useBorrowExecution();
 
-  const isLoading = isLoadingNeko || isLoadingOrchestrator;
+  const hasAnyPools = borrowPools.length > 0 || orchestratorPools.length > 0;
+  const isLoading = isLoadingNeko && !hasAnyPools;
+  const isFetching = isFetchingNeko || isFetchingOrchestrator;
   const poolsError = nekoError || orchestratorError;
 
   const assets = useMemo(() => {
@@ -64,6 +68,7 @@ export function useBorrow() {
         const cFactor =
           typeof p.metadata?.cFactor === "number" ? p.metadata.cFactor : null;
         return {
+          rowId: `agg-borrow-${p.id}-${token?.code ?? "unknown"}-${i}`,
           pool: {
             token1: token?.code ?? "?",
             token2: p.name,
@@ -142,6 +147,7 @@ export function useBorrow() {
     assets,
     paginatedAssets,
     isLoading,
+    isFetching,
     poolsError,
     selectedAsset,
     isProcessing,

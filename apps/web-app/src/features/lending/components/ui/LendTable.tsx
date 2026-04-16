@@ -7,6 +7,7 @@ import type { PoolData } from "../../types/lending";
 interface LendTableProps {
   pools: PoolData[];
   isLoading: boolean;
+  isFetching?: boolean;
   error: unknown;
   onDeposit: (pool: PoolData) => void;
   onWithdraw: (pool: PoolData) => void;
@@ -16,6 +17,7 @@ interface LendTableProps {
 export function LendTable({
   pools,
   isLoading,
+  isFetching = false,
   error,
   onDeposit,
   onWithdraw,
@@ -56,7 +58,7 @@ export function LendTable({
           </thead>
           <tbody>
             {isLoading ? (
-              <EmptyRow colSpan={5} message="Loading pools…" />
+              <LoadingRow colSpan={5} message="fetching more pools" />
             ) : error ? (
               <EmptyRow
                 colSpan={5}
@@ -64,7 +66,7 @@ export function LendTable({
                 variant="error"
               />
             ) : pools.length === 0 ? (
-              <EmptyRow colSpan={5} message="No active pools available" />
+              <EmptyRow colSpan={5} message="Loading pools..." />
             ) : (
               pools.map((pool) => (
                 <tr
@@ -110,6 +112,12 @@ export function LendTable({
         </table>
       </div>
 
+      {isFetching && !isLoading && pools.length > 0 && (
+        <div className="border-t border-white/5 px-4 py-3">
+          <BottomFetchingIndicator />
+        </div>
+      )}
+
       {}
       <div className="md:hidden">
         {isLoading ? (
@@ -120,7 +128,7 @@ export function LendTable({
             variant="error"
           />
         ) : isEmpty ? (
-          <MobileEmptyState message="No active pools available" />
+          <MobileEmptyState message="Loading Pools..." />
         ) : (
           <ul className="divide-y divide-white/5">
             {pools.map((pool) => (
@@ -178,6 +186,29 @@ export function LendTable({
   );
 }
 
+function LoadingRow({
+  colSpan,
+  message,
+}: {
+  colSpan: number;
+  message: string;
+}) {
+  return (
+    <tr>
+      <td colSpan={colSpan} className="px-4 py-12">
+        <div className="mx-auto flex w-fit items-center justify-center gap-2 text-sm text-white/50">
+          <span
+            className="inline-block animate-spin rounded-full border-2 border-white/20 border-t-[#229EDF]"
+            style={{ width: 14, height: 14 }}
+            aria-hidden="true"
+          />
+          <span>{message}</span>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 function EmptyRow({
   colSpan,
   message,
@@ -212,6 +243,19 @@ function MobileEmptyState({
     >
       {message}
     </p>
+  );
+}
+
+function BottomFetchingIndicator() {
+  return (
+    <div className="flex items-center justify-center gap-2 text-sm text-white/50">
+      <span
+        className="inline-block animate-spin rounded-full border-2 border-white/20 border-t-[#229EDF]"
+        style={{ width: 14, height: 14 }}
+        aria-hidden="true"
+      />
+      <span>Fetching more pools</span>
+    </div>
   );
 }
 
