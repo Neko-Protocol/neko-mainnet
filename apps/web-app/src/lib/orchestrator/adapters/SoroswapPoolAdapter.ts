@@ -18,6 +18,11 @@ import type {
 import { AdapterError, UnsupportedActionError } from "../types/errors";
 
 const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw"];
+const LIST_POOLS_CACHE_TTL_MS = 5 * 60 * 1000;
+const BASE_CODES = ["XLM", "USDC", "USDY", "PYUSD", "EURC"];
+// Keep discovery bounded so Soroswap does not delay the pools UI.
+const MAX_DISCOVERY_PAIRS = 12;
+const PAIR_FETCH_TIMEOUT_MS = 4_000;
 
 function parsePairId(poolId: string): { codeA: string; codeB: string } {
   const [codeA, codeB] = poolId.split("-");
@@ -45,6 +50,70 @@ function resolveToken(code: string): TokenInfo {
 
 export class SoroswapPoolAdapter implements BasePoolAdapter {
   readonly type: PoolType = "soroswap";
+  private static listPoolsCache: { at: number; value: PoolInfo[] } | null = null;
+
+  private buildDiscoveryPairs(codes: string[]): string[] {
+    const codeSet = new Set(codes);
+    const selectedBases = BASE_CODES.filter((c) => codeSet.has(c));
+    const pairs: string[] = [];
+    const seen = new Set<string>();
+
+    const addPair = (a: string, b: string) => {
+      if (!a || !b || a === b) return;
+      const [left, right] = [a, b].sort();
+      const key = `${left}-${right}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      pairs.push(key);
+    };
+
+    // Phase A: liquidity-centric pairs around base tokens.
+    for (const base of selectedBases) {
+      for (const code of codes) {
+        if (code !== base) {
+          addPair(base, code);
+        }
+      }
+    }
+
+    // Keep base-to-base pairs even when token universe is large.
+    for (let i = 0; i < selectedBases.length; i++) {
+      for (let j = i + 1; j < selectedBases.length; j++) {
+        addPair(selectedBases[i], selectedBases[j]);
+      }
+    }
+
+    // If no configured base token exists on this network, fall back to a small deterministic sample.
+    if (!pairs.length) {
+      for (let i = 0; i < codes.length; i++) {
+        for (let j = i + 1; j < codes.length; j++) {
+          addPair(codes[i], codes[j]);
+          if (pairs.length >= MAX_DISCOVERY_PAIRS) break;
+        }
+        if (pairs.length >= MAX_DISCOVERY_PAIRS) break;
+      }
+    }
+
+    return pairs.slice(0, MAX_DISCOVERY_PAIRS);
+  }
+
+  private async getPoolInfoWithTimeout(pair: string): Promise<PoolInfo> {
+    return new Promise<PoolInfo>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        reject(new Error(`Timed out fetching Soroswap pair ${pair}`));
+      }, PAIR_FETCH_TIMEOUT_MS);
+
+      void this.getPoolInfo(pair)
+        .then((value) => {
+          clearTimeout(timer);
+          resolve(value);
+        })
+        .catch((error) => {
+          clearTimeout(timer);
+          reject(error);
+        });
+    });
+  }
 
   async getPoolInfo(poolId: string): Promise<PoolInfo> {
     const { codeA, codeB } = parsePairId(poolId);
@@ -106,35 +175,47 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
   }
 
   async listPools(): Promise<PoolInfo[]> {
-    const tokens = getAvailableTokens();
-    const codes = Object.keys(tokens);
-    const knownPairs: string[] = [];
-    for (let i = 0; i < codes.length; i++) {
-      for (let j = i + 1; j < codes.length; j++) {
-        knownPairs.push(`${codes[i]}-${codes[j]}`);
-      }
+    const now = Date.now();
+    if (
+      SoroswapPoolAdapter.listPoolsCache &&
+      now - SoroswapPoolAdapter.listPoolsCache.at < LIST_POOLS_CACHE_TTL_MS
+    ) {
+      return SoroswapPoolAdapter.listPoolsCache.value;
     }
 
-    // Process in batches of 3 to avoid hitting Soroswap API rate limits (429)
-    const BATCH_SIZE = 3;
+    const tokens = getAvailableTokens();
+    const codes = Object.keys(tokens);
+    const knownPairs = this.buildDiscoveryPairs(codes);
+
+    // Process in bounded batches. On shared/public APIs this is usually faster
+    // than full pair scans while still avoiding bursty 429 spikes.
+    const BATCH_SIZE = 4;
     const settled: PromiseSettledResult<PoolInfo>[] = [];
     for (let i = 0; i < knownPairs.length; i += BATCH_SIZE) {
       const batch = knownPairs.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.allSettled(
-        batch.map((pair) => this.getPoolInfo(pair))
+        batch.map((pair) => this.getPoolInfoWithTimeout(pair))
       );
       settled.push(...batchResults);
       if (i + BATCH_SIZE < knownPairs.length) {
-        await new Promise((r) => setTimeout(r, 300));
+        const has429 = batchResults.some(
+          (result) =>
+            result.status === "rejected" &&
+            String(result.reason).includes("429")
+        );
+        await new Promise((r) => setTimeout(r, has429 ? 700 : 150));
       }
     }
 
-    return settled
+    const pools = settled
       .filter(
         (r): r is PromiseFulfilledResult<PoolInfo> =>
           r.status === "fulfilled" && r.value.state !== "unknown"
       )
       .map((r) => r.value);
+
+    SoroswapPoolAdapter.listPoolsCache = { at: now, value: pools };
+    return pools;
   }
 
   async getUserPosition(

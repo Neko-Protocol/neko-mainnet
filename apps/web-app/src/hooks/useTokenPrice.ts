@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getAvailableTokens,
@@ -33,7 +34,11 @@ export const useTokenPrice = (token: Token | string | undefined) => {
     }
   };
 
-  const tokenCode = getTokenCode();
+  const tokenCode = useMemo(() => getTokenCode(), [token]);
+  const contractAddress = useMemo(
+    () => (token ? getTokenAddress(token) : ""),
+    [token]
+  );
 
   const {
     data: price = 0,
@@ -41,18 +46,19 @@ export const useTokenPrice = (token: Token | string | undefined) => {
     error,
     isFetched,
   } = useQuery<number, Error>({
-    queryKey: ["tokenPrice", tokenCode, token],
+    queryKey: ["tokenPrice", tokenCode, contractAddress],
     queryFn: async () => {
       if (!tokenCode || typeof tokenCode !== "string") {
         return 0;
       }
 
-      const contractAddress = getTokenAddress(token!);
       return stellarPriceService.getPrice(tokenCode, contractAddress);
     },
     enabled: Boolean(tokenCode && token),
-    refetchInterval: 60000,
-    staleTime: 30000,
+    refetchInterval: 3 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
     retry: 2,
     throwOnError: false,
   });

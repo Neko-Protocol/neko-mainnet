@@ -88,7 +88,7 @@ const AssetDetail: React.FC = () => {
       <div className="rounded-2xl bg-[#229EDF] p-3 sm:p-4 mb-6">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
           <div className="flex items-start gap-3 min-w-0">
-            <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-lg bg-white/10 overflow-hidden shrink-0">
+            <div className="relative mt-5 w-11 h-11 sm:w-12 sm:h-12 rounded-lg bg-white/10 overflow-hidden shrink-0">
               <Image
                 src={stockInfo.logo || "/assets/xlm-logo.png"}
                 alt={stockInfo.name}
@@ -98,12 +98,12 @@ const AssetDetail: React.FC = () => {
               />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 <h1 className="text-lg sm:text-xl font-bold text-white break-words">
-                  {stockInfo.name}
-                </h1>
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold shrink-0 border border-white/40 bg-white/10 text-white">
                   {symbolUpper}
+                </h1>
+                <span className="inline-flex items-center -ml-0.5 px-2 py-0.5 rounded text-xs font-semibold shrink-0 border border-white/40 bg-white/10 text-white">
+                  {stockInfo.name}
                 </span>
               </div>
               <p className="text-white/90 text-sm leading-snug mt-0.5">

@@ -9,11 +9,7 @@ import {
   nativeToScVal,
   xdr,
 } from "@stellar/stellar-sdk";
-import {
-  horizonUrl,
-  networkPassphrase,
-  rpcUrl,
-} from "@/lib/constants/network";
+import { horizonUrl, networkPassphrase, rpcUrl } from "@/lib/constants/network";
 import { getCurrentNetwork, getAvailableTokens } from "./tokens";
 import {
   getApiKey,
@@ -24,9 +20,7 @@ import {
   isValidContractAddress,
   formatTokenForAPI,
 } from "./utils";
-import {
-  TrustlineRequiredError,
-} from "../../../types/soroswapTypes";
+import { TrustlineRequiredError } from "../../../types/soroswapTypes";
 import type {
   QuoteRequest,
   QuoteResponse,
@@ -209,9 +203,13 @@ export const getPool = async (request: GetPoolRequest): Promise<PoolInfo[]> => {
     .join("&");
   const queryParams = `?network=${apiNetwork}&${protocolParam}`;
   const endpoint = `/pools/${tokenA}/${tokenB}${queryParams}`;
+  const poolRequestTimeoutMs = 8_000;
 
   try {
-    const pools = await makeAPIRequest<PoolInfo[]>(endpoint, { method: "GET" });
+    const pools = await makeAPIRequest<PoolInfo[]>(endpoint, {
+      method: "GET",
+      timeout: poolRequestTimeoutMs,
+    } as RequestInit & { timeout?: number });
 
     if (
       process.env.NODE_ENV === "development" &&

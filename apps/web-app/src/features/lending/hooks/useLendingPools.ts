@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Client as RwaLendingClient, networks } from "@neko/lending";
+import { Client as RwaLendingClient } from "@neko/lending";
 import {
   rpcUrl,
   networkPassphrase,
   allowHttpForSoroban,
   stellarNetwork,
 } from "@/lib/constants/network";
+import { getLendingContracts } from "@/lib/constants/lendingContracts";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { parseInterestRateFromContractResult } from "@/lib/helpers/lendingUtils";
@@ -115,6 +116,7 @@ async function fetchLendingPools(
 }
 
 export const useLendingPools = () => {
+  const { pool1ContractId, pool2ContractId } = getLendingContracts();
   const availableTokens = useMemo(() => getAvailableTokens(), []);
 
   const queryFn = useMemo(
@@ -126,24 +128,24 @@ export const useLendingPools = () => {
       };
 
       const pool1Client = new RwaLendingClient({
-        contractId: networks.testnet.pool1ContractId,
+        contractId: pool1ContractId,
         ...clientOptions,
       });
       const pool2Client = new RwaLendingClient({
-        contractId: networks.testnet.pool2ContractId,
+        contractId: pool2ContractId,
         ...clientOptions,
       });
 
       const [pool1Pools, pool2Pools] = await Promise.all([
         fetchLendingPools(
           pool1Client,
-          networks.testnet.pool1ContractId,
+          pool1ContractId,
           POOL1_ASSETS,
           availableTokens
         ),
         fetchLendingPools(
           pool2Client,
-          networks.testnet.pool2ContractId,
+          pool2ContractId,
           POOL2_ASSETS,
           availableTokens
         ),
@@ -151,7 +153,7 @@ export const useLendingPools = () => {
 
       return [...pool1Pools, ...pool2Pools];
     },
-    [availableTokens]
+    [availableTokens, pool1ContractId, pool2ContractId]
   );
 
   return useQuery<LendingPool[]>({

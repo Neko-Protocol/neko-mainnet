@@ -1,5 +1,5 @@
 import { PoolRegistry, poolRegistry } from "./PoolRegistry";
-import { NekoLendingAdapter } from "../adapters/NekoLendingAdapter";
+// import { NekoLendingAdapter } from "../adapters/NekoLendingAdapter";
 import { BlendPoolAdapter } from "../adapters/BlendPoolAdapter";
 import { SoroswapPoolAdapter } from "../adapters/SoroswapPoolAdapter";
 import { getBlendPoolIds } from "../adapters/blend-config";
@@ -134,6 +134,20 @@ export class Orchestrator {
     return pools;
   }
 
+  async getPoolsByType(type: PoolInfo["type"]): Promise<PoolInfo[]> {
+    const adapter = this.registry.getAdapters().find((a) => a.type === type);
+    if (!adapter) {
+      return [];
+    }
+
+    try {
+      return await adapter.listPools();
+    } catch (error) {
+      console.error(`[Orchestrator] ${type}.listPools failed:`, error);
+      return [];
+    }
+  }
+
   supportsAction(poolId: string, action: string): boolean {
     try {
       const adapter = this.registry.resolve(poolId);
@@ -146,7 +160,7 @@ export class Orchestrator {
   }
 }
 
-poolRegistry.register(new NekoLendingAdapter());
+// poolRegistry.register(new NekoLendingAdapter());
 
 for (const blendPoolId of getBlendPoolIds()) {
   poolRegistry.register(new BlendPoolAdapter(blendPoolId));

@@ -1,9 +1,9 @@
 "use client";
 
 import { useQueries } from "@tanstack/react-query";
-import { networks } from "@neko/lending";
 import { lendingService } from "@/lib/services/lending.service";
 import { stellarNetwork } from "@/lib/constants/network";
+import { getLendingContracts } from "@/lib/constants/lendingContracts";
 
 export function getHealthFactorColor(hf: number | null): string {
   if (hf === null) return "text-white/40";
@@ -19,19 +19,6 @@ export function getHealthFactorLabel(hf: number | null): string {
   return "At Risk";
 }
 
-const POOLS = [
-  {
-    key: "pool1",
-    contractId: networks.testnet.pool1ContractId,
-    label: "Pool 1",
-  },
-  {
-    key: "pool2",
-    contractId: networks.testnet.pool2ContractId,
-    label: "Pool 2",
-  },
-] as const;
-
 export interface PoolHealthFactor {
   key: string;
   label: string;
@@ -40,17 +27,23 @@ export interface PoolHealthFactor {
 }
 
 export function useHealthFactor(borrower: string | undefined) {
+  const { pool1ContractId, pool2ContractId } = getLendingContracts();
+  const poolsMeta = [
+    { key: "pool1", contractId: pool1ContractId, label: "Pool 1" },
+    { key: "pool2", contractId: pool2ContractId, label: "Pool 2" },
+  ] as const;
+
   const results = useQueries({
-    queries: POOLS.map((pool) => ({
+    queries: poolsMeta.map((pool) => ({
       queryKey: ["health-factor", pool.key, borrower],
       queryFn: () => lendingService.getHealthFactor(borrower!, pool.contractId),
       enabled: stellarNetwork !== "PUBLIC" && Boolean(borrower),
       staleTime: 15_000,
-      refetchInterval: 15_000,
+      refetchInterval: 45_000,
     })),
   });
 
-  const pools: PoolHealthFactor[] = POOLS.map((pool, i) => ({
+  const pools: PoolHealthFactor[] = poolsMeta.map((pool, i) => ({
     key: pool.key,
     label: pool.label,
     contractId: pool.contractId,

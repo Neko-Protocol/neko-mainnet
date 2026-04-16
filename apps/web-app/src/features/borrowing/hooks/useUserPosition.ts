@@ -1,7 +1,6 @@
 "use client";
 
 import { useQueries } from "@tanstack/react-query";
-import { networks } from "@neko/lending";
 import { useUserLendingPositions } from "@/features/lending/hooks/useUserLendingPositions";
 import type { LendingPosition } from "@/features/lending/hooks/useUserLendingPositions";
 import { useUserBorrowPositions } from "./useUserBorrowPositions";
@@ -11,23 +10,11 @@ import type { PoolHealthFactor } from "./useHealthFactor";
 import { lendingService } from "@/lib/services/lending.service";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { stellarNetwork } from "@/lib/constants/network";
+import { getLendingContracts } from "@/lib/constants/lendingContracts";
 
 export type { LendingPosition, BorrowPosition, PoolHealthFactor };
 
 const STELLAR_DECIMALS = 7;
-
-const POOLS = [
-  {
-    key: "pool1",
-    contractId: networks.testnet.pool1ContractId,
-    label: "Pool 1",
-  },
-  {
-    key: "pool2",
-    contractId: networks.testnet.pool2ContractId,
-    label: "Pool 2",
-  },
-] as const;
 
 export interface CollateralPosition {
   tokenCode: string;
@@ -55,6 +42,12 @@ export interface UserPositionData {
 export function useUserPosition(
   borrowerAddress: string | undefined
 ): UserPositionData {
+  const { pool1ContractId, pool2ContractId } = getLendingContracts();
+  const poolsMeta = [
+    { key: "pool1", contractId: pool1ContractId, label: "Pool 1" },
+    { key: "pool2", contractId: pool2ContractId, label: "Pool 2" },
+  ] as const;
+
   const { positions: deposits, isLoading: depositsLoading } =
     useUserLendingPositions();
   const {
@@ -76,7 +69,7 @@ export function useUserPosition(
         lendingService.getCollateralRaw(
           token.contract,
           borrowerAddress!,
-          networks.testnet.pool1ContractId
+          pool1ContractId
         ),
       enabled: stellarNetwork !== "PUBLIC" && Boolean(borrowerAddress),
       staleTime: 30_000,
@@ -86,7 +79,7 @@ export function useUserPosition(
   });
 
   const borrowLimitQueries = useQueries({
-    queries: POOLS.map((pool) => ({
+    queries: poolsMeta.map((pool) => ({
       queryKey: ["borrowLimit", pool.key, borrowerAddress],
       queryFn: () =>
         lendingService.getBorrowLimitForPool(borrowerAddress!, pool.contractId),
@@ -119,7 +112,7 @@ export function useUserPosition(
     });
   });
 
-  const borrowLimits: BorrowLimitEntry[] = POOLS.map((pool, i) => ({
+  const borrowLimits: BorrowLimitEntry[] = poolsMeta.map((pool, i) => ({
     key: pool.key,
     label: pool.label,
     limitUsd: borrowLimitQueries[i].data ?? null,

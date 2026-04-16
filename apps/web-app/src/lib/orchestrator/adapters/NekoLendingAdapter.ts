@@ -1,9 +1,10 @@
-import { Client as RwaLendingClient, networks } from "@neko/lending";
+import { Client as RwaLendingClient } from "@neko/lending";
 import {
   rpcUrl,
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
+import { getLendingContracts } from "@/lib/constants/lendingContracts";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { depositToPool, withdrawFromPool } from "@/lib/helpers/stellar/lending";
@@ -33,9 +34,8 @@ const POOL2_ASSETS = new Set([
 ]);
 
 function getPoolContractId(assetCode: string): string {
-  return POOL2_ASSETS.has(assetCode)
-    ? networks.testnet.pool2ContractId
-    : networks.testnet.pool1ContractId;
+  const { pool1ContractId, pool2ContractId } = getLendingContracts();
+  return POOL2_ASSETS.has(assetCode) ? pool2ContractId : pool1ContractId;
 }
 
 /**
@@ -74,17 +74,18 @@ export class NekoLendingAdapter implements BasePoolAdapter {
   private pool2Client: RwaLendingClient;
 
   constructor() {
+    const { pool1ContractId, pool2ContractId } = getLendingContracts();
     const clientOptions = {
       rpcUrl,
       networkPassphrase,
       ...(allowHttpForSoroban && { allowHttp: true }),
     };
     this.pool1Client = new RwaLendingClient({
-      contractId: networks.testnet.pool1ContractId,
+      contractId: pool1ContractId,
       ...clientOptions,
     });
     this.pool2Client = new RwaLendingClient({
-      contractId: networks.testnet.pool2ContractId,
+      contractId: pool2ContractId,
       ...clientOptions,
     });
   }
