@@ -10,7 +10,7 @@ export const STOCK_INFO: Record<string, StockInfo> = {
       "XLM is the native currency of Stellar — a decentralized payment network built for fast, low-cost cross-border transfers. Every Stellar account must hold a minimum reserve in XLM, and each transaction costs a small fee (~0.00001 XLM). XLM also acts as a bridge currency between assets that lack a direct trading pair on the Stellar DEX. Buy on major exchanges: Coinbase, Binance, Kraken, Bybit, and others. This is NOT a Real-World Asset",
   },
   USDC: {
-    logo: "https://ipfs.io/ipfs/bafkreibpzncuhbk5ozhdow7xkcdoyf3xhwhcwcf6sj7axjzimxw6vm6pvyy",
+    logo: "/assets/usdc-logo.png",
     name: "USD Coin",
     description: "Dollar-backed stablecoin issued by Circle, pegged 1:1 to USD",
     summary:
