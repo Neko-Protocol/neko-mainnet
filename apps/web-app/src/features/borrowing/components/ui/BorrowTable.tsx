@@ -1,7 +1,6 @@
 import React from "react";
 import { Layers, TrendingDown, Shield, Droplets, Zap } from "lucide-react";
 import { ColHeader } from "./ColHeader";
-import { IdBadge } from "./IdBadge";
 import { PoolCell } from "./PoolCell";
 import { Pagination } from "./Pagination";
 import type { BorrowTableAsset } from "../../types/borrowing";
@@ -81,7 +80,7 @@ export function BorrowTable({
             ) : (
               paginatedAssets.map((asset) => (
                 <tr
-                  key={asset.id}
+                  key={asset.contractId}
                   className="border-b border-white/5 hover:bg-white/2 transition-colors"
                 >
                   <td className="px-4 py-4 align-middle w-[280px]">
@@ -142,7 +141,7 @@ export function BorrowTable({
           <>
             <ul className="divide-y divide-white/5">
               {paginatedAssets.map((asset) => (
-                <li key={asset.id} className="px-4 py-4">
+                <li key={asset.contractId} className="px-4 py-4">
                   <div className="flex items-center justify-between mb-3">
                     <PoolCell
                       token1={asset.pool.token1}
@@ -150,7 +149,6 @@ export function BorrowTable({
                       fee={asset.pool.fee}
                       isAggregated={asset.isAggregated}
                     />
-                    <IdBadge id={asset.id} isActive={asset.isActive} />
                   </div>
 
                   <div className="grid grid-cols-3 gap-2 mb-4">

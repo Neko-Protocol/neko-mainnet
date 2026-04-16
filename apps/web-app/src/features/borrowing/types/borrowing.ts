@@ -12,7 +12,6 @@ export interface BorrowPool {
 }
 
 export interface BorrowTableAsset {
-  id: string;
   pool: {
     token1: string;
     token2: string;

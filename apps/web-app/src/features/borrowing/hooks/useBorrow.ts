@@ -64,7 +64,6 @@ export function useBorrow() {
         const cFactor =
           typeof p.metadata?.cFactor === "number" ? p.metadata.cFactor : null;
         return {
-          id: `agg-borrow-${i}`,
           pool: {
             token1: token?.code ?? "?",
             token2: p.name,
