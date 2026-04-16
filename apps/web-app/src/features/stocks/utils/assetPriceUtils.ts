@@ -1,5 +1,5 @@
 export function formatUsdPrice(n: number): string {
-  if (!Number.isFinite(n) || n <= 0) return "—";
+  if (!Number.isFinite(n) || n <= 0) return "No data";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

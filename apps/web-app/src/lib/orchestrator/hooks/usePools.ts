@@ -10,8 +10,8 @@ export function usePools(enabled = true) {
   return useQuery<PoolInfo[]>({
     queryKey: [...POOLS_QUERY_KEY],
     queryFn: () => orchestrator.getAllPools(),
-    refetchInterval: 30_000,
-    staleTime: 10_000,
+    refetchInterval: 120_000,
+    staleTime: 60_000,
     retry: 2,
     throwOnError: false,
     enabled,
