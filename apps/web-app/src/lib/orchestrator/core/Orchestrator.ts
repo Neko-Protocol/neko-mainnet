@@ -134,6 +134,20 @@ export class Orchestrator {
     return pools;
   }
 
+  async getPoolsByType(type: PoolInfo["type"]): Promise<PoolInfo[]> {
+    const adapter = this.registry.getAdapters().find((a) => a.type === type);
+    if (!adapter) {
+      return [];
+    }
+
+    try {
+      return await adapter.listPools();
+    } catch (error) {
+      console.error(`[Orchestrator] ${type}.listPools failed:`, error);
+      return [];
+    }
+  }
+
   supportsAction(poolId: string, action: string): boolean {
     try {
       const adapter = this.registry.resolve(poolId);

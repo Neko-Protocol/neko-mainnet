@@ -7,15 +7,44 @@ import type { PoolInfo, PoolPosition } from "../types/pool.types";
 export const POOLS_QUERY_KEY = ["orchestrator", "pools"] as const;
 
 export function usePools(enabled = true) {
-  return useQuery<PoolInfo[]>({
-    queryKey: [...POOLS_QUERY_KEY],
-    queryFn: () => orchestrator.getAllPools(),
-    refetchInterval: 120_000,
-    staleTime: 60_000,
+  const blendQuery = useQuery<PoolInfo[]>({
+    queryKey: [...POOLS_QUERY_KEY, "blend"],
+    queryFn: () => orchestrator.getPoolsByType("blend"),
+    refetchInterval: 5 * 60_000,
+    staleTime: 3 * 60_000,
     retry: 2,
     throwOnError: false,
     enabled,
   });
+
+  const soroswapQuery = useQuery<PoolInfo[]>({
+    queryKey: [...POOLS_QUERY_KEY, "soroswap"],
+    queryFn: () => orchestrator.getPoolsByType("soroswap"),
+    refetchInterval: 5 * 60_000,
+    staleTime: 3 * 60_000,
+    retry: 2,
+    throwOnError: false,
+    enabled,
+  });
+
+  const blendPools = blendQuery.data ?? [];
+  const soroswapPools = soroswapQuery.data ?? [];
+  const data = [...blendPools, ...soroswapPools];
+
+  // Treat blend as the "first paint" source and keep soroswap loading in background.
+  const isInitialBlendLoad = enabled && blendQuery.isLoading;
+  const isLoading = isInitialBlendLoad && data.length === 0;
+
+  return {
+    ...blendQuery,
+    data,
+    isLoading,
+    isFetching: blendQuery.isFetching || soroswapQuery.isFetching,
+    error: blendQuery.error ?? soroswapQuery.error,
+    refetch: async () => {
+      await Promise.all([blendQuery.refetch(), soroswapQuery.refetch()]);
+    },
+  };
 }
 
 export function usePoolInfo(poolId: string | undefined) {
