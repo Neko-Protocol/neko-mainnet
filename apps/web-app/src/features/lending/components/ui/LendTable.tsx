@@ -89,20 +89,24 @@ export function LendTable({
                   </td>
                   {!hideActions && (
                     <td className="px-4 py-4 align-middle text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => onDeposit(pool)}
-                          className="rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-1.5 text-white/70 hover:text-white text-xs font-semibold transition-colors"
-                        >
-                          Deposit
-                        </button>
-                        <button
-                          onClick={() => onWithdraw(pool)}
-                          className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors"
-                        >
-                          Withdraw
-                        </button>
-                      </div>
+                      {pool.hideRowActions ? (
+                        <span className="text-white/20 text-xs">—</span>
+                      ) : (
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => onDeposit(pool)}
+                            className="rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-1.5 text-white/70 hover:text-white text-xs font-semibold transition-colors"
+                          >
+                            Deposit
+                          </button>
+                          <button
+                            onClick={() => onWithdraw(pool)}
+                            className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors"
+                          >
+                            Withdraw
+                          </button>
+                        </div>
+                      )}
                     </td>
                   )}
                 </tr>
@@ -161,7 +165,7 @@ export function LendTable({
                   />
                 </div>
 
-                {!hideActions && (
+                {!hideActions && !pool.hideRowActions && (
                   <div className="flex gap-2">
                     <button
                       onClick={() => onDeposit(pool)}

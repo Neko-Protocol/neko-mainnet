@@ -14,4 +14,5 @@ export interface PoolData {
   contractId: string;
   isAggregated?: boolean;
   orchestratorId?: string;
+  hideRowActions?: boolean;
 }

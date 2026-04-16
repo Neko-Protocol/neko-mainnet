@@ -115,15 +115,20 @@ export function useLend() {
       .map((p: PoolInfo) => {
         const token = p.tokens[0];
         const decimals = token?.decimals ?? 7;
-        const liquidity = formatLiquidity(
-          fromSmallestUnit(p.tvl.toString(), decimals)
-        );
+        const liquidityUsd = p.metadata?.liquidityUsd as string | undefined;
+        const liquidity =
+          liquidityUsd && parseFloat(liquidityUsd) > 0
+            ? formatLiquidity(liquidityUsd)
+            : p.tvl > 0n
+            ? formatLiquidity(fromSmallestUnit(p.tvl.toString(), decimals))
+            : "—";
         const contractId = p.id.split(":")[1] ?? p.id;
+        const canInteract = p.supportedActions.includes("deposit");
         return {
           id: `agg-${p.id}`,
           name: p.name,
           token1: token?.code ?? "?",
-          token2: "Lending",
+          token2: p.tokens[1]?.code ?? (canInteract ? "Lending" : ""),
           fee: "0%",
           roi: p.apy > 0 ? `${p.apy.toFixed(2)}%` : "0.00%",
           feeApy: p.apy > 0 ? `${p.apy.toFixed(2)}%` : "0.00%",
@@ -134,7 +139,8 @@ export function useLend() {
           bTokenRate: undefined,
           contractId,
           isAggregated: true,
-          orchestratorId: p.id,
+          orchestratorId: canInteract ? p.id : undefined,
+          hideRowActions: !canInteract,
         };
       });
 
