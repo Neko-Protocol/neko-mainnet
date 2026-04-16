@@ -1,3 +1,8 @@
+export interface ReflectorAsset {
+  tag: "Stellar" | "Other";
+  value: string;
+}
+
 export interface AssetConfig {
   code: string;
   name: string;
@@ -11,6 +16,12 @@ export interface AssetConfig {
    * Used only when Soroswap returns no price — not a substitute for on-chain parity.
    */
   coinGeckoId?: string;
+  /**
+   * SEP-40 asset identifier as tracked by the Reflector oracle.
+   * If set, StellarPriceService queries Reflector first (mainnet only).
+   * `Stellar` = SAC contract address; `Other` = symbol (e.g. "BTC").
+   */
+  reflectorAsset?: ReflectorAsset;
 }
 
 type NetworkId = "testnet" | "standalone" | "mainnet";
@@ -31,7 +42,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       name: "USD Coin",
       contract: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
       decimals: 7,
-      icon: "https://ipfs.io/ipfs/bafkreibpzncuhbk5ozhdw7xkcdoyf3xhwhcwcf6sj7axjzimxw6vm6pvyy",
+      icon: "/assets/usdc-logo.png",
       priceSource: "soroswap",
       isStablecoin: true,
       coinGeckoId: "usd-coin",
@@ -111,7 +122,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       name: "USD Coin",
       contract: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
       decimals: 7,
-      icon: "https://ipfs.io/ipfs/bafkreibpzncuhbk5ozhdow7xkcdoyf3xhwhcwcf6sj7axjzimxw6vm6pvyy",
+      icon: "/assets/usdc-logo.png",
       priceSource: "soroswap",
       isStablecoin: true,
       coinGeckoId: "usd-coin",
@@ -127,6 +138,10 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       priceSource: "soroswap",
       isStablecoin: false,
       coinGeckoId: "etherfuse-cetes",
+      reflectorAsset: {
+        tag: "Stellar",
+        value: "CAL6ER2TI6CTRAY6BFXWNWA7WTYXUXTQCHUBCIBU5O6KM3HJFG6Z6VXV",
+      },
     },
     USDY: {
       code: "USDY",
@@ -143,10 +158,14 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       name: "USD Coin",
       contract: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
       decimals: 7,
-      icon: "https://ipfs.io/ipfs/bafkreibpzncuhbk5ozhdw7xkcdoyf3xhwhcwcf6sj7axjzimxw6vm6pvyy",
+      icon: "/assets/usdc-logo.png",
       priceSource: "soroswap",
       isStablecoin: true,
       coinGeckoId: "usd-coin",
+      reflectorAsset: {
+        tag: "Stellar",
+        value: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
+      },
     },
     XLM: {
       code: "XLM",
@@ -156,6 +175,10 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       icon: "/assets/xlm-logo.png",
       priceSource: "soroswap",
       coinGeckoId: "stellar",
+      reflectorAsset: {
+        tag: "Stellar",
+        value: "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
+      },
     },
     EURC: {
       code: "EURC",
@@ -166,6 +189,10 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       priceSource: "soroswap",
       isStablecoin: true,
       coinGeckoId: "eurc",
+      reflectorAsset: {
+        tag: "Stellar",
+        value: "CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV",
+      },
     },
     USTRY: {
       code: "USTRY",
@@ -176,6 +203,10 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       priceSource: "soroswap",
       isStablecoin: false,
       coinGeckoId: "etherfuse-ustry",
+      reflectorAsset: {
+        tag: "Stellar",
+        value: "CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR",
+      },
     },
     TESOURO: {
       code: "TESOURO",
@@ -186,6 +217,10 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       priceSource: "soroswap",
       isStablecoin: false,
       coinGeckoId: "etherfuse-tesouro",
+      reflectorAsset: {
+        tag: "Stellar",
+        value: "CD6M4R2322BYCY2LNWM74PEBQAQ63SA3DUJLI3L4225U4ZVCLMSCBCIS",
+      },
     },
     PYUSD: {
       code: "PYUSD",
@@ -215,6 +250,10 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       priceSource: "soroswap",
       isStablecoin: true,
       coinGeckoId: "gyen",
+      reflectorAsset: {
+        tag: "Stellar",
+        value: "CA67EQNWGPGXHVT6E4HQ65WEV54KFDB6HJDHVCJM33VKZ7XKR5MN3KPJ",
+      },
     },
   },
 };
@@ -237,6 +276,13 @@ export function getAssetsConfig(): Record<string, AssetConfig> {
 export function getCoinGeckoIdForToken(code: string): string | undefined {
   const assets = getAssetsConfig();
   return assets[code]?.coinGeckoId;
+}
+
+/** Reflector SEP-40 asset descriptor, if tracked by the oracle for this asset. */
+export function getReflectorAssetForToken(
+  code: string
+): ReflectorAsset | undefined {
+  return getAssetsConfig()[code]?.reflectorAsset;
 }
 
 export function getRwaTokenCodes(): string[] {

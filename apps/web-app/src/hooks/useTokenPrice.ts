@@ -34,6 +34,7 @@ export const useTokenPrice = (token: Token | string | undefined) => {
   };
 
   const tokenCode = getTokenCode();
+  const contractAddress = token ? getTokenAddress(token) : "";
 
   const {
     data: price = 0,
@@ -41,18 +42,17 @@ export const useTokenPrice = (token: Token | string | undefined) => {
     error,
     isFetched,
   } = useQuery<number, Error>({
-    queryKey: ["tokenPrice", tokenCode, token],
+    queryKey: ["tokenPrice", tokenCode, contractAddress],
     queryFn: async () => {
       if (!tokenCode || typeof tokenCode !== "string") {
         return 0;
       }
 
-      const contractAddress = getTokenAddress(token!);
       return stellarPriceService.getPrice(tokenCode, contractAddress);
     },
     enabled: Boolean(tokenCode && token),
-    refetchInterval: 60000,
-    staleTime: 30000,
+    refetchInterval: 60 * 1000,
+    staleTime: 30 * 1000,
     retry: 2,
     throwOnError: false,
   });
