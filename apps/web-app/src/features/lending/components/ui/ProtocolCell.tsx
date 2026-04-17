@@ -1,9 +1,10 @@
 import Image from "next/image";
-import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getPoolTokenIcon } from "@/features/pools/utils/poolTokenIcons";
 import type { PoolData } from "../../types/lending";
 
 export function ProtocolCell({ pool }: { pool: PoolData }) {
-  const icon = getTokenIcon({ type: "contract", code: pool.token1 });
+  const icon = getPoolTokenIcon({ type: "contract", code: pool.token1 });
 
   return (
     <div className="flex items-center gap-3">

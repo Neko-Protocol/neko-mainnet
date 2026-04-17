@@ -3,7 +3,8 @@
 import React from "react";
 import Image from "next/image";
 import type { PoolCardData } from "@/features/pools/types/pools";
-import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
 
 interface PoolCardProps {
   pool: PoolCardData;
@@ -32,11 +33,11 @@ export const PoolCard: React.FC<PoolCardProps> = ({
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="relative w-14 h-8 shrink-0">
             {(() => {
-              const icon1 = getTokenIcon({
+              const icon1 = getPoolTokenIcon({
                 type: "contract",
                 code: pool.token1,
               });
-              const icon2 = getTokenIcon({
+              const icon2 = getPoolTokenIcon({
                 type: "contract",
                 code: pool.token2,
               });

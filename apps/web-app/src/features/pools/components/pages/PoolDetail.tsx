@@ -7,9 +7,9 @@ import Image from "next/image";
 import { orchestrator, useUserPosition } from "@/lib/orchestrator";
 import {
   fromSmallestUnit,
-  getTokenIcon,
   getTokenIconFitClass,
 } from "@/lib/helpers/tokenUtils";
+import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
 import type { PoolAction, TokenInfo } from "@/lib/orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { usePoolDetail } from "@/features/pools/hooks/usePoolDetail";
@@ -90,11 +90,11 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
             {}
             <div className="relative w-18 h-10 shrink-0 flex items-center">
               {(() => {
-                const icon1 = getTokenIcon({
+                const icon1 = getPoolTokenIcon({
                   type: "contract",
                   code: token1,
                 });
-                const icon2 = getTokenIcon({
+                const icon2 = getPoolTokenIcon({
                   type: "contract",
                   code: token2,
                 });
