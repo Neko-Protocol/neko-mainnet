@@ -20,7 +20,6 @@ function reserveStroopsFromApiString(s: string): bigint {
   }
 }
 
-/** Second leg stroops for a proportional deposit (1% slippage buffer). */
 export function aquaProportionalAmountB(
   amountA: bigint,
   reserves: string[]
@@ -32,16 +31,11 @@ export function aquaProportionalAmountB(
   return (amountA * reserveB * 101n) / (reserveA * 100n);
 }
 
-// --- Classic trustlines (Horizon) ---
-
 interface ClassicAssetRef {
   code: string;
   issuer: string;
 }
 
-/**
- * Aqua API `tokens_str` entries: `"native"` or `"CODE:ISSUER"`.
- */
 function parseTokenStrForClassic(
   tokenStr: string
 ): "native" | ClassicAssetRef | null {
@@ -55,10 +49,6 @@ function parseTokenStrForClassic(
   return { code, issuer };
 }
 
-/**
- * Returns classic assets from the pool that this account does not trust yet
- * (Horizon is the source of truth for trustlines).
- */
 export async function getMissingClassicTrustlines(
   publicKey: string,
   tokensStr: string[]
@@ -100,9 +90,6 @@ export async function submitHorizonTransaction(signedXdr: string): Promise<void>
 
 const TRUST_LIMIT_MAX = "9223372036854775807";
 
-/**
- * Single transaction with one changeTrust per missing asset.
- */
 export async function buildAddClassicTrustlinesTxXdr(
   publicKey: string,
   missing: ClassicAssetRef[]
