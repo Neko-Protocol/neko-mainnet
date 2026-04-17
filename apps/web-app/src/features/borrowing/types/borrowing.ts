@@ -17,6 +17,8 @@ export interface BorrowTableAsset {
     token1: string;
     token2: string;
     fee: string;
+    /** When set, shown instead of `token1/token2` (e.g. orchestrator pool title). */
+    label?: string;
   };
   borrowApr: string;
   collateralFactorDisplay: string;
