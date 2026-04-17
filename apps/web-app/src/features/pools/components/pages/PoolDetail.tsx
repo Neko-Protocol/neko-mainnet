@@ -5,9 +5,12 @@ import { use } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { orchestrator, useUserPosition } from "@/lib/orchestrator";
-import { getTokenIcon } from "@/lib/helpers/tokenUtils";
+import {
+  fromSmallestUnit,
+  getTokenIcon,
+  getTokenIconFitClass,
+} from "@/lib/helpers/tokenUtils";
 import type { PoolAction, TokenInfo } from "@/lib/orchestrator";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { useWallet } from "@/hooks/useWallet";
 import { usePoolDetail } from "@/features/pools/hooks/usePoolDetail";
 import { PageContainer } from "@/components/ui/PageContainer";
@@ -102,9 +105,10 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
                         <Image
                           src={icon1}
                           alt={token1}
-                          width={32}
-                          height={32}
+                          width={40}
+                          height={40}
                           unoptimized
+                          className={getTokenIconFitClass(token1)}
                         />
                       ) : (
                         <span className="text-white text-sm font-bold">
@@ -117,9 +121,10 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
                         <Image
                           src={icon2}
                           alt={token2}
-                          width={32}
-                          height={32}
+                          width={40}
+                          height={40}
                           unoptimized
+                          className={getTokenIconFitClass(token2)}
                         />
                       ) : (
                         <span className="text-neko-navy text-sm font-bold">

@@ -16,6 +16,7 @@ import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors
 import {
   sanitizeAmountInput,
   formatSwapAmount,
+  getTokenIconFitClass,
 } from "@/lib/helpers/tokenUtils";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
@@ -58,7 +59,7 @@ const TokenSelectorBtn: React.FC<TokenSelectorBtnProps> = ({
       disabled={disabled}
       className="flex items-center gap-2.5 bg-[#2A2A2A] hover:bg-[#333] rounded-xl px-3.5 py-2.5 w-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <div className="relative shrink-0">
+      <div className="relative h-[22px] w-[22px] shrink-0 overflow-hidden rounded-full">
         {iconUrl ? (
           <Image
             src={iconUrl}
@@ -66,7 +67,7 @@ const TokenSelectorBtn: React.FC<TokenSelectorBtnProps> = ({
             width={22}
             height={22}
             unoptimized
-            className="rounded-full object-contain"
+            className={getTokenIconFitClass(tokenId)}
           />
         ) : (
           <div className="w-[22px] h-[22px] rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold text-white">
@@ -121,10 +122,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
         <button
           onClick={isReadOnly ? undefined : onMaxClick}
           disabled={
-            isReadOnly ||
-            !maxAmt ||
-            parseFloat(maxAmt) <= 0 ||
-            isLoadingBalance
+            isReadOnly || !maxAmt || parseFloat(maxAmt) <= 0 || isLoadingBalance
           }
           className={`text-xs transition-colors shrink-0 ${
             isReadOnly
