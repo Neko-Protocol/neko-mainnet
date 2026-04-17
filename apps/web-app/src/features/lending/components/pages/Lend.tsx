@@ -62,8 +62,8 @@ const Lend: React.FC = () => {
         className="mb-8"
       />
 
-      <div className="mb-6 flex w-full flex-wrap items-center gap-3">
-        <div className="flex w-fit max-w-full flex-wrap items-center gap-1 rounded-xl bg-[#1C1C1C] p-1">
+      <div className="mb-6 flex w-full flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 w-fit max-w-full flex-wrap items-center gap-1 rounded-xl bg-[#1C1C1C] p-1">
           <button
             onClick={() => setActiveTab("pools")}
             className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
@@ -98,7 +98,7 @@ const Lend: React.FC = () => {
           </button>
         </div>
         {activeTab === "pools" && protocolOptions.length > 0 && (
-          <div className="shrink-0">
+          <div className="ml-auto shrink-0">
             <LendProtocolFilter
               value={protocolFilter}
               onChange={setProtocolFilter}

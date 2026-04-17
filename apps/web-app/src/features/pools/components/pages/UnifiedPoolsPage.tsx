@@ -243,7 +243,7 @@ function SubTabs<T extends string>({
   trailing?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex w-full flex-wrap items-center gap-3">
+    <div className="mb-6 flex w-full flex-wrap items-center justify-between gap-3">
       <div className="flex min-w-0 w-fit max-w-full flex-wrap items-center gap-1 rounded-xl bg-[#1C1C1C] p-1">
         {tabs.map(({ key, label }) => (
           <button
@@ -259,7 +259,7 @@ function SubTabs<T extends string>({
           </button>
         ))}
       </div>
-      {trailing ? <div className="shrink-0">{trailing}</div> : null}
+      {trailing ? <div className="ml-auto shrink-0">{trailing}</div> : null}
     </div>
   );
 }
