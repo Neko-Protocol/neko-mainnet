@@ -1,11 +1,19 @@
 import React from "react";
 import { ArrowLeftRight, TrendingUp, Droplets, Coins, Zap } from "lucide-react";
+import { Pagination } from "@/features/borrowing/components/ui/Pagination";
 import { ColHeader } from "./ColHeader";
 import { ProtocolCell } from "./ProtocolCell";
 import type { PoolData } from "../../types/lending";
 
 interface LendTableProps {
   pools: PoolData[];
+  paginatedPools: PoolData[];
+  page: number;
+  totalRows: number;
+  totalPages: number;
+  rowsPerPage: number;
+  onPageChange: (page: number) => void;
+  onRowsPerPageChange: (value: number) => void;
   isLoading: boolean;
   isFetching?: boolean;
   error: unknown;
@@ -16,6 +24,13 @@ interface LendTableProps {
 
 export function LendTable({
   pools,
+  paginatedPools,
+  page,
+  totalRows,
+  totalPages,
+  rowsPerPage,
+  onPageChange,
+  onRowsPerPageChange,
   isLoading,
   isFetching = false,
   error,
@@ -23,11 +38,13 @@ export function LendTable({
   onWithdraw,
   hideActions = false,
 }: LendTableProps) {
+  const colCount = hideActions ? 4 : 5;
   const isEmpty = !isLoading && !error && pools.length === 0;
+  const filterEmpty =
+    !isLoading && !error && pools.length > 0 && totalRows === 0;
 
   return (
     <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
-      {}
       <div className="hidden md:block">
         <table className="w-full">
           <thead>
@@ -58,17 +75,22 @@ export function LendTable({
           </thead>
           <tbody>
             {isLoading ? (
-              <LoadingRow colSpan={5} message="fetching more pools" />
+              <LoadingRow colSpan={colCount} message="fetching more pools" />
             ) : error ? (
               <EmptyRow
-                colSpan={5}
+                colSpan={colCount}
                 message={`Error loading pools: ${String(error)}`}
                 variant="error"
               />
             ) : pools.length === 0 ? (
-              <EmptyRow colSpan={5} message="Loading pools..." />
+              <EmptyRow colSpan={colCount} message="Loading pools..." />
+            ) : filterEmpty ? (
+              <EmptyRow
+                colSpan={colCount}
+                message="No pools match this protocol."
+              />
             ) : (
-              pools.map((pool) => (
+              paginatedPools.map((pool) => (
                 <tr
                   key={pool.id}
                   className="border-b border-white/5 hover:bg-white/2 transition-colors"
@@ -114,6 +136,17 @@ export function LendTable({
             )}
           </tbody>
         </table>
+
+        {totalRows > 0 && (
+          <Pagination
+            page={page}
+            totalRows={totalRows}
+            totalPages={totalPages}
+            rowsPerPage={rowsPerPage}
+            onPageChange={onPageChange}
+            onRowsPerPageChange={onRowsPerPageChange}
+          />
+        )}
       </div>
 
       {isFetching && !isLoading && pools.length > 0 && (
@@ -133,9 +166,12 @@ export function LendTable({
           />
         ) : isEmpty ? (
           <MobileEmptyState message="Loading Pools..." />
+        ) : filterEmpty ? (
+          <MobileEmptyState message="No pools match this protocol." />
         ) : (
-          <ul className="divide-y divide-white/5">
-            {pools.map((pool) => (
+          <>
+            <ul className="divide-y divide-white/5">
+              {paginatedPools.map((pool) => (
               <li key={pool.id} className="px-4 py-4">
                 {}
                 <div className="mb-3">
@@ -182,10 +218,53 @@ export function LendTable({
                   </div>
                 )}
               </li>
-            ))}
-          </ul>
+              ))}
+            </ul>
+
+            {totalRows > 0 && (
+              <MobilePagination
+                page={page}
+                totalPages={totalPages}
+                onPageChange={onPageChange}
+              />
+            )}
+          </>
         )}
       </div>
+    </div>
+  );
+}
+
+function MobilePagination({
+  page,
+  totalPages,
+  onPageChange,
+}: {
+  page: number;
+  totalPages: number;
+  onPageChange: (p: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between border-t border-white/5 px-4 py-3">
+      <button
+        type="button"
+        onClick={() => onPageChange(page - 1)}
+        disabled={page === 0}
+        className="rounded-lg bg-[#2A2A2A] px-3 py-1.5 text-xs font-semibold text-white/60 transition-colors hover:bg-[#333] disabled:opacity-30"
+      >
+        ← Prev
+      </button>
+      <span className="text-xs text-white/40">
+        {page + 1} / {Math.max(totalPages, 1)}
+      </span>
+      <button
+        type="button"
+        onClick={() => onPageChange(page + 1)}
+        disabled={page >= totalPages - 1}
+        className="rounded-lg bg-[#2A2A2A] px-3 py-1.5 text-xs font-semibold text-white/60 transition-colors hover:bg-[#333] disabled:opacity-30"
+      >
+        Next →
+      </button>
     </div>
   );
 }

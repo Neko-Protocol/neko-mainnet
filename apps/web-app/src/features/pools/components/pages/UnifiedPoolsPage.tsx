@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { stellarNetwork } from "@/lib/constants/network";
 
 import { useLend } from "@/features/lending/hooks/useLend";
 import { LendTable } from "@/features/lending/components/ui/LendTable";
+import { LendProtocolFilter } from "@/features/lending/components/ui/LendProtocolFilter";
 import { LendModal } from "@/features/lending/components/ui/LendModal";
 import MyLendingPositions from "@/features/lending/components/ui/MyLendingPositions";
 import { BackstopPanel } from "@/features/lending/components/ui/BackstopPanel";
@@ -58,9 +59,19 @@ function LendingPanel() {
   );
   const {
     pools,
+    paginatedPools,
     isLoadingPools,
     isFetchingPools,
     poolsError,
+    protocolFilter,
+    setProtocolFilter,
+    protocolOptions,
+    page,
+    totalRows,
+    totalPages,
+    rowsPerPage,
+    setPage,
+    changeRowsPerPage,
     selectedPool,
     isModalOpen,
     isDeposit,
@@ -86,12 +97,29 @@ function LendingPanel() {
         tabs={[...lendTabs]}
         active={activeTab}
         onChange={setActiveTab}
+        trailing={
+          activeTab === "pools" && protocolOptions.length > 0 ? (
+            <LendProtocolFilter
+              value={protocolFilter}
+              onChange={setProtocolFilter}
+              options={protocolOptions}
+              disabled={isLoadingPools}
+            />
+          ) : null
+        }
       />
 
       {activeTab === "pools" && (
         <>
           <LendTable
             pools={pools}
+            paginatedPools={paginatedPools}
+            page={page}
+            totalRows={totalRows}
+            totalPages={totalPages}
+            rowsPerPage={rowsPerPage}
+            onPageChange={setPage}
+            onRowsPerPageChange={changeRowsPerPage}
             isLoading={isLoadingPools}
             isFetching={isFetchingPools}
             error={poolsError}
@@ -207,26 +235,31 @@ function SubTabs<T extends string>({
   tabs,
   active,
   onChange,
+  trailing,
 }: {
   tabs: { key: T; label: string }[];
   active: T;
   onChange: (key: T) => void;
+  trailing?: ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-1 rounded-xl bg-[#1C1C1C] p-1 w-fit mb-6">
-      {tabs.map(({ key, label }) => (
-        <button
-          key={key}
-          onClick={() => onChange(key)}
-          className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-            active === key
-              ? "bg-[#229EDF] text-white"
-              : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          {label}
-        </button>
-      ))}
+    <div className="mb-6 flex w-full flex-wrap items-center gap-3">
+      <div className="flex min-w-0 w-fit max-w-full flex-wrap items-center gap-1 rounded-xl bg-[#1C1C1C] p-1">
+        {tabs.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => onChange(key)}
+            className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
+              active === key
+                ? "bg-[#229EDF] text-white"
+                : "text-white/40 hover:text-white/70"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {trailing ? <div className="shrink-0">{trailing}</div> : null}
     </div>
   );
 }
