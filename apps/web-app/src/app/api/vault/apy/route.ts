@@ -15,6 +15,10 @@ import { defindexNetworkFromEnv } from "@/lib/defindex/network";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
+
+// CETES vault — the only vault with custom per-strategy APY getters.
+const CETES_VAULT_ID =
+  "CCFWKCD52JNSQLN5OS4F7EG6BPDT4IRJV6KODIEIZLWPM35IKHOKT6S2";
 const NEKO_POOL_CONTRACT =
   "CB4HAFD6ECCOQZXOD6FXUVDM3E773LKR5JHVGA3DBJXIWHZUWX2THEDJ";
 const AQUARIUS_POOL =
@@ -40,9 +44,6 @@ function getRpcConfig() {
 }
 
 // ─── Neko APY ─────────────────────────────────────────────────────────────────
-// Calls get_interest_rate(Symbol("CETES")) on neko-pool
-// Returns annual interest rate in SCALAR_7 (7 decimals)
-// Converts APR → APY via compound formula
 
 async function getNekoApy(
   server: rpc.Server,
@@ -68,7 +69,6 @@ async function getNekoApy(
     const sim = await server.simulateTransaction(tx);
     if (rpc.Api.isSimulationError(sim)) return null;
 
-    // Result is Result<i128, Error> — unwrap the Ok value
     const raw = scValToNative(sim.result!.retval);
     const aprRaw: bigint =
       typeof raw === "object" && raw !== null && "ok" in raw
@@ -77,18 +77,15 @@ async function getNekoApy(
           ? raw
           : BigInt(String(raw));
 
-    const apr = Number(aprRaw) / SCALAR_7; // e.g. 0.05 = 5%
-    // APR → APY: (1 + apr/365)^365 - 1
+    const apr = Number(aprRaw) / SCALAR_7;
     const apy = Math.pow(1 + apr / 365, 365) - 1;
-    return apy * 100; // return as percentage
+    return apy * 100;
   } catch {
     return null;
   }
 }
 
 // ─── Aquarius APY ─────────────────────────────────────────────────────────────
-// Uses the public Aquarius AMM API — no auth required
-// total_apy = trading fees APY + AQUA rewards APY
 
 async function getAquariusApy(): Promise<number | null> {
   try {
@@ -107,7 +104,6 @@ async function getAquariusApy(): Promise<number | null> {
     const pool = data?.items?.[0];
     if (!pool) return null;
 
-    // total_apy is a decimal fraction (0.05 = 5%)
     return parseFloat(pool.total_apy) * 100;
   } catch {
     return null;
@@ -115,10 +111,6 @@ async function getAquariusApy(): Promise<number | null> {
 }
 
 // ─── Soroswap APY ─────────────────────────────────────────────────────────────
-// Soroswap API doesn't expose APY or volume directly.
-// Estimate: 0.3% fee on trading volume. Without volume data on testnet,
-// we return null and let the UI show it as unavailable.
-// On mainnet, volume can be queried and used to compute fee APY.
 
 async function getSoroswapApy(): Promise<number | null> {
   return null;
@@ -141,7 +133,7 @@ async function getAllocations(
   for (const alloc of funds[0].strategy_allocations) {
     const addr: string = alloc.strategy_address;
     const amount = Number(BigInt(alloc.amount.toString()));
-    result[addr] = amount / total; // fraction 0–1
+    result[addr] = amount / total;
   }
   return result;
 }
@@ -180,77 +172,87 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Not configured" }, { status: 503 });
     }
 
-    const { rpcUrl, networkPassphrase } = getRpcConfig();
-    const keypair = Keypair.fromSecret(secretKey);
-    const server = new rpc.Server(rpcUrl);
+    // For all vaults, try the DeFindex SDK APY first.
+    const defindexApy = await getDefindexVaultApy(vaultId);
 
-    const client = new DefindexVaultClient({
-      contractId: vaultId,
-      rpcUrl,
-      networkPassphrase,
-      publicKey: keypair.publicKey(),
-    });
+    // For the CETES vault only, also compute manual weighted APY from on-chain
+    // strategy data as a fallback when the SDK does not return a value.
+    if (vaultId === CETES_VAULT_ID) {
+      const { rpcUrl, networkPassphrase } = getRpcConfig();
+      const keypair = Keypair.fromSecret(secretKey);
+      const server = new rpc.Server(rpcUrl);
 
-    // Fetch all in parallel
-    const [nekoApy, aquariusApy, soroswapApy, allocations, defindexApy] =
-      await Promise.all([
-        getNekoApy(server, networkPassphrase, keypair.publicKey()),
-        getAquariusApy(),
-        getSoroswapApy(),
-        getAllocations(client),
-        getDefindexVaultApy(vaultId),
-      ]);
+      const client = new DefindexVaultClient({
+        contractId: vaultId,
+        rpcUrl,
+        networkPassphrase,
+        publicKey: keypair.publicKey(),
+      });
 
-    const strategies = [
-      {
-        name: "Neko",
-        address: NEKO_STRATEGY,
-        apy: nekoApy,
-        weight: allocations[NEKO_STRATEGY] ?? 0,
-      },
-      {
-        name: "Aquarius",
-        address: AQUARIUS_STRATEGY,
-        apy: aquariusApy,
-        weight: allocations[AQUARIUS_STRATEGY] ?? 0,
-      },
-      {
-        name: "Soroswap",
-        address: SOROSWAP_STRATEGY,
-        apy: soroswapApy,
-        weight: allocations[SOROSWAP_STRATEGY] ?? 0,
-      },
-    ];
+      const [nekoApy, aquariusApy, soroswapApy, allocations] =
+        await Promise.all([
+          getNekoApy(server, networkPassphrase, keypair.publicKey()),
+          getAquariusApy(),
+          getSoroswapApy(),
+          getAllocations(client),
+        ]);
 
-    // Weighted vault APY — only include strategies with known APY
-    const knownStrategies = strategies.filter((s) => s.apy !== null);
-    const totalKnownWeight = knownStrategies.reduce(
-      (sum, s) => sum + s.weight,
-      0
-    );
+      const strategies = [
+        {
+          name: "Neko",
+          address: NEKO_STRATEGY,
+          apy: nekoApy,
+          weight: allocations[NEKO_STRATEGY] ?? 0,
+        },
+        {
+          name: "Aquarius",
+          address: AQUARIUS_STRATEGY,
+          apy: aquariusApy,
+          weight: allocations[AQUARIUS_STRATEGY] ?? 0,
+        },
+        {
+          name: "Soroswap",
+          address: SOROSWAP_STRATEGY,
+          apy: soroswapApy,
+          weight: allocations[SOROSWAP_STRATEGY] ?? 0,
+        },
+      ];
 
-    let manualVaultApy: number | null = null;
-    if (knownStrategies.length > 0 && totalKnownWeight > 0) {
-      manualVaultApy = knownStrategies.reduce((sum, s) => {
-        const normalizedWeight = s.weight / totalKnownWeight;
-        return sum + s.apy! * normalizedWeight;
-      }, 0);
+      const knownStrategies = strategies.filter((s) => s.apy !== null);
+      const totalKnownWeight = knownStrategies.reduce(
+        (sum, s) => sum + s.weight,
+        0
+      );
+
+      let manualVaultApy: number | null = null;
+      if (knownStrategies.length > 0 && totalKnownWeight > 0) {
+        manualVaultApy = knownStrategies.reduce((sum, s) => {
+          const normalizedWeight = s.weight / totalKnownWeight;
+          return sum + s.apy! * normalizedWeight;
+        }, 0);
+      }
+
+      const vaultApy = defindexApy ?? manualVaultApy;
+
+      return NextResponse.json({
+        vaultApy: vaultApy !== null ? parseFloat(vaultApy.toFixed(2)) : null,
+        strategies: strategies.map((s) => ({
+          name: s.name,
+          apy: s.apy !== null ? parseFloat(s.apy.toFixed(2)) : null,
+          weight: parseFloat((s.weight * 100).toFixed(1)),
+        })),
+        note:
+          soroswapApy === null
+            ? "Soroswap APY not available — trading fee yield requires volume data"
+            : undefined,
+      });
     }
 
-    // Use DefIndex SDK APY if available, fall back to manual weighted calculation
-    const vaultApy = defindexApy ?? manualVaultApy;
-
+    // All other vaults: SDK APY only, no on-chain strategy data.
     return NextResponse.json({
-      vaultApy: vaultApy !== null ? parseFloat(vaultApy.toFixed(2)) : null,
-      strategies: strategies.map((s) => ({
-        name: s.name,
-        apy: s.apy !== null ? parseFloat(s.apy.toFixed(2)) : null,
-        weight: parseFloat((s.weight * 100).toFixed(1)),
-      })),
-      note:
-        soroswapApy === null
-          ? "Soroswap APY not available — trading fee yield requires volume data"
-          : undefined,
+      vaultApy:
+        defindexApy !== null ? parseFloat(defindexApy.toFixed(2)) : null,
+      strategies: [],
     });
   } catch (err) {
     return NextResponse.json(
