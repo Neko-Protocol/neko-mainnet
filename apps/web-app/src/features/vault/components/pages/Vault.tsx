@@ -107,7 +107,7 @@ const Vault: React.FC = () => {
         className="mb-8"
       />
 
-      <div className="mb-6">
+      <div className="mb-6 w-full min-w-0">
         <VaultTabs activeTab={activeTab} onChange={setActiveTab} />
       </div>
 
@@ -147,6 +147,8 @@ const Vault: React.FC = () => {
           vaultContractId={activeContractId}
           isDeposit={actionModal.isDeposit}
           onClose={closeActionModal}
+          supplyAssetContractAddress={displayVault?.supplyAsset.contractAddress}
+          supplyAssetSymbol={displayVault?.supplyAsset.symbol}
         />
       )}
     </PageContainer>

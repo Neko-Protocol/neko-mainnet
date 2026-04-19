@@ -49,7 +49,10 @@ async function signAndSubmit(
   );
 }
 
-export function useVaultAction(vaultContractId: string | null | undefined) {
+export function useVaultAction(
+  vaultContractId: string | null | undefined,
+  symbol = "tokens"
+) {
   const [isLoading, setIsLoading] = useState(false);
 
   const {
@@ -119,7 +122,7 @@ export function useVaultAction(vaultContractId: string | null | undefined) {
 
         await new Promise((r) => setTimeout(r, 3000));
         await Promise.all([refetchBalance(), refetchVaultData()]);
-        showSuccess(`Successfully deposited ${amount} CETES`);
+        showSuccess(`Successfully deposited ${amount} ${symbol}`);
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
         showError(
@@ -137,6 +140,7 @@ export function useVaultAction(vaultContractId: string | null | undefined) {
       refetchVaultData,
       showError,
       showSuccess,
+      symbol,
       vaultContractId,
     ]
   );

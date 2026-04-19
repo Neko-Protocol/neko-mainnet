@@ -10,19 +10,20 @@ import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
 import { useQuery } from "@tanstack/react-query";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 
-const CETES_CONTRACT =
-  "CC72F57YTPX76HAA64JQOEGHQAPSADQWSY5DWVBR66JINPFDLNCQYHIC";
-
 interface VaultActionModalProps {
   vaultContractId: string;
   isDeposit: boolean;
   onClose: () => void;
+  supplyAssetContractAddress?: string;
+  supplyAssetSymbol?: string;
 }
 
 export function VaultActionModal({
   vaultContractId,
   isDeposit,
   onClose,
+  supplyAssetContractAddress,
+  supplyAssetSymbol,
 }: VaultActionModalProps) {
   const [visible, setVisible] = useState(false);
   const [amount, setAmount] = useState("");
@@ -31,14 +32,17 @@ export function VaultActionModal({
   );
 
   const { address } = useWallet();
-  const { sharesFormatted, userShares } = useVaultBalance(vaultContractId);
-  const { isLoading, handleDeposit, handleWithdraw } =
-    useVaultAction(vaultContractId);
+  const { sharesFormatted } = useVaultBalance(vaultContractId);
+  const { isLoading, handleDeposit, handleWithdraw } = useVaultAction(
+    vaultContractId,
+    supplyAssetSymbol
+  );
 
-  const { data: cetesBalance = "0" } = useQuery({
-    queryKey: ["cetesBalance", address],
-    queryFn: () => getTokenBalanceFromContract(CETES_CONTRACT, address!, 7),
-    enabled: !!address,
+  const { data: supplyBalance = "0" } = useQuery({
+    queryKey: ["vaultSupplyBalance", supplyAssetContractAddress, address],
+    queryFn: () =>
+      getTokenBalanceFromContract(supplyAssetContractAddress!, address!, 7),
+    enabled: !!address && !!supplyAssetContractAddress,
     staleTime: 30_000,
     refetchOnWindowFocus: false,
   });
@@ -53,7 +57,8 @@ export function VaultActionModal({
     setTimeout(onClose, 220);
   }, [onClose]);
 
-  const maxAmount = mode === "deposit" ? String(cetesBalance) : sharesFormatted;
+  const maxAmount =
+    mode === "deposit" ? String(supplyBalance) : sharesFormatted;
 
   const handleMax = () => {
     setAmount(maxAmount);
@@ -74,6 +79,8 @@ export function VaultActionModal({
   };
 
   const isDisabled = isLoading || !amount || parseFloat(amount) <= 0;
+
+  const supplyLabel = supplyAssetSymbol ?? "Token";
 
   return (
     <ModalPortal>
@@ -141,14 +148,16 @@ export function VaultActionModal({
           <div className="px-5 py-5 space-y-4">
             <div className="flex items-center justify-between text-xs">
               <span className="text-white/40">
-                {mode === "deposit" ? "CETES Balance" : "dfTokens Balance"}
+                {mode === "deposit"
+                  ? `${supplyLabel} Balance`
+                  : "dfTokens Balance"}
               </span>
               <span className="text-white/60 font-mono">
-                {mode === "deposit" ? cetesBalance : sharesFormatted}
+                {mode === "deposit" ? supplyBalance : sharesFormatted}
               </span>
             </div>
 
-            <div className="flex items-center gap-2 rounded-xl bg-white/[0.04] border border-white/10 px-4 py-3">
+            <div className="flex items-center gap-2 rounded-xl bg-white/4 border border-white/10 px-4 py-3">
               <input
                 type="text"
                 inputMode="decimal"
@@ -192,7 +201,7 @@ export function VaultActionModal({
               {isLoading
                 ? "Processing..."
                 : mode === "deposit"
-                  ? "Deposit CETES"
+                  ? `Deposit ${supplyLabel}`
                   : "Withdraw"}
             </button>
           </div>
