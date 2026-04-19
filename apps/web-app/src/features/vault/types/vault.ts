@@ -11,6 +11,7 @@ export interface VaultAsset {
   iconWhiteSrc?: string;
   logoSrc: string;
   network: "Stellar";
+  contractAddress?: string;
 }
 
 export interface VaultStrategy {
