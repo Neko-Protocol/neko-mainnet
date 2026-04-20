@@ -5,9 +5,17 @@ interface PoolCellProps {
   token2: string;
   fee: string;
   isAggregated?: boolean;
+  /** Overrides the default `token1/token2` title (e.g. Blend pool display name). */
+  label?: string;
 }
 
-export function PoolCell({ token1, token2, fee, isAggregated }: PoolCellProps) {
+export function PoolCell({
+  token1,
+  token2,
+  fee,
+  isAggregated,
+  label,
+}: PoolCellProps) {
   return (
     <div className="flex justify-center">
       <div className="flex items-center gap-3 w-[200px] ml-6">
@@ -20,7 +28,7 @@ export function PoolCell({ token1, token2, fee, isAggregated }: PoolCellProps) {
           </div>
         </div>
         <span className="text-white font-medium text-sm">
-          {token1}/{token2}
+          {label ?? `${token1}/${token2}`}
         </span>
         {isAggregated ? (
           <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400 shrink-0">

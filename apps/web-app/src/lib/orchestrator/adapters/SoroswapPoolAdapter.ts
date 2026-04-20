@@ -20,7 +20,7 @@ import { AdapterError, UnsupportedActionError } from "../types/errors";
 const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw"];
 const LIST_POOLS_CACHE_TTL_MS = 5 * 60 * 1000;
 const BASE_CODES = ["XLM", "USDC", "USDY", "PYUSD", "EURC"];
-// Keep discovery bounded so Soroswap does not delay the pools UI.
+// Cap pair discovery so the pools UI stays responsive (each pair may RPC).
 const MAX_DISCOVERY_PAIRS = 12;
 const PAIR_FETCH_TIMEOUT_MS = 4_000;
 
@@ -130,7 +130,7 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
         return {
           id: `soroswap:${poolId}`,
           type: "soroswap",
-          name: `${codeA} / ${codeB}`,
+          name: `${codeA} / ${codeB} Soroswap Pool`,
           tokens: [tokenA, tokenB],
           tvl: 0n,
           apy: 0,
@@ -147,7 +147,7 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       return {
         id: `soroswap:${poolId}`,
         type: "soroswap",
-        name: `${codeA} / ${codeB}`,
+        name: `${codeA} / ${codeB} Soroswap Pool`,
         tokens: [tokenA, tokenB],
         tvl: reserveA + reserveB,
         apy: 0,

@@ -1,4 +1,4 @@
-export type PoolType = "blend" | "neko" | "soroswap" | "custom";
+export type PoolType = "blend" | "neko" | "soroswap" | "aqua" | "custom";
 
 export type PoolState = "active" | "frozen" | "on_ice" | "unknown";
 

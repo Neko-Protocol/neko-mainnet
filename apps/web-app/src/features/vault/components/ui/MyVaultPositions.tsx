@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import {
   Wallet,
   Coins,
@@ -196,9 +197,10 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
                   <Image
                     src={vault.supplyAsset.iconSrc}
                     alt={vault.supplyAsset.symbol}
-                    width={20}
-                    height={20}
+                    width={32}
+                    height={32}
                     unoptimized
+                    className={getTokenIconFitClass(vault.supplyAsset.symbol)}
                   />
                 </div>
                 <span className="text-white font-medium text-sm">

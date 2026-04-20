@@ -3,7 +3,8 @@
 import React from "react";
 import Image from "next/image";
 import type { PoolCardData } from "@/features/pools/types/pools";
-import { getTokenIcon } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
 
 interface PoolCardProps {
   pool: PoolCardData;
@@ -15,6 +16,7 @@ interface PoolCardProps {
 function typeLabel(type: string): string {
   if (type === "blend" || type === "neko") return "Lending";
   if (type === "soroswap") return "AMM";
+  if (type === "aqua") return "Aqua AMM";
   return type;
 }
 
@@ -31,11 +33,11 @@ export const PoolCard: React.FC<PoolCardProps> = ({
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="relative w-14 h-8 shrink-0">
             {(() => {
-              const icon1 = getTokenIcon({
+              const icon1 = getPoolTokenIcon({
                 type: "contract",
                 code: pool.token1,
               });
-              const icon2 = getTokenIcon({
+              const icon2 = getPoolTokenIcon({
                 type: "contract",
                 code: pool.token2,
               });
@@ -46,9 +48,10 @@ export const PoolCard: React.FC<PoolCardProps> = ({
                       <Image
                         src={icon1}
                         alt={pool.token1}
-                        width={24}
-                        height={24}
+                        width={32}
+                        height={32}
                         unoptimized
+                        className={getTokenIconFitClass(pool.token1)}
                       />
                     ) : (
                       <span className="text-white text-sm font-bold">
@@ -61,9 +64,10 @@ export const PoolCard: React.FC<PoolCardProps> = ({
                       <Image
                         src={icon2}
                         alt={pool.token2}
-                        width={24}
-                        height={24}
+                        width={32}
+                        height={32}
                         unoptimized
+                        className={getTokenIconFitClass(pool.token2)}
                       />
                     ) : (
                       <span className="text-neko-navy text-sm font-bold">
