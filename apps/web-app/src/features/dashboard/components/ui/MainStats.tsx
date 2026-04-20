@@ -5,7 +5,6 @@ import { DollarSign, Coins, TrendingUp } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { usePortfolioValue } from "@/features/dashboard/hooks/usePortfolioValue";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
-import { HoldingsPieChart } from "@/features/dashboard/components/HoldingsPieChart";
 import { StatCard } from "@/features/stocks/components/ui/StatCard";
 
 function formatUsd(value: number): string {
@@ -35,16 +34,6 @@ const MainStats: React.FC = () => {
     return (sum / assets.length).toFixed(1);
   }, [assets]);
 
-  const chartHoldings = React.useMemo(
-    () =>
-      holdings.map((h) => ({
-        name: h.code,
-        value: h.valueUsd > 0 ? h.valueUsd : h.balance,
-      })),
-    [holdings]
-  );
-
-  const chartTotal = chartHoldings.reduce((sum, h) => sum + h.value, 0);
   const isLoading = isFetchingBalances || isLoadingPortfolio;
 
   return (
@@ -67,35 +56,6 @@ const MainStats: React.FC = () => {
           label="Avg. Pool APY"
           value={avgPoolApy !== null ? `${avgPoolApy}%` : "—"}
         />
-      </div>
-
-      <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-4 sm:p-6">
-        <h3 className="text-white font-semibold text-sm mb-4">
-          Wallet Holdings
-        </h3>
-        {!address ? (
-          <div className="flex items-center justify-center py-8">
-            <p className="text-white/40 text-sm">
-              Connect your wallet to view holdings
-            </p>
-          </div>
-        ) : chartHoldings.length === 0 ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-center">
-              <p className="text-white/40 text-sm mb-1">No holdings found</p>
-              <p className="text-white/30 text-xs">
-                Fund your account to see balances here
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="min-h-[220px]">
-            <HoldingsPieChart
-              holdings={chartHoldings}
-              totalValue={chartTotal}
-            />
-          </div>
-        )}
       </div>
     </div>
   );
