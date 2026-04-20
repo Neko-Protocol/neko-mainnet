@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# Remove IDE-injected attribution so commits stay tool-neutral.
+msg_file="$1"
+[ -n "$msg_file" ] && [ -f "$msg_file" ] || exit 0
+tmp=$(mktemp)
+if grep -v '^Made-with: Cursor$' "$msg_file" > "$tmp" 2>/dev/null; then
+  cmp -s "$tmp" "$msg_file" || cat "$tmp" > "$msg_file"
+fi
+rm -f "$tmp"
+exit 0
