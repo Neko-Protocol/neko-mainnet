@@ -5,7 +5,11 @@ import type {
   VaultView,
   VaultStrategyAllocation,
 } from "@/features/vault/types/vault";
-import { vaultArtForSymbol } from "@/features/vault/utils/vaultAssetArt";
+import {
+  vaultArtForSymbol,
+  vaultDedicatedArtKey,
+} from "@/features/vault/utils/vaultAssetArt";
+import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 
 // Per-vault static overrides: contractId → fields that differ from the defaults.
 // Merge order: defaults → STATIC_OVERRIDES[contractId] → derived fields.
@@ -78,12 +82,23 @@ function toVaultAsset(
   contractAddress = ""
 ): VaultAsset {
   const art = vaultArtForSymbol(symbol);
+  const poolIcon = contractAddress.trim()
+    ? getTokenIcon(contractAddress)
+    : null;
+  const dedicated = vaultDedicatedArtKey(symbol);
+  const iconSrc = poolIcon ?? art.iconSrc;
+  const iconWhiteSrc =
+    poolIcon && dedicated
+      ? art.iconWhiteSrc
+      : poolIcon
+        ? poolIcon
+        : art.iconWhiteSrc;
   return {
     symbol,
     name,
-    iconSrc: art.iconSrc,
-    iconWhiteSrc: art.iconWhiteSrc,
-    logoSrc: art.iconSrc,
+    iconSrc,
+    iconWhiteSrc,
+    logoSrc: iconSrc,
     network: "Stellar",
     contractAddress,
   };
