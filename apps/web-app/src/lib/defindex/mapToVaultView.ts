@@ -5,7 +5,11 @@ import type {
   VaultView,
   VaultStrategyAllocation,
 } from "@/features/vault/types/vault";
-import { vaultArtForSymbol } from "@/features/vault/utils/vaultAssetArt";
+import {
+  vaultArtForSymbol,
+  vaultDedicatedArtKey,
+} from "@/features/vault/utils/vaultAssetArt";
+import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 
 // Per-vault static overrides: contractId → fields that differ from the defaults.
 // Merge order: defaults → STATIC_OVERRIDES[contractId] → derived fields.
@@ -18,37 +22,37 @@ const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
   // USDC Beans
   CBNKCU3HGFKHFOF7JTGXQCNKE3G3DXS5RDBQUKQMIIECYKXPIOUGB2S3: {
     createdBy: "Beans",
-    creatorIconSrc: "/assets/vault-creators/beans.svg",
+    creatorIconSrc: "/assets/vault-creators/beans.jpeg",
   },
   // CETES Soroswap Earn
   CC24OISYJHWXZIFZBRJHFLVO5CNN3PQSKZE5BBBZLSSI5Z23TKC6GQY2: {
-    createdBy: "Soroswap Earn",
-    creatorIconSrc: "/assets/vault-creators/soroswap-earn.svg",
+    createdBy: "Soroswap",
+    creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
   },
   // USTRY Soroswap Earn
   CDI7QVDTNDFEHB25VFQGMNFALGCXXKAWUSHOTQR2D4O44CATQJ5ZQMN6: {
-    createdBy: "Soroswap Earn",
-    creatorIconSrc: "/assets/vault-creators/soroswap-earn.svg",
+    createdBy: "Soroswap",
+    creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
   },
   // USDC Soroswap Earn
   CA2FIPJ7U6BG3N7EOZFI74XPJZOEOD4TYWXFVCIO5VDCHTVAGS6F4UKK: {
-    createdBy: "Soroswap Earn",
-    creatorIconSrc: "/assets/vault-creators/soroswap-earn.svg",
+    createdBy: "Soroswap",
+    creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
   },
   // EURC Soroswap Earn
   CCKTLDG6I2MMJCKFWXXBXMA42LJ3XN2IOW6M7TK6EWNPJTS736ETFF2N: {
-    createdBy: "Soroswap Earn",
-    creatorIconSrc: "/assets/vault-creators/soroswap-earn.svg",
+    createdBy: "Soroswap",
+    creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
   },
   // EURC Beans
   CAIZ3NMNPEN5SQISJV7PD2YY6NI6DIPFA4PCRUBOGDE4I7A3DXDLK5OI: {
     createdBy: "Beans",
-    creatorIconSrc: "/assets/vault-creators/beans.svg",
+    creatorIconSrc: "/assets/vault-creators/beans.jpeg",
   },
   // USDC HANA
   CBUJZL5QAD5TOPD7JMCBQ3RHR6RZWY34A4QF7UHILTDH2JF2Z3VJGY2Y: {
     createdBy: "HANA",
-    creatorIconSrc: "/assets/vault-creators/hana.svg",
+    creatorIconSrc: "/assets/vault-creators/hana.png",
   },
   // USDC xPortal
   CD4JGS6BB5NZVSNKRNI43GUC6E3OBYLCLBQZJVTZLDVHQ5KDAOHVOIQF: {
@@ -63,12 +67,12 @@ const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
   // USDC Rozo
   CCDRFMZ7CH364ATQ5YSVTEJ3G3KPNFVM6TTC6N4T5REHWJS6LGVFP7MY: {
     createdBy: "Rozo",
-    creatorIconSrc: "/assets/vault-creators/rozo.svg",
+    creatorIconSrc: "/assets/vault-creators/rozo.jpeg",
   },
   // USDC Meru
   CCA2ZJP5BVRXYTQH4FAGHCAUMRYCXVC4CRYC2NXHWMR7TIVX36U7F5HR: {
     createdBy: "Meru",
-    creatorIconSrc: "/assets/vault-creators/meru.svg",
+    creatorIconSrc: "/assets/vault-creators/meru.jpg",
   },
 };
 
@@ -78,12 +82,23 @@ function toVaultAsset(
   contractAddress = ""
 ): VaultAsset {
   const art = vaultArtForSymbol(symbol);
+  const poolIcon = contractAddress.trim()
+    ? getTokenIcon(contractAddress)
+    : null;
+  const dedicated = vaultDedicatedArtKey(symbol);
+  const iconSrc = poolIcon ?? art.iconSrc;
+  const iconWhiteSrc =
+    poolIcon && dedicated
+      ? art.iconWhiteSrc
+      : poolIcon
+        ? poolIcon
+        : art.iconWhiteSrc;
   return {
     symbol,
     name,
-    iconSrc: art.iconSrc,
-    iconWhiteSrc: art.iconWhiteSrc,
-    logoSrc: art.iconSrc,
+    iconSrc,
+    iconWhiteSrc,
+    logoSrc: iconSrc,
     network: "Stellar",
     contractAddress,
   };

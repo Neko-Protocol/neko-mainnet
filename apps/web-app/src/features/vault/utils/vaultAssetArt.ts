@@ -29,6 +29,15 @@ export function normalizeVaultSymbol(raw: string): string {
   return raw.replace(/\0/g, "").trim().toUpperCase();
 }
 
+/**
+ * Non-null when `vaultArtForSymbol` uses a dedicated vault SVG pair (incl. white variant).
+ */
+export function vaultDedicatedArtKey(
+  symbol: string
+): keyof typeof VAULT_ASSET_ART | null {
+  return resolveVaultArtKey(normalizeVaultSymbol(symbol));
+}
+
 function resolveVaultArtKey(
   normalized: string
 ): keyof typeof VAULT_ASSET_ART | null {

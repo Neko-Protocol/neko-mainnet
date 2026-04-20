@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import type { VaultView, VaultCategory } from "../../types/vault";
+import { vaultArtForSymbol } from "../../utils/vaultAssetArt";
 import { VaultAssetIllustrations } from "./VaultAssetIllustrations";
 
 interface VaultCardProps {
@@ -33,6 +34,10 @@ export const VaultCard: React.FC<VaultCardProps> = ({
   const isLight = (vault.variant ?? "light") === "light";
   const categoryLabel = CATEGORY_LABEL[vault.category];
   const hasPosition = userBalance && userBalance > 0n;
+  const cardHeaderIconSrc = React.useMemo(
+    () => vaultArtForSymbol(vault.supplyAsset.symbol).iconSrc,
+    [vault.supplyAsset.symbol]
+  );
 
   return (
     <div
@@ -65,7 +70,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
         <div className="relative z-10 flex items-center gap-3 px-5 py-4 pr-[46%]">
           <div className="w-12 h-12 rounded-full bg-[#111] flex items-center justify-center shrink-0 overflow-hidden shadow-md">
             <Image
-              src={vault.supplyAsset.iconSrc}
+              src={cardHeaderIconSrc}
               alt={vault.supplyAsset.symbol}
               width={48}
               height={48}

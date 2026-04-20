@@ -103,6 +103,9 @@ export const getTokenIcon = (
     }
 
     if (!tokenCode) {
+      tokenCode = STELLAR_FALLBACK_CONTRACTS[token] || null;
+    }
+    if (!tokenCode) {
       tokenCode = token.toUpperCase();
     }
   } else if (typeof token === "object" && "type" in token) {

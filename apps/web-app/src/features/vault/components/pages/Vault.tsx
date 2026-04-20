@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import React, {
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
@@ -20,7 +26,19 @@ import {
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
+import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 import type { VaultView } from "../../types/vault";
+
+function vaultAssetFilterIconSrc(v: VaultView): string {
+  const addr = v.supplyAsset.contractAddress?.trim();
+  if (addr) {
+    const fromContract = getTokenIcon(addr);
+    if (fromContract) return fromContract;
+  }
+  const fromSymbol = getTokenIcon(v.supplyAsset.symbol.trim());
+  if (fromSymbol) return fromSymbol;
+  return v.supplyAsset.iconSrc;
+}
 
 const Vault: React.FC = () => {
   const [selectedVault, setSelectedVault] = useState<VaultView | null>(null);
@@ -145,7 +163,7 @@ const Vault: React.FC = () => {
     const map = new Map<string, string>();
     vaultsFromApi.forEach((v) => {
       if (v.supplyAsset?.symbol && !map.has(v.supplyAsset.symbol)) {
-        map.set(v.supplyAsset.symbol, v.supplyAsset.iconSrc);
+        map.set(v.supplyAsset.symbol, vaultAssetFilterIconSrc(v));
       }
     });
     return Array.from(map.entries())
