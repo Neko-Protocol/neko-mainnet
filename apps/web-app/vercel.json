@@ -1,0 +1,10 @@
+{
+  "installCommand": "cd ../.. && npm install --legacy-peer-deps",
+  "buildCommand": "cd ../.. && npx turbo run build --filter=web-app --ui stream --log-order grouped",
+  "crons": [
+    {
+      "path": "/api/vault/invest",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}

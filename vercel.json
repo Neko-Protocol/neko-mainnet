@@ -1,6 +1,6 @@
 {
   "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "turbo run build",
+  "buildCommand": "turbo run build --ui stream --log-order grouped",
   "outputDirectory": "apps/web-app/.next",
   "crons": [
     {
