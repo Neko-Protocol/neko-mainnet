@@ -88,6 +88,7 @@ export function BorrowTable({
                       token2={asset.pool.token2}
                       fee={asset.pool.fee}
                       isAggregated={asset.isAggregated}
+                      label={asset.pool.label}
                     />
                   </td>
                   <td className="px-4 py-4 align-middle text-center text-white text-sm">
@@ -153,6 +154,7 @@ export function BorrowTable({
                       token2={asset.pool.token2}
                       fee={asset.pool.fee}
                       isAggregated={asset.isAggregated}
+                      label={asset.pool.label}
                     />
                   </div>
 

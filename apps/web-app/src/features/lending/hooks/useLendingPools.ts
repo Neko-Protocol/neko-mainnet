@@ -5,7 +5,6 @@ import {
   rpcUrl,
   networkPassphrase,
   allowHttpForSoroban,
-  stellarNetwork,
 } from "@/lib/constants/network";
 import { getLendingContracts } from "@/lib/constants/lendingContracts";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
@@ -159,7 +158,7 @@ export const useLendingPools = () => {
   return useQuery<LendingPool[]>({
     queryKey: ["lendingPools"],
     queryFn,
-    enabled: stellarNetwork !== "PUBLIC",
+    enabled: true,
     staleTime: 2 * 60_000,
     gcTime: 10 * 60_000,
     refetchInterval: 2 * 60_000,

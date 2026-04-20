@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { X, Copy, Check, Droplets, FileText, Coins } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import type { VaultView } from "../../types/vault";
@@ -112,9 +113,10 @@ export function VaultDetailModal({
               <Image
                 src={vault.supplyAsset.iconSrc}
                 alt={vault.supplyAsset.symbol}
-                width={24}
-                height={24}
+                width={36}
+                height={36}
                 unoptimized
+                className={getTokenIconFitClass(vault.supplyAsset.symbol)}
               />
             </div>
             <div className="min-w-0">

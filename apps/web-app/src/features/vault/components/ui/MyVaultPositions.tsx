@@ -2,8 +2,8 @@
 
 import React from "react";
 import Image from "next/image";
+import { getTokenIconFitClass, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { Wallet, Coins } from "lucide-react";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { useWallet } from "@/hooks/useWallet";
 import type { VaultView } from "../../types/vault";
 
@@ -89,7 +89,6 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
                 key={vault.id}
                 className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors"
               >
-                {/* Vault name */}
                 <td className="px-4 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-[#222] flex items-center justify-center overflow-hidden shrink-0">
@@ -99,6 +98,7 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
                         width={20}
                         height={20}
                         unoptimized
+                        className={getTokenIconFitClass(vault.supplyAsset.symbol)}
                       />
                     </div>
                     <span className="text-white font-medium text-sm">
@@ -107,14 +107,12 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
                   </div>
                 </td>
 
-                {/* Asset */}
                 <td className="px-4 py-4">
                   <span className="text-white/60 text-sm">
                     {vault.supplyAsset.symbol}
                   </span>
                 </td>
 
-                {/* Shares */}
                 <td className="px-4 py-4 text-center">
                   <span className="text-white font-bold text-sm tabular-nums">
                     {parseFloat(sharesFormatted).toLocaleString("en-US", {
@@ -124,7 +122,6 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
                   <p className="text-white/30 text-xs mt-0.5">shares</p>
                 </td>
 
-                {/* APY */}
                 <td className="px-4 py-4 text-center">
                   {vault.apy7d && vault.apy7d !== "—" ? (
                     <span className="text-sm font-bold text-green-400">
@@ -135,7 +132,6 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
                   )}
                 </td>
 
-                {/* Status */}
                 <td className="px-4 py-4 text-center">
                   {vault.status === "active" ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-medium text-green-400">
@@ -155,16 +151,17 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
                   )}
                 </td>
 
-                {/* Actions */}
                 <td className="px-4 py-4">
                   <div className="flex items-center justify-end gap-2">
                     <button
+                      type="button"
                       onClick={() => onDeposit?.(vault)}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#229EDF] hover:bg-[#1a8bc7] text-white transition-colors"
                     >
                       Deposit
                     </button>
                     <button
+                      type="button"
                       onClick={() => onWithdraw?.(vault)}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
                     >

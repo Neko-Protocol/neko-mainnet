@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import type { VaultView, VaultCategory } from "../../types/vault";
 import { VaultAssetIllustrations } from "./VaultAssetIllustrations";
 
@@ -66,9 +67,10 @@ export const VaultCard: React.FC<VaultCardProps> = ({
             <Image
               src={vault.supplyAsset.iconSrc}
               alt={vault.supplyAsset.symbol}
-              width={28}
-              height={28}
+              width={48}
+              height={48}
               unoptimized
+              className={getTokenIconFitClass(vault.supplyAsset.symbol)}
             />
           </div>
 
@@ -121,6 +123,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
                 width={16}
                 height={16}
                 unoptimized
+                className={getTokenIconFitClass(vault.supplyAsset.symbol)}
               />
             </div>
             <span className="text-white/80 text-xs font-medium">
@@ -134,6 +137,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
                 width={16}
                 height={16}
                 unoptimized
+                className={getTokenIconFitClass("XLM")}
               />
             </div>
             <span className="text-white/80 text-xs font-medium">
@@ -151,6 +155,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
                   width={16}
                   height={16}
                   unoptimized
+                  className="h-full w-full object-cover"
                 />
               </div>
             )}

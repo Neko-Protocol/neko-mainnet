@@ -56,6 +56,9 @@ export function useBorrow() {
       )
       .map((p: PoolInfo, i: number) => {
         const token = p.tokens[0];
+        const tokenB = p.tokens[1];
+        const code1 = token?.code ?? "?";
+        const code2 = tokenB?.code ?? code1;
         const decimals = token?.decimals ?? 7;
         const liquidity = formatLiquidity(
           fromSmallestUnit(p.tvl.toString(), decimals)
@@ -70,9 +73,10 @@ export function useBorrow() {
         return {
           rowId: `agg-borrow-${p.id}-${token?.code ?? "unknown"}-${i}`,
           pool: {
-            token1: token?.code ?? "?",
-            token2: p.name,
+            token1: code1,
+            token2: code2,
             fee: "0%",
+            label: p.name,
           },
           borrowApr: borrowApy > 0 ? `${borrowApy.toFixed(2)}%` : "0.00%",
           collateralFactorDisplay:

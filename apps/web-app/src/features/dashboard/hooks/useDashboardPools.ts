@@ -32,6 +32,7 @@ export function useDashboardPools(): UseDashboardPoolsResult {
 
         return {
           id: pool.id,
+          protocolId: pool.type,
           name: pool.name,
           token1,
           token2,

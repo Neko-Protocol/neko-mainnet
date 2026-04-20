@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
-import { getTokenIcon } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import type { MappedBalances } from "@/lib/helpers/stellar/wallet";
 
@@ -79,7 +79,7 @@ const TokenItem: React.FC<TokenItemProps> = ({
           : "bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10"
       }`}
     >
-      <div className="relative shrink-0">
+      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-md">
         {icon ? (
           <Image
             src={icon}
@@ -87,7 +87,7 @@ const TokenItem: React.FC<TokenItemProps> = ({
             width={40}
             height={40}
             unoptimized
-            className="rounded-full shadow-md object-contain p-1"
+            className={getTokenIconFitClass(code)}
           />
         ) : (
           <div className="w-10 h-10 rounded-full bg-[#229EDF]/30 flex items-center justify-center text-white font-bold text-sm shadow-md">

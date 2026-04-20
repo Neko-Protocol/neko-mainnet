@@ -2,6 +2,7 @@ import { PoolRegistry, poolRegistry } from "./PoolRegistry";
 // import { NekoLendingAdapter } from "../adapters/NekoLendingAdapter";
 import { BlendPoolAdapter } from "../adapters/BlendPoolAdapter";
 import { SoroswapPoolAdapter } from "../adapters/SoroswapPoolAdapter";
+import { AquaPoolAdapter } from "../adapters/AquaPoolAdapter";
 import { getBlendPoolIds } from "../adapters/blend-config";
 import { UnsupportedActionError } from "../types/errors";
 
@@ -167,5 +168,6 @@ for (const blendPoolId of getBlendPoolIds()) {
 }
 
 poolRegistry.register(new SoroswapPoolAdapter());
+poolRegistry.register(new AquaPoolAdapter());
 
 export const orchestrator = new Orchestrator(poolRegistry);

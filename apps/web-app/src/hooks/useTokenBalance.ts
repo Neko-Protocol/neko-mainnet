@@ -4,6 +4,8 @@ import { useWallet } from "./useWallet";
 import { getTokens, getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { getTokenAddress } from "@/lib/helpers/stellar/soroswap";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
+import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
+import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 
 const BASE_RESERVE = 0.5;
 
@@ -57,14 +59,16 @@ export const useTokenBalance = (
     | { type: "native" | "contract"; code?: string; contract?: string }
     | undefined
 ) => {
-  const { address, balances, subentryCount } = useWallet();
+  const { address, balances, subentryCount, nativeBalanceStroops } = useWallet();
 
   const tokenAddress = token ? getTokenAddress(token) : null;
 
   const tokens = getTokens();
 
+  const xlmSacFromConfig = getAvailableTokens().XLM?.contract;
   const isXlm =
     tokenAddress === tokens.XLM ||
+    tokenAddress === xlmSacFromConfig ||
     (typeof token !== "string" && token?.type === "native") ||
     tokenAddress === XLM_TESTNET_ADDRESS;
 
@@ -90,8 +94,17 @@ export const useTokenBalance = (
   });
 
   if (isXlm) {
-    const totalBalance = getTotalXlm(balances);
-    const spendable = getSpendableXlm(balances, subentryCount);
+    const totalBalance =
+      nativeBalanceStroops > 0n
+        ? fromSmallestUnit(nativeBalanceStroops.toString(), 7)
+        : getTotalXlm(balances);
+    const spendable =
+      nativeBalanceStroops > 0n
+        ? fromSmallestUnit(
+            spendableNativeStroops(nativeBalanceStroops, subentryCount).toString(),
+            7
+          )
+        : getSpendableXlm(balances, subentryCount);
     return {
       /** Amount you can spend in a tx (after reserve); use for Max + validation. */
       balance: spendable,

@@ -20,6 +20,10 @@ import type { PoolInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolData } from "../types/lending";
+import {
+  LENDING_PROTOCOL_LABELS,
+  LENDING_PROTOCOL_ORDER,
+} from "../constants/protocols";
 import { auditService } from "@/lib/services/audit.service";
 
 function toBTokens(tokensAmount: string, bTokenRate: string): string {
@@ -40,6 +44,9 @@ export function useLend() {
   const [bTokenBalance, setBTokenBalance] = useState<string | null>(null);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [selectedPool, setSelectedPool] = useState<PoolData | null>(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [protocolFilter, setProtocolFilterState] = useState<string>("all");
 
   const { address, signTransaction, networkPassphrase } = useWallet();
   const { addNotification } = useToast();
@@ -92,6 +99,7 @@ export function useLend() {
           : `$${balanceNum.toFixed(2)}`;
       return {
         id: `pool-${index}`,
+        protocolId: "neko",
         name: `${pool.assetCode} Pool`,
         token1: pool.assetCode,
         token2: "",
@@ -115,15 +123,21 @@ export function useLend() {
       .map((p: PoolInfo) => {
         const token = p.tokens[0];
         const decimals = token?.decimals ?? 7;
-        const liquidity = formatLiquidity(
-          fromSmallestUnit(p.tvl.toString(), decimals)
-        );
+        const liquidityUsd = p.metadata?.liquidityUsd as string | undefined;
+        const liquidity =
+          liquidityUsd && parseFloat(liquidityUsd) > 0
+            ? formatLiquidity(liquidityUsd)
+            : p.tvl > 0n
+            ? formatLiquidity(fromSmallestUnit(p.tvl.toString(), decimals))
+            : "—";
         const contractId = p.id.split(":")[1] ?? p.id;
+        const canInteract = p.supportedActions.includes("deposit");
         return {
           id: `agg-${p.id}`,
+          protocolId: p.type,
           name: p.name,
           token1: token?.code ?? "?",
-          token2: "Lending",
+          token2: p.tokens[1]?.code ?? (canInteract ? "Lending" : ""),
           fee: "0%",
           roi: p.apy > 0 ? `${p.apy.toFixed(2)}%` : "0.00%",
           feeApy: p.apy > 0 ? `${p.apy.toFixed(2)}%` : "0.00%",
@@ -134,12 +148,49 @@ export function useLend() {
           bTokenRate: undefined,
           contractId,
           isAggregated: true,
-          orchestratorId: p.id,
+          orchestratorId: canInteract ? p.id : undefined,
+          hideRowActions: !canInteract,
         };
       });
 
     return [...nekoPools, ...aggregated];
   }, [lendingPools, orchestratorPools]);
+
+  const protocolOptions = useMemo(() => {
+    const ids = new Set(pools.map((p) => p.protocolId));
+    const order = LENDING_PROTOCOL_ORDER as readonly string[];
+    const known = order
+      .filter((id) => ids.has(id))
+      .map((id) => ({ id, label: LENDING_PROTOCOL_LABELS[id] ?? id }));
+    const unknown = [...ids].filter((id) => !order.includes(id));
+    const extras = unknown.map((id) => ({
+      id,
+      label: LENDING_PROTOCOL_LABELS[id] ?? id,
+    }));
+    return [...known, ...extras];
+  }, [pools]);
+
+  const filteredPools = useMemo(() => {
+    if (protocolFilter === "all") return pools;
+    return pools.filter((p) => p.protocolId === protocolFilter);
+  }, [pools, protocolFilter]);
+
+  const totalRows = filteredPools.length;
+  const totalPages = Math.ceil(totalRows / rowsPerPage);
+  const paginatedPools = filteredPools.slice(
+    page * rowsPerPage,
+    (page + 1) * rowsPerPage
+  );
+
+  const setProtocolFilter = useCallback((id: string) => {
+    setProtocolFilterState(id);
+    setPage(0);
+  }, []);
+
+  const changeRowsPerPage = useCallback((value: number) => {
+    setRowsPerPage(value);
+    setPage(0);
+  }, []);
 
   const loadBTokenBalance = useCallback(async () => {
     if (!selectedPool || !address) {
@@ -317,9 +368,19 @@ export function useLend() {
 
   return {
     pools,
+    paginatedPools,
     isLoadingPools,
     isFetchingPools,
     poolsError,
+    protocolFilter,
+    setProtocolFilter,
+    protocolOptions,
+    page,
+    totalRows,
+    totalPages,
+    rowsPerPage,
+    setPage,
+    changeRowsPerPage,
     selectedPool,
     isModalOpen,
     isDeposit,

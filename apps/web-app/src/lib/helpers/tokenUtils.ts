@@ -112,3 +112,15 @@ export const getTokenIcon = (
   if (!tokenCode) return null;
   return STELLAR_TOKEN_ICON_MAP[tokenCode] ?? null;
 };
+
+/**
+ * Tailwind classes for token icons inside circular avatars.
+ * XLM uses contain + padding so the Stellar mark is not cropped; other
+ * assets use cover so square artwork clips cleanly to the circle.
+ */
+export function getTokenIconFitClass(tokenCode: string): string {
+  if (tokenCode.trim().toUpperCase() === "XLM") {
+    return "h-full w-full object-contain p-0.5";
+  }
+  return "h-full w-full object-cover";
+}
