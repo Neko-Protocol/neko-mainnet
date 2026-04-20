@@ -10,6 +10,7 @@
     "./tailwind": "./tailwind.config.ts"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4",
     "tailwindcss": "^4"
   }
 }

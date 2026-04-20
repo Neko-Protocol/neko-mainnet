@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
-import { X, Copy, Check, Droplets, Zap, FileText, Coins } from "lucide-react";
+import { X, Copy, Check, Droplets, FileText, Coins } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import type { VaultView } from "../../types/vault";
 
@@ -140,31 +140,18 @@ export function VaultDetailModal({
               </p>
             )}
 
-            {/* Strategy */}
-            {detail?.strategies && detail.strategies.length > 0 && (
+            {/* Liquidity */}
+            {detail?.liquidity && (
               <section>
-                <div className="flex items-center gap-2 mb-3">
-                  <Zap className="h-3.5 w-3.5 text-[#229EDF]" />
-                  <h3 className="text-white text-sm font-semibold">Strategy</h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <Droplets className="h-3.5 w-3.5 text-[#229EDF]" />
+                  <h3 className="text-white text-sm font-semibold">
+                    Liquidity
+                  </h3>
                 </div>
-                <div className="space-y-2">
-                  {detail.strategies.map((s) => (
-                    <div
-                      key={s.protocol}
-                      className="flex gap-3 rounded-xl bg-white/3 border border-white/5 px-4 py-3"
-                    >
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#229EDF] shrink-0 mt-1.5" />
-                      <div>
-                        <span className="text-white/80 text-xs font-semibold">
-                          {s.protocol}
-                        </span>
-                        <p className="text-white/40 text-xs mt-0.5 leading-relaxed">
-                          {s.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-white/50 text-xs leading-relaxed">
+                  {detail.liquidity}
+                </p>
               </section>
             )}
 
@@ -263,20 +250,6 @@ export function VaultDetailModal({
               </section>
             )}
 
-            {/* Liquidity */}
-            {detail?.liquidity && (
-              <section>
-                <div className="flex items-center gap-2 mb-2">
-                  <Droplets className="h-3.5 w-3.5 text-[#229EDF]" />
-                  <h3 className="text-white text-sm font-semibold">
-                    Liquidity
-                  </h3>
-                </div>
-                <p className="text-white/50 text-xs leading-relaxed">
-                  {detail.liquidity}
-                </p>
-              </section>
-            )}
           </div>
 
           {/* ── FOOTER ── */}

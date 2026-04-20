@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import type DefindexSDK from "@defindex/sdk";
+import type { SupportedNetworks } from "@defindex/sdk";
 import { createDefindexServerSdk } from "@/lib/defindex/createServerSdk";
 import { defindexInfoToVaultView } from "@/lib/defindex/mapToVaultView";
 import { defindexNetworkFromEnv } from "@/lib/defindex/network";
@@ -21,6 +23,42 @@ function formatVaultFetchError(reason: unknown): string {
   }
   if (reason instanceof Error) return reason.message;
   return String(reason);
+}
+
+function isRateLimitError(err: unknown): boolean {
+  const msg =
+    err instanceof Error ? err.message : String(err ?? "").toLowerCase();
+  return (
+    msg.toLowerCase().includes("rate limit") ||
+    msg.includes("429") ||
+    msg.includes("too many")
+  );
+}
+
+async function delay(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+// Fetches a single vault with up to `maxRetries` retries on rate-limit errors.
+async function fetchVaultWithRetry(
+  sdk: InstanceType<typeof DefindexSDK>,
+  contractId: string,
+  network: SupportedNetworks,
+  maxRetries = 3
+): Promise<VaultView> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const info = await sdk.getVaultInfo(contractId, network);
+      return defindexInfoToVaultView(contractId, info);
+    } catch (err) {
+      if (isRateLimitError(err) && attempt < maxRetries) {
+        await delay(600 * (attempt + 1));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("Max retries exceeded");
 }
 
 export async function GET() {
@@ -51,27 +89,24 @@ export async function GET() {
   }
 
   const sdk = createDefindexServerSdk();
-
-  const settled = await Promise.allSettled(
-    ids.map(async (contractId) => {
-      const info = await sdk.getVaultInfo(contractId, network);
-      return defindexInfoToVaultView(contractId, info);
-    })
-  );
-
   const vaults: VaultView[] = [];
   const fetchErrors: { contractId: string; message: string }[] = [];
-  settled.forEach((r, i) => {
-    const contractId = ids[i] ?? "";
-    if (r.status === "fulfilled") {
-      vaults.push(r.value);
-    } else {
+
+  // Fetch sequentially with a small gap to avoid rate limiting.
+  for (let i = 0; i < ids.length; i++) {
+    const contractId = ids[i]!;
+    try {
+      const view = await fetchVaultWithRetry(sdk, contractId, network);
+      vaults.push(view);
+    } catch (err) {
       fetchErrors.push({
         contractId,
-        message: formatVaultFetchError(r.reason),
+        message: formatVaultFetchError(err),
       });
     }
-  });
+    // 150 ms gap between requests keeps us well under typical API rate limits.
+    if (i < ids.length - 1) await delay(150);
+  }
 
   return NextResponse.json({
     vaults,

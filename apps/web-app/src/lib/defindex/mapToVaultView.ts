@@ -5,17 +5,102 @@ import type {
   VaultView,
   VaultStrategyAllocation,
 } from "@/features/vault/types/vault";
+import {
+  vaultArtForSymbol,
+  vaultDedicatedArtKey,
+} from "@/features/vault/utils/vaultAssetArt";
+import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 
-const DEFAULT_ICON = "/assets/vault-assets/usdc.svg";
+// Per-vault static overrides: contractId → fields that differ from the defaults.
+// Merge order: defaults → STATIC_OVERRIDES[contractId] → derived fields.
+const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
+  // CETES vault — Neko-managed, keep DeFindex as platform
+  CCFWKCD52JNSQLN5OS4F7EG6BPDT4IRJV6KODIEIZLWPM35IKHOKT6S2: {
+    createdBy: "DeFindex",
+    creatorIconSrc: "/defindex-logo.svg",
+  },
+  // USDC Beans
+  CBNKCU3HGFKHFOF7JTGXQCNKE3G3DXS5RDBQUKQMIIECYKXPIOUGB2S3: {
+    createdBy: "Beans",
+    creatorIconSrc: "/assets/vault-creators/beans.jpeg",
+  },
+  // CETES Soroswap Earn
+  CC24OISYJHWXZIFZBRJHFLVO5CNN3PQSKZE5BBBZLSSI5Z23TKC6GQY2: {
+    createdBy: "Soroswap",
+    creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
+  },
+  // USTRY Soroswap Earn
+  CDI7QVDTNDFEHB25VFQGMNFALGCXXKAWUSHOTQR2D4O44CATQJ5ZQMN6: {
+    createdBy: "Soroswap",
+    creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
+  },
+  // USDC Soroswap Earn
+  CA2FIPJ7U6BG3N7EOZFI74XPJZOEOD4TYWXFVCIO5VDCHTVAGS6F4UKK: {
+    createdBy: "Soroswap",
+    creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
+  },
+  // EURC Soroswap Earn
+  CCKTLDG6I2MMJCKFWXXBXMA42LJ3XN2IOW6M7TK6EWNPJTS736ETFF2N: {
+    createdBy: "Soroswap",
+    creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
+  },
+  // EURC Beans
+  CAIZ3NMNPEN5SQISJV7PD2YY6NI6DIPFA4PCRUBOGDE4I7A3DXDLK5OI: {
+    createdBy: "Beans",
+    creatorIconSrc: "/assets/vault-creators/beans.jpeg",
+  },
+  // USDC HANA
+  CBUJZL5QAD5TOPD7JMCBQ3RHR6RZWY34A4QF7UHILTDH2JF2Z3VJGY2Y: {
+    createdBy: "HANA",
+    creatorIconSrc: "/assets/vault-creators/hana.png",
+  },
+  // USDC xPortal
+  CD4JGS6BB5NZVSNKRNI43GUC6E3OBYLCLBQZJVTZLDVHQ5KDAOHVOIQF: {
+    createdBy: "xPortal",
+    creatorIconSrc: "/assets/vault-creators/xportal.svg",
+  },
+  // USDC Seevcash
+  CC767WIU5QGJMXYHDDYJAJEF2YWPHOXOZDWD3UUAZVS4KQPRXCKPT2YZ: {
+    createdBy: "Seevcash",
+    creatorIconSrc: "/assets/vault-creators/seevcash.svg",
+  },
+  // USDC Rozo
+  CCDRFMZ7CH364ATQ5YSVTEJ3G3KPNFVM6TTC6N4T5REHWJS6LGVFP7MY: {
+    createdBy: "Rozo",
+    creatorIconSrc: "/assets/vault-creators/rozo.jpeg",
+  },
+  // USDC Meru
+  CCA2ZJP5BVRXYTQH4FAGHCAUMRYCXVC4CRYC2NXHWMR7TIVX36U7F5HR: {
+    createdBy: "Meru",
+    creatorIconSrc: "/assets/vault-creators/meru.jpg",
+  },
+};
 
-function toVaultAsset(symbol: string, name: string): VaultAsset {
+function toVaultAsset(
+  symbol: string,
+  name: string,
+  contractAddress = ""
+): VaultAsset {
+  const art = vaultArtForSymbol(symbol);
+  const poolIcon = contractAddress.trim()
+    ? getTokenIcon(contractAddress)
+    : null;
+  const dedicated = vaultDedicatedArtKey(symbol);
+  const iconSrc = poolIcon ?? art.iconSrc;
+  const iconWhiteSrc =
+    poolIcon && dedicated
+      ? art.iconWhiteSrc
+      : poolIcon
+        ? poolIcon
+        : art.iconWhiteSrc;
   return {
     symbol,
     name,
-    iconSrc: DEFAULT_ICON,
-    iconWhiteSrc: DEFAULT_ICON,
-    logoSrc: DEFAULT_ICON,
+    iconSrc,
+    iconWhiteSrc,
+    logoSrc: iconSrc,
     network: "Stellar",
+    contractAddress,
   };
 }
 
@@ -91,12 +176,12 @@ export function defindexInfoToVaultView(
   const assets = info.assets ?? [];
   const primary = assets[0];
   const supplyAsset = primary
-    ? toVaultAsset(primary.symbol, primary.name)
+    ? toVaultAsset(primary.symbol, primary.name, primary.address ?? "")
     : toVaultAsset(info.symbol, info.name);
 
   const collateralAssets =
     assets.length > 0
-      ? assets.map((a) => toVaultAsset(a.symbol, a.name))
+      ? assets.map((a) => toVaultAsset(a.symbol, a.name, a.address ?? ""))
       : [supplyAsset];
 
   const strategiesFlat = assets.flatMap((a) =>
@@ -112,8 +197,7 @@ export function defindexInfoToVaultView(
     for (const s of a.strategies ?? []) {
       const n = (strategyNameCount.get(s.name) ?? 0) + 1;
       strategyNameCount.set(s.name, n);
-      const label =
-        n === 1 ? s.name : `${s.name} (${s.address.slice(0, 5)}…)`;
+      const label = n === 1 ? s.name : `${s.name} (${s.address.slice(0, 5)}…)`;
       strategyRecord[label] = s.address;
     }
   }
@@ -124,6 +208,8 @@ export function defindexInfoToVaultView(
     info.apy != null && !Number.isNaN(Number(info.apy))
       ? `${Number(info.apy).toFixed(2)}%`
       : "—";
+
+  const overrides = STATIC_OVERRIDES[contractId] ?? {};
 
   const config: VaultConfig = {
     id: contractId,
@@ -137,6 +223,7 @@ export function defindexInfoToVaultView(
     creatorIconSrc: "/defindex-logo.svg",
     variant: "light",
     featured: true,
+    ...overrides,
     detail: {
       description: `Vault with ${assets.length} underlying asset(s).`,
       strategies: strategiesFlat,

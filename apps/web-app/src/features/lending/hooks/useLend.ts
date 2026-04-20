@@ -283,7 +283,9 @@ export function useLend() {
           throw new Error(`Token ${selectedPool.assetCode} not found`);
 
         const decimals = token.decimals || 7;
-        const passphrase = networkPassphrase || Networks.TESTNET;
+        if (!networkPassphrase)
+          throw new Error("Network passphrase not available");
+        const passphrase = networkPassphrase;
         const sorobanServer = new rpc.Server(rpcUrl, {
           allowHttp: stellarNetwork === "LOCAL",
         });
@@ -300,7 +302,7 @@ export function useLend() {
             lendingContractId
           );
 
-          const signedDeposit = await signTransaction(depositXdr as any, {
+          const signedDeposit = await signTransaction(depositXdr as string, {
             networkPassphrase: passphrase,
             address,
           });
@@ -320,7 +322,7 @@ export function useLend() {
             lendingContractId
           );
 
-          const signedWithdraw = await signTransaction(withdrawXdr as any, {
+          const signedWithdraw = await signTransaction(withdrawXdr as string, {
             networkPassphrase: passphrase,
             address,
           });

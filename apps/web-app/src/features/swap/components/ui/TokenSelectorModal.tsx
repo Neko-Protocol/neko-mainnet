@@ -307,7 +307,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                 <h3 className="text-xs font-semibold text-white/50 mb-3 px-2 uppercase tracking-wider">
                   Your tokens
                 </h3>
-                <div className="space-y-1">
+                <div className="flex flex-col gap-3">
                   {userTokens.map((code) => {
                     const isSelected = selectedToken
                       ? getTokenId(selectedToken) === code

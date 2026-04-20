@@ -6,7 +6,6 @@ import {
   BASE_FEE,
   Operation,
   Address,
-  nativeToScVal,
   xdr,
 } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
@@ -14,24 +13,35 @@ import { resolveVaultIdForApi } from "@/lib/defindex/vaultContract";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
-const STRATEGIES = [
-  {
-    name: "Neko",
-    addr: "CCCEWBCYSIHTGBJ2TUOAFQY63UJ4SWDYTYNAEGXWPB7FP6PRHHGVZJIR",
-  },
-  {
-    name: "Aquarius",
-    addr: "CCGV5QSAFRT6OGBZNCE72I6BAODXLDMWEUYAOBI5ZBLHOURSEGVGFTTZ",
-  },
-  {
-    name: "Soroswap",
-    addr: "CCY5WW3VXVJDBBXNYXCCH33XTQICHPU6RPFWYJJCT4PTYPN3SXJN2XBJ",
-  },
-];
-const MIN_IDLE_THRESHOLD = 10_000_000n; // 1 CETES minimum
 
-let lastInvest = 0;
+// Per-vault strategy definitions. Vaults not listed here have no strategies to
+// invest into (invest step is skipped; fees are still collected).
+const VAULT_STRATEGIES: Record<
+  string,
+  Array<{ name: string; addr: string }>
+> = {
+  // CETES vault (Neko-managed)
+  CCFWKCD52JNSQLN5OS4F7EG6BPDT4IRJV6KODIEIZLWPM35IKHOKT6S2: [
+    {
+      name: "Neko",
+      addr: "CCCEWBCYSIHTGBJ2TUOAFQY63UJ4SWDYTYNAEGXWPB7FP6PRHHGVZJIR",
+    },
+    {
+      name: "Aquarius",
+      addr: "CCGV5QSAFRT6OGBZNCE72I6BAODXLDMWEUYAOBI5ZBLHOURSEGVGFTTZ",
+    },
+    {
+      name: "Soroswap",
+      addr: "CCY5WW3VXVJDBBXNYXCCH33XTQICHPU6RPFWYJJCT4PTYPN3SXJN2XBJ",
+    },
+  ],
+};
+
+const MIN_IDLE_THRESHOLD = 10_000_000n; // 1 unit (7 decimals)
 const COOLDOWN_MS = 5 * 60 * 1000;
+
+// Per-vault cooldown: keyed by vaultId so parallel vaults don't block each other.
+const lastInvest = new Map<string, number>();
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -108,10 +118,7 @@ async function harvestAquarius(
         Operation.invokeContractFunction({
           contract: AQUARIUS_STRATEGY,
           function: "harvest",
-          args: [
-            new Address(vaultContractId).toScVal(), // from = vault address
-            xdr.ScVal.scvVoid(), // data = None
-          ],
+          args: [new Address(vaultContractId).toScVal(), xdr.ScVal.scvVoid()],
         })
       )
       .setTimeout(30)
@@ -135,8 +142,13 @@ async function investIdle(
   client: DefindexVaultClient,
   keypair: Keypair,
   server: rpc.Server,
-  networkPassphrase: string
+  networkPassphrase: string,
+  strategies: Array<{ name: string; addr: string }>
 ) {
+  if (strategies.length === 0) {
+    return { invested: false, results: [], idleAmount: 0 };
+  }
+
   const fundsTx = await client.fetch_total_managed_funds({ simulate: true });
   let funds = fundsTx.result as any;
   if (funds?.tag === "ok") funds = funds.value;
@@ -149,12 +161,12 @@ async function investIdle(
     return { invested: false, results: [], idleAmount: idleHuman };
   }
 
-  const perStrategy = idleAmount / BigInt(STRATEGIES.length);
-  const remainder = idleAmount % BigInt(STRATEGIES.length);
+  const perStrategy = idleAmount / BigInt(strategies.length);
+  const remainder = idleAmount % BigInt(strategies.length);
   const results: { strategy: string; hash: string; status: string }[] = [];
 
-  for (let i = 0; i < STRATEGIES.length; i++) {
-    const { name, addr } = STRATEGIES[i];
+  for (let i = 0; i < strategies.length; i++) {
+    const { name, addr } = strategies[i];
     const amount = i === 0 ? perStrategy + remainder : perStrategy;
     if (amount === 0n) continue;
 
@@ -177,7 +189,6 @@ async function collectFees(
 ) {
   const results: { step: string; hash: string; status: string }[] = [];
 
-  // 1. report() — track gains/losses per strategy since last call
   try {
     const reportTx = await client.report();
     const r = await sendTx(reportTx as any, keypair, server, networkPassphrase);
@@ -188,7 +199,6 @@ async function collectFees(
     return { results, feesCollected: false };
   }
 
-  // 2. lock_fees() — separate accrued gains as manager fees
   try {
     const lockTx = await client.lock_fees({ new_fee_bps: undefined });
     const r = await sendTx(lockTx as any, keypair, server, networkPassphrase);
@@ -199,7 +209,6 @@ async function collectFees(
     return { results, feesCollected: false };
   }
 
-  // 3. distribute_fees() — transfer locked fees to fee receivers
   try {
     const distTx = await client.distribute_fees({
       caller: keypair.publicKey(),
@@ -259,7 +268,9 @@ export async function GET(request: NextRequest) {
       canInvest: BigInt(funds[0].idle_amount.toString()) >= MIN_IDLE_THRESHOLD,
       cooldownRemaining: Math.max(
         0,
-        Math.ceil((lastInvest + COOLDOWN_MS - Date.now()) / 1000)
+        Math.ceil(
+          ((lastInvest.get(vaultId) ?? 0) + COOLDOWN_MS - Date.now()) / 1000
+        )
       ),
     });
   } catch (err) {
@@ -292,7 +303,8 @@ export async function POST(request: NextRequest) {
     const isCron = request.headers.get("x-vercel-cron") === "1";
 
     if (!isCron) {
-      const remaining = lastInvest + COOLDOWN_MS - Date.now();
+      const remaining =
+        (lastInvest.get(vaultId) ?? 0) + COOLDOWN_MS - Date.now();
       if (remaining > 0) {
         return NextResponse.json(
           { error: `Please wait ${Math.ceil(remaining / 1000)}s` },
@@ -301,7 +313,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    lastInvest = Date.now();
+    lastInvest.set(vaultId, Date.now());
 
     const { secretKey, rpcUrl, networkPassphrase } = getEnv();
     const keypair = Keypair.fromSecret(secretKey);
@@ -313,23 +325,22 @@ export async function POST(request: NextRequest) {
       publicKey: keypair.publicKey(),
     });
 
-    // 1. Harvest Aquarius AQUA rewards → sends them to the vault
-    const harvestResult = await harvestAquarius(
-      keypair,
-      server,
-      networkPassphrase,
-      vaultId
-    );
+    const strategies = VAULT_STRATEGIES[vaultId] ?? [];
 
-    // 2. Invest idle funds (includes any AQUA-converted idle if applicable)
+    // Harvest Aquarius rewards only for the CETES vault (which has Aquarius strategy).
+    const hasCetesStrategies = strategies.some((s) => s.name === "Aquarius");
+    const harvestResult = hasCetesStrategies
+      ? await harvestAquarius(keypair, server, networkPassphrase, vaultId)
+      : { hash: "", status: "skipped" };
+
     const investResult = await investIdle(
       client,
       keypair,
       server,
-      networkPassphrase
+      networkPassphrase,
+      strategies
     );
 
-    // 3. Collect fees (report → lock → distribute)
     const feesResult = await collectFees(
       client,
       keypair,

@@ -8,16 +8,20 @@ import { VaultCard } from "./VaultCard";
 interface VaultGridProps {
   vaults: VaultView[];
   isLoading?: boolean;
+  userBalances?: Record<string, bigint>;
   onDetailsClick?: (vault: VaultView) => void;
   onDepositClick?: (vault: VaultView) => void;
+  onWithdrawClick?: (vault: VaultView) => void;
   emptySubtitle?: string;
 }
 
 export const VaultGrid: React.FC<VaultGridProps> = ({
   vaults,
   isLoading,
+  userBalances,
   onDetailsClick,
   onDepositClick,
+  onWithdrawClick,
   emptySubtitle = "Try adjusting your filters",
 }) => {
   if (vaults.length === 0) {
@@ -49,8 +53,10 @@ export const VaultGrid: React.FC<VaultGridProps> = ({
           key={vault.id}
           vault={vault}
           isLoading={isLoading}
+          userBalance={userBalances?.[vault.id]}
           onDetailsClick={onDetailsClick}
           onDepositClick={onDepositClick}
+          onWithdrawClick={onWithdrawClick}
         />
       ))}
     </div>

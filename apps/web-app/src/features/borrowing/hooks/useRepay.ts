@@ -61,7 +61,11 @@ export function useRepay() {
 
       const signAndSend = (xdr: string) =>
         signAndSendTransaction(xdr, signTransaction as SignTransactionFn, {
-          networkPassphrase: networkPassphrase || Networks.TESTNET,
+          networkPassphrase: (() => {
+            if (!networkPassphrase)
+              throw new Error("Network passphrase not available");
+            return networkPassphrase;
+          })(),
           rpcUrl,
           address,
           waitForPending: true,
