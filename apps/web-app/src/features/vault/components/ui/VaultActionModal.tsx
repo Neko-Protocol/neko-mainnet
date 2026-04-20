@@ -16,6 +16,7 @@ interface VaultActionModalProps {
   onClose: () => void;
   supplyAssetContractAddress?: string;
   supplyAssetSymbol?: string;
+  vaultShareSymbol?: string;
 }
 
 export function VaultActionModal({
@@ -24,6 +25,7 @@ export function VaultActionModal({
   onClose,
   supplyAssetContractAddress,
   supplyAssetSymbol,
+  vaultShareSymbol,
 }: VaultActionModalProps) {
   const [visible, setVisible] = useState(false);
   const [amount, setAmount] = useState("");
@@ -150,7 +152,7 @@ export function VaultActionModal({
               <span className="text-white/40">
                 {mode === "deposit"
                   ? `${supplyLabel} Balance`
-                  : "dfTokens Balance"}
+                  : `${vaultShareSymbol ?? "Shares"} Balance`}
               </span>
               <span className="text-white/60 font-mono">
                 {mode === "deposit" ? supplyBalance : sharesFormatted}
@@ -181,7 +183,7 @@ export function VaultActionModal({
               </div>
               <div className="flex justify-between">
                 <span className="text-white/40">Network</span>
-                <span className="text-white/60">Stellar Testnet</span>
+                <span className="text-white/60">Stellar Mainnet</span>
               </div>
               {mode === "deposit" && (
                 <div className="flex justify-between">

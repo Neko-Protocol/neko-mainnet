@@ -53,9 +53,7 @@ export default function InterestRateParamsForm() {
       reactivity: Math.round(parseFloat(reactivity) * SCALAR_7) || 0,
       enabled,
       l_factor: pctTo7(parseFloat(lFactor) || 0),
-      supply_cap: BigInt(
-        Math.round((parseFloat(supplyCap) || 0) * 10 ** 7)
-      ),
+      supply_cap: BigInt(Math.round((parseFloat(supplyCap) || 0) * 10 ** 7)),
     };
 
     if (params.target_util > 9_500_000) {
@@ -89,7 +87,11 @@ export default function InterestRateParamsForm() {
         return;
       }
       await signAndSendTransaction(result.xdr, signTransaction, {
-        networkPassphrase: networkPassphrase || Networks.TESTNET,
+        networkPassphrase: (() => {
+          if (!networkPassphrase)
+            throw new Error("Network passphrase not available");
+          return networkPassphrase;
+        })(),
         rpcUrl,
         address,
         waitForPending: true,

@@ -60,7 +60,11 @@ function TreasuryFeesTableInner({ pool }: { pool: (typeof POOLS)[number] }) {
         return;
       }
       await signAndSendTransaction(result.xdr, signTransaction, {
-        networkPassphrase: networkPassphrase || Networks.TESTNET,
+        networkPassphrase: (() => {
+          if (!networkPassphrase)
+            throw new Error("Network passphrase not available");
+          return networkPassphrase;
+        })(),
         rpcUrl,
         address,
         waitForPending: true,

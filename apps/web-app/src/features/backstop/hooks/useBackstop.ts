@@ -102,13 +102,15 @@ export function useBackstop(contractId: string) {
       if (!address || !amount || parseFloat(amount) <= 0) return;
       setIsLoading(true);
       try {
-        const passphrase = networkPassphrase || Networks.TESTNET;
+        if (!networkPassphrase)
+          throw new Error("Network passphrase not available");
+        const passphrase = networkPassphrase;
         const sorobanServer = new rpc.Server(rpcUrl, {
           allowHttp: stellarNetwork === "LOCAL",
         });
 
         const depositXdr = await depositToBackstop(amount, address, contractId);
-        const signedDeposit = await signTransaction(depositXdr as any, {
+        const signedDeposit = await signTransaction(depositXdr as string, {
           networkPassphrase: passphrase,
           address,
         });
@@ -144,7 +146,9 @@ export function useBackstop(contractId: string) {
       if (!address || !amount || parseFloat(amount) <= 0) return;
       setIsLoading(true);
       try {
-        const passphrase = networkPassphrase || Networks.TESTNET;
+        if (!networkPassphrase)
+          throw new Error("Network passphrase not available");
+        const passphrase = networkPassphrase;
         const sorobanServer = new rpc.Server(rpcUrl, {
           allowHttp: stellarNetwork === "LOCAL",
         });
@@ -154,7 +158,7 @@ export function useBackstop(contractId: string) {
           address,
           contractId
         );
-        const signed = await signTransaction(xdr as any, {
+        const signed = await signTransaction(xdr as string, {
           networkPassphrase: passphrase,
           address,
         });
@@ -192,13 +196,15 @@ export function useBackstop(contractId: string) {
       if (!address || !amount || parseFloat(amount) <= 0) return;
       setIsLoading(true);
       try {
-        const passphrase = networkPassphrase || Networks.TESTNET;
+        if (!networkPassphrase)
+          throw new Error("Network passphrase not available");
+        const passphrase = networkPassphrase;
         const sorobanServer = new rpc.Server(rpcUrl, {
           allowHttp: stellarNetwork === "LOCAL",
         });
 
         const xdr = await withdrawFromBackstop(amount, address, contractId);
-        const signed = await signTransaction(xdr as any, {
+        const signed = await signTransaction(xdr as string, {
           networkPassphrase: passphrase,
           address,
         });

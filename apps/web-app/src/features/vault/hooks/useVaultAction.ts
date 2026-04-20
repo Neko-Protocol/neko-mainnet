@@ -88,7 +88,10 @@ export function useVaultAction(
       setIsLoading(true);
 
       try {
-        const passphrase = walletPassphrase || Networks.TESTNET;
+        if (!walletPassphrase) {
+          throw new Error("Wallet passphrase not available");
+        }
+        const passphrase = walletPassphrase;
 
         // Client needs publicKey so simulation uses the real user account
         const client = new DefindexVaultClient({
@@ -152,7 +155,10 @@ export function useVaultAction(
       setIsLoading(true);
 
       try {
-        const passphrase = walletPassphrase || Networks.TESTNET;
+        if (!walletPassphrase) {
+          throw new Error("Wallet passphrase not available");
+        }
+        const passphrase = walletPassphrase;
 
         const client = new DefindexVaultClient({
           contractId: vaultContractId,
@@ -179,7 +185,7 @@ export function useVaultAction(
 
         await new Promise((r) => setTimeout(r, 3000));
         await Promise.all([refetchBalance(), refetchVaultData()]);
-        showSuccess(`Successfully withdrew ${shares} dfTokens`);
+        showSuccess(`Successfully withdrew ${shares} ${symbol ?? "shares"}`);
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
         showError(

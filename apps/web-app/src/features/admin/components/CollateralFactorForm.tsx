@@ -121,7 +121,11 @@ export default function CollateralFactorForm() {
         return;
       }
       await signAndSendTransaction(result.xdr, signTransaction, {
-        networkPassphrase: networkPassphrase || Networks.TESTNET,
+        networkPassphrase: (() => {
+          if (!networkPassphrase)
+            throw new Error("Network passphrase not available");
+          return networkPassphrase;
+        })(),
         rpcUrl,
         address,
         waitForPending: true,

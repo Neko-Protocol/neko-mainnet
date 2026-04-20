@@ -38,6 +38,7 @@ export function useVaultBalance(contractId: string | null | undefined) {
     enabled: !!address && !!contractId && !!client,
     staleTime: 30_000,
     gcTime: 5 * 60_000,
+    refetchInterval: 30_000,
     refetchOnWindowFocus: false,
     retry: false,
     throwOnError: false,

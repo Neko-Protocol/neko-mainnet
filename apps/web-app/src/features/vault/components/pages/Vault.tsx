@@ -1,6 +1,10 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import Image from "next/image";
+import { ChevronDown } from "lucide-react";
+import { useQueries } from "@tanstack/react-query";
+import { useWallet } from "@/hooks/useWallet";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { VaultGrid } from "../ui/VaultGrid";
@@ -8,8 +12,14 @@ import { VaultDetailModal } from "../ui/VaultDetailModal";
 import { VaultTabs, type VaultTabKey } from "../ui/VaultTabs";
 import { VaultActionModal } from "../ui/VaultActionModal";
 import MyVaultPositions from "../ui/MyVaultPositions";
+import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useDefindexVaults } from "../../hooks/useDefindexVaults";
 import { useVaultData } from "../../hooks/useVaultData";
+import {
+  rpcUrl,
+  networkPassphrase,
+  allowHttpForSoroban,
+} from "@/lib/constants/network";
 import type { VaultView } from "../../types/vault";
 
 const Vault: React.FC = () => {
@@ -18,6 +28,22 @@ const Vault: React.FC = () => {
   const [pendingActionVault, setPendingActionVault] =
     useState<VaultView | null>(null);
   const [activeTab, setActiveTab] = useState<VaultTabKey>("vaults");
+  const [assetFilter, setAssetFilter] = useState<string | null>(null);
+  const [assetDropdownOpen, setAssetDropdownOpen] = useState(false);
+  const assetDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        assetDropdownRef.current &&
+        !assetDropdownRef.current.contains(e.target as Node)
+      ) {
+        setAssetDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
   const [actionModal, setActionModal] = useState<{
     open: boolean;
     isDeposit: boolean;
@@ -34,7 +60,7 @@ const Vault: React.FC = () => {
       );
     }
     if (defindexPayload?.error === "unsupported_network") {
-      return "Unsupported Stellar network for DeFindex. Use PUBLIC (mainnet) or TESTNET.";
+      return "Unsupported network. DeFindex requires Stellar Mainnet.";
     }
     if (defindexPayload?.error === "no_vault_ids") {
       return (
@@ -65,6 +91,39 @@ const Vault: React.FC = () => {
   const { data: liveVaultData, isLoading: isLoadingLive } =
     useVaultData(activeContractId);
 
+  const { address } = useWallet();
+
+  // Fetch all vault balances in parallel
+  const balanceQueries = useQueries({
+    queries: (vaultsFromApi || []).map((v) => ({
+      queryKey: ["vaultBalance", v.detail?.contracts?.vault, address],
+      queryFn: async () => {
+        if (!address || !v.detail?.contracts?.vault) return 0n;
+        const client = new DefindexVaultClient({
+          contractId: v.detail.contracts.vault,
+          rpcUrl,
+          networkPassphrase,
+          ...(allowHttpForSoroban && { allowHttp: true }),
+        });
+        const tx = await client.balance({ id: address }, { simulate: true });
+        return BigInt(tx.result?.toString() ?? "0");
+      },
+      enabled: !!address && !!v.detail?.contracts?.vault,
+      staleTime: 30_000,
+      refetchInterval: 30_000,
+      retry: false,
+    })),
+  });
+
+  // Build userBalances map from vault ID to balance
+  const userBalances = useMemo(() => {
+    const map: Record<string, bigint> = {};
+    vaultsFromApi.forEach((vault, idx) => {
+      map[vault.id] = balanceQueries[idx]?.data ?? 0n;
+    });
+    return map;
+  }, [vaultsFromApi, balanceQueries]);
+
   const vaults = useMemo<VaultView[]>(() => {
     if (vaultsFromApi.length === 0) return [];
     if (!liveVaultData || !activeContractId) return vaultsFromApi;
@@ -76,11 +135,33 @@ const Vault: React.FC = () => {
         tvl: liveVaultData.tvl > 0n ? liveVaultData.tvlFormatted : v.tvl,
         totalSupply:
           liveVaultData.totalShares > 0n
-            ? `${(Number(liveVaultData.totalShares) / 1e7).toLocaleString()} dfTokens`
+            ? `${(Number(liveVaultData.totalShares) / 1e7).toLocaleString()} shares`
             : v.totalSupply,
       };
     });
   }, [vaultsFromApi, liveVaultData, activeContractId]);
+
+  const assetOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    vaultsFromApi.forEach((v) => {
+      if (v.supplyAsset?.symbol && !map.has(v.supplyAsset.symbol)) {
+        map.set(v.supplyAsset.symbol, v.supplyAsset.iconSrc);
+      }
+    });
+    return Array.from(map.entries())
+      .map(([symbol, iconSrc]) => ({ symbol, iconSrc }))
+      .sort((a, b) => a.symbol.localeCompare(b.symbol));
+  }, [vaultsFromApi]);
+
+  const assetSymbols = useMemo(
+    () => assetOptions.map((o) => o.symbol),
+    [assetOptions]
+  );
+
+  const filteredVaults = useMemo(() => {
+    if (!assetFilter) return vaults;
+    return vaults.filter((v) => v.supplyAsset?.symbol === assetFilter);
+  }, [vaults, assetFilter]);
 
   const displayVault =
     pendingActionVault ?? selectedVault ?? vaultsFromApi[0] ?? null;
@@ -88,8 +169,8 @@ const Vault: React.FC = () => {
   const gridLoading = isLoading || isFetching;
   const rowLoading = isLoadingLive && !!activeContractId;
 
-  const openDepositModal = () =>
-    setActionModal({ open: true, isDeposit: true });
+  const openDepositModal = (isDeposit = true) =>
+    setActionModal({ open: true, isDeposit });
 
   const closeActionModal = () => {
     setPendingActionVault(null);
@@ -107,26 +188,104 @@ const Vault: React.FC = () => {
         className="mb-8"
       />
 
-      <div className="mb-6 w-full min-w-0">
+      <div className="mb-6 w-full min-w-0 flex items-center justify-between gap-4">
         <VaultTabs activeTab={activeTab} onChange={setActiveTab} />
+        {activeTab === "vaults" && assetOptions.length >= 2 && (
+          <div ref={assetDropdownRef} className="relative shrink-0">
+            <button
+              onClick={() => setAssetDropdownOpen((o) => !o)}
+              className="flex items-center gap-2 bg-[#1C1C1C] border border-white/10 text-white/70 text-xs rounded-lg pl-3 pr-2.5 py-2 outline-none hover:border-white/20 transition-colors cursor-pointer"
+            >
+              {assetFilter ? (
+                <>
+                  <Image
+                    src={
+                      assetOptions.find((o) => o.symbol === assetFilter)
+                        ?.iconSrc ?? ""
+                    }
+                    alt={assetFilter}
+                    width={16}
+                    height={16}
+                    className="rounded-full"
+                    unoptimized
+                  />
+                  <span>{assetFilter}</span>
+                </>
+              ) : (
+                <span>All assets</span>
+              )}
+              <ChevronDown
+                className={`h-3.5 w-3.5 text-white/40 transition-transform ${assetDropdownOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {assetDropdownOpen && (
+              <div className="absolute right-0 top-full mt-1 z-20 min-w-[140px] rounded-xl bg-[#1C1C1C] border border-white/10 shadow-xl overflow-hidden">
+                <button
+                  onClick={() => {
+                    setAssetFilter(null);
+                    setAssetDropdownOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs transition-colors hover:bg-white/5 ${!assetFilter ? "text-white" : "text-white/50"}`}
+                >
+                  All assets
+                </button>
+                {assetOptions.map(({ symbol, iconSrc }) => (
+                  <button
+                    key={symbol}
+                    onClick={() => {
+                      setAssetFilter(symbol);
+                      setAssetDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs transition-colors hover:bg-white/5 ${assetFilter === symbol ? "text-white" : "text-white/50"}`}
+                  >
+                    <Image
+                      src={iconSrc}
+                      alt={symbol}
+                      width={16}
+                      height={16}
+                      className="rounded-full"
+                      unoptimized
+                    />
+                    {symbol}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {activeTab === "vaults" ? (
         <VaultGrid
-          vaults={vaults}
+          vaults={filteredVaults}
           isLoading={gridLoading || rowLoading}
+          userBalances={userBalances}
           onDetailsClick={setSelectedVault}
           onDepositClick={(v) => {
-            setPendingActionVault(null);
-            setSelectedVault(v);
-            openDepositModal();
+            setSelectedVault(null);
+            setPendingActionVault(v);
+            openDepositModal(true);
+          }}
+          onWithdrawClick={(v) => {
+            setSelectedVault(null);
+            setPendingActionVault(v);
+            openDepositModal(false);
           }}
           emptySubtitle={emptyVaultSubtitle}
         />
       ) : (
         <MyVaultPositions
-          vaultContractId={activeContractId}
-          vault={displayVault}
+          vaults={vaults}
+          userBalances={userBalances}
+          onDeposit={(v) => {
+            setPendingActionVault(v);
+            openDepositModal(true);
+          }}
+          onWithdraw={(v) => {
+            setPendingActionVault(v);
+            openDepositModal(false);
+          }}
         />
       )}
 
@@ -144,11 +303,13 @@ const Vault: React.FC = () => {
 
       {actionModal.open && activeContractId && (
         <VaultActionModal
+          key={`${activeContractId}-${actionModal.isDeposit}`}
           vaultContractId={activeContractId}
           isDeposit={actionModal.isDeposit}
           onClose={closeActionModal}
           supplyAssetContractAddress={displayVault?.supplyAsset.contractAddress}
           supplyAssetSymbol={displayVault?.supplyAsset.symbol}
+          vaultShareSymbol={displayVault?.name}
         />
       )}
     </PageContainer>

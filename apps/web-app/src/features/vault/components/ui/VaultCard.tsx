@@ -8,8 +8,10 @@ import { VaultAssetIllustrations } from "./VaultAssetIllustrations";
 interface VaultCardProps {
   vault: VaultView;
   isLoading?: boolean;
+  userBalance?: bigint;
   onDetailsClick?: (vault: VaultView) => void;
   onDepositClick?: (vault: VaultView) => void;
+  onWithdrawClick?: (vault: VaultView) => void;
 }
 
 const CATEGORY_LABEL: Record<VaultCategory, string> = {
@@ -22,11 +24,14 @@ const CATEGORY_LABEL: Record<VaultCategory, string> = {
 export const VaultCard: React.FC<VaultCardProps> = ({
   vault,
   isLoading,
+  userBalance,
   onDetailsClick,
   onDepositClick,
+  onWithdrawClick,
 }) => {
   const isLight = (vault.variant ?? "light") === "light";
   const categoryLabel = CATEGORY_LABEL[vault.category];
+  const hasPosition = userBalance && userBalance > 0n;
 
   return (
     <div
@@ -189,11 +194,17 @@ export const VaultCard: React.FC<VaultCardProps> = ({
         style={{ background: isLight ? "#141414" : "#181818" }}
       >
         <button
-          aria-label={`View details for ${vault.name}`}
-          onClick={() => onDetailsClick?.(vault)}
+          aria-label={
+            hasPosition
+              ? `Withdraw from ${vault.name}`
+              : `View details for ${vault.name}`
+          }
+          onClick={() =>
+            hasPosition ? onWithdrawClick?.(vault) : onDetailsClick?.(vault)
+          }
           className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-white/15 hover:border-white/35 text-white/60 hover:text-white bg-transparent"
         >
-          Details
+          {hasPosition ? "Withdraw" : "Details"}
         </button>
         <button
           aria-label={`Deposit into ${vault.name}`}
