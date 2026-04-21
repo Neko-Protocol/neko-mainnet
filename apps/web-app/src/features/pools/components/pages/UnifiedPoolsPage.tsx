@@ -7,7 +7,6 @@ import { stellarNetwork } from "@/lib/constants/network";
 
 import { useLend } from "@/features/lending/hooks/useLend";
 import { LendTable } from "@/features/lending/components/ui/LendTable";
-import { LendProtocolFilter } from "@/features/lending/components/ui/LendProtocolFilter";
 import { LendModal } from "@/features/lending/components/ui/LendModal";
 import MyLendingPositions from "@/features/lending/components/ui/MyLendingPositions";
 import { BackstopPanel } from "@/features/lending/components/ui/BackstopPanel";
@@ -83,6 +82,8 @@ function LendingPanel() {
     closeModal,
     handleConfirm,
     refreshBalance,
+    searchQuery,
+    setSearchQuery,
   } = useLend();
 
   useEffect(() => {
@@ -97,34 +98,22 @@ function LendingPanel() {
         tabs={[...lendTabs]}
         active={activeTab}
         onChange={setActiveTab}
-        trailing={
-          activeTab === "pools" && protocolOptions.length > 0 ? (
-            <LendProtocolFilter
-              value={protocolFilter}
-              onChange={setProtocolFilter}
-              options={protocolOptions}
-              disabled={isLoadingPools}
-            />
-          ) : null
-        }
       />
 
       {activeTab === "pools" && (
         <>
           <LendTable
             pools={pools}
-            paginatedPools={paginatedPools}
-            page={page}
-            totalRows={totalRows}
-            totalPages={totalPages}
-            rowsPerPage={rowsPerPage}
-            onPageChange={setPage}
-            onRowsPerPageChange={changeRowsPerPage}
             isLoading={isLoadingPools}
             isFetching={isFetchingPools}
             error={poolsError}
             onDeposit={(pool) => openModal(pool, true)}
             onWithdraw={(pool) => openModal(pool, false)}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            protocolFilter={protocolFilter}
+            onProtocolFilterChange={setProtocolFilter}
+            protocolOptions={protocolOptions}
           />
           {isModalOpen && selectedPool && (
             <LendModal

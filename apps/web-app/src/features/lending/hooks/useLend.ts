@@ -47,6 +47,7 @@ export function useLend() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [protocolFilter, setProtocolFilterState] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { address, signTransaction, networkPassphrase } = useWallet();
   const { addNotification } = useToast();
@@ -128,8 +129,8 @@ export function useLend() {
           liquidityUsd && parseFloat(liquidityUsd) > 0
             ? formatLiquidity(liquidityUsd)
             : p.tvl > 0n
-            ? formatLiquidity(fromSmallestUnit(p.tvl.toString(), decimals))
-            : "—";
+              ? formatLiquidity(fromSmallestUnit(p.tvl.toString(), decimals))
+              : "—";
         const contractId = p.id.split(":")[1] ?? p.id;
         const canInteract = p.supportedActions.includes("deposit");
         return {
@@ -171,9 +172,21 @@ export function useLend() {
   }, [pools]);
 
   const filteredPools = useMemo(() => {
-    if (protocolFilter === "all") return pools;
-    return pools.filter((p) => p.protocolId === protocolFilter);
-  }, [pools, protocolFilter]);
+    let result =
+      protocolFilter === "all"
+        ? pools
+        : pools.filter((p) => p.protocolId === protocolFilter);
+    const q = searchQuery.toLowerCase().trim();
+    if (q) {
+      result = result.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.token1.toLowerCase().includes(q) ||
+          p.token2.toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [pools, protocolFilter, searchQuery]);
 
   const totalRows = filteredPools.length;
   const totalPages = Math.ceil(totalRows / rowsPerPage);
@@ -184,6 +197,11 @@ export function useLend() {
 
   const setProtocolFilter = useCallback((id: string) => {
     setProtocolFilterState(id);
+    setPage(0);
+  }, []);
+
+  const handleSetSearchQuery = useCallback((q: string) => {
+    setSearchQuery(q);
     setPage(0);
   }, []);
 
@@ -392,5 +410,7 @@ export function useLend() {
     closeModal,
     handleConfirm,
     refreshBalance: loadBTokenBalance,
+    searchQuery,
+    setSearchQuery: handleSetSearchQuery,
   };
 }
