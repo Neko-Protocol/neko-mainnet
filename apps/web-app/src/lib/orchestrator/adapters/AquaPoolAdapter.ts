@@ -25,6 +25,8 @@ import {
   horizonUrl,
   stellarNetwork,
 } from "@/lib/constants/network";
+import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
+import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 
 // Aqua pool type identifiers as returned by the REST API
 type AquaPoolType = "constant_product" | "stable_swap" | "stable";
@@ -75,7 +77,12 @@ function parseTokenStr(tokenStr: string, contractAddress: string): TokenInfo {
 
   const colonIdx = tokenStr.indexOf(":");
   if (colonIdx === -1) {
-    return { address: contractAddress, code: tokenStr, name: tokenStr, decimals: 7 };
+    return {
+      address: contractAddress,
+      code: tokenStr,
+      name: tokenStr,
+      decimals: 7,
+    };
   }
 
   const code = tokenStr.slice(0, colonIdx);
@@ -180,16 +187,54 @@ export class AquaPoolAdapter implements BasePoolAdapter {
 
   async getUserPosition(
     poolId: string,
-    _userAddress: string
+    userAddress: string
   ): Promise<PoolPosition> {
-    return {
-      poolId: `aqua:${poolId}`,
+    const fullPoolId = `aqua:${poolId}`;
+    const emptyPosition: PoolPosition = {
+      poolId: fullPoolId,
       deposited: 0n,
       depositedFormatted: "0",
       rewards: 0n,
       rewardsFormatted: "0",
       metadata: {},
     };
+
+    try {
+      const poolInfo = await this.getPoolInfo(poolId);
+      const shareTokenAddress = poolInfo.metadata.shareTokenAddress as
+        | string
+        | undefined;
+      if (!shareTokenAddress) {
+        return emptyPosition;
+      }
+
+      const shareTokenDecimals = 7;
+      const depositedFormatted = await getTokenBalanceFromContract(
+        shareTokenAddress,
+        userAddress,
+        shareTokenDecimals
+      );
+      const deposited = toBigIntFromDecimalString(
+        depositedFormatted,
+        shareTokenDecimals
+      );
+
+      return {
+        poolId: fullPoolId,
+        deposited,
+        depositedFormatted: fromSmallestUnit(
+          deposited.toString(),
+          shareTokenDecimals
+        ),
+        rewards: 0n,
+        rewardsFormatted: "0",
+        metadata: {
+          shareTokenAddress,
+        },
+      };
+    } catch {
+      return emptyPosition;
+    }
   }
 
   async deposit(
@@ -306,4 +351,14 @@ export class AquaPoolAdapter implements BasePoolAdapter {
   supportsAction(action: PoolAction): boolean {
     return SUPPORTED_ACTIONS.includes(action);
   }
+}
+
+function toBigIntFromDecimalString(value: string, decimals: number): bigint {
+  if (!value || value === "0") return 0n;
+  const [integerPart = "0", fractionPart = ""] = value.split(".");
+  const normalizedFraction = fractionPart
+    .slice(0, decimals)
+    .padEnd(decimals, "0");
+  const normalizedInteger = integerPart.replace(/^0+(?=\d)/, "") || "0";
+  return BigInt(`${normalizedInteger}${normalizedFraction}`);
 }

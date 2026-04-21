@@ -5,6 +5,7 @@ import {
 } from "@/lib/helpers/stellar/soroswap";
 import { networkPassphrase } from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 
 import type { BasePoolAdapter } from "../types/adapter.types";
 import type {
@@ -221,9 +222,9 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
 
   async getUserPosition(
     poolId: string,
-    _userAddress: string
+    userAddress: string
   ): Promise<PoolPosition> {
-    return {
+    const emptyPosition: PoolPosition = {
       poolId: `soroswap:${poolId}`,
       deposited: 0n,
       depositedFormatted: "0",
@@ -231,6 +232,48 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       rewardsFormatted: "0",
       metadata: {},
     };
+
+    try {
+      const { codeA, codeB } = parsePairId(poolId);
+      const tokenA = resolveToken(codeA);
+      const tokenB = resolveToken(codeB);
+      const pools = await getPool({
+        tokenA: tokenA.address,
+        tokenB: tokenB.address,
+      });
+
+      const pool = pools[0];
+      if (!pool?.address) {
+        return emptyPosition;
+      }
+
+      const lpTokenDecimals = 7;
+      const depositedFormatted = await getTokenBalanceFromContract(
+        pool.address,
+        userAddress,
+        lpTokenDecimals
+      );
+      const deposited = toBigIntFromDecimalString(
+        depositedFormatted,
+        lpTokenDecimals
+      );
+
+      return {
+        poolId: `soroswap:${poolId}`,
+        deposited,
+        depositedFormatted: fromSmallestUnit(
+          deposited.toString(),
+          lpTokenDecimals
+        ),
+        rewards: 0n,
+        rewardsFormatted: "0",
+        metadata: {
+          lpTokenAddress: pool.address,
+        },
+      };
+    } catch {
+      return emptyPosition;
+    }
   }
 
   async deposit(
@@ -310,7 +353,6 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       throw new AdapterError("soroswap", "deposit", error);
     }
   }
-
   async withdraw(): Promise<TransactionResult> {
     throw new UnsupportedActionError(
       "soroswap",
@@ -326,4 +368,14 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
     if (action === "withdraw") return false;
     return SUPPORTED_ACTIONS.includes(action);
   }
+}
+
+function toBigIntFromDecimalString(value: string, decimals: number): bigint {
+  if (!value || value === "0") return 0n;
+  const [integerPart = "0", fractionPart = ""] = value.split(".");
+  const normalizedFraction = fractionPart
+    .slice(0, decimals)
+    .padEnd(decimals, "0");
+  const normalizedInteger = integerPart.replace(/^0+(?=\d)/, "") || "0";
+  return BigInt(`${normalizedInteger}${normalizedFraction}`);
 }
