@@ -57,6 +57,7 @@ export interface VaultConfig {
   collateralAssets: VaultAsset[];
   createdBy: string;
   creatorIconSrc?: string;
+  issuerIconSrc?: string;
   variant?: VaultCardVariant;
   featured?: boolean;
   detail?: VaultDetail;

@@ -68,14 +68,14 @@ export const VaultCard: React.FC<VaultCardProps> = ({
 
         {/* icon + name + badge */}
         <div className="relative z-10 flex items-center gap-3 px-5 py-4 pr-[46%]">
-          <div className="w-12 h-12 rounded-full bg-[#111] flex items-center justify-center shrink-0 overflow-hidden shadow-md">
+          <div className="w-12 h-12 shrink-0 ml-1">
             <Image
               src={cardHeaderIconSrc}
               alt={vault.supplyAsset.symbol}
               width={48}
               height={48}
               unoptimized
-              className={getTokenIconFitClass(vault.supplyAsset.symbol)}
+              className="h-full w-full object-contain"
             />
           </div>
 
@@ -110,6 +110,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
         <VaultAssetIllustrations
           collateralAssets={vault.collateralAssets}
           isLight={isLight}
+          issuerIconSrc={vault.issuerIconSrc}
         />
       </div>
 
