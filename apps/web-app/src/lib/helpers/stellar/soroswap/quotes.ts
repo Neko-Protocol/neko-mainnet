@@ -620,8 +620,8 @@ export const addLiquidity = async (
   }
 
   const requestBody = {
-    amountA: amountA.toString(),
-    amountB: amountB.toString(),
+    amountA,
+    amountB,
     to: request.to,
     slippageBps: request.slippageBps || 500,
   };
