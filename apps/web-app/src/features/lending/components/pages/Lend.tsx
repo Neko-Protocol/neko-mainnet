@@ -113,13 +113,6 @@ const Lend: React.FC = () => {
         <>
           <LendTable
             pools={pools}
-            paginatedPools={paginatedPools}
-            page={page}
-            totalRows={totalRows}
-            totalPages={totalPages}
-            rowsPerPage={rowsPerPage}
-            onPageChange={setPage}
-            onRowsPerPageChange={changeRowsPerPage}
             isLoading={isLoadingPools}
             isFetching={isFetchingPools}
             error={poolsError}

@@ -23,56 +23,55 @@ const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
   CBNKCU3HGFKHFOF7JTGXQCNKE3G3DXS5RDBQUKQMIIECYKXPIOUGB2S3: {
     createdBy: "Beans",
     creatorIconSrc: "/assets/vault-creators/beans.jpeg",
+    issuerIconSrc: "/assets/vault-assets/beans.svg",
   },
   // CETES Soroswap Earn
   CC24OISYJHWXZIFZBRJHFLVO5CNN3PQSKZE5BBBZLSSI5Z23TKC6GQY2: {
     createdBy: "Soroswap",
     creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
+    issuerIconSrc: "/assets/vault-assets/soroswap.svg",
   },
   // USTRY Soroswap Earn
   CDI7QVDTNDFEHB25VFQGMNFALGCXXKAWUSHOTQR2D4O44CATQJ5ZQMN6: {
     createdBy: "Soroswap",
     creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
+    issuerIconSrc: "/assets/vault-assets/soroswap.svg",
   },
   // USDC Soroswap Earn
   CA2FIPJ7U6BG3N7EOZFI74XPJZOEOD4TYWXFVCIO5VDCHTVAGS6F4UKK: {
     createdBy: "Soroswap",
     creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
+    issuerIconSrc: "/assets/vault-assets/soroswap.svg",
   },
   // EURC Soroswap Earn
   CCKTLDG6I2MMJCKFWXXBXMA42LJ3XN2IOW6M7TK6EWNPJTS736ETFF2N: {
     createdBy: "Soroswap",
     creatorIconSrc: "/assets/vault-creators/soroswap.jpg",
+    issuerIconSrc: "/assets/vault-assets/soroswap.svg",
   },
   // EURC Beans
   CAIZ3NMNPEN5SQISJV7PD2YY6NI6DIPFA4PCRUBOGDE4I7A3DXDLK5OI: {
     createdBy: "Beans",
     creatorIconSrc: "/assets/vault-creators/beans.jpeg",
+    issuerIconSrc: "/assets/vault-assets/beans.svg",
   },
   // USDC HANA
   CBUJZL5QAD5TOPD7JMCBQ3RHR6RZWY34A4QF7UHILTDH2JF2Z3VJGY2Y: {
     createdBy: "HANA",
     creatorIconSrc: "/assets/vault-creators/hana.png",
-  },
-  // USDC xPortal
-  CD4JGS6BB5NZVSNKRNI43GUC6E3OBYLCLBQZJVTZLDVHQ5KDAOHVOIQF: {
-    createdBy: "xPortal",
-    creatorIconSrc: "/assets/vault-creators/xportal.svg",
-  },
-  // USDC Seevcash
-  CC767WIU5QGJMXYHDDYJAJEF2YWPHOXOZDWD3UUAZVS4KQPRXCKPT2YZ: {
-    createdBy: "Seevcash",
-    creatorIconSrc: "/assets/vault-creators/seevcash.svg",
+    issuerIconSrc: "/assets/vault-assets/hanah.svg",
   },
   // USDC Rozo
   CCDRFMZ7CH364ATQ5YSVTEJ3G3KPNFVM6TTC6N4T5REHWJS6LGVFP7MY: {
     createdBy: "Rozo",
     creatorIconSrc: "/assets/vault-creators/rozo.jpeg",
+    issuerIconSrc: "/assets/vault-assets/rozo.svg",
   },
   // USDC Meru
   CCA2ZJP5BVRXYTQH4FAGHCAUMRYCXVC4CRYC2NXHWMR7TIVX36U7F5HR: {
     createdBy: "Meru",
     creatorIconSrc: "/assets/vault-creators/meru.jpg",
+    issuerIconSrc: "/assets/vault-assets/meru.svg",
   },
 };
 

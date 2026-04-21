@@ -42,8 +42,7 @@ const AssetBreakdown: React.FC = () => {
   const totalRows = filteredAssets.length;
   const totalPages = Math.ceil(totalRows / rowsPerPage);
   const paginatedPools = useMemo(
-    () =>
-      filteredAssets.slice(page * rowsPerPage, (page + 1) * rowsPerPage),
+    () => filteredAssets.slice(page * rowsPerPage, (page + 1) * rowsPerPage),
     [filteredAssets, page, rowsPerPage]
   );
 
@@ -92,13 +91,6 @@ const AssetBreakdown: React.FC = () => {
 
       <LendTable
         pools={assets}
-        paginatedPools={paginatedPools}
-        page={page}
-        totalRows={totalRows}
-        totalPages={totalPages}
-        rowsPerPage={rowsPerPage}
-        onPageChange={setPage}
-        onRowsPerPageChange={changeRowsPerPage}
         isLoading={isLoading}
         error={error}
         onDeposit={handleAction}
