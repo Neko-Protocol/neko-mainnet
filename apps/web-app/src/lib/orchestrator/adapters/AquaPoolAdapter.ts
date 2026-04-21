@@ -75,7 +75,12 @@ function parseTokenStr(tokenStr: string, contractAddress: string): TokenInfo {
 
   const colonIdx = tokenStr.indexOf(":");
   if (colonIdx === -1) {
-    return { address: contractAddress, code: tokenStr, name: tokenStr, decimals: 7 };
+    return {
+      address: contractAddress,
+      code: tokenStr,
+      name: tokenStr,
+      decimals: 7,
+    };
   }
 
   const code = tokenStr.slice(0, colonIdx);
@@ -99,8 +104,13 @@ function mapApiPool(raw: AquaApiPool): PoolInfo {
     parseTokenStr(str, raw.tokens_addresses[i] ?? "")
   );
 
-  // total_apy is a decimal fraction (e.g. 0.0398 = 3.98%)
-  const apy = raw.total_apy ? parseFloat(String(raw.total_apy)) * 100 : 0;
+  // total_apy, apy, rewards_apy: decimal fractions (e.g. 0.0398 = 3.98%)
+  const totalApyStr = String(raw.total_apy ?? "");
+  const apy = totalApyStr ? parseFloat(totalApyStr) * 100 : 0;
+  const baseSupplyApy = raw.apy ? parseFloat(String(raw.apy)) * 100 : 0;
+  const rewardsApy = raw.rewards_apy
+    ? parseFloat(String(raw.rewards_apy)) * 100
+    : 0;
 
   // liquidity_usd from the API is in stroops-denominated USD (7 decimal places)
   // Values like "15963137326050.91" → divide by 1e7 → "$1596313.73"
@@ -134,6 +144,10 @@ function mapApiPool(raw: AquaApiPool): PoolInfo {
       shareTokenAddress: raw.share_token_address,
       liquidityUsd,
       reserves,
+      /** LP supply (base) APY % */
+      supplyApy: baseSupplyApy,
+      /** Additional rewards APY % */
+      rewardsApy,
     },
   };
 }

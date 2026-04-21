@@ -107,8 +107,6 @@ function LendingPanel() {
             isLoading={isLoadingPools}
             isFetching={isFetchingPools}
             error={poolsError}
-            onDeposit={(pool) => openModal(pool, true)}
-            onWithdraw={(pool) => openModal(pool, false)}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             protocolFilter={protocolFilter}
@@ -196,7 +194,6 @@ function BorrowingPanel() {
             totalRows={totalRows}
             totalPages={totalPages}
             rowsPerPage={rowsPerPage}
-            onBorrow={openModal}
             onPageChange={setPage}
             onRowsPerPageChange={changeRowsPerPage}
           />

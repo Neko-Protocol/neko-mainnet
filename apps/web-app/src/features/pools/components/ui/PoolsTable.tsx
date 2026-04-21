@@ -22,9 +22,6 @@ interface PoolsTableProps {
   isLoading: boolean;
   isFetching?: boolean;
   error: unknown;
-  onDetailsClick: (poolId: string) => void;
-  onLendClick?: (poolId: string) => void;
-  onSwapClick?: (poolId: string) => void;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -152,47 +149,6 @@ function StatusDot({ isActive }: { isActive: boolean }) {
   );
 }
 
-// ── ActionsCell ────────────────────────────────────────────────────────────────
-
-function ActionsCell({
-  poolId,
-  onDetailsClick,
-  onLendClick,
-  onSwapClick,
-}: {
-  poolId: string;
-  onDetailsClick: (id: string) => void;
-  onLendClick?: (id: string) => void;
-  onSwapClick?: (id: string) => void;
-}) {
-  return (
-    <div className="flex items-center justify-center gap-2">
-      <button
-        onClick={() => onDetailsClick(poolId)}
-        className="rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-3 py-1.5 text-white/70 hover:text-white text-xs font-semibold transition-colors"
-      >
-        Details →
-      </button>
-      {onLendClick && (
-        <button
-          onClick={() => onLendClick(poolId)}
-          className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-3 py-1.5 text-white text-xs font-bold transition-colors"
-        >
-          Lend
-        </button>
-      )}
-      {onSwapClick && (
-        <button
-          onClick={() => onSwapClick(poolId)}
-          className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-3 py-1.5 text-white text-xs font-bold transition-colors"
-        >
-          Swap
-        </button>
-      )}
-    </div>
-  );
-}
-
 // ── LoadingRow / EmptyRow ──────────────────────────────────────────────────────
 
 function LoadingRow({ colSpan }: { colSpan: number }) {
@@ -261,17 +217,15 @@ function StatCell({
 
 // ── PoolsTable ─────────────────────────────────────────────────────────────────
 
-const COL_SPAN = 6;
+const COL_SPAN = 5;
 
 export function PoolsTable({
   pools,
   isLoading,
   isFetching = false,
   error,
-  onDetailsClick,
-  onLendClick,
-  onSwapClick,
 }: PoolsTableProps) {
+  const router = useRouter();
   return (
     <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
       {/* Desktop table */}
@@ -294,11 +248,6 @@ export function PoolsTable({
                 centered
               />
               <ColHeader icon={Activity} label="Status" centered />
-              <th className="px-4 py-3 text-center">
-                <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
-                  Actions
-                </span>
-              </th>
             </tr>
           </thead>
           <tbody>
@@ -319,7 +268,8 @@ export function PoolsTable({
               pools.map((pool) => (
                 <tr
                   key={pool.id}
-                  className="border-b border-white/5 last:border-0 hover:bg-[#2A2A2A] transition-colors"
+                  onClick={() => router.push(`/pools/${pool.id}`)}
+                  className="border-b border-white/5 last:border-0 hover:bg-[#2A2A2A] transition-colors cursor-pointer"
                 >
                   <td className="px-4 py-4 align-middle">
                     <PoolCell pool={pool} />
@@ -335,14 +285,6 @@ export function PoolsTable({
                   </td>
                   <td className="px-4 py-4 align-middle">
                     <StatusDot isActive={pool.isActive} />
-                  </td>
-                  <td className="px-4 py-4 align-middle">
-                    <ActionsCell
-                      poolId={pool.id}
-                      onDetailsClick={onDetailsClick}
-                      onLendClick={onLendClick}
-                      onSwapClick={onSwapClick}
-                    />
                   </td>
                 </tr>
               ))
@@ -382,7 +324,11 @@ export function PoolsTable({
         ) : (
           <ul className="divide-y divide-white/5">
             {pools.map((pool) => (
-              <li key={pool.id} className="px-4 py-4">
+              <li
+                key={pool.id}
+                onClick={() => router.push(`/pools/${pool.id}`)}
+                className="px-4 py-4 cursor-pointer hover:bg-[#2A2A2A] transition-colors"
+              >
                 <div className="flex items-center justify-between mb-3">
                   <PoolCell pool={pool} />
                   <div className="flex items-center gap-2">
@@ -390,37 +336,13 @@ export function PoolsTable({
                     <StatusDot isActive={pool.isActive} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 mb-3">
+                <div className="grid grid-cols-2 gap-2">
                   <StatCell label="APY" value={pool.roi} icon={TrendingUp} />
                   <StatCell
                     label="Liquidity"
                     value={pool.liquidity}
                     icon={Droplets}
                   />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => onDetailsClick(pool.id)}
-                    className="flex-1 rounded-lg bg-[#2A2A2A] hover:bg-[#333] py-2 text-white/70 hover:text-white text-xs font-semibold transition-colors text-center"
-                  >
-                    Details →
-                  </button>
-                  {onLendClick && (
-                    <button
-                      onClick={() => onLendClick(pool.id)}
-                      className="flex-1 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] py-2 text-white text-xs font-bold transition-colors"
-                    >
-                      Lend
-                    </button>
-                  )}
-                  {onSwapClick && (
-                    <button
-                      onClick={() => onSwapClick(pool.id)}
-                      className="flex-1 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] py-2 text-white text-xs font-bold transition-colors"
-                    >
-                      Swap
-                    </button>
-                  )}
                 </div>
               </li>
             ))}
