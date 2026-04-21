@@ -770,6 +770,7 @@ interface LendTableProps {
   onDeposit: (pool: PoolData) => void;
   onWithdraw: (pool: PoolData) => void;
   hideActions?: boolean;
+  compact?: boolean;
   // Toolbar
   searchQuery?: string;
   onSearchChange?: (q: string) => void;
@@ -786,6 +787,7 @@ export function LendTable({
   onDeposit,
   onWithdraw,
   hideActions = false,
+  compact = false,
   searchQuery = "",
   onSearchChange,
   protocolFilter = "all",
@@ -954,7 +956,9 @@ export function LendTable({
           )}
         </div>
       )}
-      <div className="hidden md:block overflow-y-auto max-h-[600px] min-h-[420px] rounded-b-2xl">
+      <div
+        className={`hidden md:block overflow-y-auto max-h-[600px] rounded-b-2xl ${compact ? "" : "min-h-[420px]"}`}
+      >
         <table className="w-full">
           <thead className="sticky top-0 bg-[#1C1C1C] z-10">
             <tr className="border-b border-white/5">
@@ -1076,7 +1080,7 @@ export function LendTable({
       )}
 
       {}
-      <div className="md:hidden min-h-[420px]">
+      <div className={`md:hidden ${compact ? "" : "min-h-[420px]"}`}>
         {isLoading ? (
           <MobileEmptyState message="Loading pools…" />
         ) : error ? (

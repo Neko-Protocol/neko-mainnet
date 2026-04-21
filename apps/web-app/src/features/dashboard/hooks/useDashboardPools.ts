@@ -15,18 +15,38 @@ export function useDashboardPools(): UseDashboardPoolsResult {
   const { data: allPools = [], isLoading, error } = usePools();
 
   const assets = useMemo<PoolData[]>(() => {
-    return allPools
+    const numericLiquidity = (pool: PoolInfo): number => {
+      if (pool.type === "aqua" && pool.metadata?.liquidityUsd)
+        return parseFloat(String(pool.metadata.liquidityUsd));
+      const decimals = pool.tokens[0]?.decimals ?? 7;
+      return parseFloat(fromSmallestUnit(pool.tvl.toString(), decimals));
+    };
+
+    const depositPools = allPools
       .filter((pool: PoolInfo) => pool.supportedActions.includes("deposit"))
-      .slice(0, 4)
+      .sort((a, b) => numericLiquidity(b) - numericLiquidity(a));
+
+    // Take top 6 per protocol so the filter always has 6 options per protocol
+    const countByProtocol: Record<string, number> = {};
+    return depositPools
+      .filter((pool) => {
+        const count = countByProtocol[pool.type] ?? 0;
+        if (count >= 6) return false;
+        countByProtocol[pool.type] = count + 1;
+        return true;
+      })
       .map((pool: PoolInfo): PoolData => {
         const token1 = pool.tokens[0]?.code ?? "?";
         const token2 =
           pool.tokens.length > 1 ? (pool.tokens[1]?.code ?? "?") : "Lending";
 
         const decimals = pool.tokens[0]?.decimals ?? 7;
-        const liquidity = formatLiquidity(
-          fromSmallestUnit(pool.tvl.toString(), decimals)
-        );
+        // Aqua pools store USD liquidity in metadata; others use on-chain TVL
+        const rawLiquidity =
+          pool.type === "aqua" && pool.metadata?.liquidityUsd
+            ? String(pool.metadata.liquidityUsd)
+            : fromSmallestUnit(pool.tvl.toString(), decimals);
+        const liquidity = formatLiquidity(rawLiquidity);
 
         const apy = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
 
