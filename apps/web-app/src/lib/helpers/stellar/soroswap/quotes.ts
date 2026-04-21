@@ -619,16 +619,6 @@ export const addLiquidity = async (
     );
   }
 
-  const network = getCurrentNetwork();
-  const apiNetwork =
-    network === "standalone" || network === "local" ? "testnet" : network;
-
-  const queryParams = new URLSearchParams({
-    network: apiNetwork,
-    protocol: "soroswap",
-  });
-  const endpoint = `/pools/${assetA}/${assetB}?${queryParams.toString()}`;
-
   const requestBody = {
     amountA: amountA.toString(),
     amountB: amountB.toString(),
@@ -637,16 +627,27 @@ export const addLiquidity = async (
   };
 
   try {
-    const addLiquidityResponse = await makeAPIRequest<{ xdr: string }>(
-      endpoint,
-      {
-        method: "POST",
-        body: JSON.stringify(requestBody),
-      }
-    );
+    const sdk = getSoroswapSDK();
+    const addLiquidityResponse = (await sdk.addLiquidity({
+      assetA,
+      assetB,
+      amountA: requestBody.amountA,
+      amountB: requestBody.amountB,
+      to: requestBody.to,
+      slippageBps: String(requestBody.slippageBps),
+    })) as { xdr?: string };
 
-    if (!addLiquidityResponse.xdr) {
-      throw new Error("No XDR returned from add liquidity API");
+    if (!addLiquidityResponse || typeof addLiquidityResponse !== "object") {
+      throw new Error("Invalid add liquidity response from Soroswap SDK");
+    }
+
+    if (
+      !addLiquidityResponse.xdr ||
+      typeof addLiquidityResponse.xdr !== "string"
+    ) {
+      throw new Error(
+        "No XDR returned from Soroswap SDK addLiquidity response"
+      );
     }
 
     return { xdr: addLiquidityResponse.xdr };
@@ -685,9 +686,7 @@ export const addLiquidity = async (
         errorMessage.includes("400") ||
         errorMessage.includes("Bad Request")
       ) {
-        throw new Error(
-          `Invalid request to Soroswap API (400): ${errorMessage}`
-        );
+        throw new Error(`Invalid add liquidity request (400): ${errorMessage}`);
       }
 
       throw error;

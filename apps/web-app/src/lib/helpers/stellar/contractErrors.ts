@@ -5,6 +5,22 @@ import {
   getContractError,
 } from "@/lib/constants/contracts";
 
+function isLikelyTransportError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  const transportPatterns = [
+    "failed to fetch",
+    "networkerror",
+    "network error",
+    "timeout",
+    "timed out",
+    "econn",
+    "enotfound",
+    "eai_again",
+    "socket hang up",
+  ];
+  return transportPatterns.some((pattern) => normalized.includes(pattern));
+}
+
 function extractContractNameFromError(errorString: string): string | null {
   const contractPatterns = [
     { pattern: /rwa-lending/i, name: "rwa-lending" },
@@ -132,10 +148,7 @@ export function extractContractError(
     return "Insufficient funds for this transaction";
   }
 
-  if (
-    errorString.toLowerCase().includes("network") ||
-    errorString.toLowerCase().includes("timeout")
-  ) {
+  if (isLikelyTransportError(errorString)) {
     return "Network error. Please check your connection and try again.";
   }
 

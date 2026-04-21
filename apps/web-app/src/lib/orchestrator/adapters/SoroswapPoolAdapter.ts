@@ -50,7 +50,8 @@ function resolveToken(code: string): TokenInfo {
 
 export class SoroswapPoolAdapter implements BasePoolAdapter {
   readonly type: PoolType = "soroswap";
-  private static listPoolsCache: { at: number; value: PoolInfo[] } | null = null;
+  private static listPoolsCache: { at: number; value: PoolInfo[] } | null =
+    null;
 
   private buildDiscoveryPairs(codes: string[]): string[] {
     const codeSet = new Set(codes);
@@ -243,9 +244,59 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
     const tokenB = resolveToken(codeB);
 
     const humanAmountA = fromSmallestUnit(amount.toString(), tokenA.decimals);
-    const humanAmountB = humanAmountA;
 
     try {
+      const pools = await getPool({
+        tokenA: tokenA.address,
+        tokenB: tokenB.address,
+      });
+      const pool = pools[0];
+
+      if (!pool) {
+        throw new Error(
+          `No active Soroswap pool found for ${tokenA.code}/${tokenB.code}.`
+        );
+      }
+
+      const poolTokenA = String(pool.tokenA).toUpperCase();
+      const poolTokenB = String(pool.tokenB).toUpperCase();
+      const requestTokenA = tokenA.address.toUpperCase();
+      const requestTokenB = tokenB.address.toUpperCase();
+
+      let reserveForTokenA: bigint;
+      let reserveForTokenB: bigint;
+
+      if (poolTokenA === requestTokenA && poolTokenB === requestTokenB) {
+        reserveForTokenA = BigInt(pool.reserveA);
+        reserveForTokenB = BigInt(pool.reserveB);
+      } else if (poolTokenA === requestTokenB && poolTokenB === requestTokenA) {
+        reserveForTokenA = BigInt(pool.reserveB);
+        reserveForTokenB = BigInt(pool.reserveA);
+      } else {
+        throw new Error(
+          `Unexpected pool token mapping for ${tokenA.code}/${tokenB.code}.`
+        );
+      }
+
+      if (reserveForTokenA <= 0n || reserveForTokenB <= 0n) {
+        throw new Error(
+          `Pool reserves are invalid for ${tokenA.code}/${tokenB.code}.`
+        );
+      }
+
+      // Keep deposit amounts aligned with pool ratio to satisfy slippage checks.
+      const amountB = (amount * reserveForTokenB) / reserveForTokenA;
+      if (amountB <= 0n) {
+        throw new Error(
+          "Calculated token B amount is too small for this pool."
+        );
+      }
+
+      const humanAmountB = fromSmallestUnit(
+        amountB.toString(),
+        tokenB.decimals
+      );
+
       const result = await addLiquidity({
         assetA: tokenA.address,
         assetB: tokenB.address,
