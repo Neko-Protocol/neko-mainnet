@@ -5,6 +5,7 @@ import {
 } from "@/lib/helpers/stellar/soroswap";
 import { networkPassphrase } from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 
 import type { BasePoolAdapter } from "../types/adapter.types";
 import type {
@@ -50,7 +51,8 @@ function resolveToken(code: string): TokenInfo {
 
 export class SoroswapPoolAdapter implements BasePoolAdapter {
   readonly type: PoolType = "soroswap";
-  private static listPoolsCache: { at: number; value: PoolInfo[] } | null = null;
+  private static listPoolsCache: { at: number; value: PoolInfo[] } | null =
+    null;
 
   private buildDiscoveryPairs(codes: string[]): string[] {
     const codeSet = new Set(codes);
@@ -220,9 +222,9 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
 
   async getUserPosition(
     poolId: string,
-    _userAddress: string
+    userAddress: string
   ): Promise<PoolPosition> {
-    return {
+    const emptyPosition: PoolPosition = {
       poolId: `soroswap:${poolId}`,
       deposited: 0n,
       depositedFormatted: "0",
@@ -230,6 +232,48 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       rewardsFormatted: "0",
       metadata: {},
     };
+
+    try {
+      const { codeA, codeB } = parsePairId(poolId);
+      const tokenA = resolveToken(codeA);
+      const tokenB = resolveToken(codeB);
+      const pools = await getPool({
+        tokenA: tokenA.address,
+        tokenB: tokenB.address,
+      });
+
+      const pool = pools[0];
+      if (!pool?.address) {
+        return emptyPosition;
+      }
+
+      const lpTokenDecimals = 7;
+      const depositedFormatted = await getTokenBalanceFromContract(
+        pool.address,
+        userAddress,
+        lpTokenDecimals
+      );
+      const deposited = toBigIntFromDecimalString(
+        depositedFormatted,
+        lpTokenDecimals
+      );
+
+      return {
+        poolId: `soroswap:${poolId}`,
+        deposited,
+        depositedFormatted: fromSmallestUnit(
+          deposited.toString(),
+          lpTokenDecimals
+        ),
+        rewards: 0n,
+        rewardsFormatted: "0",
+        metadata: {
+          lpTokenAddress: pool.address,
+        },
+      };
+    } catch {
+      return emptyPosition;
+    }
   }
 
   async deposit(
@@ -243,9 +287,59 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
     const tokenB = resolveToken(codeB);
 
     const humanAmountA = fromSmallestUnit(amount.toString(), tokenA.decimals);
-    const humanAmountB = humanAmountA;
 
     try {
+      const pools = await getPool({
+        tokenA: tokenA.address,
+        tokenB: tokenB.address,
+      });
+      const pool = pools[0];
+
+      if (!pool) {
+        throw new Error(
+          `No active Soroswap pool found for ${tokenA.code}/${tokenB.code}.`
+        );
+      }
+
+      const poolTokenA = String(pool.tokenA).toUpperCase();
+      const poolTokenB = String(pool.tokenB).toUpperCase();
+      const requestTokenA = tokenA.address.toUpperCase();
+      const requestTokenB = tokenB.address.toUpperCase();
+
+      let reserveForTokenA: bigint;
+      let reserveForTokenB: bigint;
+
+      if (poolTokenA === requestTokenA && poolTokenB === requestTokenB) {
+        reserveForTokenA = BigInt(pool.reserveA);
+        reserveForTokenB = BigInt(pool.reserveB);
+      } else if (poolTokenA === requestTokenB && poolTokenB === requestTokenA) {
+        reserveForTokenA = BigInt(pool.reserveB);
+        reserveForTokenB = BigInt(pool.reserveA);
+      } else {
+        throw new Error(
+          `Unexpected pool token mapping for ${tokenA.code}/${tokenB.code}.`
+        );
+      }
+
+      if (reserveForTokenA <= 0n || reserveForTokenB <= 0n) {
+        throw new Error(
+          `Pool reserves are invalid for ${tokenA.code}/${tokenB.code}.`
+        );
+      }
+
+      // Keep deposit amounts aligned with pool ratio to satisfy slippage checks.
+      const amountB = (amount * reserveForTokenB) / reserveForTokenA;
+      if (amountB <= 0n) {
+        throw new Error(
+          "Calculated token B amount is too small for this pool."
+        );
+      }
+
+      const humanAmountB = fromSmallestUnit(
+        amountB.toString(),
+        tokenB.decimals
+      );
+
       const result = await addLiquidity({
         assetA: tokenA.address,
         assetB: tokenB.address,
@@ -259,7 +353,6 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       throw new AdapterError("soroswap", "deposit", error);
     }
   }
-
   async withdraw(): Promise<TransactionResult> {
     throw new UnsupportedActionError(
       "soroswap",
@@ -275,4 +368,14 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
     if (action === "withdraw") return false;
     return SUPPORTED_ACTIONS.includes(action);
   }
+}
+
+function toBigIntFromDecimalString(value: string, decimals: number): bigint {
+  if (!value || value === "0") return 0n;
+  const [integerPart = "0", fractionPart = ""] = value.split(".");
+  const normalizedFraction = fractionPart
+    .slice(0, decimals)
+    .padEnd(decimals, "0");
+  const normalizedInteger = integerPart.replace(/^0+(?=\d)/, "") || "0";
+  return BigInt(`${normalizedInteger}${normalizedFraction}`);
 }
