@@ -1,4 +1,11 @@
-import React, { useRef, useState, useEffect, useMemo } from "react";
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
   ArrowLeftRight,
@@ -46,13 +53,15 @@ function ProtocolDropdown({
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      const t = e.target as Node;
+      if (!btnRef.current?.contains(t) && !panelRef.current?.contains(t))
         setOpen(false);
-      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -62,9 +71,16 @@ function ProtocolDropdown({
   const selected = allOptions.find((o) => o.id === value) ?? allOptions[0];
 
   return (
-    <div ref={ref} className="relative">
+    <div>
       <button
-        onClick={() => !disabled && setOpen((o) => !o)}
+        ref={btnRef}
+        onClick={() => {
+          if (!disabled && btnRef.current) {
+            const r = btnRef.current.getBoundingClientRect();
+            setPos({ top: r.bottom + 8, left: r.left });
+          }
+          if (!disabled) setOpen((o) => !o);
+        }}
         disabled={disabled}
         className="group inline-flex items-center gap-1.5 text-[10px] text-white/70 font-medium hover:text-white transition-colors disabled:opacity-50"
       >
@@ -82,42 +98,47 @@ function ProtocolDropdown({
         <span>{selected.label}</span>
       </button>
 
-      {open && (
-        <div className="absolute left-0 top-full mt-2 z-50 min-w-[160px] rounded-xl border border-white/10 bg-[#1C1C1C] shadow-xl overflow-hidden">
-          {allOptions.map((opt) => (
-            <button
-              key={opt.id}
-              onClick={() => {
-                onChange(opt.id);
-                setOpen(false);
-              }}
-              className={`flex w-full items-center gap-2.5 px-3 py-2 text-[11px] transition-colors hover:bg-white/5 ${
-                value === opt.id ? "text-white" : "text-white/60"
-              }`}
-            >
-              {opt.id !== "all" &&
-                (PROTOCOL_ICONS[opt.id] ? (
-                  <Image
-                    src={PROTOCOL_ICONS[opt.id]}
-                    alt={opt.label}
-                    width={18}
-                    height={18}
-                    unoptimized
-                    className="rounded-full object-cover w-[18px] h-[18px] shrink-0"
-                  />
-                ) : (
-                  <span className="w-[18px] h-[18px] rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold shrink-0">
-                    {opt.label[0]}
-                  </span>
-                ))}
-              {opt.label}
-              {value === opt.id && (
-                <span className="ml-auto text-[#229EDF]">✓</span>
-              )}
-            </button>
-          ))}
-        </div>
-      )}
+      {open &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div
+            ref={panelRef}
+            className="fixed z-[9999] min-w-[160px] rounded-xl border border-white/10 bg-[#1C1C1C] shadow-xl overflow-hidden"
+            style={{ top: pos.top, left: pos.left }}
+          >
+            {allOptions.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => {
+                  onChange(opt.id);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center gap-2.5 px-3 py-2 text-[11px] transition-colors hover:bg-white/5 ${value === opt.id ? "text-white" : "text-white/60"}`}
+              >
+                {opt.id !== "all" &&
+                  (PROTOCOL_ICONS[opt.id] ? (
+                    <Image
+                      src={PROTOCOL_ICONS[opt.id]}
+                      alt={opt.label}
+                      width={18}
+                      height={18}
+                      unoptimized
+                      className="rounded-full object-cover w-[18px] h-[18px] shrink-0"
+                    />
+                  ) : (
+                    <span className="w-[18px] h-[18px] rounded-full bg-white/10 flex items-center justify-center text-[9px] font-bold shrink-0">
+                      {opt.label[0]}
+                    </span>
+                  ))}
+                {opt.label}
+                {value === opt.id && (
+                  <span className="ml-auto text-[#229EDF]">✓</span>
+                )}
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -210,12 +231,15 @@ function FilterDropdown({
   const [open, setOpen] = useState(false);
   const [poolPanelOpen, setPoolPanelOpen] = useState(false);
   const [poolSearch, setPoolSearch] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const active = isFilterActive(filters);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
         setPoolPanelOpen(false);
       }
@@ -243,7 +267,7 @@ function FilterDropdown({
   };
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={wrapperRef} className="relative">
       <button
         onClick={() => {
           setOpen((o) => !o);
@@ -260,18 +284,13 @@ function FilterDropdown({
 
       {open && (
         <div className="absolute left-0 top-full mt-2 z-50 flex">
-          {/* ── Left: range filters ── */}
+          {/* Left: range filters */}
           <div className="w-64 rounded-xl border border-white/10 bg-[#1C1C1C] shadow-2xl p-4 flex flex-col gap-4">
-            {/* Pool row */}
             <div className="flex items-center justify-between text-xs font-medium text-white/50">
               <p>Pool</p>
               <button
                 onClick={() => setPoolPanelOpen((o) => !o)}
-                className={`flex items-center gap-1.5 transition-colors ${
-                  filters.selectedPools.length > 0
-                    ? "text-[#229EDF]"
-                    : "hover:text-white"
-                }`}
+                className={`flex items-center gap-1.5 transition-colors ${filters.selectedPools.length > 0 ? "text-[#229EDF]" : "hover:text-white"}`}
               >
                 {filters.selectedPools.length > 0
                   ? `${filters.selectedPools.length} selected`
@@ -279,9 +298,7 @@ function FilterDropdown({
                 <SlidersHorizontal className="h-3 w-3" />
               </button>
             </div>
-
             <div className="border-t border-white/5" />
-
             <RangeRow
               label="Supply APY"
               minVal={filters.apyMin}
@@ -298,7 +315,6 @@ function FilterDropdown({
               onMinChange={(v) => onChange({ ...filters, liquidityMin: v })}
               onMaxChange={(v) => onChange({ ...filters, liquidityMax: v })}
             />
-
             {active && (
               <button
                 onClick={() => {
@@ -313,10 +329,9 @@ function FilterDropdown({
             )}
           </div>
 
-          {/* ── Right: pool selector panel ── */}
+          {/* Right: pool selector panel */}
           {poolPanelOpen && (
             <div className="ml-1 w-60 rounded-xl border border-white/10 bg-[#1C1C1C] shadow-2xl flex flex-col overflow-hidden">
-              {/* Search */}
               <div className="px-3 pt-3 pb-2 border-b border-white/5">
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/30" />
@@ -337,8 +352,6 @@ function FilterDropdown({
                   )}
                 </div>
               </div>
-
-              {/* Pool list */}
               <ul className="overflow-y-auto max-h-64 py-1">
                 {filteredPoolList.map((pool) => {
                   const tokenIcon = getPoolTokenIcon({
@@ -359,11 +372,7 @@ function FilterDropdown({
                         className="flex w-full items-center gap-2.5 px-3 py-2 hover:bg-white/5 transition-colors"
                       >
                         <div
-                          className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
-                            isSelected
-                              ? "bg-[#229EDF] border-[#229EDF]"
-                              : "border-white/20"
-                          }`}
+                          className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors ${isSelected ? "bg-[#229EDF] border-[#229EDF]" : "border-white/20"}`}
                         >
                           {isSelected && (
                             <span className="text-white text-[9px] font-bold">
@@ -431,11 +440,14 @@ function SortDropdown({
   onChange: (s: SortState) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node))
+      const t = e.target as Node;
+      if (!btnRef.current?.contains(t) && !panelRef.current?.contains(t))
         setOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -446,9 +458,16 @@ function SortDropdown({
     SORT_FIELDS.find((f) => f.value === sort.field)?.label ?? "Sort";
 
   return (
-    <div ref={ref} className="relative">
+    <div>
       <button
-        onClick={() => setOpen((o) => !o)}
+        ref={btnRef}
+        onClick={() => {
+          if (btnRef.current) {
+            const r = btnRef.current.getBoundingClientRect();
+            setPos({ top: r.bottom + 8, left: r.left });
+          }
+          setOpen((o) => !o);
+        }}
         className="group inline-flex items-center gap-1.5 text-[10px] text-white/70 font-medium hover:text-white transition-colors"
       >
         {sort.order === "desc" ? (
@@ -459,57 +478,64 @@ function SortDropdown({
         Sort by {fieldLabel}
       </button>
 
-      {open && (
-        <div className="absolute left-0 top-full mt-2 z-50 w-56 rounded-xl border border-white/10 bg-[#1C1C1C] shadow-2xl overflow-hidden">
-          {/* Order section */}
-          <div className="px-3 pt-3 pb-1">
-            <p className="text-[10px] text-white/30 font-semibold uppercase tracking-wider mb-1">
-              Order
-            </p>
-            {(["desc", "asc"] as SortOrder[]).map((o) => (
-              <button
-                key={o}
-                onClick={() => onChange({ ...sort, order: o })}
-                className="flex w-full items-center gap-2.5 px-2 py-1.5 rounded-lg text-[11px] transition-colors hover:bg-white/5 text-white/70 hover:text-white"
-              >
-                {o === "desc" ? (
-                  <ArrowDown className="h-3.5 w-3.5 shrink-0" />
-                ) : (
-                  <ArrowUp className="h-3.5 w-3.5 shrink-0" />
-                )}
-                {o === "desc" ? "Descending" : "Ascending"}
-                {sort.order === o && (
-                  <span className="ml-auto text-[#229EDF]">✓</span>
-                )}
-              </button>
-            ))}
-          </div>
+      {open &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div
+            ref={panelRef}
+            className="fixed z-[9999] w-56 rounded-xl border border-white/10 bg-[#1C1C1C] shadow-2xl overflow-hidden"
+            style={{ top: pos.top, left: pos.left }}
+          >
+            {/* Order section */}
+            <div className="px-3 pt-3 pb-1">
+              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-wider mb-1">
+                Order
+              </p>
+              {(["desc", "asc"] as SortOrder[]).map((o) => (
+                <button
+                  key={o}
+                  onClick={() => onChange({ ...sort, order: o })}
+                  className="flex w-full items-center gap-2.5 px-2 py-1.5 rounded-lg text-[11px] transition-colors hover:bg-white/5 text-white/70 hover:text-white"
+                >
+                  {o === "desc" ? (
+                    <ArrowDown className="h-3.5 w-3.5 shrink-0" />
+                  ) : (
+                    <ArrowUp className="h-3.5 w-3.5 shrink-0" />
+                  )}
+                  {o === "desc" ? "Descending" : "Ascending"}
+                  {sort.order === o && (
+                    <span className="ml-auto text-[#229EDF]">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
 
-          <div className="mx-3 my-2 border-t border-white/5" />
+            <div className="mx-3 my-2 border-t border-white/5" />
 
-          {/* Sort by section */}
-          <div className="px-3 pb-3">
-            <p className="text-[10px] text-white/30 font-semibold uppercase tracking-wider mb-1">
-              Sort by
-            </p>
-            {SORT_FIELDS.map((f) => (
-              <button
-                key={f.value}
-                onClick={() => {
-                  onChange({ ...sort, field: f.value });
-                  setOpen(false);
-                }}
-                className="flex w-full items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] transition-colors hover:bg-white/5 text-white/70 hover:text-white"
-              >
-                {f.label}
-                {sort.field === f.value && (
-                  <span className="ml-auto text-[#229EDF]">✓</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+            {/* Sort by section */}
+            <div className="px-3 pb-3">
+              <p className="text-[10px] text-white/30 font-semibold uppercase tracking-wider mb-1">
+                Sort by
+              </p>
+              {SORT_FIELDS.map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => {
+                    onChange({ ...sort, field: f.value });
+                    setOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] transition-colors hover:bg-white/5 text-white/70 hover:text-white"
+                >
+                  {f.label}
+                  {sort.field === f.value && (
+                    <span className="ml-auto text-[#229EDF]">✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -551,11 +577,14 @@ function ColumnsDropdown({
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node))
+      const t = e.target as Node;
+      if (!btnRef.current?.contains(t) && !panelRef.current?.contains(t))
         setOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -577,59 +606,73 @@ function ColumnsDropdown({
   };
 
   return (
-    <div ref={ref} className="relative">
+    <div>
       <button
-        onClick={() => setOpen((o) => !o)}
+        ref={btnRef}
+        onClick={() => {
+          if (btnRef.current) {
+            const r = btnRef.current.getBoundingClientRect();
+            setPos({ top: r.bottom + 8, left: r.right - 256 });
+          }
+          setOpen((o) => !o);
+        }}
         className="flex items-center justify-center text-white/40 hover:text-white/70 transition-colors"
         title="Manage columns"
       >
         <Settings className="h-5 w-5" />
       </button>
 
-      {open && (
-        <div className="absolute right-0 top-full mt-4 z-50 w-64 rounded-xl border border-white/10 bg-[#1C1C1C] shadow-2xl overflow-hidden">
-          {/* Search */}
-          <div className="px-3 pt-3 pb-2 border-b border-white/5">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
-              <input
-                type="text"
-                placeholder="Search columns..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-[#141414] border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/25 outline-none focus:border-[#229EDF]/40 transition-colors"
-              />
+      {open &&
+        typeof window !== "undefined" &&
+        createPortal(
+          <div
+            ref={panelRef}
+            className="fixed z-[9999] w-64 rounded-xl border border-white/10 bg-[#1C1C1C] shadow-2xl overflow-hidden"
+            style={{ top: pos.top, left: pos.left }}
+          >
+            {/* Search */}
+            <div className="px-3 pt-3 pb-2 border-b border-white/5">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
+                <input
+                  type="text"
+                  placeholder="Search columns..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-[#141414] border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/25 outline-none focus:border-[#229EDF]/40 transition-colors"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Column list */}
-          <ul className="py-1 max-h-72 overflow-y-auto">
-            {filtered.map((col) => {
-              const isVisible = visible.has(col.key);
-              return (
-                <li key={col.key}>
-                  <button
-                    onClick={() => toggle(col.key)}
-                    className="flex w-full items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors"
-                  >
-                    <AlignJustify className="h-3.5 w-3.5 text-white/20 shrink-0" />
-                    <span
-                      className={`flex-1 text-left text-[12px] font-medium ${isVisible ? "text-white" : "text-white/30"}`}
+            {/* Column list */}
+            <ul className="py-1 max-h-72 overflow-y-auto">
+              {filtered.map((col) => {
+                const isVisible = visible.has(col.key);
+                return (
+                  <li key={col.key}>
+                    <button
+                      onClick={() => toggle(col.key)}
+                      className="flex w-full items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors"
                     >
-                      {col.label}
-                    </span>
-                    {isVisible ? (
-                      <Eye className="h-4 w-4 text-white/50 shrink-0" />
-                    ) : (
-                      <EyeOff className="h-4 w-4 text-white/20 shrink-0" />
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+                      <AlignJustify className="h-3.5 w-3.5 text-white/20 shrink-0" />
+                      <span
+                        className={`flex-1 text-left text-[12px] font-medium ${isVisible ? "text-white" : "text-white/30"}`}
+                      >
+                        {col.label}
+                      </span>
+                      {isVisible ? (
+                        <Eye className="h-4 w-4 text-white/50 shrink-0" />
+                      ) : (
+                        <EyeOff className="h-4 w-4 text-white/20 shrink-0" />
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
@@ -850,24 +893,42 @@ export function LendTable({
     (protocolOptions.length > 0 && !!onProtocolFilterChange);
 
   return (
-    <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
+    <div className="w-full rounded-2xl border border-white/5 bg-[#1C1C1C]">
       {/* ── Toolbar ─────────────────────── */}
       {showToolbar && (
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/5">
+        <div className="relative z-20 flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/5 rounded-t-2xl bg-[#1C1C1C]">
           {/* Filters */}
           <div className="flex items-center gap-6">
             {protocolOptions.length > 0 && onProtocolFilterChange && (
               <ProtocolDropdown
                 value={protocolFilter}
-                onChange={onProtocolFilterChange}
+                onChange={(id) => {
+                  onProtocolFilterChange(id);
+                  setFilters((f) => ({ ...f, selectedPools: [] }));
+                }}
                 options={protocolOptions}
                 disabled={isLoading}
               />
             )}
             <FilterDropdown
               filters={filters}
-              onChange={setFilters}
-              pools={pools}
+              onChange={(next) => {
+                // Reset selected pools that no longer belong to the active protocol
+                const scopedPools =
+                  protocolFilter === "all"
+                    ? pools
+                    : pools.filter((p) => p.protocolId === protocolFilter);
+                const scopedIds = new Set(scopedPools.map((p) => p.id));
+                const filteredSelected = next.selectedPools.filter((id) =>
+                  scopedIds.has(id)
+                );
+                setFilters({ ...next, selectedPools: filteredSelected });
+              }}
+              pools={
+                protocolFilter === "all"
+                  ? pools
+                  : pools.filter((p) => p.protocolId === protocolFilter)
+              }
             />
             <SortDropdown sort={sort} onChange={setSort} />
           </div>
@@ -893,7 +954,7 @@ export function LendTable({
           )}
         </div>
       )}
-      <div className="hidden md:block overflow-y-auto max-h-[600px]">
+      <div className="hidden md:block overflow-y-auto max-h-[600px] min-h-[420px] rounded-b-2xl">
         <table className="w-full">
           <thead className="sticky top-0 bg-[#1C1C1C] z-10">
             <tr className="border-b border-white/5">
@@ -1015,7 +1076,7 @@ export function LendTable({
       )}
 
       {}
-      <div className="md:hidden">
+      <div className="md:hidden min-h-[420px]">
         {isLoading ? (
           <MobileEmptyState message="Loading pools…" />
         ) : error ? (
