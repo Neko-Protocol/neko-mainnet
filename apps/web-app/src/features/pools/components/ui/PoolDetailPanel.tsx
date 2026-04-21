@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import { Copy, Check, Globe } from "lucide-react";
 import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { useTokenPrice } from "@/hooks/useTokenPrice";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -167,6 +168,7 @@ function AmountInput({
   balanceValue,
   onMax,
   disabled,
+  usdValue,
 }: {
   label: string;
   token: PoolDetailPanelToken;
@@ -176,6 +178,7 @@ function AmountInput({
   balanceValue: string;
   onMax?: () => void;
   disabled?: boolean;
+  usdValue?: string;
 }) {
   const resolvedIcon =
     token.icon ?? getPoolTokenIcon({ type: "contract", code: token.symbol });
@@ -225,7 +228,7 @@ function AmountInput({
       />
 
       <div className="flex items-center justify-between mt-2">
-        <span className="text-white/30 text-xs">$0</span>
+        <span className="text-white/30 text-xs">${usdValue ?? "0"}</span>
         <div className="flex items-center gap-2">
           <span className="text-white/30 text-xs tabular-nums">
             {balanceValue} {token.symbol}
@@ -296,6 +299,27 @@ export function PoolDetailPanel({
   const [mode, setMode] = useState<"lend" | "borrow">(initialType);
   const [collateralAmount, setCollateralAmount] = useState("");
   const [borrowAmount, setBorrowAmount] = useState("");
+
+  const { price: token1Price } = useTokenPrice(pool.token1.symbol);
+  const { price: token2Price } = useTokenPrice(pool.token2.symbol);
+
+  const ammUsdValue = useMemo(() => {
+    const parsed = parseFloat(ammAmount);
+    if (!parsed || !token1Price) return "0.00";
+    return (parsed * token1Price).toFixed(2);
+  }, [ammAmount, token1Price]);
+
+  const collateralUsdValue = useMemo(() => {
+    const parsed = parseFloat(collateralAmount);
+    if (!parsed || !token1Price) return "0.00";
+    return (parsed * token1Price).toFixed(2);
+  }, [collateralAmount, token1Price]);
+
+  const borrowUsdValue = useMemo(() => {
+    const parsed = parseFloat(borrowAmount);
+    if (!parsed || !token2Price) return "0.00";
+    return (parsed * token2Price).toFixed(2);
+  }, [borrowAmount, token2Price]);
 
   const lendingTabs = supportsBorrow
     ? (["lend", "borrow"] as const)
@@ -370,6 +394,7 @@ export function PoolDetailPanel({
           balanceValue={balanceForAmm}
           onMax={maxAmm}
           disabled={!isWalletConnected}
+          usdValue={ammUsdValue}
         />
       ) : (
         <>
@@ -383,6 +408,7 @@ export function PoolDetailPanel({
               balanceValue={pool.token1Balance ?? "0.00"}
               onMax={() => setCollateralAmount(pool.token1Balance ?? "0")}
               disabled={!isWalletConnected}
+              usdValue={collateralUsdValue}
             />
           )}
           {mode === "borrow" && (
@@ -395,6 +421,7 @@ export function PoolDetailPanel({
               balanceValue={pool.borrowLimit ?? "0.00"}
               onMax={() => setBorrowAmount(pool.borrowLimit ?? "0")}
               disabled={!isWalletConnected}
+              usdValue={borrowUsdValue}
             />
           )}
         </>
@@ -414,11 +441,33 @@ export function PoolDetailPanel({
         />
         <InfoRow
           label={`Collateral (${pool.token1.symbol})`}
-          value={pool.collateralBalance ?? "0.00"}
+          valueEl={
+            <div className="text-right">
+              <span className="text-xs font-medium tabular-nums text-white/80">
+                {pool.collateralBalance ?? "0.00"}
+              </span>
+              <span className="block text-[10px] tabular-nums text-white/35">
+                $
+                {(
+                  parseFloat(pool.collateralBalance ?? "0") * token1Price
+                ).toFixed(2)}
+              </span>
+            </div>
+          }
         />
         <InfoRow
           label={`Loan (${pool.token2.symbol})`}
-          value={pool.loanBalance ?? "0.00"}
+          valueEl={
+            <div className="text-right">
+              <span className="text-xs font-medium tabular-nums text-white/80">
+                {pool.loanBalance ?? "0.00"}
+              </span>
+              <span className="block text-[10px] tabular-nums text-white/35">
+                $
+                {(parseFloat(pool.loanBalance ?? "0") * token2Price).toFixed(2)}
+              </span>
+            </div>
+          }
         />
         <InfoRow
           label="LTV"
