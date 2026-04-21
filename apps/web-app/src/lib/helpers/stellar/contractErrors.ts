@@ -81,6 +81,9 @@ export function extractContractError(
       if (contractError) {
         return contractError.message;
       }
+      // If a specific contract was provided/inferred but has no mapping for this
+      // code, do not fall back to unrelated global mappings.
+      return `Contract error #${errorCode}`;
     }
 
     if (isValidErrorCode(errorCode)) {
@@ -103,6 +106,8 @@ export function extractContractError(
       if (contractError) {
         return contractError.message;
       }
+      // Avoid mismapping host errors to unrelated contracts.
+      return `Contract error #${errorCode}`;
     }
 
     if (isValidErrorCode(errorCode)) {
