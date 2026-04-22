@@ -18,7 +18,11 @@ export class AdapterError extends OrchestratorError {
   public readonly userMessage: string;
 
   constructor(adapterType: string, operation: string, cause: unknown) {
-    const friendly = extractContractError(cause);
+    const contractHint =
+      adapterType === "aqua" || adapterType === "soroswap"
+        ? adapterType
+        : undefined;
+    const friendly = extractContractError(cause, contractHint);
     super(`[${adapterType}] ${operation} failed: ${friendly}`, { cause });
     this.name = "AdapterError";
     this.userMessage = friendly;

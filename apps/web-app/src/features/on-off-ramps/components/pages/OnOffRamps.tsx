@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
@@ -39,6 +39,9 @@ const OnOffRamps: React.FC = () => {
   const { addNotification } = useToast();
   const { state, dispatch } = useRampState();
   const [isSimulating, setIsSimulating] = useState(false);
+  const [isEtherfuseConfigured, setIsEtherfuseConfigured] = useState(true);
+  const [isCheckingProviderStatus, setIsCheckingProviderStatus] =
+    useState(true);
 
   const config = RAMP_PROVIDERS[state.provider];
 
@@ -114,10 +117,35 @@ const OnOffRamps: React.FC = () => {
 
   // Derived
   const isOnRamp = state.direction === "on";
+  const isEtherfuseSelected = state.provider === "etherfuse";
+  const isEtherfuseUnavailable = isEtherfuseSelected && !isEtherfuseConfigured;
   const fromCurrency = isOnRamp ? "MXN" : config.supportedAssets[0];
   const toCurrency = isOnRamp ? config.supportedAssets[0] : "MXN";
   const canGetQuote =
     !!address && !!state.amount && parseFloat(state.amount) > 0;
+
+  useEffect(() => {
+    const checkProviderStatus = async () => {
+      setIsCheckingProviderStatus(true);
+      try {
+        const response = await fetch("/api/anchor/etherfuse/status", {
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          setIsEtherfuseConfigured(false);
+          return;
+        }
+        const result: { configured?: boolean } = await response.json();
+        setIsEtherfuseConfigured(Boolean(result.configured));
+      } catch {
+        setIsEtherfuseConfigured(false);
+      } finally {
+        setIsCheckingProviderStatus(false);
+      }
+    };
+
+    void checkProviderStatus();
+  }, []);
 
   const handleProviderChange = (provider: AnchorProvider) => {
     dispatch({ type: "SET_PROVIDER", provider });
@@ -253,6 +281,7 @@ const OnOffRamps: React.FC = () => {
   const isLoadingTx = isCreatingOnRamp || isCreatingOffRamp;
   const isPollingTx =
     isPollingOnRamp || isPollingOffRamp || isWaitingForXdr || isSigning;
+  const isRampDisabled = isLoadingTx || isPollingTx || isEtherfuseUnavailable;
 
   return (
     <PageContainer maxWidth="4xl">
@@ -265,25 +294,39 @@ const OnOffRamps: React.FC = () => {
         className="mb-6"
       />
 
+      {!isCheckingProviderStatus && !isEtherfuseConfigured && (
+        <div className="bg-yellow-400/10 border border-yellow-400/30 rounded-2xl p-4 mb-5 text-yellow-200 text-sm">
+          On/off-ramps are coming soon. The team is working to get it ready
+          ASAP!
+        </div>
+      )}
+
       {!address && (
         <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-5 text-center text-white/60 text-sm">
           Connect your wallet to use on/off ramps
         </div>
       )}
 
-      <div className="flex flex-col gap-4">
+      <div
+        className={`flex flex-col gap-4 transition-opacity ${
+          isEtherfuseUnavailable
+            ? "grayscale opacity-50 pointer-events-none"
+            : ""
+        }`}
+      >
         {/* Provider + Direction Selection */}
         <ProviderSelector
           selected={state.provider}
           onSelect={handleProviderChange}
           disabled={isLoadingTx || isPollingTx}
+          unavailableProviders={!isEtherfuseConfigured ? ["etherfuse"] : []}
         />
 
         <RampDirectionTabs
           direction={state.direction}
           provider={state.provider}
           onChange={handleDirectionChange}
-          disabled={isLoadingTx || isPollingTx}
+          disabled={isRampDisabled}
         />
 
         {/* KYC Banner */}
@@ -398,12 +441,13 @@ const OnOffRamps: React.FC = () => {
                   ? "You send (MXN)"
                   : `You send (${config.supportedAssets[0]})`
               }
-              disabled={!address || isLoadingTx}
+              disabled={!address || isLoadingTx || isEtherfuseUnavailable}
             />
 
             <button
               onClick={handleGetQuote}
               disabled={
+                isEtherfuseUnavailable ||
                 !canGetQuote ||
                 isLoadingQuote ||
                 isEnsuring ||

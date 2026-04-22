@@ -8,12 +8,14 @@ interface ProviderSelectorProps {
   selected: AnchorProvider;
   onSelect: (provider: AnchorProvider) => void;
   disabled?: boolean;
+  unavailableProviders?: AnchorProvider[];
 }
 
 export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
   selected,
   onSelect,
   disabled,
+  unavailableProviders = [],
 }) => {
   return (
     <div className="flex flex-col gap-2">
@@ -22,7 +24,8 @@ export const ProviderSelector: React.FC<ProviderSelectorProps> = ({
         {(Object.keys(RAMP_PROVIDERS) as AnchorProvider[]).map((key) => {
           const config = RAMP_PROVIDERS[key];
           const isActive = selected === key;
-          const isComingSoon = key === "alfredpay";
+          const isComingSoon =
+            key === "alfredpay" || unavailableProviders.includes(key);
           return (
             <button
               key={key}
