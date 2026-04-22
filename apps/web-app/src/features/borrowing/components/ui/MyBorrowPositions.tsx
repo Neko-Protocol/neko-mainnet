@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
+import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import {
   Wallet,
@@ -12,6 +13,34 @@ import {
   HeartPulse,
   Lock,
 } from "lucide-react";
+
+const PROTOCOL_ICONS: Record<string, string> = {
+  neko: "/neko-logo.png",
+  soroswap: "/assets/vault-creators/soroswap.jpg",
+  aqua: "https://coin-images.coingecko.com/coins/images/20026/small/aqua-logo.png?1696519446",
+  blend: "/assets/vault-creators/blend.png",
+};
+
+function ProtocolLogo({ protocolId }: { protocolId: string }) {
+  const src = PROTOCOL_ICONS[protocolId];
+  if (src) {
+    return (
+      <Image
+        src={src}
+        alt={protocolId}
+        width={24}
+        height={24}
+        unoptimized
+        className="rounded-full object-cover w-6 h-6 mx-auto"
+      />
+    );
+  }
+  return (
+    <span className="inline-flex w-6 h-6 rounded-full bg-white/10 items-center justify-center text-[9px] font-bold text-white mx-auto">
+      {protocolId.charAt(0).toUpperCase()}
+    </span>
+  );
+}
 import { useWallet } from "@/hooks/useWallet";
 import { useUserBorrowPositions } from "../../hooks/useUserBorrowPositions";
 import type { BorrowPosition } from "../../hooks/useUserBorrowPositions";
@@ -30,7 +59,13 @@ import { getTokenBalance } from "@/lib/helpers/stellar/lending";
 
 const STELLAR_DECIMALS = 7;
 
-const MyBorrowPositions: React.FC = () => {
+interface MyBorrowPositionsProps {
+  headerAction?: React.ReactNode;
+}
+
+const MyBorrowPositions: React.FC<MyBorrowPositionsProps> = ({
+  headerAction,
+}) => {
   const { address } = useWallet();
   const { positions, isLoading, hasWallet } = useUserBorrowPositions();
   const { pools: hfPools, isLoading: isLoadingHF } = useHealthFactor(
@@ -138,10 +173,11 @@ const MyBorrowPositions: React.FC = () => {
 
       <div className="w-full rounded-2xl border border-white/5 bg-[#1C1C1C]">
         {/* ── Neko borrow positions ── */}
-        <div className="flex items-center px-4 py-3 border-b border-white/5">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
           <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
             Your Borrow Positions
           </span>
+          {headerAction}
         </div>
 
         {/* Desktop */}
@@ -149,6 +185,7 @@ const MyBorrowPositions: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/5">
+                <ColHeader icon={Shield} label="Protocol" centered />
                 <ColHeader icon={Coins} label="Asset" centered />
                 <ColHeader
                   icon={Shield}
@@ -186,7 +223,7 @@ const MyBorrowPositions: React.FC = () => {
               {isLoading ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-4 py-12 text-center text-white/40 text-sm"
                   >
                     Loading your positions...
@@ -195,7 +232,7 @@ const MyBorrowPositions: React.FC = () => {
               ) : positions.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="px-4 py-12 text-center text-white/40 text-sm"
                   >
                     You don&apos;t have any active borrow positions yet.
@@ -207,6 +244,11 @@ const MyBorrowPositions: React.FC = () => {
                     key={pos.assetCode}
                     className="border-b border-white/5 hover:bg-white/2 transition-colors"
                   >
+                    <td className="px-4 py-4 text-center">
+                      <div className="flex justify-center">
+                        <ProtocolLogo protocolId="neko" />
+                      </div>
+                    </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center justify-center gap-3">
                         <TokenAvatar code={pos.assetCode} />
@@ -323,6 +365,7 @@ const MyBorrowPositions: React.FC = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/5">
+                  <ColHeader icon={Shield} label="Protocol" centered />
                   <ColHeader icon={Coins} label="Asset" />
                   <ColHeader
                     icon={Layers}
@@ -336,7 +379,6 @@ const MyBorrowPositions: React.FC = () => {
                     tooltip="Annual interest rate on your debt"
                     centered
                   />
-                  <ColHeader icon={Hash} label="Protocol" centered />
                 </tr>
               </thead>
               <tbody>
@@ -388,6 +430,11 @@ const MyBorrowPositions: React.FC = () => {
                         key={pos.pool.id}
                         className="border-b border-white/5 hover:bg-white/2 transition-colors"
                       >
+                        <td className="px-4 py-4 text-center">
+                          <div className="flex justify-center">
+                            <ProtocolLogo protocolId={pos.pool.type} />
+                          </div>
+                        </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
                             <TokenAvatar code={tokenCode} />
@@ -404,9 +451,6 @@ const MyBorrowPositions: React.FC = () => {
                         </td>
                         <td className="px-4 py-4 text-center text-white text-sm">
                           {borrowApy.toFixed(2)}%
-                        </td>
-                        <td className="px-4 py-4 text-center text-white/60 text-sm">
-                          {pos.pool.name}
                         </td>
                       </tr>
                     );

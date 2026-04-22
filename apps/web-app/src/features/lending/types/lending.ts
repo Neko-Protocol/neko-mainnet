@@ -13,8 +13,12 @@ export interface PoolData {
   assetCode: string;
   asset: string;
   bTokenRate?: string;
+  /** Formatted total borrowed from this pool; undefined for non-lending pools */
+  totalBorrowed?: string;
   contractId: string;
   isAggregated?: boolean;
   orchestratorId?: string;
   hideRowActions?: boolean;
+  /** User's deposited amount (formatted, no symbol) — used in withdraw modal */
+  depositedAmount?: string;
 }
