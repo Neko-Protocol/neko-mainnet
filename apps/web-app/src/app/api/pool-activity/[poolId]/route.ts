@@ -21,16 +21,16 @@ function tryDecodeAmount(bodyXdrBase64: string): number | null {
 
     if (target.switch().name === "scvI128") {
       const parts = target.i128();
-      const hi = parts.hi().toNumber();
+      const hi = Number(String(parts.hi()));
       if (hi !== 0) return null; // too large to represent safely
-      return parts.lo().toNumber() / 1e7;
+      return Number(String(parts.lo())) / 1e7;
     }
 
     if (target.switch().name === "scvU128") {
       const parts = target.u128();
-      const hi = parts.hi().toNumber();
+      const hi = Number(String(parts.hi()));
       if (hi !== 0) return null;
-      return parts.lo().toNumber() / 1e7;
+      return Number(String(parts.lo())) / 1e7;
     }
 
     return null;
