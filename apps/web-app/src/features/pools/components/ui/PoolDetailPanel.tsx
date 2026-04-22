@@ -1015,7 +1015,7 @@ export function PoolDetailLayout({
         <div className="border-t border-white/5 mb-8" />
 
         {/* Metrics grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-7">
+        <div className="flex flex-wrap justify-between gap-y-7">
           <div>
             <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
               Total Liquidity
