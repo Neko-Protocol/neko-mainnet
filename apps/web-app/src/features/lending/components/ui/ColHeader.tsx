@@ -19,6 +19,7 @@ export function ColHeader({
       <div
         className={`flex items-center gap-1.5 text-white/40 text-xs font-semibold uppercase tracking-wide ${centered ? "justify-center" : ""}`}
       >
+        <Icon className="h-3.5 w-3.5 shrink-0" />
         {label}
         {tooltip && (
           <div className="group relative">

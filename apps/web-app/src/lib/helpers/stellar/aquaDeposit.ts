@@ -6,7 +6,8 @@ import {
 } from "@stellar/stellar-sdk";
 import { horizonUrl, networkPassphrase } from "@/lib/constants/network";
 
-function reserveStroopsFromApiString(s: string): bigint {
+/** Aqua API can return integer stroops as floats, e.g. "41211365815358.0000000" */
+export function reserveStroopsFromApiString(s: string): bigint {
   const t = s.trim();
   if (!t) return 0n;
   const dot = t.indexOf(".");
@@ -76,7 +77,9 @@ export async function getMissingClassicTrustlines(
   return missing;
 }
 
-export async function submitHorizonTransaction(signedXdr: string): Promise<void> {
+export async function submitHorizonTransaction(
+  signedXdr: string
+): Promise<void> {
   const res = await fetch(`${horizonUrl}/transactions`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },

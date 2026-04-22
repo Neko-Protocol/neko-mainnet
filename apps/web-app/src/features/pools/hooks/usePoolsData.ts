@@ -56,11 +56,32 @@ export function usePoolsData() {
               : "?";
 
         const decimals = pool.tokens[0]?.decimals ?? 7;
-        const liquidity = formatLiquidity(
-          fromSmallestUnit(pool.tvl.toString(), decimals)
-        );
+        const tokenAmount = fromSmallestUnit(pool.tvl.toString(), decimals);
+
+        // For Aqua, tvl is 0n and liquidityUsd is in metadata — already USD.
+        // For Blend/Soroswap, tvl is in tokens; the table cell will price it.
+        const isUsdAlready = pool.type === "aqua";
+        const liquidityTokenCode = isUsdAlready
+          ? undefined
+          : (pool.tokens[0]?.code ?? undefined);
+        const liquidity = isUsdAlready
+          ? formatLiquidity(
+              String((pool.metadata.liquidityUsd as string | undefined) ?? "0")
+            )
+          : formatLiquidity(tokenAmount);
 
         const apy = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
+
+        // Total borrowed — only meaningful for Blend lending pools
+        let totalBorrowed = "-";
+        let totalBorrowedTokenAmount: string | undefined;
+        if (pool.type === "blend") {
+          const liabRaw = String(
+            (pool.metadata.totalLiabilities as string | undefined) ?? "0"
+          );
+          totalBorrowedTokenAmount = fromSmallestUnit(liabRaw, decimals);
+          totalBorrowed = formatLiquidity(totalBorrowedTokenAmount);
+        }
 
         return {
           id: pool.id,
@@ -70,6 +91,10 @@ export function usePoolsData() {
           roi: apy,
           feeApy: apy,
           liquidity,
+          liquidityTokenAmount: isUsdAlready ? undefined : tokenAmount,
+          liquidityTokenCode,
+          totalBorrowed,
+          totalBorrowedTokenAmount,
           isActive: pool.state === "active",
           type: pool.type,
         };

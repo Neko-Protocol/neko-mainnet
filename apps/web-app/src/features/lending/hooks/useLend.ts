@@ -133,6 +133,17 @@ export function useLend() {
               : "—";
         const contractId = p.id.split(":")[1] ?? p.id;
         const canInteract = p.supportedActions.includes("deposit");
+
+        // Total borrowed for Blend pools (totalLiabilities in stroops)
+        let totalBorrowed: string | undefined;
+        if (p.type === "blend") {
+          const liabRaw = String(
+            (p.metadata?.totalLiabilities as string | undefined) ?? "0"
+          );
+          const liabTokens = fromSmallestUnit(liabRaw, decimals);
+          totalBorrowed = formatLiquidity(liabTokens);
+        }
+
         return {
           id: `agg-${p.id}`,
           protocolId: p.type,
@@ -147,6 +158,7 @@ export function useLend() {
           assetCode: token?.code ?? "?",
           asset: token?.address ?? "",
           bTokenRate: undefined,
+          totalBorrowed,
           contractId,
           isAggregated: true,
           orchestratorId: canInteract ? p.id : undefined,
@@ -273,9 +285,16 @@ export function useLend() {
       try {
         if (selectedPool.isAggregated && selectedPool.orchestratorId) {
           const decimals = 7;
-          const rawAmount = BigInt(
-            Math.floor(parseFloat(amount) * 10 ** decimals)
-          );
+
+          const isWithdrawAll =
+            !isDeposit &&
+            selectedPool.depositedAmount !== undefined &&
+            parseFloat(amount) >=
+              parseFloat(selectedPool.depositedAmount) - 1e-7;
+
+          const rawAmount = isWithdrawAll
+            ? BigInt("999999999999999999")
+            : BigInt(Math.floor(parseFloat(amount) * 10 ** decimals));
 
           const txHash = await executePoolAction({
             poolId: selectedPool.orchestratorId,

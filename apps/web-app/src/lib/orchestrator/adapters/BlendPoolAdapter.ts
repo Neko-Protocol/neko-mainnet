@@ -119,6 +119,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           totalLiabilities: reserve.totalLiabilities().toString(),
           utilization: reserve.getUtilizationFloat(),
           poolName: pool.metadata.name,
+          hasEmissions: !!(reserve.supplyEmissions || reserve.borrowEmissions),
         },
       };
     } catch (error) {
@@ -172,6 +173,9 @@ export class BlendPoolAdapter implements BasePoolAdapter {
             totalLiabilities: reserve.totalLiabilities().toString(),
             utilization: reserve.getUtilizationFloat(),
             poolName: pool.metadata.name,
+            hasEmissions: !!(
+              reserve.supplyEmissions || reserve.borrowEmissions
+            ),
           },
         });
       }
@@ -242,7 +246,89 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     userAddress: string,
     amount: bigint
   ): Promise<TransactionResult> {
-    return this.buildSubmitTx(rawId, userAddress, amount, "withdraw");
+    const { poolContractId, assetAddress } = parseRawId(rawId);
+    const network = getBlendNetwork();
+
+    try {
+      const pool = await PoolV2.load(network, poolContractId);
+      const reserve = pool.reserves.get(assetAddress);
+
+      if (!reserve) {
+        throw new AdapterError(
+          "blend",
+          "withdraw",
+          `Reserve ${assetAddress} not found in pool ${poolContractId}`
+        );
+      }
+
+      const poolUser = await pool.loadUser(userAddress);
+      const supplied = poolUser.getSupply(reserve);
+      const collateral = poolUser.getCollateral(reserve);
+      const total = supplied + collateral;
+
+      // Clamp requested amount to actual on-chain total to handle stale/rounded values
+      const effectiveAmount = amount > total ? total : amount;
+
+      const requests: Request[] = [];
+
+      if (collateral > 0n && supplied > 0n) {
+        // User has both: split proportionally
+        const collateralShare =
+          effectiveAmount >= total
+            ? collateral
+            : (collateral * effectiveAmount) / total;
+        const supplyShare =
+          effectiveAmount >= total
+            ? supplied
+            : effectiveAmount - collateralShare;
+
+        if (collateralShare > 0n) {
+          requests.push({
+            request_type: RequestType.WithdrawCollateral,
+            address: assetAddress,
+            amount: collateralShare,
+          });
+        }
+        if (supplyShare > 0n) {
+          requests.push({
+            request_type: RequestType.Withdraw,
+            address: assetAddress,
+            amount: supplyShare,
+          });
+        }
+      } else if (collateral > 0n) {
+        // Only collateral
+        const withdrawAmt =
+          effectiveAmount > collateral ? collateral : effectiveAmount;
+        requests.push({
+          request_type: RequestType.WithdrawCollateral,
+          address: assetAddress,
+          amount: withdrawAmt,
+        });
+      } else {
+        // Only supply (most common case)
+        const withdrawAmt =
+          effectiveAmount > supplied ? supplied : effectiveAmount;
+        requests.push({
+          request_type: RequestType.Withdraw,
+          address: assetAddress,
+          amount: withdrawAmt,
+        });
+      }
+
+      const poolContract = new PoolContractV2(poolContractId);
+      const opXdr = poolContract.submit({
+        from: userAddress,
+        spender: userAddress,
+        to: userAddress,
+        requests,
+      });
+
+      return this.wrapOperation(opXdr, userAddress);
+    } catch (error) {
+      if (error instanceof AdapterError) throw error;
+      throw new AdapterError("blend", "withdraw", error);
+    }
   }
 
   async borrow(
@@ -251,6 +337,52 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     amount: bigint
   ): Promise<TransactionResult> {
     return this.buildSubmitTx(rawId, userAddress, amount, "borrow");
+  }
+
+  /**
+   * Bundle a supplyCollateral + borrow in one Blend submit transaction.
+   * rawId identifies the asset being borrowed; collateralAssetAddress is the
+   * asset the user is putting up as collateral (may be a different reserve in
+   * the same pool contract).
+   */
+  async borrowWithCollateral(
+    rawId: string,
+    userAddress: string,
+    borrowAmount: bigint,
+    collateralAssetAddress: string,
+    collateralAmount: bigint
+  ): Promise<TransactionResult> {
+    const { poolContractId, assetAddress } = parseRawId(rawId);
+
+    try {
+      const poolContract = new PoolContractV2(poolContractId);
+      const requests: Request[] = [];
+
+      if (collateralAmount > 0n) {
+        requests.push({
+          request_type: RequestType.SupplyCollateral,
+          address: collateralAssetAddress,
+          amount: collateralAmount,
+        });
+      }
+
+      requests.push({
+        request_type: RequestType.Borrow,
+        address: assetAddress,
+        amount: borrowAmount,
+      });
+
+      const opXdr = poolContract.submit({
+        from: userAddress,
+        spender: userAddress,
+        to: userAddress,
+        requests,
+      });
+
+      return this.wrapOperation(opXdr, userAddress);
+    } catch (error) {
+      throw new AdapterError("blend", "borrowWithCollateral", error);
+    }
   }
 
   async repay(

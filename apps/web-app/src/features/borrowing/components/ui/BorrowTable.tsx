@@ -1,5 +1,6 @@
 import React from "react";
-import { Layers, TrendingDown, Shield, Droplets, Zap } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Layers, TrendingDown, Shield, Droplets } from "lucide-react";
 import { ColHeader } from "./ColHeader";
 import { PoolCell } from "./PoolCell";
 import { Pagination } from "./Pagination";
@@ -15,7 +16,6 @@ interface BorrowTableProps {
   totalRows: number;
   totalPages: number;
   rowsPerPage: number;
-  onBorrow: (asset: BorrowTableAsset) => void;
   onPageChange: (page: number) => void;
   onRowsPerPageChange: (value: number) => void;
 }
@@ -30,10 +30,10 @@ export function BorrowTable({
   totalRows,
   totalPages,
   rowsPerPage,
-  onBorrow,
   onPageChange,
   onRowsPerPageChange,
 }: BorrowTableProps) {
+  const router = useRouter();
   const isEmpty = !isLoading && !poolsError && assets.length === 0;
 
   return (
@@ -62,25 +62,30 @@ export function BorrowTable({
                 tooltip="Total liquidity in pool"
                 centered
               />
-              <ColHeader icon={Zap} label="Actions" centered />
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              <LoadingRow colSpan={5} message="Loading borrow pools..." />
+              <LoadingRow colSpan={4} message="Loading borrow pools..." />
             ) : poolsError ? (
               <EmptyRow
-                colSpan={5}
+                colSpan={4}
                 message={`Error loading borrow pools: ${String(poolsError)}`}
                 variant="error"
               />
             ) : assets.length === 0 ? (
-              <EmptyRow colSpan={5} message="Loading borrow pools..." />
+              <EmptyRow colSpan={4} message="Loading borrow pools..." />
             ) : (
               paginatedAssets.map((asset) => (
                 <tr
                   key={asset.rowId}
-                  className="border-b border-white/5 hover:bg-white/2 transition-colors"
+                  onClick={() => {
+                    const id = asset.orchestratorId
+                      ? asset.orchestratorId.replace(/^agg-/, "")
+                      : asset.contractId;
+                    router.push(`/pools/${encodeURIComponent(id)}`);
+                  }}
+                  className="border-b border-white/5 hover:bg-white/[0.04] transition-colors cursor-pointer"
                 >
                   <td className="px-4 py-4 align-middle w-[280px]">
                     <PoolCell
@@ -99,14 +104,6 @@ export function BorrowTable({
                   </td>
                   <td className="px-4 py-4 align-middle text-center text-white text-sm">
                     {asset.liquidity}
-                  </td>
-                  <td className="px-4 py-4 align-middle text-center">
-                    <button
-                      onClick={() => onBorrow(asset)}
-                      className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors"
-                    >
-                      Borrow
-                    </button>
                   </td>
                 </tr>
               ))
@@ -147,7 +144,16 @@ export function BorrowTable({
           <>
             <ul className="divide-y divide-white/5">
               {paginatedAssets.map((asset) => (
-                <li key={asset.rowId} className="px-4 py-4">
+                <li
+                  key={asset.rowId}
+                  onClick={() => {
+                    const id = asset.orchestratorId
+                      ? asset.orchestratorId.replace(/^agg-/, "")
+                      : asset.contractId;
+                    router.push(`/pools/${encodeURIComponent(id)}`);
+                  }}
+                  className="px-4 py-4 cursor-pointer hover:bg-white/[0.04] transition-colors"
+                >
                   <div className="flex items-center justify-between mb-3">
                     <PoolCell
                       token1={asset.pool.token1}
@@ -157,8 +163,7 @@ export function BorrowTable({
                       label={asset.pool.label}
                     />
                   </div>
-
-                  <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="grid grid-cols-3 gap-2">
                     <StatCell
                       label="APR"
                       value={asset.borrowApr}
@@ -175,13 +180,6 @@ export function BorrowTable({
                       icon={Droplets}
                     />
                   </div>
-
-                  <button
-                    onClick={() => onBorrow(asset)}
-                    className="w-full rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-2 text-white text-sm font-semibold transition-colors"
-                  >
-                    Borrow
-                  </button>
                 </li>
               ))}
             </ul>

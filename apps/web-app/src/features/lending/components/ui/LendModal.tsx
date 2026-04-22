@@ -86,18 +86,29 @@ export function LendModal({
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mb-3">
-          {stats.map(({ label, value }) => (
-            <div key={label} className="bg-white/5 rounded-lg p-2.5">
-              <p className="text-white/40 text-[10px] sm:text-xs mb-0.5">
-                {label}
-              </p>
-              <p className="text-white font-semibold text-xs sm:text-sm truncate">
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
+        {isDeposit && (
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            {stats.map(({ label, value }) => (
+              <div key={label} className="bg-white/5 rounded-lg p-2.5">
+                <p className="text-white/40 text-[10px] sm:text-xs mb-0.5">
+                  {label}
+                </p>
+                <p className="text-white font-semibold text-xs sm:text-sm truncate">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isDeposit && pool.depositedAmount && (
+          <div className="mb-3 rounded-xl bg-[#229EDF]/10 border border-[#229EDF]/20 p-3">
+            <p className="text-[#229EDF]/70 text-xs mb-0.5">Your Position</p>
+            <p className="text-[#229EDF] font-bold text-base">
+              {pool.depositedAmount} {pool.token1}
+            </p>
+          </div>
+        )}
 
         {!isDeposit && !isAggregated && (
           <div className="mb-3 rounded-xl bg-[#229EDF]/10 border border-[#229EDF]/20 p-3 flex items-center justify-between">
@@ -125,14 +136,25 @@ export function LendModal({
             {isDeposit ? "Amount to Deposit" : "Amount to Withdraw"} (
             {pool.token1})
           </label>
-          <input
-            type="number"
-            placeholder="0.00"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            disabled={isLoading}
-            className="w-full bg-[#2A2A2A] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-[#229EDF]/50 transition-colors disabled:opacity-50"
-          />
+          <div className="relative">
+            <input
+              type="number"
+              placeholder="0.00"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              disabled={isLoading}
+              className="w-full bg-[#2A2A2A] border border-white/10 rounded-lg px-3 py-2.5 pr-14 text-sm text-white placeholder:text-white/20 outline-none focus:border-[#229EDF]/50 transition-colors disabled:opacity-50"
+            />
+            {!isDeposit && pool.depositedAmount && (
+              <button
+                type="button"
+                onClick={() => setAmount(pool.depositedAmount!)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#229EDF] text-xs font-bold hover:text-[#1a8bc7] transition-colors"
+              >
+                Max
+              </button>
+            )}
+          </div>
           {!isDeposit && !isAggregated && amount && bTokensToBurn && (
             <p className="text-white/30 text-xs mt-1 italic">
               You will burn ~{parseFloat(bTokensToBurn).toFixed(4)} bTokens

@@ -65,6 +65,27 @@ export class Orchestrator {
     return adapter.borrow(rawId, userAddress, amount);
   }
 
+  async borrowWithCollateral(
+    poolId: string,
+    userAddress: string,
+    borrowAmount: bigint,
+    collateralAssetAddress: string,
+    collateralAmount: bigint
+  ): Promise<TransactionResult> {
+    const adapter = this.registry.resolve(poolId);
+    if (!(adapter instanceof BlendPoolAdapter)) {
+      throw new UnsupportedActionError(adapter.type, "borrowWithCollateral");
+    }
+    const rawId = PoolRegistry.stripPrefix(poolId);
+    return adapter.borrowWithCollateral(
+      rawId,
+      userAddress,
+      borrowAmount,
+      collateralAssetAddress,
+      collateralAmount
+    );
+  }
+
   async repay(
     poolId: string,
     userAddress: string,

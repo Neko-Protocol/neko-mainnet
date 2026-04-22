@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { Search } from "lucide-react";
 import { BannerPage } from "@/components/ui/BannerPage";
@@ -18,10 +17,7 @@ const POOL_FILTERS: { label: string; value: PoolTypeFilter }[] = [
   { label: "AMM", value: "amm" },
 ];
 
-const isLendingType = (type: string) => type === "blend" || type === "neko";
-
 const Pools: React.FC = () => {
-  const router = useRouter();
   const [activeTab, setActiveTab] = useState<PageTab>("pools");
   const {
     pools,
@@ -107,15 +103,6 @@ const Pools: React.FC = () => {
             isLoading={isLoading}
             isFetching={isFetching}
             error={error}
-            onDetailsClick={(id) => router.push(`/pools/${id}`)}
-            onLendClick={(id) => {
-              const pool = pools.find((p) => p.id === id);
-              if (pool && isLendingType(pool.type)) router.push("/lending");
-            }}
-            onSwapClick={(id) => {
-              const pool = pools.find((p) => p.id === id);
-              if (pool?.type === "soroswap") router.push("/swap");
-            }}
           />
         </>
       )}

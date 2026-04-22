@@ -6,14 +6,16 @@ import { useRouter } from "next/navigation";
 import {
   Layers,
   Tag,
-  TrendingUp,
   Droplets,
   Activity,
   Info,
+  ArrowDownUp,
 } from "lucide-react";
 import type { PoolCardData } from "@/features/pools/types/pools";
 import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { formatLiquidity } from "../../utils/poolUtils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -22,9 +24,6 @@ interface PoolsTableProps {
   isLoading: boolean;
   isFetching?: boolean;
   error: unknown;
-  onDetailsClick: (poolId: string) => void;
-  onLendClick?: (poolId: string) => void;
-  onSwapClick?: (poolId: string) => void;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -152,47 +151,6 @@ function StatusDot({ isActive }: { isActive: boolean }) {
   );
 }
 
-// ── ActionsCell ────────────────────────────────────────────────────────────────
-
-function ActionsCell({
-  poolId,
-  onDetailsClick,
-  onLendClick,
-  onSwapClick,
-}: {
-  poolId: string;
-  onDetailsClick: (id: string) => void;
-  onLendClick?: (id: string) => void;
-  onSwapClick?: (id: string) => void;
-}) {
-  return (
-    <div className="flex items-center justify-center gap-2">
-      <button
-        onClick={() => onDetailsClick(poolId)}
-        className="rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-3 py-1.5 text-white/70 hover:text-white text-xs font-semibold transition-colors"
-      >
-        Details →
-      </button>
-      {onLendClick && (
-        <button
-          onClick={() => onLendClick(poolId)}
-          className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-3 py-1.5 text-white text-xs font-bold transition-colors"
-        >
-          Lend
-        </button>
-      )}
-      {onSwapClick && (
-        <button
-          onClick={() => onSwapClick(poolId)}
-          className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-3 py-1.5 text-white text-xs font-bold transition-colors"
-        >
-          Swap
-        </button>
-      )}
-    </div>
-  );
-}
-
 // ── LoadingRow / EmptyRow ──────────────────────────────────────────────────────
 
 function LoadingRow({ colSpan }: { colSpan: number }) {
@@ -259,19 +217,47 @@ function StatCell({
   );
 }
 
+// ── LiquidityCell ─────────────────────────────────────────────────────────────
+
+function LiquidityCell({
+  tokenAmount,
+  tokenCode,
+  fallback,
+}: {
+  tokenAmount?: string;
+  tokenCode?: string;
+  fallback: string;
+}) {
+  const { price, isLoading } = useTokenPrice(tokenCode);
+
+  if (!tokenCode || !tokenAmount) {
+    // Already USD (Aqua) — render as-is
+    return <span className="text-white text-sm">{fallback}</span>;
+  }
+
+  if (isLoading) {
+    return <span className="text-white/40 text-sm">…</span>;
+  }
+
+  const usd =
+    price > 0
+      ? formatLiquidity((parseFloat(tokenAmount) * price).toString())
+      : fallback;
+
+  return <span className="text-white text-sm">{usd}</span>;
+}
+
 // ── PoolsTable ─────────────────────────────────────────────────────────────────
 
-const COL_SPAN = 6;
+const COL_SPAN = 5;
 
 export function PoolsTable({
   pools,
   isLoading,
   isFetching = false,
   error,
-  onDetailsClick,
-  onLendClick,
-  onSwapClick,
 }: PoolsTableProps) {
+  const router = useRouter();
   return (
     <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
       {/* Desktop table */}
@@ -282,23 +268,18 @@ export function PoolsTable({
               <ColHeader icon={Layers} label="Pool" />
               <ColHeader icon={Tag} label="Type" />
               <ColHeader
-                icon={TrendingUp}
-                label="APY"
-                tooltip="Annual yield rate for this pool"
+                icon={Droplets}
+                label="Total Supply"
+                tooltip="Total value supplied to the pool"
                 centered
               />
               <ColHeader
-                icon={Droplets}
-                label="Total Liquidity"
-                tooltip="Total value locked in the pool"
+                icon={ArrowDownUp}
+                label="Total Borrowed"
+                tooltip="Total amount currently borrowed from this pool"
                 centered
               />
               <ColHeader icon={Activity} label="Status" centered />
-              <th className="px-4 py-3 text-center">
-                <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
-                  Actions
-                </span>
-              </th>
             </tr>
           </thead>
           <tbody>
@@ -319,7 +300,8 @@ export function PoolsTable({
               pools.map((pool) => (
                 <tr
                   key={pool.id}
-                  className="border-b border-white/5 last:border-0 hover:bg-[#2A2A2A] transition-colors"
+                  onClick={() => router.push(`/pools/${pool.id}`)}
+                  className="border-b border-white/5 last:border-0 hover:bg-[#2A2A2A] transition-colors cursor-pointer"
                 >
                   <td className="px-4 py-4 align-middle">
                     <PoolCell pool={pool} />
@@ -327,22 +309,26 @@ export function PoolsTable({
                   <td className="px-4 py-4 align-middle">
                     <TypeBadge type={pool.type} />
                   </td>
-                  <td className="px-4 py-4 align-middle text-center text-white text-sm font-medium">
-                    {pool.roi}
+                  <td className="px-4 py-4 align-middle text-center font-medium">
+                    <LiquidityCell
+                      tokenAmount={pool.liquidityTokenAmount}
+                      tokenCode={pool.liquidityTokenCode}
+                      fallback={pool.liquidity}
+                    />
                   </td>
-                  <td className="px-4 py-4 align-middle text-center text-white text-sm">
-                    {pool.liquidity}
+                  <td className="px-4 py-4 align-middle text-center text-sm">
+                    {pool.totalBorrowed === "-" ? (
+                      <span className="text-white/30">—</span>
+                    ) : (
+                      <LiquidityCell
+                        tokenAmount={pool.totalBorrowedTokenAmount}
+                        tokenCode={pool.liquidityTokenCode}
+                        fallback={pool.totalBorrowed}
+                      />
+                    )}
                   </td>
                   <td className="px-4 py-4 align-middle">
                     <StatusDot isActive={pool.isActive} />
-                  </td>
-                  <td className="px-4 py-4 align-middle">
-                    <ActionsCell
-                      poolId={pool.id}
-                      onDetailsClick={onDetailsClick}
-                      onLendClick={onLendClick}
-                      onSwapClick={onSwapClick}
-                    />
                   </td>
                 </tr>
               ))
@@ -382,7 +368,11 @@ export function PoolsTable({
         ) : (
           <ul className="divide-y divide-white/5">
             {pools.map((pool) => (
-              <li key={pool.id} className="px-4 py-4">
+              <li
+                key={pool.id}
+                onClick={() => router.push(`/pools/${pool.id}`)}
+                className="px-4 py-4 cursor-pointer hover:bg-[#2A2A2A] transition-colors"
+              >
                 <div className="flex items-center justify-between mb-3">
                   <PoolCell pool={pool} />
                   <div className="flex items-center gap-2">
@@ -390,37 +380,17 @@ export function PoolsTable({
                     <StatusDot isActive={pool.isActive} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  <StatCell label="APY" value={pool.roi} icon={TrendingUp} />
+                <div className="grid grid-cols-2 gap-2">
                   <StatCell
-                    label="Liquidity"
+                    label="Supply"
                     value={pool.liquidity}
                     icon={Droplets}
                   />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => onDetailsClick(pool.id)}
-                    className="flex-1 rounded-lg bg-[#2A2A2A] hover:bg-[#333] py-2 text-white/70 hover:text-white text-xs font-semibold transition-colors text-center"
-                  >
-                    Details →
-                  </button>
-                  {onLendClick && (
-                    <button
-                      onClick={() => onLendClick(pool.id)}
-                      className="flex-1 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] py-2 text-white text-xs font-bold transition-colors"
-                    >
-                      Lend
-                    </button>
-                  )}
-                  {onSwapClick && (
-                    <button
-                      onClick={() => onSwapClick(pool.id)}
-                      className="flex-1 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] py-2 text-white text-xs font-bold transition-colors"
-                    >
-                      Swap
-                    </button>
-                  )}
+                  <StatCell
+                    label="Borrowed"
+                    value={pool.totalBorrowed}
+                    icon={ArrowDownUp}
+                  />
                 </div>
               </li>
             ))}

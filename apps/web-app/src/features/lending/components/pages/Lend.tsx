@@ -110,33 +110,40 @@ const Lend: React.FC = () => {
       </div>
 
       {activeTab === "pools" && (
-        <>
-          <LendTable
-            pools={pools}
-            isLoading={isLoadingPools}
-            isFetching={isFetchingPools}
-            error={poolsError}
-            onDeposit={(pool) => openModal(pool, true)}
-            onWithdraw={(pool) => openModal(pool, false)}
-          />
-
-          {isModalOpen && selectedPool && (
-            <LendModal
-              pool={selectedPool}
-              isDeposit={isDeposit}
-              isLoading={isLoading}
-              bTokenBalance={bTokenBalance}
-              isLoadingBalance={isLoadingBalance}
-              hasWallet={hasWallet}
-              onClose={closeModal}
-              onConfirm={handleConfirm}
-              onRefreshBalance={() => void refreshBalance()}
-            />
-          )}
-        </>
+        <LendTable
+          pools={pools}
+          isLoading={isLoadingPools}
+          isFetching={isFetchingPools}
+          error={poolsError}
+        />
       )}
 
-      {activeTab === "positions" && <MyLendingPositions />}
+      {isModalOpen && selectedPool && (
+        <LendModal
+          pool={selectedPool}
+          isDeposit={isDeposit}
+          isLoading={isLoading}
+          bTokenBalance={bTokenBalance}
+          isLoadingBalance={isLoadingBalance}
+          hasWallet={hasWallet}
+          onClose={closeModal}
+          onConfirm={handleConfirm}
+          onRefreshBalance={() => void refreshBalance()}
+        />
+      )}
+
+      {activeTab === "positions" && (
+        <MyLendingPositions
+          onWithdraw={(assetCode, protocolId, orchestratorId) => {
+            const pool = pools.find((p) =>
+              orchestratorId
+                ? p.orchestratorId === orchestratorId
+                : p.protocolId === protocolId && p.assetCode === assetCode
+            );
+            if (pool) openModal(pool, false);
+          }}
+        />
+      )}
 
       {showBackstop && activeTab === "backstop" && <BackstopPanel />}
     </PageContainer>

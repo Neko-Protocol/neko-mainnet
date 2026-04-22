@@ -2,7 +2,10 @@ import { useQueries } from "@tanstack/react-query";
 import { usePools } from "@/lib/orchestrator/hooks/usePools";
 import { orchestrator } from "@/lib/orchestrator/core/Orchestrator";
 import { useWallet } from "@/hooks/useWallet";
-import type { PoolPosition, PoolInfo } from "@/lib/orchestrator/types/pool.types";
+import type {
+  PoolPosition,
+  PoolInfo,
+} from "@/lib/orchestrator/types/pool.types";
 
 export interface UserPositionWithPool {
   pool: PoolInfo;
@@ -23,12 +26,15 @@ export function useUserPositions() {
     })),
   });
 
-  const isLoading =
-    isLoadingPools || positionQueries.some((q) => q.isLoading);
+  const isLoading = isLoadingPools || positionQueries.some((q) => q.isLoading);
 
   const positions: UserPositionWithPool[] = [];
   positionQueries.forEach((q, i) => {
-    if (q.data && q.data.deposited > 0n) {
+    if (!q.data) return;
+    const hasDeposit = q.data.deposited > 0n;
+    const hasLiabilities =
+      parseFloat(String(q.data.metadata?.liabilities ?? "0")) > 0;
+    if (hasDeposit || hasLiabilities) {
       positions.push({ pool: pools[i], position: q.data });
     }
   });

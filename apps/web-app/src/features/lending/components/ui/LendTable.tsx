@@ -7,12 +7,13 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeftRight,
   TrendingUp,
   Droplets,
-  Coins,
-  Zap,
+  ArrowDownUp,
+  Layers,
   Search,
   SlidersHorizontal,
   Settings,
@@ -415,7 +416,7 @@ function FilterDropdown({
 
 // ── SortDropdown ──────────────────────────────────────────────────────────────
 
-type SortField = "name" | "roi" | "liquidity" | "bTokenRate";
+type SortField = "name" | "roi" | "liquidity" | "totalBorrowed";
 type SortOrder = "desc" | "asc";
 
 interface SortState {
@@ -426,7 +427,7 @@ interface SortState {
 const SORT_FIELDS: { value: SortField; label: string }[] = [
   { value: "roi", label: "Supply APY" },
   { value: "liquidity", label: "Total Liquidity" },
-  { value: "bTokenRate", label: "bToken Rate" },
+  { value: "totalBorrowed", label: "Total Borrowed" },
   { value: "name", label: "Pool name" },
 ];
 
@@ -547,16 +548,14 @@ export type ColumnKey =
   | "pool"
   | "apy"
   | "liquidity"
-  | "bTokenRate"
-  | "actions";
+  | "totalBorrowed";
 
 const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: "protocol", label: "Protocol" },
   { key: "pool", label: "Pool" },
   { key: "apy", label: "Supply APY" },
   { key: "liquidity", label: "Total Liquidity" },
-  { key: "bTokenRate", label: "bToken Rate" },
-  { key: "actions", label: "Actions" },
+  { key: "totalBorrowed", label: "Total Borrowed" },
 ];
 
 export const DEFAULT_VISIBLE_COLUMNS: Set<ColumnKey> = new Set([
@@ -564,8 +563,7 @@ export const DEFAULT_VISIBLE_COLUMNS: Set<ColumnKey> = new Set([
   "pool",
   "apy",
   "liquidity",
-  "bTokenRate",
-  "actions",
+  "totalBorrowed",
 ]);
 
 function ColumnsDropdown({
@@ -767,16 +765,14 @@ interface LendTableProps {
   isLoading: boolean;
   isFetching?: boolean;
   error: unknown;
-  onDeposit: (pool: PoolData) => void;
-  onWithdraw: (pool: PoolData) => void;
-  hideActions?: boolean;
-  compact?: boolean;
   // Toolbar
   searchQuery?: string;
   onSearchChange?: (q: string) => void;
   protocolFilter?: string;
   onProtocolFilterChange?: (id: string) => void;
   protocolOptions?: { id: string; label: string }[];
+  /** When true, table card has no min-height (e.g. embedded in dashboard). */
+  compact?: boolean;
 }
 
 export function LendTable({
@@ -784,16 +780,14 @@ export function LendTable({
   isLoading,
   isFetching = false,
   error,
-  onDeposit,
-  onWithdraw,
-  hideActions = false,
-  compact = false,
   searchQuery = "",
   onSearchChange,
   protocolFilter = "all",
   onProtocolFilterChange,
   protocolOptions = [],
+  compact = false,
 }: LendTableProps) {
+  const router = useRouter();
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
   const [sort, setSort] = useState<SortState>(DEFAULT_SORT);
   const [visibleColumns, setVisibleColumns] = useState<Set<ColumnKey>>(
@@ -867,9 +861,16 @@ export function LendTable({
           (s.includes("M") ? 1_000_000 : s.includes("k") ? 1_000 : 1);
         av = parse(a.liquidity);
         bv = parse(b.liquidity);
-      } else if (sort.field === "bTokenRate") {
-        av = parseFloat(a.bTokenRate ?? "1");
-        bv = parseFloat(b.bTokenRate ?? "1");
+      } else if (sort.field === "totalBorrowed") {
+        const parse = (s: string | undefined) =>
+          parseFloat((s ?? "0").replace(/[^0-9.]/g, "")) *
+          ((s ?? "").includes("M")
+            ? 1_000_000
+            : (s ?? "").includes("k")
+              ? 1_000
+              : 1);
+        av = parse(a.totalBorrowed);
+        bv = parse(b.totalBorrowed);
       } else {
         return sort.order === "asc"
           ? a.name.localeCompare(b.name)
@@ -882,10 +883,9 @@ export function LendTable({
   }, [pools, filters, sort, protocolFilter, searchQuery]);
 
   const col = (key: ColumnKey) => visibleColumns.has(key);
-  const colCount =
-    (
-      ["protocol", "pool", "apy", "liquidity", "bTokenRate"] as ColumnKey[]
-    ).filter((k) => col(k)).length + (!hideActions && col("actions") ? 1 : 0);
+  const colCount = (
+    ["protocol", "pool", "apy", "liquidity", "totalBorrowed"] as ColumnKey[]
+  ).filter((k) => col(k)).length;
   const isEmpty = !isLoading && !error && pools.length === 0;
   const filterEmpty =
     !isLoading && !error && pools.length > 0 && displayPools.length === 0;
@@ -965,7 +965,7 @@ export function LendTable({
               {col("protocol") && (
                 <ColHeader icon={ArrowLeftRight} label="Protocol" />
               )}
-              {col("pool") && <ColHeader icon={ArrowLeftRight} label="Pool" />}
+              {col("pool") && <ColHeader icon={Layers} label="Pool" />}
               {col("apy") && (
                 <ColHeader
                   icon={TrendingUp}
@@ -982,16 +982,13 @@ export function LendTable({
                   centered
                 />
               )}
-              {col("bTokenRate") && (
+              {col("totalBorrowed") && (
                 <ColHeader
-                  icon={Coins}
-                  tooltip="Rate at which you receive bTokens for each asset deposited"
-                  label="bToken Rate"
+                  icon={ArrowDownUp}
+                  tooltip="Total amount currently borrowed from this pool"
+                  label="Total Borrowed"
                   centered
                 />
-              )}
-              {!hideActions && col("actions") && (
-                <ColHeader icon={Zap} label="Actions" centered />
               )}
             </tr>
           </thead>
@@ -1015,7 +1012,11 @@ export function LendTable({
               displayPools.map((pool) => (
                 <tr
                   key={pool.id}
-                  className="border-b border-white/5 hover:bg-white/2 transition-colors"
+                  onClick={() => {
+                    const id = pool.orchestratorId ?? pool.contractId;
+                    if (id) router.push(`/pools/${encodeURIComponent(id)}`);
+                  }}
+                  className={`border-b border-white/5 hover:bg-white/[0.04] transition-colors ${(pool.orchestratorId ?? pool.contractId) ? "cursor-pointer" : ""}`}
                 >
                   {col("protocol") && (
                     <td className="px-4 py-4 align-middle">
@@ -1037,32 +1038,12 @@ export function LendTable({
                       {pool.liquidity}
                     </td>
                   )}
-                  {col("bTokenRate") && (
-                    <td className="px-4 py-4 align-middle text-center text-white text-sm">
-                      {pool.bTokenRate
-                        ? parseFloat(pool.bTokenRate).toFixed(4)
-                        : "1.0000"}
-                    </td>
-                  )}
-                  {!hideActions && col("actions") && (
-                    <td className="px-4 py-4 align-middle text-center">
-                      {pool.hideRowActions ? (
-                        <span className="text-white/20 text-xs">—</span>
+                  {col("totalBorrowed") && (
+                    <td className="px-4 py-4 align-middle text-center text-sm">
+                      {pool.totalBorrowed ? (
+                        <span className="text-white">{pool.totalBorrowed}</span>
                       ) : (
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => onDeposit(pool)}
-                            className="rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-1.5 text-white/70 hover:text-white text-xs font-semibold transition-colors"
-                          >
-                            Deposit
-                          </button>
-                          <button
-                            onClick={() => onWithdraw(pool)}
-                            className="rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-1.5 text-white text-xs font-semibold transition-colors"
-                          >
-                            Withdraw
-                          </button>
-                        </div>
+                        <span className="text-white/30">—</span>
                       )}
                     </td>
                   )}
@@ -1096,15 +1077,19 @@ export function LendTable({
           <>
             <ul className="divide-y divide-white/5 overflow-y-auto max-h-[600px]">
               {displayPools.map((pool) => (
-                <li key={pool.id} className="px-4 py-4">
-                  {}
+                <li
+                  key={pool.id}
+                  onClick={() => {
+                    const id = pool.orchestratorId ?? pool.contractId;
+                    if (id) router.push(`/pools/${encodeURIComponent(id)}`);
+                  }}
+                  className={`px-4 py-4 hover:bg-white/[0.04] transition-colors ${(pool.orchestratorId ?? pool.contractId) ? "cursor-pointer" : ""}`}
+                >
                   <div className="mb-1 flex items-center gap-3">
                     <ProtocolNameCell pool={pool} />
                     <PoolPairCell pool={pool} />
                   </div>
-
-                  {}
-                  <div className="grid grid-cols-3 gap-2 mb-4">
+                  <div className="grid grid-cols-3 gap-2">
                     <StatCell
                       label="Supply APY"
                       value={pool.roi}
@@ -1116,32 +1101,11 @@ export function LendTable({
                       icon={Droplets}
                     />
                     <StatCell
-                      label="bToken Rate"
-                      value={
-                        pool.bTokenRate
-                          ? parseFloat(pool.bTokenRate).toFixed(4)
-                          : "1.0000"
-                      }
-                      icon={Coins}
+                      label="Borrowed"
+                      value={pool.totalBorrowed ?? "—"}
+                      icon={ArrowDownUp}
                     />
                   </div>
-
-                  {!hideActions && !pool.hideRowActions && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onDeposit(pool)}
-                        className="flex-1 rounded-lg bg-[#2A2A2A] hover:bg-[#333] px-4 py-2 text-white/70 hover:text-white text-sm font-semibold transition-colors"
-                      >
-                        Deposit
-                      </button>
-                      <button
-                        onClick={() => onWithdraw(pool)}
-                        className="flex-1 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] px-4 py-2 text-white text-sm font-semibold transition-colors"
-                      >
-                        Withdraw
-                      </button>
-                    </div>
-                  )}
                 </li>
               ))}
             </ul>
