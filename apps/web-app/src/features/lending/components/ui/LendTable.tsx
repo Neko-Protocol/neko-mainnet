@@ -8,6 +8,8 @@ import React, {
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import {
   ArrowLeftRight,
   TrendingUp,
@@ -548,7 +550,8 @@ export type ColumnKey =
   | "pool"
   | "apy"
   | "liquidity"
-  | "totalBorrowed";
+  | "totalBorrowed"
+  | "borrow";
 
 const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: "protocol", label: "Protocol" },
@@ -556,6 +559,7 @@ const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: "apy", label: "Supply APY" },
   { key: "liquidity", label: "Total Liquidity" },
   { key: "totalBorrowed", label: "Total Borrowed" },
+  { key: "borrow", label: "Borrow APY" },
 ];
 
 export const DEFAULT_VISIBLE_COLUMNS: Set<ColumnKey> = new Set([
@@ -564,6 +568,7 @@ export const DEFAULT_VISIBLE_COLUMNS: Set<ColumnKey> = new Set([
   "apy",
   "liquidity",
   "totalBorrowed",
+  "borrow",
 ]);
 
 function ColumnsDropdown({
@@ -673,6 +678,25 @@ function ColumnsDropdown({
         )}
     </div>
   );
+}
+
+// ── PricedCell ────────────────────────────────────────────────────────────────
+
+function PricedCell({
+  tokenAmount,
+  tokenCode,
+  fallback,
+}: {
+  tokenAmount?: string;
+  tokenCode?: string;
+  fallback: string;
+}) {
+  const { price } = useTokenPrice(tokenCode);
+  if (tokenAmount && tokenCode && price > 0) {
+    const usd = parseFloat(tokenAmount) * price;
+    return <span className="text-white">{formatLiquidity(String(usd))}</span>;
+  }
+  return <span className="text-white">{fallback}</span>;
 }
 
 // ── ProtocolNameCell ──────────────────────────────────────────────────────────
@@ -884,7 +908,14 @@ export function LendTable({
 
   const col = (key: ColumnKey) => visibleColumns.has(key);
   const colCount = (
-    ["protocol", "pool", "apy", "liquidity", "totalBorrowed"] as ColumnKey[]
+    [
+      "protocol",
+      "pool",
+      "apy",
+      "liquidity",
+      "totalBorrowed",
+      "borrow",
+    ] as ColumnKey[]
   ).filter((k) => col(k)).length;
   const isEmpty = !isLoading && !error && pools.length === 0;
   const filterEmpty =
@@ -990,6 +1021,14 @@ export function LendTable({
                   centered
                 />
               )}
+              {col("borrow") && (
+                <ColHeader
+                  icon={TrendingUp}
+                  tooltip="Annual cost to borrow from this pool"
+                  label="Borrow APY"
+                  centered
+                />
+              )}
             </tr>
           </thead>
           <tbody>
@@ -1034,14 +1073,31 @@ export function LendTable({
                     </td>
                   )}
                   {col("liquidity") && (
-                    <td className="px-4 py-4 align-middle text-center text-white text-sm">
-                      {pool.liquidity}
+                    <td className="px-4 py-4 align-middle text-center text-sm">
+                      <PricedCell
+                        tokenAmount={pool.liquidityTokenAmount}
+                        tokenCode={pool.liquidityTokenCode}
+                        fallback={pool.liquidity}
+                      />
                     </td>
                   )}
                   {col("totalBorrowed") && (
                     <td className="px-4 py-4 align-middle text-center text-sm">
                       {pool.totalBorrowed ? (
-                        <span className="text-white">{pool.totalBorrowed}</span>
+                        <PricedCell
+                          tokenAmount={pool.totalBorrowedTokenAmount}
+                          tokenCode={pool.liquidityTokenCode}
+                          fallback={pool.totalBorrowed}
+                        />
+                      ) : (
+                        <span className="text-white/30">—</span>
+                      )}
+                    </td>
+                  )}
+                  {col("borrow") && (
+                    <td className="px-4 py-4 align-middle text-center text-sm">
+                      {pool.borrowApy ? (
+                        <span className="text-white">{pool.borrowApy}</span>
                       ) : (
                         <span className="text-white/30">—</span>
                       )}
