@@ -15,6 +15,14 @@ export interface PoolDetailPanelToken {
   address?: string;
 }
 
+export interface CollateralOption {
+  symbol: string;
+  address: string;
+  decimals: number;
+  cFactor: number;
+  userBalance: string;
+}
+
 export interface PoolDetailPanelPool {
   id: string;
   name: string;
@@ -39,6 +47,8 @@ export interface PoolDetailPanelPool {
   /** LP / pool shares (max for withdraw) */
   lpBalance?: string;
   borrowLimit?: string;
+  /** Available assets that can be used as collateral when borrowing (Blend only) */
+  collateralOptions?: CollateralOption[];
 }
 
 interface PoolDetailPanelProps {
@@ -59,7 +69,11 @@ interface PoolDetailPanelProps {
   canLend?: boolean;
   canBorrow?: boolean;
   onLendSubmit?: (supplyAmount: string) => void | Promise<void>;
-  onBorrowSubmit?: (borrowAmount: string) => void | Promise<void>;
+  onBorrowSubmit?: (
+    borrowAmount: string,
+    collateralAssetAddress: string,
+    collateralAmount: string
+  ) => void | Promise<void>;
   isLendingActionPending?: boolean;
 }
 
@@ -300,8 +314,26 @@ export function PoolDetailPanel({
   const [collateralAmount, setCollateralAmount] = useState("");
   const [borrowAmount, setBorrowAmount] = useState("");
 
+  // Borrow collateral selection (Blend)
+  const defaultCollateral = pool.collateralOptions?.[0];
+  const [selectedCollateralAddress, setSelectedCollateralAddress] = useState(
+    defaultCollateral?.address ?? ""
+  );
+  const [collateralInputAmount, setCollateralInputAmount] = useState("");
+
+  const selectedCollateral = useMemo(
+    () =>
+      pool.collateralOptions?.find(
+        (o) => o.address === selectedCollateralAddress
+      ) ?? pool.collateralOptions?.[0],
+    [pool.collateralOptions, selectedCollateralAddress]
+  );
+
   const { price: token1Price } = useTokenPrice(pool.token1.symbol);
   const { price: token2Price } = useTokenPrice(pool.token2.symbol);
+  const { price: selectedCollateralPrice } = useTokenPrice(
+    selectedCollateral?.symbol
+  );
 
   const ammUsdValue = useMemo(() => {
     const parsed = parseFloat(ammAmount);
@@ -320,6 +352,20 @@ export function PoolDetailPanel({
     if (!parsed || !token2Price) return "0.00";
     return (parsed * token2Price).toFixed(2);
   }, [borrowAmount, token2Price]);
+
+  const BLEND_MIN_COLLATERAL_USD = 5;
+
+  const collateralInputUsd = useMemo(() => {
+    const parsed = parseFloat(collateralInputAmount);
+    if (!parsed || !selectedCollateralPrice) return 0;
+    return parsed * selectedCollateralPrice;
+  }, [collateralInputAmount, selectedCollateralPrice]);
+
+  const collateralBelowMinimum =
+    !!pool.collateralOptions?.length &&
+    mode === "borrow" &&
+    collateralInputAmount !== "" &&
+    collateralInputUsd < BLEND_MIN_COLLATERAL_USD;
 
   const lendingTabs = supportsBorrow
     ? (["lend", "borrow"] as const)
@@ -412,17 +458,103 @@ export function PoolDetailPanel({
             />
           )}
           {mode === "borrow" && (
-            <AmountInput
-              label={`Borrow ${pool.token2.symbol}`}
-              token={pool.token2}
-              value={borrowAmount}
-              onChange={setBorrowAmount}
-              balanceLabel="MAX"
-              balanceValue={pool.borrowLimit ?? "0.00"}
-              onMax={() => setBorrowAmount(pool.borrowLimit ?? "0")}
-              disabled={!isWalletConnected}
-              usdValue={borrowUsdValue}
-            />
+            <>
+              <AmountInput
+                label={`Borrow ${pool.token2.symbol}`}
+                token={pool.token2}
+                value={borrowAmount}
+                onChange={setBorrowAmount}
+                balanceLabel="MAX"
+                balanceValue={pool.borrowLimit ?? "0.00"}
+                onMax={() => setBorrowAmount(pool.borrowLimit ?? "0")}
+                disabled={!isWalletConnected}
+                usdValue={borrowUsdValue}
+              />
+
+              {/* Collateral card — shown for Blend pools */}
+              {pool.collateralOptions && pool.collateralOptions.length > 0 && (
+                <div className="rounded-xl border border-white/10 bg-[#1C1C1C] p-4 flex flex-col gap-3">
+                  <p className="text-white/50 text-xs font-medium">
+                    Collateral
+                  </p>
+
+                  {/* Asset selector */}
+                  <div className="flex flex-wrap gap-2">
+                    {pool.collateralOptions.map((opt) => (
+                      <button
+                        key={opt.address}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCollateralAddress(opt.address);
+                          setCollateralInputAmount("");
+                        }}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                          selectedCollateralAddress === opt.address
+                            ? "border-[#229EDF] bg-[#229EDF]/10 text-[#229EDF]"
+                            : "border-white/10 text-white/50 hover:text-white/70"
+                        }`}
+                      >
+                        {opt.symbol}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Amount input */}
+                  {selectedCollateral && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          placeholder="0.00"
+                          value={collateralInputAmount}
+                          onChange={(e) =>
+                            setCollateralInputAmount(
+                              e.target.value
+                                .replace(/[^0-9.]/g, "")
+                                .replace(/(\..*)\./g, "$1")
+                            )
+                          }
+                          disabled={!isWalletConnected}
+                          className="w-full bg-transparent text-white text-xl font-semibold outline-none placeholder:text-white/15 disabled:cursor-not-allowed"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCollateralInputAmount(
+                              selectedCollateral.userBalance
+                            )
+                          }
+                          disabled={!isWalletConnected}
+                          className="ml-3 shrink-0 text-[#229EDF] text-xs font-semibold uppercase tracking-wide hover:text-[#1a8bc7] transition-colors disabled:opacity-40"
+                        >
+                          MAX
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-white/30">
+                          {collateralInputUsd > 0
+                            ? `$${collateralInputUsd.toFixed(2)}`
+                            : "$0.00"}
+                        </span>
+                        <span className="text-white/30 tabular-nums">
+                          {selectedCollateral.userBalance}{" "}
+                          {selectedCollateral.symbol}
+                        </span>
+                      </div>
+
+                      {collateralBelowMinimum && (
+                        <p className="text-xs text-amber-400/80">
+                          Minimum collateral value: $
+                          {BLEND_MIN_COLLATERAL_USD.toFixed(2)}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </>
           )}
         </>
       )}
@@ -542,12 +674,22 @@ export function PoolDetailPanel({
           {mode === "borrow" && canBorrow && onBorrowSubmit && (
             <button
               type="button"
-              onClick={() => void onBorrowSubmit(borrowAmount)}
+              onClick={() =>
+                void onBorrowSubmit(
+                  borrowAmount,
+                  selectedCollateral?.address ?? "",
+                  collateralInputAmount
+                )
+              }
               disabled={
                 isLendingActionPending ||
                 !isWalletConnected ||
                 !borrowAmount ||
-                parseFloat(borrowAmount) <= 0
+                parseFloat(borrowAmount) <= 0 ||
+                collateralBelowMinimum ||
+                (!!pool.collateralOptions?.length &&
+                  (!collateralInputAmount ||
+                    parseFloat(collateralInputAmount) <= 0))
               }
               className="w-full py-3.5 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -602,7 +744,11 @@ interface PoolDetailLayoutProps {
   canLend?: boolean;
   canBorrow?: boolean;
   onLendSubmit?: (supplyAmount: string) => void | Promise<void>;
-  onBorrowSubmit?: (borrowAmount: string) => void | Promise<void>;
+  onBorrowSubmit?: (
+    borrowAmount: string,
+    collateralAssetAddress: string,
+    collateralAmount: string
+  ) => void | Promise<void>;
   isLendingActionPending?: boolean;
 }
 

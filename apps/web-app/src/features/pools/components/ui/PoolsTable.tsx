@@ -6,14 +6,16 @@ import { useRouter } from "next/navigation";
 import {
   Layers,
   Tag,
-  TrendingUp,
   Droplets,
   Activity,
   Info,
+  ArrowDownUp,
 } from "lucide-react";
 import type { PoolCardData } from "@/features/pools/types/pools";
 import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { formatLiquidity } from "../../utils/poolUtils";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -215,6 +217,36 @@ function StatCell({
   );
 }
 
+// ── LiquidityCell ─────────────────────────────────────────────────────────────
+
+function LiquidityCell({
+  tokenAmount,
+  tokenCode,
+  fallback,
+}: {
+  tokenAmount?: string;
+  tokenCode?: string;
+  fallback: string;
+}) {
+  const { price, isLoading } = useTokenPrice(tokenCode);
+
+  if (!tokenCode || !tokenAmount) {
+    // Already USD (Aqua) — render as-is
+    return <span className="text-white text-sm">{fallback}</span>;
+  }
+
+  if (isLoading) {
+    return <span className="text-white/40 text-sm">…</span>;
+  }
+
+  const usd =
+    price > 0
+      ? formatLiquidity((parseFloat(tokenAmount) * price).toString())
+      : fallback;
+
+  return <span className="text-white text-sm">{usd}</span>;
+}
+
 // ── PoolsTable ─────────────────────────────────────────────────────────────────
 
 const COL_SPAN = 5;
@@ -236,15 +268,15 @@ export function PoolsTable({
               <ColHeader icon={Layers} label="Pool" />
               <ColHeader icon={Tag} label="Type" />
               <ColHeader
-                icon={TrendingUp}
-                label="APY"
-                tooltip="Annual yield rate for this pool"
+                icon={Droplets}
+                label="Total Supply"
+                tooltip="Total value supplied to the pool"
                 centered
               />
               <ColHeader
-                icon={Droplets}
-                label="Total Liquidity"
-                tooltip="Total value locked in the pool"
+                icon={ArrowDownUp}
+                label="Total Borrowed"
+                tooltip="Total amount currently borrowed from this pool"
                 centered
               />
               <ColHeader icon={Activity} label="Status" centered />
@@ -277,11 +309,23 @@ export function PoolsTable({
                   <td className="px-4 py-4 align-middle">
                     <TypeBadge type={pool.type} />
                   </td>
-                  <td className="px-4 py-4 align-middle text-center text-white text-sm font-medium">
-                    {pool.roi}
+                  <td className="px-4 py-4 align-middle text-center font-medium">
+                    <LiquidityCell
+                      tokenAmount={pool.liquidityTokenAmount}
+                      tokenCode={pool.liquidityTokenCode}
+                      fallback={pool.liquidity}
+                    />
                   </td>
-                  <td className="px-4 py-4 align-middle text-center text-white text-sm">
-                    {pool.liquidity}
+                  <td className="px-4 py-4 align-middle text-center text-sm">
+                    {pool.totalBorrowed === "-" ? (
+                      <span className="text-white/30">—</span>
+                    ) : (
+                      <LiquidityCell
+                        tokenAmount={pool.totalBorrowedTokenAmount}
+                        tokenCode={pool.liquidityTokenCode}
+                        fallback={pool.totalBorrowed}
+                      />
+                    )}
                   </td>
                   <td className="px-4 py-4 align-middle">
                     <StatusDot isActive={pool.isActive} />
@@ -337,11 +381,15 @@ export function PoolsTable({
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <StatCell label="APY" value={pool.roi} icon={TrendingUp} />
                   <StatCell
-                    label="Liquidity"
+                    label="Supply"
                     value={pool.liquidity}
                     icon={Droplets}
+                  />
+                  <StatCell
+                    label="Borrowed"
+                    value={pool.totalBorrowed}
+                    icon={ArrowDownUp}
                   />
                 </div>
               </li>

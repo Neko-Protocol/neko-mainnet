@@ -253,6 +253,52 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     return this.buildSubmitTx(rawId, userAddress, amount, "borrow");
   }
 
+  /**
+   * Bundle a supplyCollateral + borrow in one Blend submit transaction.
+   * rawId identifies the asset being borrowed; collateralAssetAddress is the
+   * asset the user is putting up as collateral (may be a different reserve in
+   * the same pool contract).
+   */
+  async borrowWithCollateral(
+    rawId: string,
+    userAddress: string,
+    borrowAmount: bigint,
+    collateralAssetAddress: string,
+    collateralAmount: bigint
+  ): Promise<TransactionResult> {
+    const { poolContractId, assetAddress } = parseRawId(rawId);
+
+    try {
+      const poolContract = new PoolContractV2(poolContractId);
+      const requests: Request[] = [];
+
+      if (collateralAmount > 0n) {
+        requests.push({
+          request_type: RequestType.SupplyCollateral,
+          address: collateralAssetAddress,
+          amount: collateralAmount,
+        });
+      }
+
+      requests.push({
+        request_type: RequestType.Borrow,
+        address: assetAddress,
+        amount: borrowAmount,
+      });
+
+      const opXdr = poolContract.submit({
+        from: userAddress,
+        spender: userAddress,
+        to: userAddress,
+        requests,
+      });
+
+      return this.wrapOperation(opXdr, userAddress);
+    } catch (error) {
+      throw new AdapterError("blend", "borrowWithCollateral", error);
+    }
+  }
+
   async repay(
     rawId: string,
     userAddress: string,

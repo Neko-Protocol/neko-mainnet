@@ -8,15 +8,17 @@ import {
   orchestrator,
   useUserPosition,
   usePoolAction,
+  usePools,
 } from "@/lib/orchestrator";
 import { fromSmallestUnit, toSmallestUnit } from "@/lib/helpers/tokenUtils";
-import type { PoolAction } from "@/lib/orchestrator";
+import type { PoolAction, PoolInfo } from "@/lib/orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { usePoolDetail } from "@/features/pools/hooks/usePoolDetail";
 import {
   PoolDetailLayout,
   type PoolDetailPanelPool,
+  type CollateralOption,
 } from "../ui/PoolDetailPanel";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import { formatLiquidity, safeParseFloat } from "../../utils/poolUtils";
@@ -26,6 +28,8 @@ import {
   aquaProportionalAmountB,
 } from "@/lib/helpers/stellar/aquaDeposit";
 import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
+import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
+import { rpcUrl } from "@/lib/constants/network";
 
 interface PoolDetailProps {
   params: Promise<{ contractid: string }>;
@@ -49,13 +53,65 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   const { contractid: rawId } = use(params);
   const contractid = decodeURIComponent(rawId);
 
-  const { address, nativeBalanceStroops, subentryCount, refetchBalances } =
-    useWallet();
+  const {
+    address,
+    nativeBalanceStroops,
+    subentryCount,
+    refetchBalances,
+    signTransaction,
+  } = useWallet();
   const queryClient = useQueryClient();
   const { data: pool, isLoading, error } = usePoolDetail(contractid);
   const { data: position } = useUserPosition(contractid, address);
   const { balance: token1Balance } = useTokenBalance(pool?.tokens[0]?.address);
   const { balance: token2Balance } = useTokenBalance(pool?.tokens[1]?.address);
+
+  // Sibling reserves in the same Blend pool contract (used as collateral options)
+  const { data: allPools = [] } = usePools();
+  const blendPoolContractId =
+    pool?.type === "blend"
+      ? (pool.metadata?.poolContractId as string | undefined)
+      : undefined;
+
+  const collateralOptions = useMemo<CollateralOption[]>(() => {
+    if (!blendPoolContractId) return [];
+    return allPools
+      .filter(
+        (p: PoolInfo) =>
+          p.type === "blend" &&
+          (p.metadata?.poolContractId as string) === blendPoolContractId &&
+          p.id !== contractid
+      )
+      .map((p: PoolInfo) => ({
+        symbol: p.tokens[0]?.code ?? "?",
+        address: p.tokens[0]?.address ?? "",
+        decimals: p.tokens[0]?.decimals ?? 7,
+        cFactor: (p.metadata?.cFactor as number) ?? 0,
+        userBalance: "0", // updated below via useTokenBalance per option
+      }));
+  }, [allPools, blendPoolContractId, contractid]);
+
+  // Fetch wallet balance for each collateral option (up to 3 siblings typical)
+  const collateralBalance0 = useTokenBalance(collateralOptions[0]?.address);
+  const collateralBalance1 = useTokenBalance(collateralOptions[1]?.address);
+  const collateralBalance2 = useTokenBalance(collateralOptions[2]?.address);
+
+  const collateralOptionsWithBalances = useMemo<CollateralOption[]>(() => {
+    const balances = [
+      collateralBalance0.balance,
+      collateralBalance1.balance,
+      collateralBalance2.balance,
+    ];
+    return collateralOptions.map((opt, i) => ({
+      ...opt,
+      userBalance: balances[i] ?? "0",
+    }));
+  }, [
+    collateralOptions,
+    collateralBalance0.balance,
+    collateralBalance1.balance,
+    collateralBalance2.balance,
+  ]);
 
   const { mutateAsync: executePoolAction, isPending: isActionPending } =
     usePoolAction();
@@ -251,15 +307,69 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   );
 
   const handleBorrowingSubmit = useCallback(
-    async (borrowAmount: string) => {
-      if (!address) return;
+    async (
+      borrowAmount: string,
+      collateralAssetAddress: string,
+      collateralAmt: string
+    ) => {
+      if (!address || !signTransaction) return;
       const b = parseFloat(borrowAmount);
       if (isNaN(b) || b <= 0) return;
-      const bDec = pool?.tokens[1]?.decimals ?? 7;
-      const amountBigInt = BigInt(toSmallestUnit(borrowAmount, bDec));
-      await runPoolAction("borrow", amountBigInt);
+      const bDec = pool?.tokens[0]?.decimals ?? 7;
+      const borrowBigInt = BigInt(toSmallestUnit(borrowAmount, bDec));
+
+      const cNum = parseFloat(collateralAmt);
+      const hasCollateral =
+        !!collateralAssetAddress && !isNaN(cNum) && cNum > 0;
+
+      if (hasCollateral) {
+        const collateralOption = collateralOptionsWithBalances.find(
+          (o) => o.address === collateralAssetAddress
+        );
+        const cDec = collateralOption?.decimals ?? 7;
+        const collateralBigInt = BigInt(toSmallestUnit(collateralAmt, cDec));
+
+        const result = await orchestrator.borrowWithCollateral(
+          contractid,
+          address,
+          borrowBigInt,
+          collateralAssetAddress,
+          collateralBigInt
+        );
+
+        const signed = await signTransaction(result.xdr, {
+          networkPassphrase: result.networkPassphrase,
+        });
+        const signedXdr =
+          typeof signed === "string"
+            ? signed
+            : ((signed as { signedTxXdr?: string }).signedTxXdr ?? "");
+
+        const server = new rpc.Server(rpcUrl, { allowHttp: true });
+        const tx = TransactionBuilder.fromXDR(
+          signedXdr,
+          result.networkPassphrase
+        );
+        const txResult = await server.sendTransaction(tx);
+        if (txResult.status === "ERROR") {
+          throw new Error("Transaction failed");
+        }
+        await server.pollTransaction(txResult.hash, { attempts: 30 });
+      } else {
+        await runPoolAction("borrow", borrowBigInt);
+      }
+
+      await refetchAfterTx();
     },
-    [address, pool, runPoolAction]
+    [
+      address,
+      signTransaction,
+      pool,
+      contractid,
+      collateralOptionsWithBalances,
+      runPoolAction,
+      refetchAfterTx,
+    ]
   );
 
   const ammSubmitDisabled =
@@ -391,8 +501,15 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       collateralBalance: collateralRaw,
       loanBalance: loanRaw,
       currentLtv: 0,
+      collateralOptions: collateralOptionsWithBalances,
     };
-  }, [pool, position, token1Balance, isLendingPool]);
+  }, [
+    pool,
+    position,
+    token1Balance,
+    isLendingPool,
+    collateralOptionsWithBalances,
+  ]);
 
   if (isLoading) {
     return (
