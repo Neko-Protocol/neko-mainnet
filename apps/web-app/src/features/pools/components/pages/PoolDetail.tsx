@@ -510,6 +510,10 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     let supplyApyDisplay: string;
     let supplyApySub: string | undefined;
     let borrowApyLabel: string | undefined;
+    let poolTypeLabel: string | undefined;
+    let poolTypeDetail: string | undefined;
+    let oraclePrice: string | undefined;
+    let utilization: string | undefined;
 
     if (isAqua) {
       const usd = safeParseFloat(liquidityUsd);
@@ -534,6 +538,20 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       if (rewards > 0.0001) {
         supplyApySub = `Base ${baseSup.toFixed(2)}% + ${rewards.toFixed(2)}% rewards`;
       }
+      const aquaPoolType = pool.metadata.aquaPoolType as string | undefined;
+      if (aquaPoolType === "stable_swap" || aquaPoolType === "stable") {
+        poolTypeLabel = "Stable Swap";
+        const amp = pool.metadata.amplificationFactor as
+          | number
+          | null
+          | undefined;
+        if (amp != null) poolTypeDetail = `A: ${amp}`;
+      } else if (aquaPoolType === "constant_product") {
+        poolTypeLabel = "Constant Product";
+      }
+      if (primaryTokenPrice > 0 && t1?.code) {
+        oraclePrice = `${t1.code} = $${primaryTokenPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
+      }
     } else if (isLendingPool) {
       const liqUsd =
         primaryTokenPrice > 0
@@ -551,6 +569,12 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
             : totalLiabilities;
         totalBorrowedStat = formatLiquidity(String(borrowUsd));
         totalBorrowedStatRaw = `${totalLiabilities.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${t1?.code ?? ""}`;
+        if (tvlNum > 0) {
+          utilization = `${((totalLiabilities / tvlNum) * 100).toFixed(2)}%`;
+        }
+      }
+      if (primaryTokenPrice > 0 && t1?.code) {
+        oraclePrice = `${t1.code} = $${primaryTokenPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
       }
     } else {
       totalLiquidity = formatLiquidity(availableLiquidityNum.toString());
@@ -581,6 +605,10 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       supplyApy: supplyApyDisplay,
       supplyApySub,
       borrowApyLabel,
+      poolType: poolTypeLabel,
+      poolTypeDetail,
+      oraclePrice,
+      utilization,
       issuer: {
         name: ISSUER_LABELS[pool.type] ?? pool.type,
         icon: ISSUER_ICONS[pool.type] ?? null,

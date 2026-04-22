@@ -741,7 +741,7 @@ function PoolPairCell({ pool }: { pool: PoolData }) {
         className="relative shrink-0"
         style={{ width: hasToken2 ? 36 : 24, height: 24 }}
       >
-        <div className="absolute left-0 w-6 h-6 rounded-full bg-[#1a2a4a] border border-white/10 flex items-center justify-center overflow-hidden">
+        <div className="absolute left-0 w-6 h-6 rounded-full bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden">
           {icon1 ? (
             <Image
               src={icon1}
@@ -758,7 +758,7 @@ function PoolPairCell({ pool }: { pool: PoolData }) {
           )}
         </div>
         {hasToken2 && (
-          <div className="absolute left-3 w-6 h-6 rounded-full bg-[#1a2a4a] border border-white/10 flex items-center justify-center overflow-hidden">
+          <div className="absolute left-3 w-6 h-6 rounded-full bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden">
             {icon2 ? (
               <Image
                 src={icon2}

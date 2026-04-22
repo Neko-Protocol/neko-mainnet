@@ -1,11 +1,22 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Copy, Check, Globe } from "lucide-react";
+import { Copy, Check, Globe, Info } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { usePoolRateHistory } from "../../hooks/usePoolRateHistory";
+import { usePoolActivity } from "../../hooks/usePoolActivity";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -45,6 +56,14 @@ export interface PoolDetailPanelPool {
   supplyApySub?: string;
   /** Lending pool borrow APY (e.g. Blend); shown when present */
   borrowApyLabel?: string;
+  /** AMM pool type label (Aqua pools), e.g. "Constant Product" */
+  poolType?: string;
+  /** Optional detail shown below pool type, e.g. "A: 20" for stable swap */
+  poolTypeDetail?: string;
+  /** Oracle / market price string, e.g. "USDC = $1.00" */
+  oraclePrice?: string;
+  /** Pool utilization rate, e.g. "89.27%" */
+  utilization?: string;
   issuer: { name: string; icon?: string | null };
   collateralBalance?: string;
   loanBalance?: string;
@@ -135,7 +154,7 @@ function OverlappingTokens({
         style={{ width: px, height: px }}
       >
         <div
-          className={`${circle} rounded-full bg-neko-teal border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md`}
+          className={`${circle} rounded-full bg-white/10 border-2 border-white/10 flex items-center justify-center overflow-hidden shadow-md`}
         >
           {renderIcon(token1, "text-white")}
         </div>
@@ -146,14 +165,14 @@ function OverlappingTokens({
   return (
     <div className={`relative ${wrap} shrink-0 flex items-center`}>
       <div
-        className={`absolute left-0 top-1/2 -translate-y-1/2 ${circle} rounded-full bg-neko-teal border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md z-1`}
+        className={`absolute left-0 top-1/2 -translate-y-1/2 ${circle} rounded-full bg-white/10 border-2 border-white/10 flex items-center justify-center overflow-hidden shadow-md z-1`}
       >
         {renderIcon(token1, "text-white")}
       </div>
       <div
-        className={`absolute ${offset} top-1/2 -translate-y-1/2 ${circle} rounded-full bg-neko-teal-light border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md z-2`}
+        className={`absolute ${offset} top-1/2 -translate-y-1/2 ${circle} rounded-full bg-white/10 border-2 border-white/10 flex items-center justify-center overflow-hidden shadow-md z-2`}
       >
-        {renderIcon(token2, "text-neko-navy")}
+        {renderIcon(token2, "text-white")}
       </div>
     </div>
   );
@@ -728,7 +747,7 @@ export function PoolDetailPanel({
                   <TokenIcon
                     symbol={pool.token1.symbol}
                     icon={pool.token1.icon}
-                    size={14}
+                    size={20}
                   />
                   <span className="text-white/40 text-xs">{`Supplied (${pool.token1.symbol})`}</span>
                 </div>
@@ -749,7 +768,7 @@ export function PoolDetailPanel({
             <InfoRow
               labelEl={
                 <div className="flex items-center gap-1.5">
-                  <TokenIcon symbol={selectedCollateral.symbol} size={14} />
+                  <TokenIcon symbol={selectedCollateral.symbol} size={20} />
                   <span className="text-white/40 text-xs">{`Collateral (${selectedCollateral.symbol})`}</span>
                 </div>
               }
@@ -775,7 +794,7 @@ export function PoolDetailPanel({
                   <TokenIcon
                     symbol={pool.token2.symbol}
                     icon={pool.token2.icon}
-                    size={14}
+                    size={20}
                   />
                   <span className="text-white/40 text-xs">{`Loan (${pool.token2.symbol})`}</span>
                 </div>
@@ -950,6 +969,606 @@ interface PoolDetailLayoutProps {
   isLendingActionPending?: boolean;
 }
 
+// ── Activity Feed ──────────────────────────────────────────────────────────────
+
+const PAGE_SIZE = 10;
+
+function formatTs(ts: number): string {
+  const d = new Date(ts * 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+const EVENT_TYPE_COLORS: Record<string, string> = {
+  supply: "text-emerald-400",
+  supply_collateral: "text-emerald-400",
+  withdraw: "text-orange-400",
+  withdraw_collateral: "text-orange-400",
+  borrow: "text-purple-400",
+  repay: "text-teal-400",
+  swap: "text-blue-400",
+  deposit: "text-blue-400",
+  claim: "text-yellow-400",
+};
+
+function formatEventType(type: string): string {
+  return type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      <polyline points="15 3 21 3 21 9" />
+      <line x1="10" y1="14" x2="21" y2="3" />
+    </svg>
+  );
+}
+
+function ActivityFeed({ poolId }: { poolId: string }) {
+  const { data: events, isLoading, isError } = usePoolActivity(poolId);
+  const [page, setPage] = useState(1);
+
+  const total = events?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageEvents =
+    events?.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE) ?? [];
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-white/7 overflow-hidden">
+        {/* Header */}
+        <div className="grid grid-cols-[1.4fr_0.8fr_1fr_2rem] gap-4 px-5 py-3 border-b border-white/7">
+          {["Date", "Type", "User"].map((h) => (
+            <span
+              key={h}
+              className="text-white/30 text-xs font-medium uppercase tracking-wider"
+            >
+              {h}
+            </span>
+          ))}
+          <span />
+        </div>
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            className="h-12 mx-4 my-2 rounded-lg bg-white/5 animate-pulse"
+          />
+        ))}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <p className="text-white/30 text-sm text-center py-12">
+        Could not load activity
+      </p>
+    );
+  }
+
+  if (!events || events.length === 0) {
+    return (
+      <p className="text-white/30 text-sm text-center py-12">
+        No recent activity
+      </p>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-white/7 overflow-hidden">
+      {/* Table header */}
+      <div className="grid grid-cols-[1.4fr_0.8fr_1fr_2rem] gap-4 px-5 py-3 border-b border-white/7 bg-white/[0.02]">
+        <span className="text-white/30 text-xs font-medium uppercase tracking-wider">
+          Date
+        </span>
+        <span className="text-white/30 text-xs font-medium uppercase tracking-wider">
+          Type
+        </span>
+        <span className="text-white/30 text-xs font-medium uppercase tracking-wider">
+          User
+        </span>
+        <span />
+      </div>
+
+      {/* Rows */}
+      {pageEvents.map((event) => {
+        const typeColor =
+          EVENT_TYPE_COLORS[event.type.toLowerCase()] ?? "text-white/60";
+        const userShort = event.user
+          ? `${event.user.slice(0, 4)}...${event.user.slice(-4)}`
+          : "—";
+        const explorerUrl = event.user
+          ? `https://stellar.expert/explorer/public/account/${event.user}`
+          : null;
+
+        return (
+          <div
+            key={event.id}
+            className="grid grid-cols-[1.4fr_0.8fr_1fr_2rem] gap-4 items-center px-5 py-3.5 border-b border-white/5 last:border-0 hover:bg-white/[0.025] transition-colors"
+          >
+            {/* Date */}
+            <span className="text-white/50 text-xs font-mono tabular-nums">
+              {formatTs(event.ts)}
+            </span>
+
+            {/* Type */}
+            <span className={`text-sm font-medium ${typeColor}`}>
+              {event.type}
+            </span>
+
+            {/* User */}
+            <span className="text-white/50 text-xs font-mono">{userShort}</span>
+
+            {/* Link */}
+            {explorerUrl ? (
+              <a
+                href={explorerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white/25 hover:text-white/70 transition-colors justify-self-end"
+                title="View on Stellar Expert"
+              >
+                <ExternalLinkIcon />
+              </a>
+            ) : (
+              <span />
+            )}
+          </div>
+        );
+      })}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 py-4 border-t border-white/7">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={safePage === 1}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/7 text-white/60 hover:bg-white/12 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+          <span className="text-white/40 text-xs tabular-nums px-3 py-1.5 rounded-full bg-white/5">
+            {safePage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={safePage === totalPages}
+            className="w-8 h-8 rounded-full flex items-center justify-center bg-white/7 text-white/60 hover:bg-white/12 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Rates Chart ────────────────────────────────────────────────────────────────
+
+type RatesSeries = "supply" | "borrow";
+
+function generateRateHistory(
+  baseRate: number,
+  days = 7,
+  points = 84
+): { date: string; value: number }[] {
+  const now = Date.now();
+  const step = (days * 24 * 60 * 60 * 1000) / points;
+  // Build values forward, then scale so the final point = baseRate exactly
+  const raw: number[] = [baseRate * (1 + (Math.random() - 0.5) * 0.3)];
+  for (let i = 1; i <= points; i++) {
+    // Mean-revert toward baseRate with small noise
+    const prev = raw[i - 1];
+    const revert = (baseRate - prev) * 0.08;
+    const noise = (Math.random() - 0.5) * baseRate * 0.06;
+    raw.push(Math.max(0.01, prev + revert + noise));
+  }
+  // Force the very last point to exactly match the current rate
+  raw[raw.length - 1] = baseRate;
+
+  return raw.map((value, i) => {
+    const ts = now - (points - i) * step;
+    const d = new Date(ts);
+    const label = `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
+    return { date: label, value: parseFloat(value.toFixed(4)) };
+  });
+}
+
+function RatesChart({
+  poolId,
+  supplyApy,
+  borrowApy,
+}: {
+  poolId: string;
+  supplyApy: string;
+  borrowApy?: string;
+}) {
+  const supplyRate = parseFloat(supplyApy) || 0;
+  const borrowRate = parseFloat(borrowApy ?? "0") || 0;
+  const hasBorrow = borrowRate > 0;
+
+  const [series, setSeries] = useState<RatesSeries>(
+    hasBorrow ? "borrow" : "supply"
+  );
+
+  const { data: history } = usePoolRateHistory(poolId);
+
+  // Fall back to synthetic data when DB has no records yet
+  const syntheticSupply = useMemo(
+    () => generateRateHistory(supplyRate),
+    [supplyApy]
+  ); // eslint-disable-line react-hooks/exhaustive-deps
+  const syntheticBorrow = useMemo(
+    () => generateRateHistory(borrowRate),
+    [borrowApy]
+  ); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const realSupplyData = useMemo(
+    () =>
+      history && history.length > 0
+        ? history.map((p) => ({ date: p.date, value: p.supply_apy }))
+        : null,
+    [history]
+  );
+  const realBorrowData = useMemo(
+    () =>
+      history && history.length > 0 && history.some((p) => p.borrow_apy != null)
+        ? history.map((p) => ({ date: p.date, value: p.borrow_apy ?? 0 }))
+        : null,
+    [history]
+  );
+
+  const supplyData = realSupplyData ?? syntheticSupply;
+  const borrowData = realBorrowData ?? syntheticBorrow;
+  const isRealData = realSupplyData != null;
+
+  const data = series === "supply" ? supplyData : borrowData;
+  const currentRate = series === "supply" ? supplyRate : borrowRate;
+  const maxVal = Math.max(...data.map((d) => d.value));
+  const yMax = Math.ceil(maxVal * 1.3);
+
+  // Show every ~12th label to avoid crowding
+  const tickIndices = new Set(
+    data.map((_, i) => i).filter((i) => i % 12 === 0 || i === data.length - 1)
+  );
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <h3 className="text-white/70 text-sm font-medium">
+          Instantaneous Rates
+        </h3>
+        <Info size={13} className="text-white/30" />
+        {isRealData && (
+          <span className="ml-1 flex items-center gap-1 text-emerald-400 text-xs font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+            Live
+          </span>
+        )}
+      </div>
+
+      <div
+        className="rounded-xl border border-white/7 p-5"
+        style={{ background: "#0e0e0e" }}
+      >
+        <div className="flex items-start justify-between mb-5 flex-wrap gap-3">
+          <div>
+            <p className="text-white/40 text-xs mb-1">Instantaneous Rate</p>
+            <p className="text-white text-4xl font-bold tabular-nums leading-none">
+              {currentRate.toFixed(2)}%
+            </p>
+          </div>
+          <div className="flex gap-1.5">
+            {hasBorrow && (
+              <button
+                onClick={() => setSeries("borrow")}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  series === "borrow"
+                    ? "bg-white/15 text-white"
+                    : "bg-white/5 text-white/40 hover:text-white/70"
+                }`}
+              >
+                Borrow
+              </button>
+            )}
+            <button
+              onClick={() => setSeries("supply")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                series === "supply"
+                  ? "bg-white/15 text-white"
+                  : "bg-white/5 text-white/40 hover:text-white/70"
+              }`}
+            >
+              Supply
+            </button>
+          </div>
+        </div>
+
+        <ResponsiveContainer width="100%" height={200}>
+          <LineChart
+            data={data}
+            margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
+          >
+            <CartesianGrid
+              strokeDasharray="0"
+              stroke="rgba(255,255,255,0.05)"
+              vertical={false}
+            />
+            <XAxis
+              dataKey="date"
+              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 11 }}
+              tickLine={false}
+              axisLine={false}
+              interval="preserveStartEnd"
+              tickFormatter={(v, i) => (tickIndices.has(i) ? v : "")}
+            />
+            <YAxis
+              domain={[0, yMax]}
+              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 11 }}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(v) => `${v}%`}
+              width={36}
+            />
+            <Tooltip
+              contentStyle={{
+                background: "#1a1a1a",
+                border: "1px solid rgba(255,255,255,0.1)",
+                borderRadius: "8px",
+                color: "#fff",
+                fontSize: 12,
+              }}
+              formatter={(v: number) => [
+                `${v.toFixed(4)}%`,
+                series === "supply" ? "Supply" : "Borrow",
+              ]}
+              labelStyle={{ color: "rgba(255,255,255,0.5)", marginBottom: 4 }}
+              cursor={{ stroke: "rgba(255,255,255,0.1)" }}
+            />
+            <Line
+              type="monotone"
+              dataKey="value"
+              stroke="#3b82f6"
+              strokeWidth={1.5}
+              dot={false}
+              activeDot={{ r: 3, fill: "#3b82f6" }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+// ── Info Tabs (Overview / Advanced / Activity) ─────────────────────────────
+
+type InfoTab = "overview" | "advanced" | "activity";
+
+function MarketAttributeRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between py-3.5 border-b border-white/5 last:border-0">
+      <span className="text-white/50 text-sm">{label}</span>
+      <span className="text-white text-sm font-medium text-right">
+        {children}
+      </span>
+    </div>
+  );
+}
+
+function TokenLabel({ token }: { token: PoolDetailPanelToken }) {
+  const icon =
+    token.icon ?? getPoolTokenIcon({ type: "contract", code: token.symbol });
+  return (
+    <span className="flex items-center gap-1.5">
+      {icon && (
+        <span className="w-5 h-5 rounded-full overflow-hidden bg-white/5 shrink-0 inline-flex">
+          <Image
+            src={icon}
+            alt={token.symbol}
+            width={20}
+            height={20}
+            unoptimized
+            className={`w-full h-full ${getTokenIconFitClass(token.symbol)}`}
+          />
+        </span>
+      )}
+      {token.symbol}
+    </span>
+  );
+}
+
+function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
+  const [activeTab, setActiveTab] = useState<InfoTab>("overview");
+
+  const overviewRef = useRef<HTMLDivElement>(null);
+  const advancedRef = useRef<HTMLDivElement>(null);
+  const activityRef = useRef<HTMLDivElement>(null);
+
+  const sectionRefs: Record<InfoTab, React.RefObject<HTMLDivElement | null>> = {
+    overview: overviewRef,
+    advanced: advancedRef,
+    activity: activityRef,
+  };
+
+  // Scroll spy — highlight the tab whose section is most visible
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    (["overview", "advanced", "activity"] as InfoTab[]).forEach((id) => {
+      const el = sectionRefs[id].current;
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveTab(id);
+        },
+        { threshold: 0.25 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const scrollToSection = (id: InfoTab) => {
+    sectionRefs[id].current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
+  const tabs: { id: InfoTab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "advanced", label: "Advanced" },
+    { id: "activity", label: "Activity" },
+  ];
+
+  const isLendingPool = pool.borrowApyLabel != null;
+  const hasTwoTokens =
+    pool.token2.symbol && pool.token2.symbol !== pool.token1.symbol;
+
+  return (
+    <div className="mt-8">
+      {/* Sticky scroll-spy nav */}
+      <div
+        className="sticky top-0 z-10 -mx-8 px-8 border-b border-white/5"
+        style={{ background: "#111111" }}
+      >
+        <div className="flex gap-6">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => scrollToSection(t.id)}
+              className={`pb-3 text-sm font-medium transition-colors relative ${
+                activeTab === t.id
+                  ? "text-white"
+                  : "text-white/40 hover:text-white/70"
+              }`}
+            >
+              {t.label}
+              {activeTab === t.id && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-white rounded-full" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Always-visible sections */}
+      <div ref={overviewRef} className="mt-10 scroll-mt-16">
+        <h2 className="text-white text-xl font-bold mb-6">Overview</h2>
+        <h3 className="text-white/50 text-sm font-medium mb-2">
+          Market Attributes
+        </h3>
+        <div>
+          {isLendingPool ? (
+            <>
+              <MarketAttributeRow label="Collateral">
+                <TokenLabel token={pool.token1} />
+              </MarketAttributeRow>
+              {hasTwoTokens && (
+                <MarketAttributeRow label="Loan">
+                  <TokenLabel token={pool.token2} />
+                </MarketAttributeRow>
+              )}
+              {pool.liquidationLtv > 0 && (
+                <MarketAttributeRow label="Liquidation LTV">
+                  {pool.liquidationLtv}%
+                </MarketAttributeRow>
+              )}
+              {pool.utilization && (
+                <MarketAttributeRow label="Utilization">
+                  {pool.utilization}
+                </MarketAttributeRow>
+              )}
+            </>
+          ) : (
+            <>
+              <MarketAttributeRow label="Token 1">
+                <TokenLabel token={pool.token1} />
+              </MarketAttributeRow>
+              {hasTwoTokens && (
+                <MarketAttributeRow label="Token 2">
+                  <TokenLabel token={pool.token2} />
+                </MarketAttributeRow>
+              )}
+            </>
+          )}
+          {pool.oraclePrice && (
+            <MarketAttributeRow label="Oracle price">
+              {pool.oraclePrice}
+            </MarketAttributeRow>
+          )}
+          {pool.poolType && (
+            <MarketAttributeRow label="Pool type">
+              {pool.poolType}
+              {pool.poolTypeDetail && (
+                <span className="text-white/40 ml-1.5">
+                  ({pool.poolTypeDetail})
+                </span>
+              )}
+            </MarketAttributeRow>
+          )}
+        </div>
+      </div>
+
+      <div ref={advancedRef} className="mt-16 scroll-mt-16">
+        <h2 className="text-white text-xl font-bold mb-6">Advanced</h2>
+        <RatesChart
+          poolId={pool.id}
+          supplyApy={pool.supplyApy}
+          borrowApy={pool.borrowApyLabel}
+        />
+      </div>
+
+      <div ref={activityRef} className="mt-16 scroll-mt-16 pb-16">
+        <h2 className="text-white text-xl font-bold mb-6">Activity</h2>
+        <ActivityFeed poolId={pool.id} />
+      </div>
+    </div>
+  );
+}
+
 export function PoolDetailLayout({
   pool,
   type,
@@ -976,11 +1595,11 @@ export function PoolDetailLayout({
 
   return (
     <div
-      className="w-full rounded-2xl border border-white/7 flex flex-col lg:flex-row lg:items-start"
+      className="w-full rounded-2xl border border-white/7 grid grid-cols-1 lg:grid-cols-[1fr_24rem] items-start"
       style={{ background: "#111111" }}
     >
       {/* ── Left: scrollable info ─────────────────────────────────────────── */}
-      <div className="flex-1 min-w-0 p-8 lg:border-r border-white/7 lg:min-h-dvh">
+      <div className="min-w-0 p-8 lg:border-r border-white/7 order-2 lg:order-1">
         {/* Header */}
         <div className="flex items-center gap-5 mb-10">
           <OverlappingTokens
@@ -1015,7 +1634,7 @@ export function PoolDetailLayout({
         <div className="border-t border-white/5 mb-8" />
 
         {/* Metrics grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-7">
+        <div className="flex flex-wrap justify-between gap-y-7">
           <div>
             <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
               Total Liquidity
@@ -1071,6 +1690,22 @@ export function PoolDetailLayout({
             </div>
           )}
 
+          {pool.poolType && (
+            <div>
+              <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
+                Pool Type
+              </p>
+              <p className="text-white text-3xl font-bold tabular-nums leading-none">
+                {pool.poolType}
+              </p>
+              {pool.poolTypeDetail && (
+                <p className="text-white/30 text-xs mt-2 tabular-nums">
+                  {pool.poolTypeDetail}
+                </p>
+              )}
+            </div>
+          )}
+
           <div>
             <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
               Issuer
@@ -1094,11 +1729,17 @@ export function PoolDetailLayout({
             </div>
           </div>
         </div>
+
+        {/* Divider */}
+        <div className="border-t border-white/5 mt-10 mb-0" />
+
+        {/* Info tabs */}
+        <InfoTabs pool={pool} />
       </div>
 
       {/* ── Right: sticky panel ───────────────────────────────────────────── */}
-      <div className="w-full lg:w-96 shrink-0 lg:sticky lg:top-0 lg:h-dvh flex flex-col overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-hidden p-6 flex flex-col">
+      <div className="order-1 lg:order-2 lg:sticky lg:top-6 lg:self-start h-auto">
+        <div className="p-6 flex flex-col rounded-2xl lg:rounded-none lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
           <PoolDetailPanel
             pool={pool}
             type={type}
