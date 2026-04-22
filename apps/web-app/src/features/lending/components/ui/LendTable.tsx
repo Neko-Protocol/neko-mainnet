@@ -926,7 +926,7 @@ export function LendTable({
     (protocolOptions.length > 0 && !!onProtocolFilterChange);
 
   return (
-    <div className="w-full rounded-2xl border border-white/5 bg-[#1C1C1C]">
+    <div className="w-full overflow-hidden rounded-2xl border border-white/5 bg-[#1C1C1C]">
       {/* ── Toolbar ─────────────────────── */}
       {showToolbar && (
         <div className="relative z-20 flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-white/5 rounded-t-2xl bg-[#1C1C1C]">
