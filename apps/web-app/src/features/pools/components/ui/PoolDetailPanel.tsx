@@ -22,6 +22,7 @@ export interface CollateralOption {
   decimals: number;
   cFactor: number;
   userBalance: string;
+  walletBalance?: string;
 }
 
 export interface PoolDetailPanelPool {
@@ -48,6 +49,8 @@ export interface PoolDetailPanelPool {
   /** LP / pool shares (max for withdraw) */
   lpBalance?: string;
   borrowLimit?: string;
+  /** Blend liability factor for this reserve's borrow asset (used for HF validation) */
+  lFactor?: number;
   /** Available assets that can be used as collateral when borrowing (Blend only) */
   collateralOptions?: CollateralOption[];
 }
@@ -371,6 +374,35 @@ export function PoolDetailPanel({
     collateralInputAmount !== "" &&
     collateralInputUsd < BLEND_MIN_COLLATERAL_USD;
 
+  // Max borrow in borrow-asset units derived from the NEW collateral being supplied.
+  // Formula: (collateral_usd × cFactor) / (borrow_price × lFactor)
+  const dynamicBorrowMax = useMemo(() => {
+    if (
+      !pool.collateralOptions?.length ||
+      !selectedCollateral ||
+      !collateralInputAmount
+    )
+      return null;
+    const collateralUsd = collateralInputUsd;
+    const cFactor = selectedCollateral.cFactor ?? 0; // decimal, e.g. 0.95
+    const lFactor = pool.lFactor ?? 1; // decimal, e.g. 1.05
+    const borrowPrice = token2Price ?? 0;
+    if (collateralUsd <= 0 || borrowPrice <= 0) return null;
+    return (collateralUsd * cFactor) / (borrowPrice * lFactor);
+  }, [
+    collateralInputUsd,
+    selectedCollateral,
+    collateralInputAmount,
+    token2Price,
+    pool.lFactor,
+    pool.collateralOptions,
+  ]);
+
+  const borrowExceedsHf =
+    dynamicBorrowMax !== null &&
+    !!borrowAmount &&
+    parseFloat(borrowAmount) > dynamicBorrowMax + 1e-7;
+
   const lendingTabs = supportsBorrow
     ? (["lend", "borrow"] as const)
     : (["lend"] as const);
@@ -385,320 +417,412 @@ export function PoolDetailPanel({
   };
 
   return (
-    <div className="w-full flex flex-col gap-3">
-      {depositWithdrawMode && (
-        <div className="flex bg-[#2A2A2A] rounded-xl p-1 gap-1">
-          {(["deposit", "withdraw"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => onAmmTabChange?.(t)}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors capitalize ${
-                ammTab === t
-                  ? "bg-[#229EDF] text-white"
-                  : "text-white/40 hover:text-white/70"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-      )}
+    <div className="w-full flex flex-col h-full">
+      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3">
+        {depositWithdrawMode && (
+          <div className="flex bg-[#2A2A2A] rounded-xl p-1 gap-1">
+            {(["deposit", "withdraw"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => onAmmTabChange?.(t)}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors capitalize ${
+                  ammTab === t
+                    ? "bg-[#229EDF] text-white"
+                    : "text-white/40 hover:text-white/70"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        )}
 
-      {!depositWithdrawMode && supportsBorrow && (
-        <div className="flex bg-[#2A2A2A] rounded-xl p-1 gap-1">
-          {lendingTabs.map((m) => (
-            <button
-              type="button"
-              key={m}
-              onClick={() => setMode(m)}
-              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors capitalize ${
-                mode === m
-                  ? "bg-[#229EDF] text-white"
-                  : "text-white/40 hover:text-white/70"
-              }`}
-            >
-              {m === "lend" ? "Lend" : "Borrow"}
-            </button>
-          ))}
-        </div>
-      )}
+        {!depositWithdrawMode && supportsBorrow && (
+          <div className="flex bg-[#2A2A2A] rounded-xl p-1 gap-1">
+            {lendingTabs.map((m) => (
+              <button
+                type="button"
+                key={m}
+                onClick={() => setMode(m)}
+                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors capitalize ${
+                  mode === m
+                    ? "bg-[#229EDF] text-white"
+                    : "text-white/40 hover:text-white/70"
+                }`}
+              >
+                {m === "lend" ? "Lend" : "Borrow"}
+              </button>
+            ))}
+          </div>
+        )}
 
-      {!depositWithdrawMode && !supportsBorrow && (
-        <span className="inline-flex w-fit items-center px-3 py-1.5 rounded-lg bg-[#2A2A2A] text-xs font-semibold text-white">
-          Lending
-        </span>
-      )}
+        {!depositWithdrawMode && !supportsBorrow && (
+          <span className="inline-flex w-fit items-center px-3 py-1.5 rounded-lg bg-[#2A2A2A] text-xs font-semibold text-white">
+            Lending
+          </span>
+        )}
 
-      {depositWithdrawMode && ammInsufficientFundsMessage && (
-        <p className="text-sm text-red-400/90 font-medium px-0.5" role="alert">
-          {ammInsufficientFundsMessage}
-        </p>
-      )}
+        {depositWithdrawMode && ammInsufficientFundsMessage && (
+          <p
+            className="text-sm text-red-400/90 font-medium px-0.5"
+            role="alert"
+          >
+            {ammInsufficientFundsMessage}
+          </p>
+        )}
 
-      {depositWithdrawMode ? (
-        <AmountInput
-          label={
-            isDepositTab
-              ? `Supply ${pool.token1.symbol}`
-              : `Withdraw ${pool.token1.symbol}`
-          }
-          token={pool.token1}
-          value={ammAmount}
-          onChange={(v) => onAmmAmountChange?.(v)}
-          balanceLabel="MAX"
-          balanceValue={balanceForAmm}
-          onMax={maxAmm}
-          disabled={!isWalletConnected}
-          usdValue={ammUsdValue}
-        />
-      ) : (
-        <>
-          {mode === "lend" && (
-            <AmountInput
-              label={`Supply ${pool.token1.symbol}`}
-              token={pool.token1}
-              value={collateralAmount}
-              onChange={setCollateralAmount}
-              balanceLabel="MAX"
-              balanceValue={pool.token1Balance ?? "0.00"}
-              onMax={() => setCollateralAmount(pool.token1Balance ?? "0")}
-              disabled={!isWalletConnected}
-              usdValue={collateralUsdValue}
+        {depositWithdrawMode ? (
+          <AmountInput
+            label={
+              isDepositTab
+                ? `Supply ${pool.token1.symbol}`
+                : `Withdraw ${pool.token1.symbol}`
+            }
+            token={pool.token1}
+            value={ammAmount}
+            onChange={(v) => onAmmAmountChange?.(v)}
+            balanceLabel="MAX"
+            balanceValue={balanceForAmm}
+            onMax={maxAmm}
+            disabled={!isWalletConnected}
+            usdValue={ammUsdValue}
+          />
+        ) : (
+          <>
+            {mode === "lend" && (
+              <AmountInput
+                label={`Supply ${pool.token1.symbol}`}
+                token={pool.token1}
+                value={collateralAmount}
+                onChange={setCollateralAmount}
+                balanceLabel="MAX"
+                balanceValue={pool.token1Balance ?? "0.00"}
+                onMax={() => setCollateralAmount(pool.token1Balance ?? "0")}
+                disabled={!isWalletConnected}
+                usdValue={collateralUsdValue}
+              />
+            )}
+            {mode === "borrow" && (
+              <>
+                <AmountInput
+                  label={`Borrow ${pool.token2.symbol}`}
+                  token={pool.token2}
+                  value={borrowAmount}
+                  onChange={setBorrowAmount}
+                  balanceLabel="MAX"
+                  balanceValue={
+                    dynamicBorrowMax != null
+                      ? dynamicBorrowMax.toFixed(4)
+                      : (pool.borrowLimit ?? "0.00")
+                  }
+                  onMax={() =>
+                    setBorrowAmount(
+                      dynamicBorrowMax != null
+                        ? dynamicBorrowMax.toFixed(7)
+                        : (pool.borrowLimit ?? "0")
+                    )
+                  }
+                  disabled={!isWalletConnected}
+                  usdValue={borrowUsdValue}
+                />
+                {borrowExceedsHf && (
+                  <p className="text-xs text-red-400/90 px-0.5">
+                    Borrow amount exceeds your collateral limit (~
+                    {dynamicBorrowMax!.toFixed(4)} {pool.token2.symbol} max)
+                  </p>
+                )}
+
+                {/* Collateral card — shown for Blend pools */}
+                {pool.collateralOptions &&
+                  pool.collateralOptions.length > 0 && (
+                    <div className="rounded-xl border border-white/10 bg-[#1C1C1C] p-4 flex flex-col gap-3">
+                      <p className="text-white/50 text-xs font-medium">
+                        Collateral
+                      </p>
+
+                      {/* Asset selector */}
+                      <div className="flex flex-wrap gap-3">
+                        {pool.collateralOptions.map((opt) => {
+                          const icon = getPoolTokenIcon({
+                            type: "contract",
+                            code: opt.symbol,
+                          });
+                          const isSelected =
+                            selectedCollateralAddress === opt.address;
+                          return (
+                            <button
+                              key={opt.address}
+                              type="button"
+                              onClick={() => {
+                                setSelectedCollateralAddress(opt.address);
+                                setCollateralInputAmount("");
+                              }}
+                              className="flex flex-col items-center gap-1 transition-colors"
+                            >
+                              <div
+                                className={`w-9 h-9 shrink-0 rounded-full border-2 overflow-hidden flex items-center justify-center bg-white/5 transition-colors ${
+                                  isSelected
+                                    ? "border-[#229EDF]"
+                                    : "border-white/10 hover:border-white/30"
+                                }`}
+                              >
+                                {icon ? (
+                                  <Image
+                                    src={icon}
+                                    alt={opt.symbol}
+                                    width={36}
+                                    height={36}
+                                    unoptimized
+                                    className={`w-full h-full ${getTokenIconFitClass(opt.symbol)}`}
+                                  />
+                                ) : (
+                                  <span className="text-[10px] font-bold text-white">
+                                    {opt.symbol.slice(0, 3)}
+                                  </span>
+                                )}
+                              </div>
+                              <span
+                                className={`text-[10px] font-semibold leading-none ${
+                                  isSelected
+                                    ? "text-[#229EDF]"
+                                    : "text-white/40"
+                                }`}
+                              >
+                                {opt.symbol}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Amount input */}
+                      {selectedCollateral && (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              placeholder="0.00"
+                              value={collateralInputAmount}
+                              onChange={(e) =>
+                                setCollateralInputAmount(
+                                  e.target.value
+                                    .replace(/[^0-9.]/g, "")
+                                    .replace(/(\..*)\./g, "$1")
+                                )
+                              }
+                              disabled={!isWalletConnected}
+                              className="w-full bg-transparent text-white text-xl font-semibold outline-none placeholder:text-white/15 disabled:cursor-not-allowed"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setCollateralInputAmount(
+                                  selectedCollateral.walletBalance ??
+                                    selectedCollateral.userBalance
+                                )
+                              }
+                              disabled={!isWalletConnected}
+                              className="ml-3 shrink-0 text-[#229EDF] text-xs font-semibold uppercase tracking-wide hover:text-[#1a8bc7] transition-colors disabled:opacity-40"
+                            >
+                              MAX
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-white/30">
+                              {collateralInputUsd > 0
+                                ? `$${collateralInputUsd.toFixed(2)}`
+                                : "$0.00"}
+                            </span>
+                            <span className="text-white/30 tabular-nums">
+                              {selectedCollateral.walletBalance ??
+                                selectedCollateral.userBalance}{" "}
+                              {selectedCollateral.symbol}
+                            </span>
+                          </div>
+
+                          {collateralBelowMinimum && (
+                            <p className="text-xs text-amber-400/80">
+                              Minimum collateral value: $
+                              {BLEND_MIN_COLLATERAL_USD.toFixed(2)}
+                            </p>
+                          )}
+                          {selectedCollateral.walletBalance !== undefined &&
+                            collateralInputAmount !== "" &&
+                            parseFloat(collateralInputAmount) >
+                              parseFloat(selectedCollateral.walletBalance) && (
+                              <p className="text-xs text-red-400/90">
+                                Insufficient {selectedCollateral.symbol} balance
+                              </p>
+                            )}
+                        </>
+                      )}
+                    </div>
+                  )}
+              </>
+            )}
+          </>
+        )}
+
+        <div className="rounded-xl bg-[#1C1C1C] border border-white/5 px-4 py-1">
+          <InfoRow
+            label="Network"
+            valueEl={
+              <div className="flex items-center gap-1.5">
+                <Globe className="h-3 w-3 text-[#229EDF]" />
+                <span className="text-white/80 text-xs font-medium">
+                  {pool.network}
+                </span>
+              </div>
+            }
+          />
+          <InfoRow
+            label={`Collateral (${pool.token1.symbol})`}
+            valueEl={
+              <div className="text-right">
+                <span className="text-xs font-medium tabular-nums text-white/80">
+                  {pool.collateralBalance ?? "0.00"}
+                </span>
+                <span className="block text-[10px] tabular-nums text-white/35">
+                  $
+                  {(
+                    parseFloat(pool.collateralBalance ?? "0") * token1Price
+                  ).toFixed(2)}
+                </span>
+              </div>
+            }
+          />
+          <InfoRow
+            label={`Loan (${pool.token2.symbol})`}
+            valueEl={
+              <div className="text-right">
+                <span className="text-xs font-medium tabular-nums text-white/80">
+                  {pool.loanBalance ?? "0.00"}
+                </span>
+                <span className="block text-[10px] tabular-nums text-white/35">
+                  $
+                  {(parseFloat(pool.loanBalance ?? "0") * token2Price).toFixed(
+                    2
+                  )}
+                </span>
+              </div>
+            }
+          />
+          <InfoRow
+            label="LTV"
+            value={`${pool.currentLtv ?? 0}%`}
+            dimmed={(pool.currentLtv ?? 0) === 0}
+          />
+          {pool.liquidationLtv > 0 && (
+            <InfoRow
+              label="Liquidation LTV"
+              value={`${pool.liquidationLtv}%`}
             />
           )}
-          {mode === "borrow" && (
-            <>
-              <AmountInput
-                label={`Borrow ${pool.token2.symbol}`}
-                token={pool.token2}
-                value={borrowAmount}
-                onChange={setBorrowAmount}
-                balanceLabel="MAX"
-                balanceValue={pool.borrowLimit ?? "0.00"}
-                onMax={() => setBorrowAmount(pool.borrowLimit ?? "0")}
-                disabled={!isWalletConnected}
-                usdValue={borrowUsdValue}
-              />
-
-              {/* Collateral card — shown for Blend pools */}
-              {pool.collateralOptions && pool.collateralOptions.length > 0 && (
-                <div className="rounded-xl border border-white/10 bg-[#1C1C1C] p-4 flex flex-col gap-3">
-                  <p className="text-white/50 text-xs font-medium">
-                    Collateral
-                  </p>
-
-                  {/* Asset selector */}
-                  <div className="flex flex-wrap gap-3">
-                    {pool.collateralOptions.map((opt) => {
-                      const icon = getPoolTokenIcon({
-                        type: "contract",
-                        code: opt.symbol,
-                      });
-                      const isSelected =
-                        selectedCollateralAddress === opt.address;
-                      return (
-                        <button
-                          key={opt.address}
-                          type="button"
-                          onClick={() => {
-                            setSelectedCollateralAddress(opt.address);
-                            setCollateralInputAmount("");
-                          }}
-                          className="flex flex-col items-center gap-1 transition-colors"
-                        >
-                          <div
-                            className={`w-9 h-9 shrink-0 rounded-full border-2 overflow-hidden flex items-center justify-center bg-white/5 transition-colors ${
-                              isSelected
-                                ? "border-[#229EDF]"
-                                : "border-white/10 hover:border-white/30"
-                            }`}
-                          >
-                            {icon ? (
-                              <Image
-                                src={icon}
-                                alt={opt.symbol}
-                                width={36}
-                                height={36}
-                                unoptimized
-                                className={`w-full h-full ${getTokenIconFitClass(opt.symbol)}`}
-                              />
-                            ) : (
-                              <span className="text-[10px] font-bold text-white">
-                                {opt.symbol.slice(0, 3)}
-                              </span>
-                            )}
-                          </div>
-                          <span
-                            className={`text-[10px] font-semibold leading-none ${
-                              isSelected ? "text-[#229EDF]" : "text-white/40"
-                            }`}
-                          >
-                            {opt.symbol}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Amount input */}
-                  {selectedCollateral && (
-                    <>
-                      <div className="flex items-center justify-between">
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          placeholder="0.00"
-                          value={collateralInputAmount}
-                          onChange={(e) =>
-                            setCollateralInputAmount(
-                              e.target.value
-                                .replace(/[^0-9.]/g, "")
-                                .replace(/(\..*)\./g, "$1")
-                            )
-                          }
-                          disabled={!isWalletConnected}
-                          className="w-full bg-transparent text-white text-xl font-semibold outline-none placeholder:text-white/15 disabled:cursor-not-allowed"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setCollateralInputAmount(
-                              selectedCollateral.userBalance
-                            )
-                          }
-                          disabled={!isWalletConnected}
-                          className="ml-3 shrink-0 text-[#229EDF] text-xs font-semibold uppercase tracking-wide hover:text-[#1a8bc7] transition-colors disabled:opacity-40"
-                        >
-                          MAX
-                        </button>
-                      </div>
-
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-white/30">
-                          {collateralInputUsd > 0
-                            ? `$${collateralInputUsd.toFixed(2)}`
-                            : "$0.00"}
-                        </span>
-                        <span className="text-white/30 tabular-nums">
-                          {selectedCollateral.userBalance}{" "}
-                          {selectedCollateral.symbol}
-                        </span>
-                      </div>
-
-                      {collateralBelowMinimum && (
-                        <p className="text-xs text-amber-400/80">
-                          Minimum collateral value: $
-                          {BLEND_MIN_COLLATERAL_USD.toFixed(2)}
-                        </p>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </>
+          <InfoRow
+            label="Supply APY"
+            valueEl={
+              <span className="text-xs font-medium tabular-nums text-white/80 text-right max-w-[min(12rem,55vw)]">
+                {pool.supplyApy}
+              </span>
+            }
+          />
+          {pool.borrowApyLabel != null && (
+            <InfoRow label="Borrow" value={pool.borrowApyLabel} />
           )}
-        </>
-      )}
-
-      <div className="rounded-xl bg-[#1C1C1C] border border-white/5 px-4 py-1">
-        <InfoRow
-          label="Network"
-          valueEl={
-            <div className="flex items-center gap-1.5">
-              <Globe className="h-3 w-3 text-[#229EDF]" />
-              <span className="text-white/80 text-xs font-medium">
-                {pool.network}
-              </span>
-            </div>
-          }
-        />
-        <InfoRow
-          label={`Collateral (${pool.token1.symbol})`}
-          valueEl={
-            <div className="text-right">
-              <span className="text-xs font-medium tabular-nums text-white/80">
-                {pool.collateralBalance ?? "0.00"}
-              </span>
-              <span className="block text-[10px] tabular-nums text-white/35">
-                $
-                {(
-                  parseFloat(pool.collateralBalance ?? "0") * token1Price
-                ).toFixed(2)}
-              </span>
-            </div>
-          }
-        />
-        <InfoRow
-          label={`Loan (${pool.token2.symbol})`}
-          valueEl={
-            <div className="text-right">
-              <span className="text-xs font-medium tabular-nums text-white/80">
-                {pool.loanBalance ?? "0.00"}
-              </span>
-              <span className="block text-[10px] tabular-nums text-white/35">
-                $
-                {(parseFloat(pool.loanBalance ?? "0") * token2Price).toFixed(2)}
-              </span>
-            </div>
-          }
-        />
-        <InfoRow
-          label="LTV"
-          value={`${pool.currentLtv ?? 0}%`}
-          dimmed={(pool.currentLtv ?? 0) === 0}
-        />
-        {pool.liquidationLtv > 0 && (
-          <InfoRow label="Liquidation LTV" value={`${pool.liquidationLtv}%`} />
-        )}
-        <InfoRow
-          label="Supply APY"
-          valueEl={
-            <span className="text-xs font-medium tabular-nums text-white/80 text-right max-w-[min(12rem,55vw)]">
-              {pool.supplyApy}
-            </span>
-          }
-        />
-        {pool.borrowApyLabel != null && (
-          <InfoRow label="Borrow" value={pool.borrowApyLabel} />
-        )}
-      </div>
-
-      {depositWithdrawMode && onAmmSubmit && (
-        <div className="pt-1">
-          {!isWalletConnected && (
-            <p className="text-white/35 text-xs text-center mb-2">
-              Connect your wallet to sign transactions
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={() => void onAmmSubmit()}
-            disabled={ammSubmitDisabled}
-            className="w-full py-3.5 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {isAmmSubmitting ? (
-              <span className="inline-flex items-center justify-center gap-2">
-                <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Processing…
-              </span>
-            ) : isDepositTab ? (
-              "Deposit"
-            ) : (
-              "Withdraw"
-            )}
-          </button>
         </div>
-      )}
 
-      {!depositWithdrawMode && supportsBorrow && (canLend || canBorrow) && (
-        <div className="pt-1">
-          {!isWalletConnected && (
-            <p className="text-white/35 text-xs text-center mb-2">
-              Connect your wallet to sign transactions
-            </p>
-          )}
-          {mode === "lend" && canLend && onLendSubmit && (
+        {depositWithdrawMode && onAmmSubmit && (
+          <div className="sticky bottom-0 pt-3 bg-[#121212]">
+            {!isWalletConnected && (
+              <p className="text-white/35 text-xs text-center mb-2">
+                Connect your wallet to sign transactions
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => void onAmmSubmit()}
+              disabled={ammSubmitDisabled}
+              className="w-full py-3.5 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {isAmmSubmitting ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <span className="inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Processing…
+                </span>
+              ) : isDepositTab ? (
+                "Deposit"
+              ) : (
+                "Withdraw"
+              )}
+            </button>
+          </div>
+        )}
+
+        {!depositWithdrawMode && supportsBorrow && (canLend || canBorrow) && (
+          <div className="sticky bottom-0 pt-3 bg-[#121212]">
+            {!isWalletConnected && (
+              <p className="text-white/35 text-xs text-center mb-2">
+                Connect your wallet to sign transactions
+              </p>
+            )}
+            {mode === "lend" && canLend && onLendSubmit && (
+              <button
+                type="button"
+                onClick={() => void onLendSubmit(collateralAmount)}
+                disabled={
+                  isLendingActionPending ||
+                  !isWalletConnected ||
+                  !collateralAmount ||
+                  parseFloat(collateralAmount) <= 0
+                }
+                className="w-full py-3.5 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isLendingActionPending ? "Processing…" : "Lend"}
+              </button>
+            )}
+            {mode === "borrow" && canBorrow && onBorrowSubmit && (
+              <button
+                type="button"
+                onClick={() =>
+                  void onBorrowSubmit(
+                    borrowAmount,
+                    selectedCollateral?.address ?? "",
+                    collateralInputAmount
+                  )
+                }
+                disabled={
+                  isLendingActionPending ||
+                  !isWalletConnected ||
+                  !borrowAmount ||
+                  parseFloat(borrowAmount) <= 0 ||
+                  collateralBelowMinimum ||
+                  (!!pool.collateralOptions?.length &&
+                    (!collateralInputAmount ||
+                      parseFloat(collateralInputAmount) <= 0)) ||
+                  (!!selectedCollateral?.walletBalance &&
+                    !!collateralInputAmount &&
+                    parseFloat(collateralInputAmount) >
+                      parseFloat(selectedCollateral.walletBalance)) ||
+                  borrowExceedsHf
+                }
+                className="w-full py-3.5 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isLendingActionPending ? "Processing…" : "Borrow"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {!depositWithdrawMode && !supportsBorrow && canLend && onLendSubmit && (
+          <div className="sticky bottom-0 pt-3 bg-[#121212]">
+            {!isWalletConnected && (
+              <p className="text-white/35 text-xs text-center mb-2">
+                Connect your wallet to sign transactions
+              </p>
+            )}
             <button
               type="button"
               onClick={() => void onLendSubmit(collateralAmount)}
@@ -712,57 +836,10 @@ export function PoolDetailPanel({
             >
               {isLendingActionPending ? "Processing…" : "Lend"}
             </button>
-          )}
-          {mode === "borrow" && canBorrow && onBorrowSubmit && (
-            <button
-              type="button"
-              onClick={() =>
-                void onBorrowSubmit(
-                  borrowAmount,
-                  selectedCollateral?.address ?? "",
-                  collateralInputAmount
-                )
-              }
-              disabled={
-                isLendingActionPending ||
-                !isWalletConnected ||
-                !borrowAmount ||
-                parseFloat(borrowAmount) <= 0 ||
-                collateralBelowMinimum ||
-                (!!pool.collateralOptions?.length &&
-                  (!collateralInputAmount ||
-                    parseFloat(collateralInputAmount) <= 0))
-              }
-              className="w-full py-3.5 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {isLendingActionPending ? "Processing…" : "Borrow"}
-            </button>
-          )}
-        </div>
-      )}
-
-      {!depositWithdrawMode && !supportsBorrow && canLend && onLendSubmit && (
-        <div className="pt-1">
-          {!isWalletConnected && (
-            <p className="text-white/35 text-xs text-center mb-2">
-              Connect your wallet to sign transactions
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={() => void onLendSubmit(collateralAmount)}
-            disabled={
-              isLendingActionPending ||
-              !isWalletConnected ||
-              !collateralAmount ||
-              parseFloat(collateralAmount) <= 0
-            }
-            className="w-full py-3.5 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            {isLendingActionPending ? "Processing…" : "Lend"}
-          </button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
+      {/* end scrollable content */}
     </div>
   );
 }
@@ -820,11 +897,11 @@ export function PoolDetailLayout({
 
   return (
     <div
-      className="w-full h-full rounded-2xl border border-white/7 overflow-hidden flex flex-col lg:flex-row"
+      className="w-full rounded-2xl border border-white/7 flex flex-col lg:flex-row lg:items-start"
       style={{ background: "#111111" }}
     >
       {/* ── Left: scrollable info ─────────────────────────────────────────── */}
-      <div className="flex-1 min-w-0 min-h-0 overflow-y-auto p-8 lg:border-r border-white/7">
+      <div className="flex-1 min-w-0 p-8 lg:border-r border-white/7 lg:min-h-dvh">
         {/* Header */}
         <div className="flex items-center gap-5 mb-10">
           <OverlappingTokens
@@ -913,9 +990,9 @@ export function PoolDetailLayout({
         </div>
       </div>
 
-      {/* ── Right: panel (NO scroll) ──────────────────────────────────────── */}
-      <div className="w-full lg:w-96 shrink-0 h-full flex flex-col overflow-hidden">
-        <div className="flex-1 min-h-0 overflow-hidden p-6">
+      {/* ── Right: sticky panel ───────────────────────────────────────────── */}
+      <div className="w-full lg:w-96 shrink-0 lg:sticky lg:top-0 lg:h-dvh flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-hidden p-6 flex flex-col">
           <PoolDetailPanel
             pool={pool}
             type={type}

@@ -161,7 +161,16 @@ export function PoolActionModal({
     if (needsAmount) {
       const num = parseFloat(amount);
       if (isNaN(num) || num <= 0) return;
-      const amountBigInt = BigInt(toSmallestUnit(amount, decimals));
+
+      const isFullWithdraw =
+        (action === "withdraw" || action === "withdrawCollateral") &&
+        maxAmount !== "" &&
+        parseFloat(amount) >= parseFloat(maxAmount) - 1e-7;
+
+      const amountBigInt = isFullWithdraw
+        ? BigInt("999999999999999999") // adapter clamps this to exact on-chain total
+        : BigInt(toSmallestUnit(amount, decimals));
+
       mutate.mutate(
         { poolId, action, amount: amountBigInt, tokenIndex: 0 },
         { onSuccess }
@@ -242,9 +251,7 @@ export function PoolActionModal({
                       aquaTrust.missing &&
                       aquaTrust.missing.length > 0 && (
                         <div className="space-y-2">
-                          <p>
-                            This pool needs Stellar classic trustlines for:
-                          </p>
+                          <p>This pool needs Stellar classic trustlines for:</p>
                           <ul className="list-disc pl-5 text-[#334EAC]">
                             {aquaTrust.missing.map((a) => (
                               <li key={`${a.code}:${a.issuer}`}>
@@ -287,8 +294,8 @@ export function PoolActionModal({
                         )}{" "}
                         XLM minimum ({subentryCount} subentries). Spendable
                         (approx.):{" "}
-                        {fromSmallestUnit(spendableXlmStroops.toString(), 7)} XLM
-                        after reserve + fee buffer.
+                        {fromSmallestUnit(spendableXlmStroops.toString(), 7)}{" "}
+                        XLM after reserve + fee buffer.
                       </p>
                     )}
                     {aquaDepositCheck &&
@@ -308,8 +315,8 @@ export function PoolActionModal({
                       )}
                     {amountExceedsSpendableXlm && (
                       <p className="text-xs text-red-600 font-medium mt-2">
-                        Amount exceeds spendable XLM after account reserve — lower
-                        the deposit or add XLM.
+                        Amount exceeds spendable XLM after account reserve —
+                        lower the deposit or add XLM.
                       </p>
                     )}
                   </div>

@@ -28,8 +28,11 @@ import {
   aquaProportionalAmountB,
 } from "@/lib/helpers/stellar/aquaDeposit";
 import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
+import { calculateBorrowLimit } from "@/features/borrowing/utils/borrowUtils";
 import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
 import { rpcUrl } from "@/lib/constants/network";
+import { useToast } from "@/hooks/useToast";
+import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
 
 interface PoolDetailProps {
   params: Promise<{ contractid: string }>;
@@ -106,25 +109,43 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     address
   );
 
+  const { balance: collateralWallet0 } = useTokenBalance(
+    collateralOptions[0]?.address
+  );
+  const { balance: collateralWallet1 } = useTokenBalance(
+    collateralOptions[1]?.address
+  );
+  const { balance: collateralWallet2 } = useTokenBalance(
+    collateralOptions[2]?.address
+  );
+
   const collateralOptionsWithBalances = useMemo<CollateralOption[]>(() => {
     const deposited = [
       collateralPosition0.data?.depositedFormatted ?? "0",
       collateralPosition1.data?.depositedFormatted ?? "0",
       collateralPosition2.data?.depositedFormatted ?? "0",
     ];
+    const wallets = [collateralWallet0, collateralWallet1, collateralWallet2];
     return collateralOptions.map((opt, i) => ({
       ...opt,
       userBalance: deposited[i] ?? "0",
+      walletBalance: wallets[i],
     }));
   }, [
     collateralOptions,
     collateralPosition0.data,
     collateralPosition1.data,
     collateralPosition2.data,
+    collateralWallet0,
+    collateralWallet1,
+    collateralWallet2,
   ]);
 
   const { mutateAsync: executePoolAction, isPending: isActionPending } =
     usePoolAction();
+  const { addNotification } = useToast();
+  const [isBorrowWithCollateralPending, setIsBorrowWithCollateralPending] =
+    useState(false);
 
   const supportedActions = useMemo(
     () =>
@@ -339,32 +360,55 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         const cDec = collateralOption?.decimals ?? 7;
         const collateralBigInt = BigInt(toSmallestUnit(collateralAmt, cDec));
 
-        const result = await orchestrator.borrowWithCollateral(
-          contractid,
-          address,
-          borrowBigInt,
-          collateralAssetAddress,
-          collateralBigInt
-        );
+        setIsBorrowWithCollateralPending(true);
+        try {
+          const result = await orchestrator.borrowWithCollateral(
+            contractid,
+            address,
+            borrowBigInt,
+            collateralAssetAddress,
+            collateralBigInt
+          );
 
-        const signed = await signTransaction(result.xdr, {
-          networkPassphrase: result.networkPassphrase,
-        });
-        const signedXdr =
-          typeof signed === "string"
-            ? signed
-            : ((signed as { signedTxXdr?: string }).signedTxXdr ?? "");
+          const signed = await signTransaction(result.xdr, {
+            networkPassphrase: result.networkPassphrase,
+          });
+          const signedXdr =
+            typeof signed === "string"
+              ? signed
+              : ((signed as { signedTxXdr?: string }).signedTxXdr ?? "");
 
-        const server = new rpc.Server(rpcUrl, { allowHttp: true });
-        const tx = TransactionBuilder.fromXDR(
-          signedXdr,
-          result.networkPassphrase
-        );
-        const txResult = await server.sendTransaction(tx);
-        if (txResult.status === "ERROR") {
-          throw new Error("Transaction failed");
+          const server = new rpc.Server(rpcUrl, { allowHttp: true });
+          const tx = TransactionBuilder.fromXDR(
+            signedXdr,
+            result.networkPassphrase
+          );
+          const txResult = await server.sendTransaction(tx);
+          if (txResult.status === "ERROR") {
+            throw new Error("Transaction failed");
+          }
+          const confirmed = await server.pollTransaction(txResult.hash, {
+            attempts: 30,
+          });
+          if (confirmed.status !== "SUCCESS") {
+            throw new Error(
+              confirmed.status === "FAILED"
+                ? "Transaction failed on-chain"
+                : "Transaction confirmation timeout"
+            );
+          }
+          addNotification("Borrow successful", "success");
+          await refetchAfterTx();
+        } catch (error) {
+          if (!isUserCancellationError(error)) {
+            const msg =
+              error instanceof Error ? error.message : "Transaction failed";
+            addNotification(`Borrow failed: ${msg}`, "error");
+          }
+        } finally {
+          setIsBorrowWithCollateralPending(false);
         }
-        await server.pollTransaction(txResult.hash, { attempts: 30 });
+        return;
       } else {
         await runPoolAction("borrow", borrowBigInt);
       }
@@ -426,6 +470,17 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       String(position.metadata.collateral) !== "0"
         ? fromSmallestUnit(String(position.metadata.collateral), d)
         : "0.00";
+
+    const collateralNum = parseFloat(collateralRaw);
+    const borrowLimitNum =
+      collateralNum > 0
+        ? Math.min(
+            calculateBorrowLimit(collateralNum, liquidationLtv),
+            availableLiquidityNum
+          )
+        : 0;
+    const borrowLimit =
+      borrowLimitNum > 0 ? borrowLimitNum.toFixed(7) : undefined;
 
     const loanRaw =
       liabilitiesStr !== "0" ? fromSmallestUnit(liabilitiesStr, d) : "0.00";
@@ -510,6 +565,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       lpBalance: position?.depositedFormatted ?? "0",
       collateralBalance: collateralRaw,
       loanBalance: loanRaw,
+      borrowLimit,
+      lFactor: (pool.metadata.lFactor as number | undefined) ?? 1,
       currentLtv: 0,
       collateralOptions: collateralOptionsWithBalances,
     };
@@ -556,7 +613,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   }
 
   return (
-    <div className="w-full flex flex-col h-[calc(100dvh-4rem)] lg:h-dvh px-4 sm:px-6 lg:px-8">
+    <div className="w-full flex flex-col px-4 sm:px-6 lg:px-8">
       <div className="py-4 shrink-0">
         <Link
           href="/pools"
@@ -566,7 +623,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         </Link>
       </div>
 
-      <div className="flex-1 min-h-0 pb-4">
+      <div className="pb-4">
         <PoolDetailLayout
           pool={panelPool}
           type="lend"
@@ -585,7 +642,9 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           canBorrow={canBorrow}
           onLendSubmit={handleLendOnlySubmit}
           onBorrowSubmit={handleBorrowingSubmit}
-          isLendingActionPending={isActionPending}
+          isLendingActionPending={
+            isActionPending || isBorrowWithCollateralPending
+          }
         />
       </div>
     </div>

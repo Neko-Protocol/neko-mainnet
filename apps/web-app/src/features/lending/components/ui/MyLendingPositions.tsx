@@ -11,9 +11,11 @@ import {
   Shield,
   ArrowUpFromLine,
   Zap,
+  Sparkles,
 } from "lucide-react";
 import { useUserLendingPositions } from "../../hooks/useUserLendingPositions";
 import { useUserPositions } from "@/features/dashboard/hooks/useUserPositions";
+import { usePoolAction } from "@/lib/orchestrator";
 import { ColHeader } from "./ColHeader";
 import MyBorrowPositions from "@/features/borrowing/components/ui/MyBorrowPositions";
 import { getPoolTokenIcon } from "@/features/pools/utils/poolTokenIcons";
@@ -37,6 +39,7 @@ interface UnifiedPosition {
   apy: string;
   /** orchestratorId for aggregated pools, undefined for Neko */
   orchestratorId?: string;
+  hasEmissions?: boolean;
 }
 
 interface MyPositionsProps {
@@ -104,6 +107,9 @@ const MyPositions: React.FC<MyPositionsProps> = ({
   onWithdraw,
 }) => {
   const [activeTab, setActiveTab] = useState<"lend" | "borrow">(defaultTab);
+  const { mutate: executePoolAction, isPending: isClaimPending } =
+    usePoolAction();
+  const [claimingPoolId, setClaimingPoolId] = useState<string | null>(null);
 
   const {
     positions: nekoPositions,
@@ -139,10 +145,11 @@ const MyPositions: React.FC<MyPositionsProps> = ({
       depositedRaw: pos.position.depositedFormatted,
       apy: `${pos.pool.apy.toFixed(2)}%`,
       orchestratorId: pos.pool.id,
+      hasEmissions: !!pos.pool.metadata?.hasEmissions,
     })),
   ];
 
-  const colSpan = onWithdraw ? 5 : 4;
+  const colSpan = 5;
 
   if (!hasWallet) {
     return (
@@ -191,7 +198,7 @@ const MyPositions: React.FC<MyPositionsProps> = ({
               tooltip="Annual yield on your deposit"
               centered
             />
-            {onWithdraw && <ColHeader icon={Zap} label="Actions" centered />}
+            <ColHeader icon={Zap} label="Actions" centered />
           </tr>
         </thead>
         <tbody>
@@ -246,24 +253,52 @@ const MyPositions: React.FC<MyPositionsProps> = ({
                   <td className="px-4 py-4 text-center text-white text-sm">
                     {pos.apy}
                   </td>
-                  {onWithdraw && (
-                    <td className="px-4 py-4 text-center">
-                      <button
-                        onClick={() =>
-                          onWithdraw(
-                            pos.assetCode,
-                            pos.protocolId,
-                            pos.depositedRaw,
-                            pos.orchestratorId
-                          )
-                        }
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] text-white text-xs font-semibold transition-colors"
-                      >
-                        <ArrowUpFromLine className="h-3.5 w-3.5" />
-                        Withdraw
-                      </button>
-                    </td>
-                  )}
+                  <td className="px-4 py-4 text-center">
+                    <div className="inline-flex items-center gap-2">
+                      {onWithdraw && (
+                        <button
+                          onClick={() =>
+                            onWithdraw(
+                              pos.assetCode,
+                              pos.protocolId,
+                              pos.depositedRaw,
+                              pos.orchestratorId
+                            )
+                          }
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] text-white text-xs font-semibold transition-colors"
+                        >
+                          <ArrowUpFromLine className="h-3.5 w-3.5" />
+                          Withdraw
+                        </button>
+                      )}
+                      {pos.hasEmissions && pos.orchestratorId && (
+                        <button
+                          disabled={
+                            claimingPoolId === pos.orchestratorId &&
+                            isClaimPending
+                          }
+                          onClick={() => {
+                            setClaimingPoolId(pos.orchestratorId!);
+                            executePoolAction(
+                              {
+                                poolId: pos.orchestratorId!,
+                                action: "claimRewards",
+                                amount: 0n,
+                              },
+                              { onSettled: () => setClaimingPoolId(null) }
+                            );
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                          {claimingPoolId === pos.orchestratorId &&
+                          isClaimPending
+                            ? "Claiming…"
+                            : "Claim"}
+                        </button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               );
             })

@@ -285,9 +285,16 @@ export function useLend() {
       try {
         if (selectedPool.isAggregated && selectedPool.orchestratorId) {
           const decimals = 7;
-          const rawAmount = BigInt(
-            Math.floor(parseFloat(amount) * 10 ** decimals)
-          );
+
+          const isWithdrawAll =
+            !isDeposit &&
+            selectedPool.depositedAmount !== undefined &&
+            parseFloat(amount) >=
+              parseFloat(selectedPool.depositedAmount) - 1e-7;
+
+          const rawAmount = isWithdrawAll
+            ? BigInt("999999999999999999")
+            : BigInt(Math.floor(parseFloat(amount) * 10 ** decimals));
 
           const txHash = await executePoolAction({
             poolId: selectedPool.orchestratorId,

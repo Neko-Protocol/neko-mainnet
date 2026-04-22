@@ -12,7 +12,7 @@ export function ConditionalLayout({ children }: { children: ReactNode }) {
   if (isPoolDetail) {
     return (
       <main
-        className="flex min-h-screen min-w-0 flex-1 flex-col items-center overflow-x-hidden text-white w-full"
+        className="flex min-h-screen min-w-0 flex-1 flex-col items-center overflow-x-clip text-white w-full"
         style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
       >
         {children}

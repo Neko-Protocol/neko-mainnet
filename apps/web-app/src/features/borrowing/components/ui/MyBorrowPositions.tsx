@@ -7,11 +7,10 @@ import {
   Wallet,
   Coins,
   Shield,
-  Hash,
-  TrendingDown,
+  TrendingUp,
   Layers,
-  HeartPulse,
-  Lock,
+  Zap,
+  ArrowDownToLine,
 } from "lucide-react";
 
 const PROTOCOL_ICONS: Record<string, string> = {
@@ -54,8 +53,12 @@ import { RemoveCollateralModal } from "./RemoveCollateralModal";
 import { TokenAvatar } from "./TokenAvatar";
 import { ColHeader } from "./ColHeader";
 import { RepayModal } from "./RepayModal";
+import { RepayPositionModal } from "./RepayPositionModal";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { getTokenBalance } from "@/lib/helpers/stellar/lending";
+import { usePoolAction } from "@/lib/orchestrator";
+import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import type { UserPositionWithPool } from "@/features/dashboard/hooks/useUserPositions";
 
 const STELLAR_DECIMALS = 7;
 
@@ -80,6 +83,9 @@ const MyBorrowPositions: React.FC<MyBorrowPositionsProps> = ({
     isWalletConnected: isRemoveWalletConnected,
   } = useRemoveCollateral();
 
+  const { mutateAsync: executePoolAction, isPending: isPoolActionPending } =
+    usePoolAction();
+
   const [repayPosition, setRepayPosition] = useState<BorrowPosition | null>(
     null
   );
@@ -88,6 +94,33 @@ const MyBorrowPositions: React.FC<MyBorrowPositionsProps> = ({
   );
   const [selectedPosition, setSelectedPosition] =
     useState<BorrowPosition | null>(null);
+
+  // Aggregated repay state
+  const [aggregatedRepayPos, setAggregatedRepayPos] =
+    useState<UserPositionWithPool | null>(null);
+
+  // Wallet balance for the aggregated repay token
+  const aggregatedRepayTokenCode =
+    aggregatedRepayPos?.pool.tokens[0]?.code ?? "";
+  const aggregatedRepayAssetContract = useMemo(
+    () => getAvailableTokens()[aggregatedRepayTokenCode]?.contract ?? "",
+    [aggregatedRepayTokenCode]
+  );
+  const {
+    data: aggregatedRepayWalletBalance = 0n,
+    isLoading: isAggregatedBalanceLoading,
+  } = useQuery({
+    queryKey: [
+      "aggregatedRepayWalletBalance",
+      aggregatedRepayAssetContract,
+      address,
+    ],
+    queryFn: () => getTokenBalance(aggregatedRepayAssetContract, address!),
+    enabled: Boolean(
+      aggregatedRepayPos && aggregatedRepayAssetContract && address
+    ),
+    staleTime: 10_000,
+  });
 
   // Resolve the underlying token contract address for the position being repaid
   const repayAssetContract = useMemo(() => {
@@ -159,20 +192,8 @@ const MyBorrowPositions: React.FC<MyBorrowPositionsProps> = ({
 
   return (
     <>
-      <BorrowQuickActions
-        positions={positions}
-        selectedPosition={selectedPosition}
-        onSelectPosition={setSelectedPosition}
-        onRemoveClick={() => {
-          if (selectedPosition) setRemovePosition(selectedPosition);
-        }}
-        onRepayClick={() => {
-          if (selectedPosition) setRepayPosition(selectedPosition);
-        }}
-      />
-
       <div className="w-full rounded-2xl border border-white/5 bg-[#1C1C1C]">
-        {/* ── Neko borrow positions ── */}
+        {/* ── Header ── */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
           <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
             Your Borrow Positions
@@ -180,286 +201,117 @@ const MyBorrowPositions: React.FC<MyBorrowPositionsProps> = ({
           {headerAction}
         </div>
 
-        {/* Desktop */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/5">
-                <ColHeader icon={Shield} label="Protocol" centered />
-                <ColHeader icon={Coins} label="Asset" centered />
-                <ColHeader
-                  icon={Shield}
-                  label="Collateral Token"
-                  tooltip="The token you posted as collateral to secure this borrow"
-                  centered
-                />
-                <ColHeader
-                  icon={Lock}
-                  label="Collateral Amount"
-                  tooltip="Total collateral you have locked in this pool"
-                  centered
-                />
-                <ColHeader
-                  icon={Layers}
-                  label="Current Debt"
-                  tooltip="Actual amount owed: dToken balance × dToken rate, converted to the borrowed asset"
-                  centered
-                />
-                <ColHeader
-                  icon={TrendingDown}
-                  label="Borrow APR"
-                  tooltip="Annual interest rate applied to your debt"
-                  centered
-                />
-                <ColHeader
-                  icon={HeartPulse}
-                  label="Health Factor"
-                  tooltip="Your current health factor for this pool. Keep above 1.0 to avoid liquidation."
-                  centered
-                />
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-white/5">
+              <ColHeader icon={Shield} label="Protocol" centered />
+              <ColHeader icon={Coins} label="Asset" />
+              <ColHeader
+                icon={Layers}
+                label="Amount Owed"
+                tooltip="Outstanding debt in this pool"
+                centered
+              />
+              <ColHeader
+                icon={TrendingUp}
+                label="Borrow APR"
+                tooltip="Annual interest rate on your debt"
+                centered
+              />
+              <ColHeader icon={Zap} label="Action" centered />
+            </tr>
+          </thead>
+          <tbody>
+            {isLoadingAggregated ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-4 py-12 text-center text-white/40 text-sm"
+                >
+                  Loading your positions...
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-12 text-center text-white/40 text-sm"
-                  >
-                    Loading your positions...
-                  </td>
-                </tr>
-              ) : positions.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-12 text-center text-white/40 text-sm"
-                  >
-                    You don&apos;t have any active borrow positions yet.
-                  </td>
-                </tr>
-              ) : (
-                positions.map((pos) => (
+            ) : aggregatedBorrowPositions.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-4 py-12 text-center text-white/40 text-sm"
+                >
+                  You don&apos;t have any active borrow positions yet.
+                </td>
+              </tr>
+            ) : (
+              aggregatedBorrowPositions.map((pos) => {
+                const tokenCode = pos.pool.tokens[0]?.code ?? "?";
+                const decimals =
+                  pos.pool.tokens[0]?.decimals ?? STELLAR_DECIMALS;
+                const liabilities = pos.position.metadata?.liabilities;
+                let liabilitiesFormatted = "0";
+                if (typeof liabilities === "bigint") {
+                  liabilitiesFormatted = fromSmallestUnit(
+                    liabilities.toString(),
+                    decimals
+                  );
+                } else if (
+                  typeof liabilities === "number" ||
+                  typeof liabilities === "string"
+                ) {
+                  liabilitiesFormatted = fromSmallestUnit(
+                    String(liabilities),
+                    decimals
+                  );
+                }
+                const borrowApy =
+                  typeof pos.pool.metadata.borrowApy === "number"
+                    ? pos.pool.metadata.borrowApy
+                    : pos.pool.apy;
+                const isRepaying =
+                  aggregatedRepayPos?.pool.id === pos.pool.id &&
+                  isPoolActionPending;
+
+                return (
                   <tr
-                    key={pos.assetCode}
+                    key={pos.pool.id}
                     className="border-b border-white/5 hover:bg-white/2 transition-colors"
                   >
                     <td className="px-4 py-4 text-center">
                       <div className="flex justify-center">
-                        <ProtocolLogo protocolId="neko" />
+                        <ProtocolLogo protocolId={pos.pool.type} />
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      <div className="flex items-center justify-center gap-3">
-                        <TokenAvatar code={pos.assetCode} />
+                      <div className="flex items-center gap-3">
+                        <TokenAvatar code={tokenCode} />
                         <span className="text-white font-medium text-sm">
-                          {pos.assetCode}
+                          {tokenCode}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <TokenAvatar code={pos.collateralTokenCode} />
-                        <span className="text-white text-sm">
-                          {pos.collateralTokenCode}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 text-center text-white font-semibold text-sm tabular-nums">
-                      {pos.collateralFormatted}{" "}
-                      <span className="text-white/40 font-normal">
-                        {pos.collateralTokenCode}
-                      </span>
                     </td>
                     <td className="px-4 py-4 text-center text-white font-bold text-sm tabular-nums">
-                      {pos.debtFormatted}{" "}
+                      {parseFloat(liabilitiesFormatted).toFixed(4)}{" "}
                       <span className="text-white/40 font-normal">
-                        {pos.assetCode}
+                        {tokenCode}
                       </span>
                     </td>
                     <td className="px-4 py-4 text-center text-white text-sm">
-                      {pos.interestRate.toFixed(2)}%
+                      {borrowApy.toFixed(2)}%
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <div className="flex justify-center">
-                        <HealthFactorBadge
-                          healthFactor={getHealthFactor(pos.contractId)}
-                          isLoading={isLoadingHF}
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Mobile */}
-        <div className="md:hidden">
-          {isLoading ? (
-            <p className="px-4 py-12 text-center text-white/40 text-sm">
-              Loading your positions...
-            </p>
-          ) : positions.length === 0 ? (
-            <p className="px-4 py-12 text-center text-white/40 text-sm">
-              You don&apos;t have any active borrow positions yet.
-            </p>
-          ) : (
-            <ul className="divide-y divide-white/5">
-              {positions.map((pos) => (
-                <li
-                  key={pos.assetCode}
-                  className="px-4 py-4 flex flex-col gap-3"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <TokenAvatar code={pos.assetCode} />
-                      <div>
-                        <p className="text-white font-semibold text-sm">
-                          {pos.assetCode}
-                        </p>
-                        <p className="text-white/40 text-xs">
-                          Collateral: {pos.collateralTokenCode}
-                        </p>
-                      </div>
-                    </div>
-                    <HealthFactorBadge
-                      healthFactor={getHealthFactor(pos.contractId)}
-                      isLoading={isLoadingHF}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <MobileStat
-                      label={`Collateral (${pos.collateralTokenCode})`}
-                      value={pos.collateralFormatted}
-                    />
-                    <MobileStat
-                      label={`Debt (${pos.assetCode})`}
-                      value={pos.debtFormatted}
-                    />
-                    <MobileStat
-                      label="APR"
-                      value={`${pos.interestRate.toFixed(2)}%`}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {/* ── Aggregated (non-Neko) borrow positions ── */}
-        {(isLoadingAggregated || aggregatedBorrowPositions.length > 0) && (
-          <>
-            <div className="flex items-center px-4 py-3 border-t border-white/5">
-              <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
-                Aggregated Borrow Positions
-              </span>
-              <span className="ml-2 rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-400">
-                Aggregated
-              </span>
-            </div>
-
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/5">
-                  <ColHeader icon={Shield} label="Protocol" centered />
-                  <ColHeader icon={Coins} label="Asset" />
-                  <ColHeader
-                    icon={Layers}
-                    label="Liabilities"
-                    tooltip="Outstanding debt in this aggregated pool"
-                    centered
-                  />
-                  <ColHeader
-                    icon={TrendingDown}
-                    label="Borrow APR"
-                    tooltip="Annual interest rate on your debt"
-                    centered
-                  />
-                </tr>
-              </thead>
-              <tbody>
-                {isLoadingAggregated ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-4 py-12 text-center text-white/40 text-sm"
-                    >
-                      Loading aggregated positions...
-                    </td>
-                  </tr>
-                ) : aggregatedBorrowPositions.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="px-4 py-12 text-center text-white/40 text-sm"
-                    >
-                      No aggregated borrow positions.
-                    </td>
-                  </tr>
-                ) : (
-                  aggregatedBorrowPositions.map((pos) => {
-                    const tokenCode = pos.pool.tokens[0]?.code ?? "?";
-                    const decimals =
-                      pos.pool.tokens[0]?.decimals ?? STELLAR_DECIMALS;
-                    const liabilities = pos.position.metadata?.liabilities;
-                    let liabilitiesFormatted = "0";
-                    if (typeof liabilities === "bigint") {
-                      liabilitiesFormatted = (
-                        Number(liabilities) /
-                        10 ** decimals
-                      ).toFixed(decimals);
-                    } else if (
-                      typeof liabilities === "number" ||
-                      typeof liabilities === "string"
-                    ) {
-                      liabilitiesFormatted = parseFloat(
-                        String(liabilities)
-                      ).toFixed(decimals);
-                    }
-                    const borrowApy =
-                      typeof pos.pool.metadata.borrowApy === "number"
-                        ? pos.pool.metadata.borrowApy
-                        : pos.pool.apy;
-
-                    return (
-                      <tr
-                        key={pos.pool.id}
-                        className="border-b border-white/5 hover:bg-white/2 transition-colors"
+                      <button
+                        type="button"
+                        onClick={() => setAggregatedRepayPos(pos)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] text-white text-xs font-semibold transition-colors"
                       >
-                        <td className="px-4 py-4 text-center">
-                          <div className="flex justify-center">
-                            <ProtocolLogo protocolId={pos.pool.type} />
-                          </div>
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex items-center gap-3">
-                            <TokenAvatar code={tokenCode} />
-                            <span className="text-white font-medium text-sm">
-                              {tokenCode}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 text-center text-white font-bold text-sm tabular-nums">
-                          {liabilitiesFormatted}{" "}
-                          <span className="text-white/40 font-normal">
-                            {tokenCode}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-center text-white text-sm">
-                          {borrowApy.toFixed(2)}%
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </>
-        )}
+                        <ArrowDownToLine className="h-3.5 w-3.5" />
+                        Repay
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
       {repayPosition && (
@@ -483,6 +335,42 @@ const MyBorrowPositions: React.FC<MyBorrowPositionsProps> = ({
           onSubmit={handleRemoveSubmit}
         />
       )}
+
+      {aggregatedRepayPos &&
+        (() => {
+          const tokenCode = aggregatedRepayPos.pool.tokens[0]?.code ?? "?";
+          const decimals =
+            aggregatedRepayPos.pool.tokens[0]?.decimals ?? STELLAR_DECIMALS;
+          const liabilities = aggregatedRepayPos.position.metadata?.liabilities;
+          let debtFormatted = "0";
+          if (typeof liabilities === "bigint") {
+            debtFormatted = fromSmallestUnit(liabilities.toString(), decimals);
+          } else if (
+            typeof liabilities === "number" ||
+            typeof liabilities === "string"
+          ) {
+            debtFormatted = fromSmallestUnit(String(liabilities), decimals);
+          }
+          return (
+            <RepayPositionModal
+              tokenCode={tokenCode}
+              debtFormatted={debtFormatted}
+              decimals={decimals}
+              walletBalance={aggregatedRepayWalletBalance}
+              isBalanceLoading={isAggregatedBalanceLoading}
+              isProcessing={isPoolActionPending}
+              onClose={() => setAggregatedRepayPos(null)}
+              onConfirm={async (amount) => {
+                await executePoolAction({
+                  poolId: aggregatedRepayPos.pool.id,
+                  action: "repay",
+                  amount,
+                });
+                setAggregatedRepayPos(null);
+              }}
+            />
+          );
+        })()}
     </>
   );
 };
