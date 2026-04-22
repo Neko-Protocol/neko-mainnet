@@ -318,6 +318,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
   }
 
   supportsAction(action: PoolAction): boolean {
+    if (action === "withdraw") return false;
     return SUPPORTED_ACTIONS.includes(action);
   }
 }
