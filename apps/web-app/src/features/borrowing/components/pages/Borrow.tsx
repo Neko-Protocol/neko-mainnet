@@ -7,7 +7,7 @@ import { stellarNetwork } from "@/lib/constants/network";
 import { useBorrow } from "../../hooks/useBorrow";
 import { BorrowTable } from "../ui/BorrowTable";
 import { BorrowModal } from "../ui/BorrowModal";
-import MyBorrowPositions from "../ui/MyBorrowPositions";
+import MyPositions from "@/features/lending/components/ui/MyLendingPositions";
 import LiquidationsSection from "../ui/LiquidationsSection";
 
 type PageTab = "pools" | "liquidations" | "positions";
@@ -119,7 +119,7 @@ const Borrow: React.FC = () => {
         <LiquidationsSection />
       )}
 
-      {activeTab === "positions" && <MyBorrowPositions />}
+      {activeTab === "positions" && <MyPositions defaultTab="borrow" />}
     </PageContainer>
   );
 };

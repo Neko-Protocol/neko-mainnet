@@ -93,56 +93,59 @@ function OverlappingTokens({
   const wrap = size === "lg" ? "w-24 h-16" : "w-16 h-10";
   const px = size === "lg" ? 64 : 40;
 
+  // Single-asset pools (Blend): token2 falls back to token1 — show only one icon
+  const isSingle =
+    token1.symbol === token2.symbol ||
+    (token1.address && token1.address === token2.address);
+
+  const renderIcon = (token: PoolDetailPanelToken, fallbackClass: string) => {
+    const icon =
+      token.icon ?? getPoolTokenIcon({ type: "contract", code: token.symbol });
+    return icon ? (
+      <Image
+        src={icon}
+        alt={token.symbol}
+        width={px}
+        height={px}
+        unoptimized
+        className={getTokenIconFitClass(token.symbol)}
+      />
+    ) : (
+      <span
+        className={`${fallbackClass} font-bold`}
+        style={{ fontSize: px / 3 }}
+      >
+        {token.symbol[0]}
+      </span>
+    );
+  };
+
+  if (isSingle) {
+    return (
+      <div
+        className={`shrink-0 flex items-center`}
+        style={{ width: px, height: px }}
+      >
+        <div
+          className={`${circle} rounded-full bg-neko-teal border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md`}
+        >
+          {renderIcon(token1, "text-white")}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`relative ${wrap} shrink-0 flex items-center`}>
       <div
         className={`absolute left-0 top-1/2 -translate-y-1/2 ${circle} rounded-full bg-neko-teal border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md z-1`}
       >
-        {(() => {
-          const icon =
-            token1.icon ??
-            getPoolTokenIcon({ type: "contract", code: token1.symbol });
-          return icon ? (
-            <Image
-              src={icon}
-              alt={token1.symbol}
-              width={px}
-              height={px}
-              unoptimized
-              className={getTokenIconFitClass(token1.symbol)}
-            />
-          ) : (
-            <span className="text-white font-bold" style={{ fontSize: px / 3 }}>
-              {token1.symbol[0]}
-            </span>
-          );
-        })()}
+        {renderIcon(token1, "text-white")}
       </div>
       <div
         className={`absolute ${offset} top-1/2 -translate-y-1/2 ${circle} rounded-full bg-neko-teal-light border-2 border-neko-border flex items-center justify-center overflow-hidden shadow-md z-2`}
       >
-        {(() => {
-          const icon =
-            token2.icon ??
-            getPoolTokenIcon({ type: "contract", code: token2.symbol });
-          return icon ? (
-            <Image
-              src={icon}
-              alt={token2.symbol}
-              width={px}
-              height={px}
-              unoptimized
-              className={getTokenIconFitClass(token2.symbol)}
-            />
-          ) : (
-            <span
-              className="text-neko-navy font-bold"
-              style={{ fontSize: px / 3 }}
-            >
-              {token2.symbol[0]}
-            </span>
-          );
-        })()}
+        {renderIcon(token2, "text-neko-navy")}
       </div>
     </div>
   );
@@ -795,11 +798,6 @@ export function PoolDetailLayout({
               <h1 className="text-white font-bold text-3xl sm:text-4xl leading-none">
                 {pool.name || `${pool.token1.symbol} / ${pool.token2.symbol}`}
               </h1>
-              {pool.liquidationLtv > 0 && (
-                <span className="bg-white/8 text-white/60 text-sm font-semibold px-3 py-1 rounded-lg border border-white/10">
-                  {pool.liquidationLtv}%
-                </span>
-              )}
             </div>
             <div className="flex items-center gap-4 mt-2.5 flex-wrap">
               <CopyAddress address={pool.contractAddress} />
