@@ -18,6 +18,7 @@ export interface PoolDetailPanelToken {
 export interface CollateralOption {
   symbol: string;
   address: string;
+  poolId: string;
   decimals: number;
   cFactor: number;
   userBalance: string;
@@ -423,6 +424,12 @@ export function PoolDetailPanel({
         </div>
       )}
 
+      {!depositWithdrawMode && !supportsBorrow && (
+        <span className="inline-flex w-fit items-center px-3 py-1.5 rounded-lg bg-[#2A2A2A] text-xs font-semibold text-white">
+          Lending
+        </span>
+      )}
+
       {depositWithdrawMode && ammInsufficientFundsMessage && (
         <p className="text-sm text-red-400/90 font-medium px-0.5" role="alert">
           {ammInsufficientFundsMessage}
@@ -482,24 +489,56 @@ export function PoolDetailPanel({
                   </p>
 
                   {/* Asset selector */}
-                  <div className="flex flex-wrap gap-2">
-                    {pool.collateralOptions.map((opt) => (
-                      <button
-                        key={opt.address}
-                        type="button"
-                        onClick={() => {
-                          setSelectedCollateralAddress(opt.address);
-                          setCollateralInputAmount("");
-                        }}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                          selectedCollateralAddress === opt.address
-                            ? "border-[#229EDF] bg-[#229EDF]/10 text-[#229EDF]"
-                            : "border-white/10 text-white/50 hover:text-white/70"
-                        }`}
-                      >
-                        {opt.symbol}
-                      </button>
-                    ))}
+                  <div className="flex flex-wrap gap-3">
+                    {pool.collateralOptions.map((opt) => {
+                      const icon = getPoolTokenIcon({
+                        type: "contract",
+                        code: opt.symbol,
+                      });
+                      const isSelected =
+                        selectedCollateralAddress === opt.address;
+                      return (
+                        <button
+                          key={opt.address}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCollateralAddress(opt.address);
+                            setCollateralInputAmount("");
+                          }}
+                          className="flex flex-col items-center gap-1 transition-colors"
+                        >
+                          <div
+                            className={`w-9 h-9 shrink-0 rounded-full border-2 overflow-hidden flex items-center justify-center bg-white/5 transition-colors ${
+                              isSelected
+                                ? "border-[#229EDF]"
+                                : "border-white/10 hover:border-white/30"
+                            }`}
+                          >
+                            {icon ? (
+                              <Image
+                                src={icon}
+                                alt={opt.symbol}
+                                width={36}
+                                height={36}
+                                unoptimized
+                                className={`w-full h-full ${getTokenIconFitClass(opt.symbol)}`}
+                              />
+                            ) : (
+                              <span className="text-[10px] font-bold text-white">
+                                {opt.symbol.slice(0, 3)}
+                              </span>
+                            )}
+                          </div>
+                          <span
+                            className={`text-[10px] font-semibold leading-none ${
+                              isSelected ? "text-[#229EDF]" : "text-white/40"
+                            }`}
+                          >
+                            {opt.symbol}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {/* Amount input */}
@@ -802,7 +841,14 @@ export function PoolDetailLayout({
             <div className="flex items-center gap-4 mt-2.5 flex-wrap">
               <CopyAddress address={pool.contractAddress} />
               <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm bg-[#229EDF]" />
+                <Image
+                  src="/assets/xlm-negro-logo.png"
+                  alt="Stellar"
+                  width={12}
+                  height={12}
+                  unoptimized
+                  className="w-3 h-3 rounded-sm"
+                />
                 <span className="text-white/50 text-sm">{pool.network}</span>
               </div>
             </div>

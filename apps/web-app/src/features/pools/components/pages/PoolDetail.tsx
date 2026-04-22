@@ -45,7 +45,7 @@ const ISSUER_LABELS: Record<string, string> = {
 const ISSUER_ICONS: Record<string, string> = {
   blend: "/assets/vault-creators/blend.png",
   neko: "/logo.svg",
-  soroswap: "/assets/vault-creators/soroswap.png",
+  soroswap: "/assets/vault-creators/soroswap.jpg",
   aqua: "https://coin-images.coingecko.com/coins/images/20026/small/aqua-logo.png?1696519446",
 };
 
@@ -85,32 +85,42 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       .map((p: PoolInfo) => ({
         symbol: p.tokens[0]?.code ?? "?",
         address: p.tokens[0]?.address ?? "",
+        poolId: p.id,
         decimals: p.tokens[0]?.decimals ?? 7,
         cFactor: (p.metadata?.cFactor as number) ?? 0,
-        userBalance: "0", // updated below via useTokenBalance per option
+        userBalance: "0", // updated below via useUserPosition per sibling pool
       }));
   }, [allPools, blendPoolContractId, contractid]);
 
-  // Fetch wallet balance for each collateral option (up to 3 siblings typical)
-  const collateralBalance0 = useTokenBalance(collateralOptions[0]?.address);
-  const collateralBalance1 = useTokenBalance(collateralOptions[1]?.address);
-  const collateralBalance2 = useTokenBalance(collateralOptions[2]?.address);
+  // Fetch user's deposited position in each sibling pool (up to 3 siblings typical)
+  const collateralPosition0 = useUserPosition(
+    collateralOptions[0]?.poolId,
+    address
+  );
+  const collateralPosition1 = useUserPosition(
+    collateralOptions[1]?.poolId,
+    address
+  );
+  const collateralPosition2 = useUserPosition(
+    collateralOptions[2]?.poolId,
+    address
+  );
 
   const collateralOptionsWithBalances = useMemo<CollateralOption[]>(() => {
-    const balances = [
-      collateralBalance0.balance,
-      collateralBalance1.balance,
-      collateralBalance2.balance,
+    const deposited = [
+      collateralPosition0.data?.depositedFormatted ?? "0",
+      collateralPosition1.data?.depositedFormatted ?? "0",
+      collateralPosition2.data?.depositedFormatted ?? "0",
     ];
     return collateralOptions.map((opt, i) => ({
       ...opt,
-      userBalance: balances[i] ?? "0",
+      userBalance: deposited[i] ?? "0",
     }));
   }, [
     collateralOptions,
-    collateralBalance0.balance,
-    collateralBalance1.balance,
-    collateralBalance2.balance,
+    collateralPosition0.data,
+    collateralPosition1.data,
+    collateralPosition2.data,
   ]);
 
   const { mutateAsync: executePoolAction, isPending: isActionPending } =
