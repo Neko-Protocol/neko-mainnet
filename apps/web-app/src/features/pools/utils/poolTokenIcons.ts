@@ -11,6 +11,7 @@ const POOL_ONLY_TOKEN_ICONS: Record<string, string> = {
   USDGLO:
     "https://coin-images.coingecko.com/coins/images/29319/small/GLO_logo_pine_on_cyan_1_3.png?1716971065",
   BLND: "/assets/vault-creators/blend.png",
+  XLM: "/assets/xlm-negro-logo.png",
 };
 
 type TokenArg = Parameters<typeof getTokenIcon>[0];

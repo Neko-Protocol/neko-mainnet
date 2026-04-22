@@ -6,6 +6,10 @@
     {
       "path": "/api/vault/invest",
       "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/pool-rates/record",
+      "schedule": "0 * * * *"
     }
   ]
 }
