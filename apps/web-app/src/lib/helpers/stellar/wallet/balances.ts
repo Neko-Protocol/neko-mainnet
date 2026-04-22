@@ -56,12 +56,15 @@ export const fetchBalances = async (
   const mapped: MappedBalances = {};
   let subentryCount = 0;
   let nativeBalanceStroops = 0n;
+  /** Raw Horizon balance lines (for deduping Soroban SAC reads below). */
+  let horizonBalanceLines: Horizon.HorizonApi.BalanceLine[] = [];
 
   try {
     const { balances, subentry_count } = await horizonInstance
       .accounts()
       .accountId(address)
       .call();
+    horizonBalanceLines = balances;
     subentryCount = subentry_count ?? 0;
     for (const b of balances) {
       if (b.asset_type === "native") {
@@ -80,6 +83,21 @@ export const fetchBalances = async (
   } catch (err) {
     console.warn("Horizon balance fetch failed, continuing with Soroban:", err);
     nativeBalanceStroops = 0n;
+  }
+
+  const classicAssetCodesWithNonZero = new Set<string>();
+  for (const b of horizonBalanceLines) {
+    if (b.asset_type === "native" || b.asset_type === "liquidity_pool_shares") {
+      continue;
+    }
+    if (
+      (b.asset_type === "credit_alphanum4" ||
+        b.asset_type === "credit_alphanum12") &&
+      "asset_code" in b &&
+      Number(b.balance) > 0
+    ) {
+      classicAssetCodesWithNonZero.add(b.asset_code);
+    }
   }
 
   try {
@@ -104,6 +122,9 @@ export const fetchBalances = async (
         parseBalance(result.value.balance) > 0
       ) {
         const { code, balance } = result.value;
+        if (classicAssetCodesWithNonZero.has(code)) {
+          continue;
+        }
         const key = `soroban:${code}`;
         const sorobanEntry: SorobanBalanceEntry = {
           asset_type: "credit_alphanum4",
