@@ -98,7 +98,6 @@ const Borrow: React.FC = () => {
             totalRows={totalRows}
             totalPages={totalPages}
             rowsPerPage={rowsPerPage}
-            onBorrow={openModal}
             onPageChange={setPage}
             onRowsPerPageChange={changeRowsPerPage}
           />
