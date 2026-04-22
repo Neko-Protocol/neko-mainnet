@@ -8,6 +8,8 @@ import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools"
 import { LendTable } from "@/features/lending/components/ui/LendTable";
 import type { PoolData } from "@/features/lending/types/lending";
 
+const DASHBOARD_TOP_POOLS_LIMIT = 8;
+
 const AssetBreakdown: React.FC = () => {
   const router = useRouter();
   const { assets, isLoading, error } = useDashboardPools();
@@ -34,7 +36,11 @@ const AssetBreakdown: React.FC = () => {
         </Link>
       </div>
 
-      <LendTable pools={assets} isLoading={isLoading} error={error} />
+      <LendTable
+        pools={assets.slice(0, DASHBOARD_TOP_POOLS_LIMIT)}
+        isLoading={isLoading}
+        error={error}
+      />
     </div>
   );
 };

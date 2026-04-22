@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import {
   ArrowLeftRight,
@@ -10,7 +10,7 @@ import {
   Gavel,
 } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
-import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
+import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { stellarNetwork } from "@/lib/constants/network";
 
 const allActions = [
@@ -42,7 +42,7 @@ const allActions = [
 
 const QuickActions: React.FC = () => {
   const { address } = useWallet();
-  const [showModal, setShowModal] = useState(false);
+  const { connect } = useStellarWallet();
 
   const actions = useMemo(() => {
     if (stellarNetwork === "PUBLIC") {
@@ -62,7 +62,7 @@ const QuickActions: React.FC = () => {
         </p>
         <button
           type="button"
-          onClick={() => setShowModal(true)}
+          onClick={() => void connect()}
           className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-6 w-full text-left hover:border-white/10 hover:bg-[#222222] transition-all cursor-pointer"
         >
           <div className="flex items-center justify-between">
@@ -75,10 +75,6 @@ const QuickActions: React.FC = () => {
             <ArrowRight className="h-5 w-5 text-white/40" />
           </div>
         </button>
-        <ConnectWalletModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-        />
       </div>
     );
   }
