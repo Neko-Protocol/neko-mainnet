@@ -771,6 +771,8 @@ interface LendTableProps {
   protocolFilter?: string;
   onProtocolFilterChange?: (id: string) => void;
   protocolOptions?: { id: string; label: string }[];
+  /** When true, table card has no min-height (e.g. embedded in dashboard). */
+  compact?: boolean;
 }
 
 export function LendTable({
@@ -783,6 +785,7 @@ export function LendTable({
   protocolFilter = "all",
   onProtocolFilterChange,
   protocolOptions = [],
+  compact = false,
 }: LendTableProps) {
   const router = useRouter();
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
