@@ -89,14 +89,7 @@ const AssetBreakdown: React.FC = () => {
         </div>
       </div>
 
-      <LendTable
-        pools={assets}
-        isLoading={isLoading}
-        error={error}
-        onDeposit={handleAction}
-        onWithdraw={handleAction}
-        hideActions
-      />
+      <LendTable pools={assets} isLoading={isLoading} error={error} />
     </div>
   );
 };

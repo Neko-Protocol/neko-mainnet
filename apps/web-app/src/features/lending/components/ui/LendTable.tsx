@@ -12,7 +12,8 @@ import {
   ArrowLeftRight,
   TrendingUp,
   Droplets,
-  Coins,
+  ArrowDownUp,
+  Layers,
   Search,
   SlidersHorizontal,
   Settings,
@@ -415,7 +416,7 @@ function FilterDropdown({
 
 // ── SortDropdown ──────────────────────────────────────────────────────────────
 
-type SortField = "name" | "roi" | "liquidity" | "bTokenRate";
+type SortField = "name" | "roi" | "liquidity" | "totalBorrowed";
 type SortOrder = "desc" | "asc";
 
 interface SortState {
@@ -426,7 +427,7 @@ interface SortState {
 const SORT_FIELDS: { value: SortField; label: string }[] = [
   { value: "roi", label: "Supply APY" },
   { value: "liquidity", label: "Total Liquidity" },
-  { value: "bTokenRate", label: "bToken Rate" },
+  { value: "totalBorrowed", label: "Total Borrowed" },
   { value: "name", label: "Pool name" },
 ];
 
@@ -547,14 +548,14 @@ export type ColumnKey =
   | "pool"
   | "apy"
   | "liquidity"
-  | "bTokenRate";
+  | "totalBorrowed";
 
 const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: "protocol", label: "Protocol" },
   { key: "pool", label: "Pool" },
   { key: "apy", label: "Supply APY" },
   { key: "liquidity", label: "Total Liquidity" },
-  { key: "bTokenRate", label: "bToken Rate" },
+  { key: "totalBorrowed", label: "Total Borrowed" },
 ];
 
 export const DEFAULT_VISIBLE_COLUMNS: Set<ColumnKey> = new Set([
@@ -562,7 +563,7 @@ export const DEFAULT_VISIBLE_COLUMNS: Set<ColumnKey> = new Set([
   "pool",
   "apy",
   "liquidity",
-  "bTokenRate",
+  "totalBorrowed",
 ]);
 
 function ColumnsDropdown({
@@ -857,9 +858,16 @@ export function LendTable({
           (s.includes("M") ? 1_000_000 : s.includes("k") ? 1_000 : 1);
         av = parse(a.liquidity);
         bv = parse(b.liquidity);
-      } else if (sort.field === "bTokenRate") {
-        av = parseFloat(a.bTokenRate ?? "1");
-        bv = parseFloat(b.bTokenRate ?? "1");
+      } else if (sort.field === "totalBorrowed") {
+        const parse = (s: string | undefined) =>
+          parseFloat((s ?? "0").replace(/[^0-9.]/g, "")) *
+          ((s ?? "").includes("M")
+            ? 1_000_000
+            : (s ?? "").includes("k")
+              ? 1_000
+              : 1);
+        av = parse(a.totalBorrowed);
+        bv = parse(b.totalBorrowed);
       } else {
         return sort.order === "asc"
           ? a.name.localeCompare(b.name)
@@ -873,7 +881,7 @@ export function LendTable({
 
   const col = (key: ColumnKey) => visibleColumns.has(key);
   const colCount = (
-    ["protocol", "pool", "apy", "liquidity", "bTokenRate"] as ColumnKey[]
+    ["protocol", "pool", "apy", "liquidity", "totalBorrowed"] as ColumnKey[]
   ).filter((k) => col(k)).length;
   const isEmpty = !isLoading && !error && pools.length === 0;
   const filterEmpty =
@@ -952,7 +960,7 @@ export function LendTable({
               {col("protocol") && (
                 <ColHeader icon={ArrowLeftRight} label="Protocol" />
               )}
-              {col("pool") && <ColHeader icon={ArrowLeftRight} label="Pool" />}
+              {col("pool") && <ColHeader icon={Layers} label="Pool" />}
               {col("apy") && (
                 <ColHeader
                   icon={TrendingUp}
@@ -969,11 +977,11 @@ export function LendTable({
                   centered
                 />
               )}
-              {col("bTokenRate") && (
+              {col("totalBorrowed") && (
                 <ColHeader
-                  icon={Coins}
-                  tooltip="Rate at which you receive bTokens for each asset deposited"
-                  label="bToken Rate"
+                  icon={ArrowDownUp}
+                  tooltip="Total amount currently borrowed from this pool"
+                  label="Total Borrowed"
                   centered
                 />
               )}
@@ -1025,11 +1033,13 @@ export function LendTable({
                       {pool.liquidity}
                     </td>
                   )}
-                  {col("bTokenRate") && (
-                    <td className="px-4 py-4 align-middle text-center text-white text-sm">
-                      {pool.bTokenRate
-                        ? parseFloat(pool.bTokenRate).toFixed(4)
-                        : "1.0000"}
+                  {col("totalBorrowed") && (
+                    <td className="px-4 py-4 align-middle text-center text-sm">
+                      {pool.totalBorrowed ? (
+                        <span className="text-white">{pool.totalBorrowed}</span>
+                      ) : (
+                        <span className="text-white/30">—</span>
+                      )}
                     </td>
                   )}
                 </tr>
@@ -1086,13 +1096,9 @@ export function LendTable({
                       icon={Droplets}
                     />
                     <StatCell
-                      label="bToken Rate"
-                      value={
-                        pool.bTokenRate
-                          ? parseFloat(pool.bTokenRate).toFixed(4)
-                          : "1.0000"
-                      }
-                      icon={Coins}
+                      label="Borrowed"
+                      value={pool.totalBorrowed ?? "—"}
+                      icon={ArrowDownUp}
                     />
                   </div>
                 </li>
