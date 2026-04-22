@@ -136,12 +136,21 @@ export function useLend() {
 
         // Total borrowed for Blend pools (totalLiabilities in stroops)
         let totalBorrowed: string | undefined;
+        let liquidityTokenAmount: string | undefined;
+        let liquidityTokenCode: string | undefined;
+        let totalBorrowedTokenAmount: string | undefined;
+        let borrowApy: string | undefined;
         if (p.type === "blend") {
           const liabRaw = String(
             (p.metadata?.totalLiabilities as string | undefined) ?? "0"
           );
           const liabTokens = fromSmallestUnit(liabRaw, decimals);
           totalBorrowed = formatLiquidity(liabTokens);
+          liquidityTokenAmount = fromSmallestUnit(p.tvl.toString(), decimals);
+          liquidityTokenCode = token?.code;
+          totalBorrowedTokenAmount = liabTokens;
+          const bApy = (p.metadata?.borrowApy as number | undefined) ?? 0;
+          borrowApy = `${bApy.toFixed(2)}%`;
         }
 
         return {
@@ -159,6 +168,10 @@ export function useLend() {
           asset: token?.address ?? "",
           bTokenRate: undefined,
           totalBorrowed,
+          liquidityTokenAmount,
+          liquidityTokenCode,
+          totalBorrowedTokenAmount,
+          borrowApy,
           contractId,
           isAggregated: true,
           orchestratorId: canInteract ? p.id : undefined,

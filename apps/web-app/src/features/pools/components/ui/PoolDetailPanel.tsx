@@ -35,6 +35,10 @@ export interface PoolDetailPanelPool {
   network: string;
   totalLiquidity: string;
   totalLiquidityRaw?: string;
+  /** Total borrowed (USD formatted) — shown for Blend pools */
+  totalBorrowed?: string;
+  /** Total borrowed in token units — shown below USD value */
+  totalBorrowedRaw?: string;
   /** Formatted total supply / LP yield (e.g. AMM APY) */
   supplyApy: string;
   /** Optional subline, e.g. base + rewards breakdown for Aqua */
@@ -270,20 +274,59 @@ function AmountInput({
   );
 }
 
+function TokenIcon({
+  symbol,
+  icon,
+  size = 14,
+}: {
+  symbol: string;
+  icon?: string | null;
+  size?: number;
+}) {
+  const resolvedIcon =
+    icon ?? getPoolTokenIcon({ type: "contract", code: symbol });
+  return (
+    <div
+      className="rounded-full bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden shrink-0"
+      style={{ width: size, height: size }}
+    >
+      {resolvedIcon ? (
+        <Image
+          src={resolvedIcon}
+          alt={symbol}
+          width={size}
+          height={size}
+          unoptimized
+          className={getTokenIconFitClass(symbol)}
+        />
+      ) : (
+        <span
+          style={{ fontSize: size * 0.5 }}
+          className="font-bold text-white leading-none"
+        >
+          {symbol[0]}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function InfoRow({
   label,
+  labelEl,
   value,
   valueEl,
   dimmed,
 }: {
-  label: string;
+  label?: string;
+  labelEl?: React.ReactNode;
   value?: string;
   valueEl?: React.ReactNode;
   dimmed?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
-      <span className="text-white/40 text-xs">{label}</span>
+      {labelEl ?? <span className="text-white/40 text-xs">{label}</span>}
       {valueEl ?? (
         <span
           className={`text-xs font-medium tabular-nums ${dimmed ? "text-white/40" : "text-white/80"}`}
@@ -678,59 +721,95 @@ export function PoolDetailPanel({
               </div>
             }
           />
-          <InfoRow
-            label={`Collateral (${pool.token1.symbol})`}
-            valueEl={
-              <div className="text-right">
-                <span className="text-xs font-medium tabular-nums text-white/80">
-                  {pool.collateralBalance ?? "0.00"}
-                </span>
-                <span className="block text-[10px] tabular-nums text-white/35">
-                  $
-                  {(
-                    parseFloat(pool.collateralBalance ?? "0") * token1Price
-                  ).toFixed(2)}
-                </span>
-              </div>
-            }
-          />
-          <InfoRow
-            label={`Loan (${pool.token2.symbol})`}
-            valueEl={
-              <div className="text-right">
-                <span className="text-xs font-medium tabular-nums text-white/80">
-                  {pool.loanBalance ?? "0.00"}
-                </span>
-                <span className="block text-[10px] tabular-nums text-white/35">
-                  $
-                  {(parseFloat(pool.loanBalance ?? "0") * token2Price).toFixed(
-                    2
-                  )}
-                </span>
-              </div>
-            }
-          />
-          <InfoRow
-            label="LTV"
-            value={`${pool.currentLtv ?? 0}%`}
-            dimmed={(pool.currentLtv ?? 0) === 0}
-          />
+          {mode === "lend" && (
+            <InfoRow
+              labelEl={
+                <div className="flex items-center gap-1.5">
+                  <TokenIcon
+                    symbol={pool.token1.symbol}
+                    icon={pool.token1.icon}
+                    size={14}
+                  />
+                  <span className="text-white/40 text-xs">{`Supplied (${pool.token1.symbol})`}</span>
+                </div>
+              }
+              valueEl={
+                <div className="text-right">
+                  <span className="text-xs font-medium tabular-nums text-white/80">
+                    {collateralAmount || "0.00"}
+                  </span>
+                  <span className="block text-[10px] tabular-nums text-white/35">
+                    ${collateralUsdValue ?? "0.00"}
+                  </span>
+                </div>
+              }
+            />
+          )}
+          {mode === "borrow" && selectedCollateral && (
+            <InfoRow
+              labelEl={
+                <div className="flex items-center gap-1.5">
+                  <TokenIcon symbol={selectedCollateral.symbol} size={14} />
+                  <span className="text-white/40 text-xs">{`Collateral (${selectedCollateral.symbol})`}</span>
+                </div>
+              }
+              valueEl={
+                <div className="text-right">
+                  <span className="text-xs font-medium tabular-nums text-white/80">
+                    {collateralInputAmount || "0.00"}
+                  </span>
+                  <span className="block text-[10px] tabular-nums text-white/35">
+                    $
+                    {collateralInputUsd > 0
+                      ? collateralInputUsd.toFixed(2)
+                      : "0.00"}
+                  </span>
+                </div>
+              }
+            />
+          )}
+          {mode === "borrow" && (
+            <InfoRow
+              labelEl={
+                <div className="flex items-center gap-1.5">
+                  <TokenIcon
+                    symbol={pool.token2.symbol}
+                    icon={pool.token2.icon}
+                    size={14}
+                  />
+                  <span className="text-white/40 text-xs">{`Loan (${pool.token2.symbol})`}</span>
+                </div>
+              }
+              valueEl={
+                <div className="text-right">
+                  <span className="text-xs font-medium tabular-nums text-white/80">
+                    {borrowAmount || "0.00"}
+                  </span>
+                  <span className="block text-[10px] tabular-nums text-white/35">
+                    ${borrowUsdValue ?? "0.00"}
+                  </span>
+                </div>
+              }
+            />
+          )}
           {pool.liquidationLtv > 0 && (
             <InfoRow
               label="Liquidation LTV"
               value={`${pool.liquidationLtv}%`}
             />
           )}
-          <InfoRow
-            label="Supply APY"
-            valueEl={
-              <span className="text-xs font-medium tabular-nums text-white/80 text-right max-w-[min(12rem,55vw)]">
-                {pool.supplyApy}
-              </span>
-            }
-          />
-          {pool.borrowApyLabel != null && (
-            <InfoRow label="Borrow" value={pool.borrowApyLabel} />
+          {mode !== "borrow" && (
+            <InfoRow
+              label="Supply APY"
+              valueEl={
+                <span className="text-xs font-medium tabular-nums text-white/80 text-right max-w-[min(12rem,55vw)]">
+                  {pool.supplyApy}
+                </span>
+              }
+            />
+          )}
+          {mode === "borrow" && pool.borrowApyLabel != null && (
+            <InfoRow label="Borrow APY" value={pool.borrowApyLabel} />
           )}
         </div>
 
@@ -924,7 +1003,7 @@ export function PoolDetailLayout({
                   width={12}
                   height={12}
                   unoptimized
-                  className="w-3 h-3 rounded-sm"
+                  className="w-3 h-3 rounded-sm invert"
                 />
                 <span className="text-white/50 text-sm">{pool.network}</span>
               </div>
@@ -936,7 +1015,7 @@ export function PoolDetailLayout({
         <div className="border-t border-white/5 mb-8" />
 
         {/* Metrics grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-7">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-8 gap-y-7">
           <div>
             <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
               Total Liquidity
@@ -951,6 +1030,22 @@ export function PoolDetailLayout({
             )}
           </div>
 
+          {pool.totalBorrowed && (
+            <div>
+              <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
+                Total Borrowed
+              </p>
+              <p className="text-white text-3xl font-bold tabular-nums leading-none">
+                {pool.totalBorrowed}
+              </p>
+              {pool.totalBorrowedRaw && (
+                <p className="text-white/30 text-xs mt-2 tabular-nums">
+                  {pool.totalBorrowedRaw}
+                </p>
+              )}
+            </div>
+          )}
+
           <div>
             <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
               Supply APY
@@ -964,6 +1059,17 @@ export function PoolDetailLayout({
               </p>
             )}
           </div>
+
+          {pool.borrowApyLabel != null && (
+            <div>
+              <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
+                Borrow APY
+              </p>
+              <p className="text-white text-3xl font-bold tabular-nums leading-none">
+                {pool.borrowApyLabel}
+              </p>
+            </div>
+          )}
 
           <div>
             <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">

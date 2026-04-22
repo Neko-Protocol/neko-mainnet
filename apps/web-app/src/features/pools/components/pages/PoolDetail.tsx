@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { use } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   orchestrator,
@@ -14,6 +15,7 @@ import { fromSmallestUnit, toSmallestUnit } from "@/lib/helpers/tokenUtils";
 import type { PoolAction, PoolInfo } from "@/lib/orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
+import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { usePoolDetail } from "@/features/pools/hooks/usePoolDetail";
 import {
   PoolDetailLayout,
@@ -64,10 +66,16 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     signTransaction,
   } = useWallet();
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams?.get("tab") === "borrow" ? "borrow" : "lend";
+
   const { data: pool, isLoading, error } = usePoolDetail(contractid);
   const { data: position } = useUserPosition(contractid, address);
   const { balance: token1Balance } = useTokenBalance(pool?.tokens[0]?.address);
   const { balance: token2Balance } = useTokenBalance(pool?.tokens[1]?.address);
+
+  const primaryTokenCode = pool?.tokens[0]?.code;
+  const { price: primaryTokenPrice } = useTokenPrice(primaryTokenCode);
 
   // Sibling reserves in the same Blend pool contract (used as collateral options)
   const { data: allPools = [] } = usePools();
@@ -497,6 +505,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
     let totalLiquidity: string;
     let totalLiquidityRaw: string | undefined;
+    let totalBorrowedStat: string | undefined;
+    let totalBorrowedStatRaw: string | undefined;
     let supplyApyDisplay: string;
     let supplyApySub: string | undefined;
     let borrowApyLabel: string | undefined;
@@ -525,10 +535,23 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         supplyApySub = `Base ${baseSup.toFixed(2)}% + ${rewards.toFixed(2)}% rewards`;
       }
     } else if (isLendingPool) {
-      totalLiquidity = formatLiquidity(availableLiquidityNum.toString());
+      const liqUsd =
+        primaryTokenPrice > 0
+          ? availableLiquidityNum * primaryTokenPrice
+          : availableLiquidityNum;
+      totalLiquidity = formatLiquidity(String(liqUsd));
       totalLiquidityRaw = `${availableLiquidityNum.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${t1?.code ?? ""}`;
       supplyApyDisplay = `${supplyApyFromMeta.toFixed(2)}%`;
       borrowApyLabel = `${borrowApy.toFixed(2)}%`;
+
+      if (totalLiabilities > 0) {
+        const borrowUsd =
+          primaryTokenPrice > 0
+            ? totalLiabilities * primaryTokenPrice
+            : totalLiabilities;
+        totalBorrowedStat = formatLiquidity(String(borrowUsd));
+        totalBorrowedStatRaw = `${totalLiabilities.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${t1?.code ?? ""}`;
+      }
     } else {
       totalLiquidity = formatLiquidity(availableLiquidityNum.toString());
       totalLiquidityRaw = `${availableLiquidityNum.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${t1?.code ?? ""}`;
@@ -553,6 +576,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       network: "Stellar",
       totalLiquidity,
       totalLiquidityRaw,
+      totalBorrowed: totalBorrowedStat,
+      totalBorrowedRaw: totalBorrowedStatRaw,
       supplyApy: supplyApyDisplay,
       supplyApySub,
       borrowApyLabel,
@@ -576,6 +601,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     token1Balance,
     isLendingPool,
     collateralOptionsWithBalances,
+    primaryTokenPrice,
   ]);
 
   if (isLoading) {
@@ -626,7 +652,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       <div className="pb-4">
         <PoolDetailLayout
           pool={panelPool}
-          type="lend"
+          type={initialTab}
           isWalletConnected={!!address}
           supportsBorrow={isLendingPool && supportedActions.includes("borrow")}
           depositWithdrawMode={depositWithdrawMode}
