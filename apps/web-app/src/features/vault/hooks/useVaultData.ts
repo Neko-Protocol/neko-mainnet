@@ -7,15 +7,14 @@ import {
   allowHttpForSoroban,
 } from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { VaultLiveStats } from "../types/vault";
 
 const ONE_SHARE = 1_000_000_000_000n;
 
 function formatTvl(stroops: bigint): string {
   const value = Number(fromSmallestUnit(stroops.toString(), 7));
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
-  if (value >= 1_000) return `$${(value / 1_000).toFixed(2)}k`;
-  return `$${value.toFixed(2)}`;
+  return formatLiquidity(value);
 }
 
 /** Safely extracts the value from a stellar SDK Result<T> or a raw value. */
@@ -86,7 +85,6 @@ export function useVaultData(contractId: string | null | undefined) {
     gcTime: 10 * 60_000,
     refetchInterval: 2 * 60_000,
     refetchOnWindowFocus: false,
-    placeholderData: (prev) => prev,
     retry: false,
     throwOnError: false,
     enabled: !!contractId && !!client,
