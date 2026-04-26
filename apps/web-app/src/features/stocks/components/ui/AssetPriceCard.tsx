@@ -4,8 +4,10 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { useFxRate } from "@/hooks/useFxRate";
+import { useCurrencyStore } from "@/stores/currency.store";
+import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { formatUsdPrice } from "../../utils/assetPriceUtils";
 import { ROUTES } from "../../constants/discover";
 import { STOCK_INFO } from "../../utils/stockInfo";
 import type { StockInfo } from "../../types/stocks";
@@ -23,6 +25,8 @@ export function AssetPriceCard({
 }: AssetPriceCardProps) {
   const codeUpper = tokenCode.toUpperCase();
   const { price, isLoading } = useTokenPrice(tokenCode);
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const { rate: fxRate } = useFxRate();
   const fromStatic = useStockInfo(codeUpper);
   const stockInfo = stockInfoProp ?? fromStatic ?? STOCK_INFO[codeUpper];
 
@@ -33,6 +37,11 @@ export function AssetPriceCard({
 
   const displayName = stockInfo?.name ?? assetConfig?.name ?? codeUpper;
   const logoSrc = stockInfo?.logo ?? assetConfig?.icon;
+  const convertedPrice = convertUsdToSelected(price, fxRate);
+  const formattedPrice =
+    Number.isFinite(price) && price > 0
+      ? formatCurrency(convertedPrice, selectedCurrency)
+      : "No data";
 
   return (
     <Link href={ROUTES.stockDetail(codeUpper)} className="block h-full group">
@@ -76,11 +85,9 @@ export function AssetPriceCard({
           ) : (
             <div>
               <p className="text-white/40 text-[10px] font-semibold uppercase tracking-widest mb-1">
-                Spot (USD)
+                Spot ({selectedCurrency})
               </p>
-              <p className="text-white text-3xl font-bold">
-                {formatUsdPrice(price)}
-              </p>
+              <p className="text-white text-3xl font-bold">{formattedPrice}</p>
             </div>
           )}
         </div>

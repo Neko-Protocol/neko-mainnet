@@ -35,6 +35,9 @@ import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
 import { rpcUrl } from "@/lib/constants/network";
 import { useToast } from "@/hooks/useToast";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
+import { useFxRate } from "@/hooks/useFxRate";
+import { useCurrencyStore } from "@/stores/currency.store";
+import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 
 interface PoolDetailProps {
   params: Promise<{ contractid: string }>;
@@ -76,6 +79,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
   const primaryTokenCode = pool?.tokens[0]?.code;
   const { price: primaryTokenPrice } = useTokenPrice(primaryTokenCode);
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
 
   // Sibling reserves in the same Blend pool contract (used as collateral options)
   const { data: allPools = [] } = usePools();
@@ -550,7 +555,10 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         poolTypeLabel = "Constant Product";
       }
       if (primaryTokenPrice > 0 && t1?.code) {
-        oraclePrice = `${t1.code} = $${primaryTokenPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
+        oraclePrice = `${t1.code} = ${formatCurrency(
+          convertUsdToSelected(primaryTokenPrice, fxRate),
+          selectedCurrency
+        )}`;
       }
     } else if (isLendingPool) {
       const liqUsd =
@@ -574,7 +582,10 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         }
       }
       if (primaryTokenPrice > 0 && t1?.code) {
-        oraclePrice = `${t1.code} = $${primaryTokenPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 6 })}`;
+        oraclePrice = `${t1.code} = ${formatCurrency(
+          convertUsdToSelected(primaryTokenPrice, fxRate),
+          selectedCurrency
+        )}`;
       }
     } else {
       totalLiquidity = formatLiquidity(availableLiquidityNum.toString());
@@ -630,6 +641,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     isLendingPool,
     collateralOptionsWithBalances,
     primaryTokenPrice,
+    fxRate,
+    selectedCurrency,
   ]);
 
   if (isLoading) {

@@ -109,7 +109,7 @@ export function SettingsWalletSection({
   };
 
   return (
-    <SectionCard title="Wallet">
+    <SectionCard title="Wallet" className="h-full">
       {isConnected && address ? (
         <>
           {walletName != null && walletName !== "" && (
@@ -176,7 +176,7 @@ export function SettingsWalletSection({
               type="button"
               onClick={handleMintTestTokens}
               disabled={isMinting}
-              className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-400 transition-colors duration-150 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-400 transition-colors duration-150 hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Coins className="h-4 w-4" />
               {isMinting
@@ -189,7 +189,7 @@ export function SettingsWalletSection({
             type="button"
             onClick={() => void handleDisconnect()}
             disabled={isDisconnecting}
-            className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-400 transition-colors duration-150 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 transition-colors duration-150 hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Unplug className="h-4 w-4" />
             {isDisconnecting ? "Disconnecting…" : "Disconnect Wallet"}

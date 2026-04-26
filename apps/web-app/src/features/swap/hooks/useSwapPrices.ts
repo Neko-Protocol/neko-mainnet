@@ -1,15 +1,19 @@
 import { useMemo } from "react";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { useFxRate } from "@/hooks/useFxRate";
+import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { SUSPICIOUS_VALUE_THRESHOLD_PCT } from "@/features/swap/constants/swapConfig";
+import type { SupportedCurrency } from "@/stores/currency.store";
 
 export interface SwapPrices {
   tokenInPrice: number;
   tokenOutPrice: number;
   isLoadingPrice: boolean;
   isLoadingOutPrice: boolean;
-  usdValue: string;
-  usdValueOut: string;
+  fiatValue: string;
+  fiatValueOut: string;
+  selectedCurrency: SupportedCurrency;
   swapValueAnalysis: {
     expectedOutput: number;
     actualOutput: number;
@@ -24,6 +28,7 @@ export function useSwapPrices(
   tokenIn: Token | string,
   tokenOut: Token | string
 ): SwapPrices {
+  const { rate: fxRate, currency: selectedCurrency } = useFxRate();
   const { price: tokenInPrice, isLoading: isLoadingPrice } = useTokenPrice(
     tokenIn as Token | string | undefined
   );
@@ -31,19 +36,27 @@ export function useSwapPrices(
     tokenOut as Token | string | undefined
   );
 
-  const usdValue = useMemo(() => {
+  const fiatValue = useMemo(() => {
     if (amountIn && parseFloat(amountIn) > 0 && tokenInPrice > 0) {
-      return (parseFloat(amountIn) * tokenInPrice).toFixed(2);
+      const amountUsd = parseFloat(amountIn) * tokenInPrice;
+      return formatCurrency(
+        convertUsdToSelected(amountUsd, fxRate),
+        selectedCurrency
+      );
     }
-    return "0.00";
-  }, [amountIn, tokenInPrice]);
+    return formatCurrency(0, selectedCurrency);
+  }, [amountIn, tokenInPrice, fxRate, selectedCurrency]);
 
-  const usdValueOut = useMemo(() => {
+  const fiatValueOut = useMemo(() => {
     if (amountOut && parseFloat(amountOut) > 0 && tokenOutPrice > 0) {
-      return (parseFloat(amountOut) * tokenOutPrice).toFixed(2);
+      const amountUsd = parseFloat(amountOut) * tokenOutPrice;
+      return formatCurrency(
+        convertUsdToSelected(amountUsd, fxRate),
+        selectedCurrency
+      );
     }
-    return "0.00";
-  }, [amountOut, tokenOutPrice]);
+    return formatCurrency(0, selectedCurrency);
+  }, [amountOut, tokenOutPrice, fxRate, selectedCurrency]);
 
   const swapValueAnalysis = useMemo(() => {
     if (
@@ -86,8 +99,9 @@ export function useSwapPrices(
     tokenOutPrice,
     isLoadingPrice,
     isLoadingOutPrice,
-    usdValue,
-    usdValueOut,
+    fiatValue,
+    fiatValueOut,
+    selectedCurrency,
     swapValueAnalysis,
   };
 }

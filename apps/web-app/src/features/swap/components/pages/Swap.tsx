@@ -87,7 +87,7 @@ interface BalanceCardProps {
   balance?: string;
   /** For XLM: amount after reserve; Max fills this. Defaults to balance. */
   maxSpendable?: string;
-  usdValue?: string;
+  fiatValue?: string;
   isLoadingBalance?: boolean;
   isLoadingPrice?: boolean;
   onMaxClick?: () => void;
@@ -97,7 +97,7 @@ interface BalanceCardProps {
 const BalanceCard: React.FC<BalanceCardProps> = ({
   balance,
   maxSpendable,
-  usdValue,
+  fiatValue,
   isLoadingBalance,
   isLoadingPrice,
   onMaxClick,
@@ -111,10 +111,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
         {isLoadingPrice ? (
           <span className="text-white/40 text-sm animate-pulse">Loading…</span>
         ) : (
-          <>
-            {usdValue || "0.00"}{" "}
-            <span className="text-white/40 text-xs font-normal">USD</span>
-          </>
+          <>{fiatValue || "0.00"}</>
         )}
       </div>
       <div className="flex items-center justify-between mt-1 gap-2">
@@ -207,8 +204,8 @@ const Swap: React.FC = () => {
   }, [quoteAmountOut, swapState]);
 
   const {
-    usdValue,
-    usdValueOut,
+    fiatValue,
+    fiatValueOut,
     isLoadingPrice,
     isLoadingOutPrice,
     swapValueAnalysis,
@@ -371,7 +368,7 @@ const Swap: React.FC = () => {
             <BalanceCard
               balance={tokenInTotal ?? tokenInSpendable}
               maxSpendable={tokenInSpendable}
-              usdValue={usdValue}
+              fiatValue={fiatValue}
               isLoadingBalance={isLoadingBalance}
               isLoadingPrice={isLoadingPrice}
               onMaxClick={handleMaxClick}
@@ -419,7 +416,7 @@ const Swap: React.FC = () => {
             </div>
 
             <BalanceCard
-              usdValue={usdValueOut}
+              fiatValue={fiatValueOut}
               isLoadingPrice={isLoadingOutPrice}
               isReadOnly
             />

@@ -1,3 +1,10 @@
+import {
+  convertUsdToSelected,
+  formatCompactCurrency,
+} from "@/lib/helpers/currency";
+import { useCurrencyStore } from "@/stores/currency.store";
+import { useFxRateStore } from "@/stores/fx-rate.store";
+
 export function safeParseFloat(
   value: string | number | null | undefined
 ): number {
@@ -14,9 +21,18 @@ export function parseBalance(balance: string | null | undefined): number {
 
 export function formatLiquidity(value: number | string): string {
   const num = safeParseFloat(value);
-  if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(2)}M`;
-  if (num >= 1_000) return `$${(num / 1_000).toFixed(2)}k`;
-  return `$${num.toFixed(2)}`;
+  const selectedCurrency = useCurrencyStore.getState().selectedCurrency;
+
+  if (selectedCurrency === "USD") {
+    return formatCompactCurrency(num, "USD");
+  }
+
+  const { currency, rate } = useFxRateStore.getState();
+  const effectiveRate = currency === selectedCurrency ? rate : 1;
+  return formatCompactCurrency(
+    convertUsdToSelected(num, effectiveRate),
+    selectedCurrency
+  );
 }
 
 /**
