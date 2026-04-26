@@ -15,7 +15,13 @@ import type { PoolCardData } from "@/features/pools/types/pools";
 import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
-import { formatLiquidity } from "../../utils/poolUtils";
+import { useFxRate } from "@/hooks/useFxRate";
+import {
+  convertUsdDisplayToSelectedCurrency,
+  convertUsdToSelected,
+  formatCompactCurrency,
+} from "@/lib/helpers/currency";
+import { useCurrencyStore } from "@/stores/currency.store";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -228,23 +234,35 @@ function LiquidityCell({
   tokenCode?: string;
   fallback: string;
 }) {
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
   const { price, isLoading } = useTokenPrice(tokenCode);
 
   if (!tokenCode || !tokenAmount) {
-    // Already USD (Aqua) — render as-is
-    return <span className="text-white text-sm">{fallback}</span>;
+    return (
+      <span className="text-white text-sm">
+        {convertUsdDisplayToSelectedCurrency(
+          fallback,
+          fxRate,
+          selectedCurrency
+        )}
+      </span>
+    );
   }
 
   if (isLoading) {
     return <span className="text-white/40 text-sm">…</span>;
   }
 
-  const usd =
+  const fiatValue =
     price > 0
-      ? formatLiquidity((parseFloat(tokenAmount) * price).toString())
-      : fallback;
+      ? formatCompactCurrency(
+          convertUsdToSelected(parseFloat(tokenAmount) * price, fxRate),
+          selectedCurrency
+        )
+      : convertUsdDisplayToSelectedCurrency(fallback, fxRate, selectedCurrency);
 
-  return <span className="text-white text-sm">{usd}</span>;
+  return <span className="text-white text-sm">{fiatValue}</span>;
 }
 
 // ── PoolsTable ─────────────────────────────────────────────────────────────────

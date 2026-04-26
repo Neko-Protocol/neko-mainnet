@@ -28,6 +28,9 @@ import {
 } from "@/lib/constants/network";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 import type { VaultView } from "../../types/vault";
+import { useFxRate } from "@/hooks/useFxRate";
+import { useCurrencyStore } from "@/stores/currency.store";
+import { convertUsdDisplayToSelectedCurrency } from "@/lib/helpers/currency";
 
 function vaultAssetFilterIconSrc(v: VaultView): string {
   const addr = v.supplyAsset.contractAddress?.trim();
@@ -108,6 +111,8 @@ const Vault: React.FC = () => {
 
   const { data: liveVaultData, isLoading: isLoadingLive } =
     useVaultData(activeContractId);
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
 
   const { address } = useWallet();
 
@@ -144,20 +149,37 @@ const Vault: React.FC = () => {
 
   const vaults = useMemo<VaultView[]>(() => {
     if (vaultsFromApi.length === 0) return [];
-    if (!liveVaultData || !activeContractId) return vaultsFromApi;
-
     return vaultsFromApi.map((v) => {
-      if (v.detail?.contracts?.vault !== activeContractId) return v;
+      const baseTvl = convertUsdDisplayToSelectedCurrency(
+        v.tvl,
+        fxRate,
+        selectedCurrency
+      );
+
+      if (!liveVaultData || !activeContractId) {
+        return { ...v, tvl: baseTvl };
+      }
+
+      if (v.detail?.contracts?.vault !== activeContractId) {
+        return { ...v, tvl: baseTvl };
+      }
+
       return {
         ...v,
-        tvl: liveVaultData.tvl > 0n ? liveVaultData.tvlFormatted : v.tvl,
+        tvl: liveVaultData.tvl > 0n ? liveVaultData.tvlFormatted : baseTvl,
         totalSupply:
           liveVaultData.totalShares > 0n
             ? `${(Number(liveVaultData.totalShares) / 1e7).toLocaleString()} shares`
             : v.totalSupply,
       };
     });
-  }, [vaultsFromApi, liveVaultData, activeContractId]);
+  }, [
+    vaultsFromApi,
+    liveVaultData,
+    activeContractId,
+    fxRate,
+    selectedCurrency,
+  ]);
 
   const assetOptions = useMemo(() => {
     const map = new Map<string, string>();

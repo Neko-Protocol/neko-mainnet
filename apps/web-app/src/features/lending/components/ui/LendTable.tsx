@@ -9,7 +9,13 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
-import { formatLiquidity } from "@/lib/helpers/formatUtils";
+import { useFxRate } from "@/hooks/useFxRate";
+import {
+  convertUsdDisplayToSelectedCurrency,
+  convertUsdToSelected,
+  formatCompactCurrency,
+} from "@/lib/helpers/currency";
+import { useCurrencyStore } from "@/stores/currency.store";
 import {
   ArrowLeftRight,
   TrendingUp,
@@ -231,6 +237,7 @@ function FilterDropdown({
   onChange: (f: FilterState) => void;
   pools: PoolData[];
 }) {
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const [open, setOpen] = useState(false);
   const [poolPanelOpen, setPoolPanelOpen] = useState(false);
   const [poolSearch, setPoolSearch] = useState("");
@@ -314,7 +321,7 @@ function FilterDropdown({
               label="Total Liquidity"
               minVal={filters.liquidityMin}
               maxVal={filters.liquidityMax}
-              unit="$"
+              unit={selectedCurrency}
               onMinChange={(v) => onChange({ ...filters, liquidityMin: v })}
               onMaxChange={(v) => onChange({ ...filters, liquidityMax: v })}
             />
@@ -691,12 +698,25 @@ function PricedCell({
   tokenCode?: string;
   fallback: string;
 }) {
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
   const { price } = useTokenPrice(tokenCode);
   if (tokenAmount && tokenCode && price > 0) {
     const usd = parseFloat(tokenAmount) * price;
-    return <span className="text-white">{formatLiquidity(String(usd))}</span>;
+    return (
+      <span className="text-white">
+        {formatCompactCurrency(
+          convertUsdToSelected(usd, fxRate),
+          selectedCurrency
+        )}
+      </span>
+    );
   }
-  return <span className="text-white">{fallback}</span>;
+  return (
+    <span className="text-white">
+      {convertUsdDisplayToSelectedCurrency(fallback, fxRate, selectedCurrency)}
+    </span>
+  );
 }
 
 // ── ProtocolNameCell ──────────────────────────────────────────────────────────

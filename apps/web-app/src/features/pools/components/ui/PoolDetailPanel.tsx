@@ -15,6 +15,9 @@ import {
 import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { useFxRate } from "@/hooks/useFxRate";
+import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
+import { useCurrencyStore } from "@/stores/currency.store";
 import { usePoolRateHistory } from "../../hooks/usePoolRateHistory";
 import { usePoolActivity } from "../../hooks/usePoolActivity";
 
@@ -272,7 +275,7 @@ function AmountInput({
       />
 
       <div className="flex items-center justify-between mt-2">
-        <span className="text-white/30 text-xs">${usdValue ?? "0"}</span>
+        <span className="text-white/30 text-xs">{usdValue ?? "0"}</span>
         <div className="flex items-center gap-2">
           <span className="text-white/30 text-xs tabular-nums">
             {balanceValue} {token.symbol}
@@ -403,6 +406,10 @@ export function PoolDetailPanel({
   const { price: selectedCollateralPrice } = useTokenPrice(
     selectedCollateral?.symbol
   );
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
+  const formatUsdValue = (amountUsd: number) =>
+    formatCurrency(convertUsdToSelected(amountUsd, fxRate), selectedCurrency);
 
   const ammUsdValue = useMemo(() => {
     const parsed = parseFloat(ammAmount);
@@ -548,7 +555,7 @@ export function PoolDetailPanel({
             balanceValue={balanceForAmm}
             onMax={maxAmm}
             disabled={!isWalletConnected}
-            usdValue={ammUsdValue}
+            usdValue={formatUsdValue(Number.parseFloat(ammUsdValue) || 0)}
           />
         ) : (
           <>
@@ -562,7 +569,9 @@ export function PoolDetailPanel({
                 balanceValue={pool.token1Balance ?? "0.00"}
                 onMax={() => setCollateralAmount(pool.token1Balance ?? "0")}
                 disabled={!isWalletConnected}
-                usdValue={collateralUsdValue}
+                usdValue={formatUsdValue(
+                  Number.parseFloat(collateralUsdValue) || 0
+                )}
               />
             )}
             {mode === "borrow" && (
@@ -586,7 +595,9 @@ export function PoolDetailPanel({
                     )
                   }
                   disabled={!isWalletConnected}
-                  usdValue={borrowUsdValue}
+                  usdValue={formatUsdValue(
+                    Number.parseFloat(borrowUsdValue) || 0
+                  )}
                 />
                 {borrowExceedsHf && (
                   <p className="text-xs text-red-400/90 px-0.5">
@@ -694,9 +705,7 @@ export function PoolDetailPanel({
 
                           <div className="flex items-center justify-between text-xs">
                             <span className="text-white/30">
-                              {collateralInputUsd > 0
-                                ? `$${collateralInputUsd.toFixed(2)}`
-                                : "$0.00"}
+                              {formatUsdValue(collateralInputUsd)}
                             </span>
                             <span className="text-white/30 tabular-nums">
                               {selectedCollateral.walletBalance ??
@@ -707,8 +716,8 @@ export function PoolDetailPanel({
 
                           {collateralBelowMinimum && (
                             <p className="text-xs text-amber-400/80">
-                              Minimum collateral value: $
-                              {BLEND_MIN_COLLATERAL_USD.toFixed(2)}
+                              Minimum collateral value:{" "}
+                              {formatUsdValue(BLEND_MIN_COLLATERAL_USD)}
                             </p>
                           )}
                           {selectedCollateral.walletBalance !== undefined &&
@@ -758,7 +767,7 @@ export function PoolDetailPanel({
                     {collateralAmount || "0.00"}
                   </span>
                   <span className="block text-[10px] tabular-nums text-white/35">
-                    ${collateralUsdValue ?? "0.00"}
+                    {formatUsdValue(Number.parseFloat(collateralUsdValue) || 0)}
                   </span>
                 </div>
               }
@@ -778,10 +787,7 @@ export function PoolDetailPanel({
                     {collateralInputAmount || "0.00"}
                   </span>
                   <span className="block text-[10px] tabular-nums text-white/35">
-                    $
-                    {collateralInputUsd > 0
-                      ? collateralInputUsd.toFixed(2)
-                      : "0.00"}
+                    {formatUsdValue(collateralInputUsd)}
                   </span>
                 </div>
               }
@@ -805,7 +811,7 @@ export function PoolDetailPanel({
                     {borrowAmount || "0.00"}
                   </span>
                   <span className="block text-[10px] tabular-nums text-white/35">
-                    ${borrowUsdValue ?? "0.00"}
+                    {formatUsdValue(Number.parseFloat(borrowUsdValue) || 0)}
                   </span>
                 </div>
               }
