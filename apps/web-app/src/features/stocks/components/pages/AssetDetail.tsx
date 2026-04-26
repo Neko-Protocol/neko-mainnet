@@ -11,7 +11,9 @@ import { PageContainer } from "@/components/ui/PageContainer";
 import { ROUTES } from "../../constants/discover";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
-import { formatUsdPrice } from "../../utils/assetPriceUtils";
+import { useFxRate } from "@/hooks/useFxRate";
+import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
+import { useCurrencyStore } from "@/stores/currency.store";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 const AssetDetail: React.FC = () => {
@@ -27,6 +29,8 @@ const AssetDetail: React.FC = () => {
   const { price, isLoading: isLoadingPrice } = useTokenPrice(
     symbolUpper || undefined
   );
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
 
   const stockInfo = React.useMemo((): StockInfo | undefined => {
     const fromStatic = STOCK_INFO[symbolUpper];
@@ -117,7 +121,10 @@ const AssetDetail: React.FC = () => {
               <LoadingSpinner variant="spinner" size="md" />
             ) : (
               <span className="text-2xl sm:text-3xl font-bold text-white">
-                {formatUsdPrice(price)}
+                {formatCurrency(
+                  convertUsdToSelected(price, fxRate),
+                  selectedCurrency
+                )}
               </span>
             )}
           </div>

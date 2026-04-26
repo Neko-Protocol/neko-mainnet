@@ -3,18 +3,12 @@
 import React from "react";
 import { DollarSign, Coins, TrendingUp } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
+import { useFxRate } from "@/hooks/useFxRate";
+import { useCurrencyStore } from "@/stores/currency.store";
+import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { usePortfolioValue } from "@/features/dashboard/hooks/usePortfolioValue";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
 import { StatCard } from "@/features/stocks/components/ui/StatCard";
-
-function formatUsd(value: number): string {
-  return value.toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
 
 const MainStats: React.FC = () => {
   const { address, isFetchingBalances } = useWallet();
@@ -23,6 +17,8 @@ const MainStats: React.FC = () => {
     holdings,
     isLoading: isLoadingPortfolio,
   } = usePortfolioValue();
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const { rate: fxRate } = useFxRate();
   const { assets } = useDashboardPools();
 
   const avgPoolApy = React.useMemo(() => {
@@ -35,6 +31,9 @@ const MainStats: React.FC = () => {
   }, [assets]);
 
   const isLoading = isFetchingBalances || isLoadingPortfolio;
+  const totalInSelected = convertUsdToSelected(totalUsd, fxRate);
+  const formattedTotal = formatCurrency(totalInSelected, selectedCurrency);
+  const formattedZero = formatCurrency(0, selectedCurrency);
 
   return (
     <div className="space-y-4 sm:space-y-5">
@@ -42,7 +41,7 @@ const MainStats: React.FC = () => {
         <StatCard
           icon={<DollarSign className="h-5 w-5" />}
           label="Total Portfolio Value"
-          value={address ? formatUsd(totalUsd) : "$0.00"}
+          value={address ? formattedTotal : formattedZero}
           isLoading={isLoading && !!address}
         />
         <StatCard

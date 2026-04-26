@@ -5,10 +5,13 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { useFxRate } from "@/hooks/useFxRate";
 import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
+import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import type { MappedBalances } from "@/lib/helpers/stellar/wallet";
+import { useCurrencyStore } from "@/stores/currency.store";
 
 function parseBalanceString(raw: string | undefined): number {
   if (!raw) return 0;
@@ -39,7 +42,7 @@ interface TokenItemProps {
   name: string;
   icon: string | null;
   balance: string;
-  usdValue: string;
+  fiatValue: string;
   isSelected: boolean;
   onClick: () => void;
   showBalance?: boolean;
@@ -52,7 +55,7 @@ const TokenItem: React.FC<TokenItemProps> = ({
   name,
   icon,
   balance,
-  usdValue,
+  fiatValue,
   isSelected,
   onClick,
   showBalance = true,
@@ -111,7 +114,7 @@ const TokenItem: React.FC<TokenItemProps> = ({
             {approximate && (
               <span className="text-white/45 font-normal text-xs">≈&nbsp;</span>
             )}
-            <span>${usdValue}</span>
+            <span>{fiatValue}</span>
           </div>
           <div className="text-xs text-white/50 mt-0.5">
             {bottomLabel ?? formatBalance(balance)}
@@ -136,10 +139,17 @@ function UserTokenRow({
   onClick: () => void;
 }) {
   const { balances } = useWallet();
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
   const { price, isLoading } = useTokenPrice(code);
   const balanceNum = getHoldingsAmount(balances, code);
-  const usdValue =
-    isLoading || price <= 0 ? "—" : (balanceNum * price).toFixed(2);
+  const fiatValue =
+    isLoading || price <= 0
+      ? "—"
+      : formatCurrency(
+          convertUsdToSelected(balanceNum * price, fxRate),
+          selectedCurrency
+        );
 
   return (
     <TokenItem
@@ -147,7 +157,7 @@ function UserTokenRow({
       name={name}
       icon={icon}
       balance={balanceNum.toString()}
-      usdValue={usdValue}
+      fiatValue={fiatValue}
       isSelected={isSelected}
       onClick={onClick}
     />
@@ -167,8 +177,13 @@ function PopularTokenRow({
   isSelected: boolean;
   onClick: () => void;
 }) {
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
   const { price, isLoading } = useTokenPrice(code);
-  const usdValue = isLoading ? "—" : price > 0 ? price.toFixed(2) : "—";
+  const fiatValue =
+    isLoading || price <= 0
+      ? "—"
+      : formatCurrency(convertUsdToSelected(price, fxRate), selectedCurrency);
 
   return (
     <TokenItem
@@ -176,7 +191,7 @@ function PopularTokenRow({
       name={name}
       icon={icon}
       balance="0"
-      usdValue={usdValue}
+      fiatValue={fiatValue}
       isSelected={isSelected}
       onClick={onClick}
       showBalance

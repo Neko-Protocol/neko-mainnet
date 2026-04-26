@@ -5,14 +5,13 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { AssetPriceCard } from "@/features/stocks/components/ui/AssetPriceCard";
+import { useCurrencyStore } from "@/stores/currency.store";
 
 const DASHBOARD_ASSET_LIMIT = 3;
 
 const DiscoverAssets: React.FC = () => {
-  const tokenCodes = React.useMemo(
-    () => Object.keys(getAvailableTokens()),
-    []
-  );
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const tokenCodes = React.useMemo(() => Object.keys(getAvailableTokens()), []);
 
   return (
     <div className="w-full">
@@ -22,7 +21,7 @@ const DiscoverAssets: React.FC = () => {
             Discover Assets
           </h2>
           <p className="text-white/40 text-sm">
-            Spot USD via Soroswap (mainnet)
+            Spot {selectedCurrency} via Reflector
           </p>
         </div>
         <Link
