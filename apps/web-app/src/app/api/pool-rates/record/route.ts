@@ -9,9 +9,9 @@ function getSupabase() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-export async function POST(req: NextRequest) {
-  // Protect with a shared secret so only the cron can call this
-  const secret = req.headers.get("x-cron-secret");
+export async function GET(req: NextRequest) {
+  const authHeader = req.headers.get("authorization");
+  const secret = authHeader?.replace("Bearer ", "");
   if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
