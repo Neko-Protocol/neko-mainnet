@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { STOCK_INFO } from "../../utils/stockInfo";
 import Image from "next/image";
-import type { StockInfo } from "../../types/stocks";
+import type { StockInfo } from "../../types/discover";
 import { useParams, useRouter } from "next/navigation";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { ROUTES } from "../../constants/discover";
@@ -48,7 +48,7 @@ const AssetDetail: React.FC = () => {
 
   React.useEffect(() => {
     if (!symbol) {
-      void router.push(ROUTES.STOCKS_BASE);
+      void router.push(ROUTES.DISCOVER_BASE);
     }
   }, [symbol, router]);
 
@@ -60,7 +60,7 @@ const AssetDetail: React.FC = () => {
     return (
       <PageContainer maxWidth="5xl">
         <Link
-          href={ROUTES.STOCKS_BASE}
+          href={ROUTES.DISCOVER_BASE}
           className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -76,7 +76,7 @@ const AssetDetail: React.FC = () => {
   return (
     <PageContainer maxWidth="5xl">
       <Link
-        href={ROUTES.STOCKS_BASE}
+        href={ROUTES.DISCOVER_BASE}
         className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors mb-8"
       >
         <ArrowLeft className="h-4 w-4" />

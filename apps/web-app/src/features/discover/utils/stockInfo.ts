@@ -1,4 +1,4 @@
-import type { StockInfo } from "../types/stocks";
+import type { StockInfo } from "../types/discover";
 
 export const STOCK_INFO: Record<string, StockInfo> = {
   XLM: {

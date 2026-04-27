@@ -156,12 +156,12 @@ neko-dapp/
 │   │   │   │       ├── borrowing/
 │   │   │   │       ├── lending/
 │   │   │   │       ├── pools/
-│   │   │   │       ├── stocks/
+│   │   │   │       ├── discover/
 │   │   │   │       └── swap/
 │   │   │   ├── features/           # Feature-based modules
 │   │   │   │   ├── borrowing/      # Borrow feature
 │   │   │   │   ├── lending/        # Lend feature
-│   │   │   │   ├── stocks/         # RWA Stocks/Oracle feature
+│   │   │   │   ├── discover/       # Asset discovery & oracle
 │   │   │   │   ├── swap/           # Token swap feature
 │   │   │   │   ├── pools/          # Liquidity pool management
 │   │   │   │   ├── wallet/         # Wallet integration

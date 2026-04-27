@@ -10,7 +10,7 @@ import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { ROUTES } from "../../constants/discover";
 import { STOCK_INFO } from "../../utils/stockInfo";
-import type { StockInfo } from "../../types/stocks";
+import type { StockInfo } from "../../types/discover";
 import { useStockInfo } from "../../hooks/useStockInfo";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
@@ -44,7 +44,7 @@ export function AssetPriceCard({
       : "No data";
 
   return (
-    <Link href={ROUTES.stockDetail(codeUpper)} className="block h-full group">
+    <Link href={ROUTES.assetDetail(codeUpper)} className="block h-full group">
       <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 h-full flex flex-col transition-all duration-200 hover:border-white/10 hover:bg-[#222222] cursor-pointer">
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3">

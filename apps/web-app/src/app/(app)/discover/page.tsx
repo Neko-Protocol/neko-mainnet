@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Oracle from "@/features/stocks/components/pages/Oracle";
+import Oracle from "@/features/discover/components/pages/Oracle";
 
 export const metadata: Metadata = {
   title: "Stocks | Neko Protocol",

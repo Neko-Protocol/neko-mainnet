@@ -51,7 +51,7 @@ forge fmt                # Format Solidity code
 
 Uses a **feature-based architecture**:
 
-- **features/**: Self-contained modules (borrowing, lending, stocks, swap, pools, wallet, dashboard) each with components/, hooks/, utils/
+- **features/**: Self-contained modules (borrowing, lending, discover, swap, pools, wallet, dashboard) each with components/, hooks/, utils/
 - **components/**: Shared UI components
 - **lib/**: Shared utilities, constants, helpers, services
 - **stores/**: Zustand stores (user.store.ts, wallet.store.ts, session.store.ts)
