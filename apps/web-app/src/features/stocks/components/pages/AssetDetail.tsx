@@ -58,10 +58,7 @@ const AssetDetail: React.FC = () => {
 
   if (!hasAsset || !stockInfo) {
     return (
-      <PageContainer
-        maxWidth="5xl"
-        className="animate__animated animate__fadeInRight"
-      >
+      <PageContainer maxWidth="5xl">
         <Link
           href={ROUTES.STOCKS_BASE}
           className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors mb-8"
@@ -77,10 +74,7 @@ const AssetDetail: React.FC = () => {
   }
 
   return (
-    <PageContainer
-      maxWidth="5xl"
-      className="animate__animated animate__fadeInRight"
-    >
+    <PageContainer maxWidth="5xl">
       <Link
         href={ROUTES.STOCKS_BASE}
         className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors mb-8"
