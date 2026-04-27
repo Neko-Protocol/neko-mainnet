@@ -231,6 +231,36 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     return fromSmallestUnit(amtB.toString(), d2);
   }, [pool, ammTab, ammAmount, decimals]);
 
+  const maxAmmDepositAmount = useMemo(() => {
+    if (!pool || pool.type !== "aqua") return token1Balance ?? "0";
+    const reserves = pool.metadata.reserves as string[] | undefined;
+    if (!reserves?.length || pool.tokens.length < 2)
+      return token1Balance ?? "0";
+
+    const d1 = pool.tokens[0]?.decimals ?? 7;
+    const d2 = pool.tokens[1]?.decimals ?? 7;
+
+    const t1MaxStroops =
+      pool.tokens[0]?.code === "XLM"
+        ? spendableXlmStroops
+        : BigInt(toSmallestUnit(token1Balance ?? "0", d1));
+
+    const t2BalStroops = BigInt(toSmallestUnit(token2Balance ?? "0", d2));
+    const reserveA = reserveStroopsFromApiString(reserves[0]);
+    const reserveB = reserveStroopsFromApiString(reserves[1]);
+
+    if (reserveA <= 0n || reserveB <= 0n) {
+      return fromSmallestUnit(t1MaxStroops.toString(), d1);
+    }
+
+    const maxT1FromT2Stroops =
+      (t2BalStroops * reserveA * 100n) / (reserveB * 101n);
+    const limitingStroops =
+      t1MaxStroops < maxT1FromT2Stroops ? t1MaxStroops : maxT1FromT2Stroops;
+
+    return fromSmallestUnit(limitingStroops.toString(), d1);
+  }, [pool, token1Balance, token2Balance, spendableXlmStroops]);
+
   const amountExceedsSpendableXlm =
     depositWithdrawMode &&
     ammTab === "deposit" &&
@@ -625,6 +655,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         icon: ISSUER_ICONS[pool.type] ?? null,
       },
       token1Balance: token1Balance ?? "0",
+      token2Balance: token2Balance ?? "0",
       /** LP / supplied position in human units (withdraw max) */
       lpBalance: position?.depositedFormatted ?? "0",
       collateralBalance: collateralRaw,
@@ -700,6 +731,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           ammTab={ammTab}
           onAmmTabChange={handleAmmTabChange}
           ammAmount={ammAmount}
+          ammAmount2={requiredSecondLegFormatted ?? undefined}
+          ammMaxAmount={maxAmmDepositAmount}
           onAmmAmountChange={setAmmAmount}
           onAmmSubmit={handleAmmSubmit}
           isAmmSubmitting={isActionPending}
