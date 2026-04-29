@@ -3,80 +3,94 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowUpRight } from "lucide-react";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { ROUTES } from "../../constants/discover";
-import { STOCK_INFO } from "../../utils/stockInfo";
-import type { StockInfo } from "../../types/discover";
-import { useStockInfo } from "../../hooks/useStockInfo";
+import { ASSET_INFO } from "../../utils/stockInfo";
+import type { AssetInfo } from "../../types/discover";
+import { useAssetInfo } from "../../hooks/useAssetInfo";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { CLASS_ACCENT, getAssetTaxonomy } from "../../utils/assetClass";
 
 export interface AssetPriceCardProps {
   tokenCode: string;
-  stockInfo?: StockInfo | null;
+  assetInfo?: AssetInfo | null;
 }
 
 export function AssetPriceCard({
   tokenCode,
-  stockInfo: stockInfoProp,
+  assetInfo: assetInfoProp,
 }: AssetPriceCardProps) {
   const codeUpper = tokenCode.toUpperCase();
   const { price, isLoading } = useTokenPrice(tokenCode);
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate();
-  const fromStatic = useStockInfo(codeUpper);
-  const stockInfo = stockInfoProp ?? fromStatic ?? STOCK_INFO[codeUpper];
+  const fromStatic = useAssetInfo(codeUpper);
+  const assetInfo = assetInfoProp ?? fromStatic ?? ASSET_INFO[codeUpper];
 
   const assetConfig = React.useMemo(
     () => getAvailableTokens()[codeUpper],
     [codeUpper]
   );
 
-  const displayName = stockInfo?.name ?? assetConfig?.name ?? codeUpper;
-  const logoSrc = stockInfo?.logo ?? assetConfig?.icon;
+  const taxonomy = assetInfo?.taxonomy ?? getAssetTaxonomy(codeUpper);
+  const accent = taxonomy ? CLASS_ACCENT[taxonomy.class] : undefined;
+
+  const displayName = assetInfo?.name ?? assetConfig?.name ?? codeUpper;
+  const logoSrc = assetInfo?.logo ?? assetConfig?.icon;
   const convertedPrice = convertUsdToSelected(price, fxRate);
-  const formattedPrice =
-    Number.isFinite(price) && price > 0
-      ? formatCurrency(convertedPrice, selectedCurrency)
-      : "No data";
+  const hasPrice = Number.isFinite(price) && price > 0;
+  const formattedPrice = hasPrice
+    ? formatCurrency(convertedPrice, selectedCurrency)
+    : "No data";
 
   return (
-    <Link href={ROUTES.assetDetail(codeUpper)} className="block h-full group">
-      <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 h-full flex flex-col transition-all duration-200 hover:border-white/10 hover:bg-[#222222] cursor-pointer">
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-3">
+    <Link
+      href={ROUTES.assetDetail(codeUpper)}
+      className="block h-full group focus:outline-none"
+    >
+      <div className="relative rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 h-full flex flex-col transition-all duration-200 hover:border-white/15 hover:bg-[#202020] hover:-translate-y-0.5 cursor-pointer overflow-hidden">
+        {/* Decorative gradient blob — class-tinted */}
+        {accent && (
+          <div
+            aria-hidden
+            className={`pointer-events-none absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl opacity-50 ${accent.bg}`}
+          />
+        )}
+
+        <div className="relative flex items-start justify-between mb-5">
+          <div className="flex items-center gap-3 min-w-0">
             {logoSrc && (
-              <div className="relative w-10 h-10 rounded-xl bg-[#2A2A2A] overflow-hidden shrink-0">
+              <div className="relative w-11 h-11 rounded-full bg-white overflow-hidden shrink-0 ring-1 ring-white/10 flex items-center justify-center">
                 <Image
                   src={logoSrc}
                   alt={displayName}
                   fill
                   unoptimized
-                  className="object-contain p-1.5"
+                  className="object-cover scale-110"
                 />
               </div>
             )}
-            <div>
-              <h3 className="text-white font-semibold text-sm leading-tight">
-                {codeUpper}
-              </h3>
-              <span
-                className="inline-flex items-center mt-1 -ml-0.5 px-2 py-0.5 rounded-md text-[10px] font-semibold"
-                style={{
-                  color: "#229EDF",
-                  backgroundColor: "rgba(34,158,223,0.10)",
-                }}
-              >
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-white font-semibold text-sm leading-tight truncate">
+                  {codeUpper}
+                </h3>
+              </div>
+              <p className="text-white/50 text-xs mt-0.5 truncate">
                 {displayName}
-              </span>
+              </p>
             </div>
           </div>
+
+          <ArrowUpRight className="h-4 w-4 text-white/20 group-hover:text-white/60 transition-colors shrink-0" />
         </div>
 
-        <div className="flex-1 flex flex-col">
+        <div className="relative flex-1 flex flex-col justify-between gap-4">
           {isLoading ? (
             <div className="flex items-center gap-2">
               <LoadingSpinner variant="dots" size="sm" />
@@ -87,9 +101,23 @@ export function AssetPriceCard({
               <p className="text-white/40 text-[10px] font-semibold uppercase tracking-widest mb-1">
                 Spot ({selectedCurrency})
               </p>
-              <p className="text-white text-3xl font-bold">{formattedPrice}</p>
+              <p
+                className={`text-3xl font-bold tabular-nums ${hasPrice ? "text-white" : "text-white/40"}`}
+              >
+                {formattedPrice}
+              </p>
             </div>
           )}
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {taxonomy && accent && (
+              <span
+                className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${accent.chip}`}
+              >
+                {taxonomy.classLabel}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </Link>

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import Oracle from "@/features/discover/components/pages/Oracle";
+import DiscoverPage from "@/features/discover/components/pages/DiscoverPage";
 
 export const metadata: Metadata = {
-  title: "Stocks | Neko Protocol",
-  description: "View RWA stock prices and oracle data on Neko Protocol.",
+  title: "Discover Assets | Neko Protocol",
+  description:
+    "Explore supported real-world assets and market data on Neko Protocol.",
 };
 
-export default function StocksPage() {
-  return <Oracle />;
+export default function DiscoverRoute() {
+  return <DiscoverPage />;
 }
