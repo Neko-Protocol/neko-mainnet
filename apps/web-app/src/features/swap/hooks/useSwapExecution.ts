@@ -11,6 +11,8 @@ import {
 import {
   DEFAULT_SLIPPAGE_BPS,
   MAX_HOPS,
+  PLATFORM_FEE_BPS,
+  NEKO_TREASURY_ADDRESS,
 } from "@/features/swap/constants/swapConfig";
 import { useWallet } from "@/hooks/useWallet";
 import { auditService } from "@/lib/services/audit.service";
@@ -48,9 +50,14 @@ export function useSwapExecution() {
         assetOut: tokenOut as Token | string,
         amount: amountIn,
         tradeType: "EXACT_IN",
-        protocols: ["soroswap", "phoenix", "aqua"],
+        protocols: NEKO_TREASURY_ADDRESS
+          ? ["sdex"]
+          : ["soroswap", "phoenix", "aqua"],
         slippageBps: DEFAULT_SLIPPAGE_BPS,
         maxHops: MAX_HOPS,
+        ...(NEKO_TREASURY_ADDRESS
+          ? { feeBps: PLATFORM_FEE_BPS, referralId: NEKO_TREASURY_ADDRESS }
+          : {}),
       };
 
       const newQuote = await getQuote(quoteRequest);
@@ -69,6 +76,9 @@ export function useSwapExecution() {
             quote: newQuote,
             from: address,
             to: address,
+            ...(NEKO_TREASURY_ADDRESS
+              ? { referralId: NEKO_TREASURY_ADDRESS }
+              : {}),
           });
           break;
         } catch (err) {
@@ -155,6 +165,12 @@ export function useSwapExecution() {
                 (tokenOut.type === "native" ? "XLM" : tokenOut.contract)),
           amount_in: parseFloat(amountIn),
           tx_hash: sendResult.txHash,
+          ...(newQuote.platformFee
+            ? {
+                platform_fee_bps: newQuote.platformFee.feeBps,
+                platform_fee_amount: newQuote.platformFee.feeAmount,
+              }
+            : {}),
         });
         return { orderId: sendResult.txHash, txHash: sendResult.txHash };
       }
