@@ -133,27 +133,39 @@ const AssetDetail: React.FC = () => {
   };
 
   useEffect(() => {
-    const observers: IntersectionObserver[] = [];
-    (Object.keys(sectionRefs) as InfoTab[]).forEach((id) => {
-      const el = sectionRefs[id].current;
-      if (!el) return;
-      const obs = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) setActiveTab(id);
-        },
-        { threshold: 0.25 }
-      );
-      obs.observe(el);
-      observers.push(obs);
-    });
-    return () => observers.forEach((o) => o.disconnect());
+    const orderedTabs: InfoTab[] = ["overview", "details", "buy"];
+    const anchorOffset = 140;
+
+    const updateActiveTab = () => {
+      const available = orderedTabs.filter((id) => sectionRefs[id].current);
+      if (available.length === 0) return;
+
+      let current = available[0];
+      for (const id of available) {
+        const top = sectionRefs[id].current!.getBoundingClientRect().top;
+        if (top - anchorOffset <= 0) {
+          current = id;
+        }
+      }
+      setActiveTab(current);
+    };
+
+    updateActiveTab();
+    window.addEventListener("scroll", updateActiveTab, { passive: true });
+    window.addEventListener("resize", updateActiveTab);
+    return () => {
+      window.removeEventListener("scroll", updateActiveTab);
+      window.removeEventListener("resize", updateActiveTab);
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const scrollTo = (id: InfoTab) =>
+  const scrollTo = (id: InfoTab) => {
+    setActiveTab(id);
     sectionRefs[id].current?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
+  };
 
   useEffect(() => {
     if (!symbol) {
