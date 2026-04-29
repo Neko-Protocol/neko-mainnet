@@ -58,9 +58,7 @@ export function useUserPosition(
   const { pools: healthFactors, isLoading: hfLoading } =
     useHealthFactor(borrowerAddress);
 
-  const rwaTokens = Object.values(getAssetsConfig()).filter(
-    (a) => a.priceSource === "soroswap"
-  );
+  const rwaTokens = Object.values(getAssetsConfig());
 
   const collateralQueries = useQueries({
     queries: rwaTokens.map((token) => ({
