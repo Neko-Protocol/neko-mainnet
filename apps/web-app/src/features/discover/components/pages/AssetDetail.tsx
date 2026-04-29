@@ -224,7 +224,7 @@ const AssetDetail: React.FC = () => {
           {/* ── Left column ── */}
           <div className="min-w-0 p-8 lg:border-r border-white/7 order-2 lg:order-1">
             {/* Header */}
-            <div className="flex items-center gap-5 mb-10">
+            <div className="flex items-start gap-4 mb-10">
               <div className="relative w-16 h-16 rounded-full bg-white ring-1 ring-white/10 overflow-hidden shrink-0 flex items-center justify-center">
                 <Image
                   src={stockInfo.logo || "/assets/xlm-logo.png"}
@@ -234,24 +234,26 @@ const AssetDetail: React.FC = () => {
                   className="object-cover scale-110"
                 />
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-white font-bold text-3xl sm:text-4xl leading-none">
+              <div className="min-w-0 flex-1 h-16 flex flex-col justify-between">
+                <div className="min-h-0 flex items-center gap-2">
+                  <h1 className="text-white font-bold text-2xl leading-none truncate">
                     {symbolUpper}
                   </h1>
                   {taxonomy && accent && (
                     <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${accent.chip}`}
+                      className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold ${accent.chip}`}
                     >
                       {taxonomy.classLabel}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-4 mt-2.5 flex-wrap">
-                  <span className="text-white/70 text-sm font-medium">
+                <div className="min-h-0 flex items-center gap-3">
+                  <span className="text-white/70 text-sm font-medium truncate">
                     {stockInfo.name}
                   </span>
-                  <CopyAddress address={cfg!.contract} />
+                  <span className="shrink-0">
+                    <CopyAddress address={cfg!.contract} />
+                  </span>
                 </div>
               </div>
             </div>
