@@ -98,22 +98,22 @@ export const CLASS_ACCENT: Record<
   { bg: string; text: string; ring: string; chip: string }
 > = {
   native: {
-    bg: "bg-[#229EDF]/10",
-    text: "text-[#229EDF]",
-    ring: "ring-[#229EDF]/30",
-    chip: "bg-[#229EDF]/15 text-[#229EDF]",
+    bg: "bg-sky-500/12",
+    text: "text-sky-300",
+    ring: "ring-sky-500/30",
+    chip: "bg-sky-500/18 text-sky-300",
   },
   stablecoin: {
-    bg: "bg-emerald-500/10",
-    text: "text-emerald-300",
-    ring: "ring-emerald-500/30",
-    chip: "bg-emerald-500/15 text-emerald-300",
+    bg: "bg-cyan-500/12",
+    text: "text-cyan-300",
+    ring: "ring-cyan-500/30",
+    chip: "bg-cyan-500/18 text-cyan-300",
   },
   "sovereign-bond": {
-    bg: "bg-amber-500/10",
-    text: "text-amber-300",
-    ring: "ring-amber-500/30",
-    chip: "bg-amber-500/15 text-amber-300",
+    bg: "bg-blue-500/12",
+    text: "text-blue-300",
+    ring: "ring-blue-500/30",
+    chip: "bg-blue-500/18 text-blue-300",
   },
 };
 

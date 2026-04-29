@@ -206,7 +206,7 @@ const AssetDetail: React.FC = () => {
   ];
 
   return (
-    <div className="w-full flex flex-col px-4 sm:px-6 lg:px-8">
+    <div className="w-full min-w-0 max-w-full min-h-screen overflow-x-hidden flex flex-col px-4 sm:px-6 lg:px-8">
       <div className="py-4 shrink-0">
         <Link
           href={ROUTES.DISCOVER_BASE}
@@ -216,9 +216,9 @@ const AssetDetail: React.FC = () => {
         </Link>
       </div>
 
-      <div className="pb-4">
+      <div className="flex-1 pb-4">
         <div
-          className="w-full rounded-2xl border border-white/7 grid grid-cols-1 lg:grid-cols-[1fr_22rem] items-start"
+          className="w-full h-full min-h-[calc(100vh-10rem)] rounded-2xl border border-white/7 grid grid-cols-1 lg:grid-cols-[1fr_22rem] items-start"
           style={{ background: "#111111" }}
         >
           {/* ── Left column ── */}
