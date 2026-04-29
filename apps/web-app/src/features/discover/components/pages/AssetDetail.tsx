@@ -148,6 +148,14 @@ const AssetDetail: React.FC = () => {
       const available = orderedTabs.filter((id) => sectionRefs[id].current);
       if (available.length === 0) return;
 
+      const isAtBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 8;
+      if (isAtBottom) {
+        setActiveTab(available[available.length - 1]);
+        return;
+      }
+
       let current = available[0];
       for (const id of available) {
         const top = sectionRefs[id].current!.getBoundingClientRect().top;
@@ -169,9 +177,13 @@ const AssetDetail: React.FC = () => {
 
   const scrollTo = (id: InfoTab) => {
     setActiveTab(id);
-    sectionRefs[id].current?.scrollIntoView({
+    const target = sectionRefs[id].current;
+    if (!target) return;
+
+    const anchorOffset = 96;
+    window.scrollTo({
+      top: target.getBoundingClientRect().top + window.scrollY - anchorOffset,
       behavior: "smooth",
-      block: "start",
     });
   };
 
@@ -239,50 +251,49 @@ const AssetDetail: React.FC = () => {
           {/* ── Left column ── */}
           <div className="min-w-0 p-8 lg:border-r border-white/7 order-2 lg:order-1">
             {/* Header */}
-            <div className="flex items-start gap-4 mb-10">
-              <div className="relative w-16 h-16 rounded-full bg-white ring-1 ring-white/10 overflow-hidden shrink-0 flex items-center justify-center">
-                <Image
-                  src={stockInfo.logo || "/assets/xlm-logo.png"}
-                  alt={stockInfo.name}
-                  fill
-                  unoptimized
-                  className="object-cover scale-110"
-                />
-              </div>
-              <div className="min-w-0 flex-1 h-16 flex flex-col justify-between">
-                <div className="min-h-0 flex items-center gap-2">
-                  <h1 className="text-white font-bold text-2xl leading-none truncate">
-                    {symbolUpper}
-                  </h1>
-                  {taxonomy && accent && (
-                    <span
-                      className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold ${accent.chip}`}
-                    >
-                      {taxonomy.classLabel}
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between mb-10">
+              <div className="flex items-start gap-4 min-w-0">
+                <div className="relative w-16 h-16 rounded-full bg-white ring-1 ring-white/10 overflow-hidden shrink-0 flex items-center justify-center">
+                  <Image
+                    src={stockInfo.logo || "/assets/xlm-logo.png"}
+                    alt={stockInfo.name}
+                    fill
+                    unoptimized
+                    className="object-cover scale-110"
+                  />
+                </div>
+                <div className="min-w-0 flex-1 h-16 flex flex-col justify-between">
+                  <div className="min-h-0 flex items-center gap-2">
+                    <h1 className="text-white font-bold text-2xl leading-none truncate">
+                      {symbolUpper}
+                    </h1>
+                    {taxonomy && accent && (
+                      <span
+                        className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold ${accent.chip}`}
+                      >
+                        {taxonomy.classLabel}
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-h-0 flex items-center gap-3">
+                    <span className="text-white/70 text-sm font-medium truncate">
+                      {stockInfo.name}
                     </span>
-                  )}
-                </div>
-                <div className="min-h-0 flex items-center gap-3">
-                  <span className="text-white/70 text-sm font-medium truncate">
-                    {stockInfo.name}
-                  </span>
-                  <span className="shrink-0">
-                    <CopyAddress address={cfg!.contract} />
-                  </span>
+                    <span className="shrink-0">
+                      <CopyAddress address={cfg!.contract} />
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="border-t border-white/5 mb-8" />
-
-            {/* Metrics grid */}
-            <div className="flex flex-wrap justify-between gap-y-7">
-              <div>
-                <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
+              <div className="shrink-0 sm:text-right">
+                <p className="text-white/40 text-xs font-medium mb-2 uppercase tracking-wider">
                   Spot Price ({selectedCurrency})
                 </p>
                 {isLoadingPrice ? (
-                  <LoadingSpinner variant="spinner" size="md" />
+                  <div className="sm:flex sm:justify-end">
+                    <LoadingSpinner variant="spinner" size="md" />
+                  </div>
                 ) : (
                   <p
                     className={`text-3xl font-bold tabular-nums leading-none ${
@@ -298,42 +309,9 @@ const AssetDetail: React.FC = () => {
                     : "Source unavailable"}
                 </p>
               </div>
-
-              {taxonomy?.peg && (
-                <div>
-                  <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
-                    Pegged To
-                  </p>
-                  <p className="text-white text-3xl font-bold tabular-nums leading-none">
-                    {taxonomy.peg}
-                  </p>
-                </div>
-              )}
-
-              {taxonomy?.issuer && (
-                <div>
-                  <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
-                    Issuer
-                  </p>
-                  <p className="text-white text-lg font-bold leading-tight max-w-[14rem]">
-                    {taxonomy.issuer}
-                  </p>
-                </div>
-              )}
-
-              {taxonomy?.region && taxonomy.class !== "sovereign-bond" && (
-                <div>
-                  <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
-                    Region
-                  </p>
-                  <p className="text-white text-3xl font-bold tabular-nums leading-none">
-                    {taxonomy.region}
-                  </p>
-                </div>
-              )}
             </div>
 
-            <div className="border-t border-white/5 mt-10" />
+            <div className="border-t border-white/5" />
 
             <section className="mt-8 rounded-xl border border-white/7 p-5 bg-[#0E0E0E]">
               <div className="flex items-center justify-between mb-5">
