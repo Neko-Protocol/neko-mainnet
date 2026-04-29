@@ -13,11 +13,9 @@ export interface AssetTaxonomy {
   region?: string;
   /** Whether the token accrues yield natively (rebasing or interest-bearing). */
   yieldBearing?: boolean;
-  /** Whether the token represents a real-world asset. */
-  rwa?: boolean;
 }
 
-export interface StockInfo {
+export interface AssetInfo {
   logo: string;
   name: string;
   description: string;
