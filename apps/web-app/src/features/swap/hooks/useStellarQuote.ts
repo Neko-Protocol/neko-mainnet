@@ -5,11 +5,15 @@ import { formatSwapAmount, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import {
   DEFAULT_SLIPPAGE_BPS,
   MAX_HOPS,
+  PLATFORM_FEE_BPS,
+  NEKO_TREASURY_ADDRESS,
 } from "@/features/swap/constants/swapConfig";
+import type { PlatformFee } from "@/lib/types/soroswapTypes";
 
 export interface StellarQuoteResult {
   amount: string | null;
   error: string | null;
+  platformFee?: PlatformFee;
 }
 
 export function useStellarQuote(
@@ -50,9 +54,14 @@ export function useStellarQuote(
           assetOut: tokenOut as Token | string,
           amount: trimmedAmount,
           tradeType: "EXACT_IN",
-          protocols: ["soroswap", "phoenix", "aqua"],
+          protocols: NEKO_TREASURY_ADDRESS
+            ? ["sdex"]
+            : ["soroswap", "phoenix", "aqua"],
           slippageBps: DEFAULT_SLIPPAGE_BPS,
           maxHops: MAX_HOPS,
+          ...(NEKO_TREASURY_ADDRESS
+            ? { feeBps: PLATFORM_FEE_BPS, referralId: NEKO_TREASURY_ADDRESS }
+            : {}),
         };
 
         const quote = await getQuote(quoteRequest);
@@ -67,6 +76,7 @@ export function useStellarQuote(
             return {
               amount: formatSwapAmount(fromSmallestUnit(amountOutStr, 7), 6),
               error: null,
+              platformFee: quote.platformFee,
             };
           }
         }

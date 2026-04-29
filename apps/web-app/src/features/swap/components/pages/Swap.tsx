@@ -16,8 +16,10 @@ import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors
 import {
   sanitizeAmountInput,
   formatSwapAmount,
+  fromSmallestUnit,
   getTokenIconFitClass,
 } from "@/lib/helpers/tokenUtils";
+import { DEFAULT_SLIPPAGE_BPS } from "@/features/swap/constants/swapConfig";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { BannerPage } from "@/components/ui/BannerPage";
@@ -195,6 +197,7 @@ const Swap: React.FC = () => {
     amountOut: quoteAmountOut,
     isLoadingQuote,
     quoteError,
+    platformFee,
   } = useSwapQuote(address, amountIn, tokenIn, tokenOut);
 
   useEffect(() => {
@@ -435,6 +438,26 @@ const Swap: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {canGetQuote && !isLoadingQuote && platformFee && (
+        <div className="mt-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex flex-col gap-1.5 text-sm">
+          <div className="flex justify-between items-center text-white/60">
+            <span>Platform fee</span>
+            <span className="text-white/80 font-medium">
+              {platformFee.feeBps / 100}%{" · "}
+              {formatSwapAmount(
+                fromSmallestUnit(platformFee.feeAmount, 7),
+                4
+              )}{" "}
+              {getTokenId(tokenIn)}
+            </span>
+          </div>
+          <div className="flex justify-between items-center text-white/60">
+            <span>Slippage tolerance</span>
+            <span className="text-white/80">{DEFAULT_SLIPPAGE_BPS / 100}%</span>
+          </div>
+        </div>
+      )}
 
       {}
       {}

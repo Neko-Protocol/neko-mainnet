@@ -6,6 +6,7 @@ import {
   DEBOUNCE_MS,
   QUOTE_REFRESH_INTERVAL_MS,
 } from "@/features/swap/constants/swapConfig";
+import type { PlatformFee } from "@/lib/types/soroswapTypes";
 
 const MAX_CONSECUTIVE_FAILURES = 3;
 
@@ -14,6 +15,7 @@ export interface SwapQuoteState {
   isLoadingQuote: boolean;
   apiKeyConfigured: boolean;
   quoteError: string | null;
+  platformFee: PlatformFee | undefined;
 }
 
 export interface SwapQuoteActions {
@@ -30,6 +32,9 @@ export function useSwapQuote(
   const [isLoadingQuote, setIsLoadingQuote] = useState<boolean>(false);
   const [apiKeyConfigured, setApiKeyConfigured] = useState<boolean>(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
+  const [platformFee, setPlatformFee] = useState<PlatformFee | undefined>(
+    undefined
+  );
 
   const quoteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const quoteIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -69,6 +74,7 @@ export function useSwapQuote(
 
       if (result.amount !== null) {
         setAmountOut(result.amount);
+        setPlatformFee(result.platformFee ?? undefined);
         setIsLoadingQuote(false);
         setQuoteError(null);
         failureCountRef.current = 0;
@@ -121,17 +127,20 @@ export function useSwapQuote(
 
     if (!isValid || !address) {
       setAmountOut("0.0");
+      setPlatformFee(undefined);
       setQuoteError(null);
       return;
     }
 
     if (!apiKeyConfigured) {
       setAmountOut("0.0");
+      setPlatformFee(undefined);
       setQuoteError(null);
       return;
     }
 
     setAmountOut("0.0");
+    setPlatformFee(undefined);
     setIsLoadingQuote(true);
     setQuoteError(null);
     failureCountRef.current = 0;
@@ -190,6 +199,7 @@ export function useSwapQuote(
     isLoadingQuote,
     apiKeyConfigured,
     quoteError,
+    platformFee,
     fetchLiveQuote,
   };
 }

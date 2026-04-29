@@ -298,7 +298,7 @@ export const getQuote = async (
       );
     }
 
-    const quoteRequestBody = {
+    const quoteRequestBody: Record<string, unknown> = {
       assetIn,
       assetOut,
       amount: amountInSmallestUnit.toString(),
@@ -307,6 +307,11 @@ export const getQuote = async (
       slippageBps: request.slippageBps || 500,
       maxHops: request.maxHops || 3,
     };
+
+    if (request.feeBps && request.referralId) {
+      quoteRequestBody.feeBps = request.feeBps;
+      quoteRequestBody.referralId = request.referralId;
+    }
 
     const apiResponse = await fetch(
       `${SOROSWAP_API_URL}/quote?network=${sdkNetwork}`,
@@ -358,6 +363,7 @@ export const getQuote = async (
         swapInfo: { protocol: string; path: string[] };
         percent: string;
       }>;
+      platformFee?: { feeBps: number; feeAmount: string };
     };
 
     const response: QuoteResponse = {
@@ -367,6 +373,10 @@ export const getQuote = async (
       protocol: quoteResponse.platform || "soroswap",
       _sdkQuote: quoteResponse,
     };
+
+    if (quoteResponse.platformFee) {
+      response.platformFee = quoteResponse.platformFee;
+    }
 
     if ("routes" in quoteResponse && quoteResponse.routes) {
       response.routes = quoteResponse.routes as unknown[];
@@ -484,6 +494,9 @@ export const buildTransaction = async (
     };
     if (request.to) {
       buildBody.to = request.to;
+    }
+    if (request.referralId) {
+      buildBody.referralId = request.referralId;
     }
 
     const buildRes = await fetch(buildUrl, {
