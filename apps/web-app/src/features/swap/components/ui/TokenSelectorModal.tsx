@@ -27,6 +27,11 @@ function getHoldingsAmount(balances: MappedBalances, code: string): number {
   if (soroban?.balance) {
     return parseBalanceString(String(soroban.balance));
   }
+  for (const [key, entry] of Object.entries(balances)) {
+    if (key.startsWith(`${code}:`) && entry.balance) {
+      return parseBalanceString(String(entry.balance));
+    }
+  }
   return 0;
 }
 
