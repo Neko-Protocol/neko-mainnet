@@ -8,8 +8,9 @@ import { MobileHeader } from "@/components/navigation/MobileHeader";
 export function ConditionalLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isPoolDetail = /^\/pools\/[^/]+/.test(pathname);
+  const isDiscoverAssetDetail = /^\/discover\/[^/]+/.test(pathname);
 
-  if (isPoolDetail) {
+  if (isPoolDetail || isDiscoverAssetDetail) {
     return (
       <main
         className="flex min-h-screen min-w-0 flex-1 flex-col items-center text-white w-full"

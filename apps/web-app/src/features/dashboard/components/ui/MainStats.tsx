@@ -8,7 +8,7 @@ import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { usePortfolioValue } from "@/features/dashboard/hooks/usePortfolioValue";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
-import { StatCard } from "@/features/stocks/components/ui/StatCard";
+import { StatCard } from "@/features/discover/components/ui/StatCard";
 
 const MainStats: React.FC = () => {
   const { address, isFetchingBalances } = useWallet();

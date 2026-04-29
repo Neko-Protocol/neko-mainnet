@@ -6,12 +6,20 @@ import {
 import {
   getCoinGeckoIdForToken,
   getReflectorAssetForToken,
+  type AssetPriceSource,
 } from "@/lib/constants/assets.config";
 import type { Asset as ReflectorAsset } from "@neko/reflector";
 import { getReflectorClient } from "@/lib/helpers/stellar/reflector-client";
 
 /** Decimals used by the Reflector oracle (fixed at 14). */
 const REFLECTOR_DECIMALS = 14;
+
+export type PriceSource = AssetPriceSource;
+
+export interface PricedResult {
+  price: number;
+  source: PriceSource | null;
+}
 
 function soroswapAssetMatches(
   apiAsset: string | undefined,
@@ -193,39 +201,56 @@ export class StellarPriceService {
       // Reflector prices have REFLECTOR_DECIMALS decimal places, quoted in USDC ≈ USD
       const usd = Number(priceData.price) / Math.pow(10, REFLECTOR_DECIMALS);
       return Number.isFinite(usd) && usd > 0 ? usd : 0;
-    } catch {
+    } catch (err) {
+      console.warn(
+        "[Reflector] Last price fetch failed",
+        reflectorAsset,
+        err instanceof Error ? err.message : err
+      );
       return 0;
     }
   }
 
   async getPrice(tokenCode: string, contractAddress?: string): Promise<number> {
-    if (!tokenCode || typeof tokenCode !== "string") return 0;
+    const { price } = await this.getPriceWithSource(tokenCode, contractAddress);
+    return price;
+  }
+
+  async getPriceWithSource(
+    tokenCode: string,
+    contractAddress?: string
+  ): Promise<PricedResult> {
+    // The flow is: Reflector -> Soroswap -> CoinGecko
+    if (!tokenCode || typeof tokenCode !== "string") {
+      return { price: 0, source: null };
+    }
 
     const reflectorAsset = getReflectorAssetForToken(tokenCode);
     const coinGeckoId = getCoinGeckoIdForToken(tokenCode);
 
-    // Try Reflector first for all assets that have a reflectorAsset configured
     if (reflectorAsset) {
+      // USDC is the Reflector pubnet base asset, therefore lastprice returns None
+      // for the base, so short-circuit to 1.00, we'll still attribute to Reflector.
+      if (tokenCode === "USDC") {
+        return { price: 1, source: "reflector" };
+      }
       const reflectorPrice = await this.getReflectorUsdPrice(reflectorAsset);
-      if (reflectorPrice > 0) return reflectorPrice;
+      if (reflectorPrice > 0) {
+        return { price: reflectorPrice, source: "reflector" };
+      }
     }
 
-    // XLM fallback: CoinGecko (Soroswap XLM price is in XLM, not USD)
-    if (tokenCode === "XLM") {
-      return this.getCoinGeckoSimpleUsd(coinGeckoId ?? "stellar");
-    }
-
-    // All other assets: Soroswap → CoinGecko
     if (contractAddress) {
       const spot = await this.getSoroswapUsdPrice(contractAddress);
-      if (spot > 0) return spot;
-      if (coinGeckoId) {
-        return this.getCoinGeckoSimpleUsd(coinGeckoId);
-      }
-      return 0;
+      if (spot > 0) return { price: spot, source: "soroswap" };
     }
 
-    return 0;
+    if (coinGeckoId) {
+      const price = await this.getCoinGeckoSimpleUsd(coinGeckoId);
+      if (price > 0) return { price, source: "coingecko" };
+    }
+
+    return { price: 0, source: null };
   }
 }
 

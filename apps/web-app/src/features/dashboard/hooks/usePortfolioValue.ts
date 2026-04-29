@@ -20,7 +20,7 @@ interface PortfolioValue {
 
 function getContractForToken(code: string): string | undefined {
   const asset = getAssetsConfig()[code];
-  return asset?.priceSource === "soroswap" ? asset.contract : undefined;
+  return asset?.contract;
 }
 
 export function usePortfolioValue(): PortfolioValue {

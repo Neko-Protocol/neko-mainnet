@@ -5,7 +5,11 @@ import {
   getTokenAddress,
 } from "@/lib/helpers/stellar/soroswap";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import { stellarPriceService } from "@/lib/services/stellar-price.service";
+import {
+  stellarPriceService,
+  type PriceSource,
+  type PricedResult,
+} from "@/lib/services/stellar-price.service";
 
 export const useTokenPrice = (token: Token | string | undefined) => {
   const getTokenCode = (): string | null => {
@@ -40,19 +44,14 @@ export const useTokenPrice = (token: Token | string | undefined) => {
     [token]
   );
 
-  const {
-    data: price = 0,
-    isLoading,
-    error,
-    isFetched,
-  } = useQuery<number, Error>({
+  const { data, isLoading, error, isFetched } = useQuery<PricedResult, Error>({
     queryKey: ["tokenPrice", tokenCode, contractAddress],
     queryFn: async () => {
       if (!tokenCode || typeof tokenCode !== "string") {
-        return 0;
+        return { price: 0, source: null };
       }
 
-      return stellarPriceService.getPrice(tokenCode, contractAddress);
+      return stellarPriceService.getPriceWithSource(tokenCode, contractAddress);
     },
     enabled: Boolean(tokenCode && token),
     refetchInterval: 3 * 60 * 1000,
@@ -63,11 +62,15 @@ export const useTokenPrice = (token: Token | string | undefined) => {
     throwOnError: false,
   });
 
+  const price = data?.price ?? 0;
+  const source: PriceSource | null = data?.source ?? null;
+
   const priceError =
     error?.message ?? (isFetched && price === 0 ? "Price unavailable" : null);
 
   return {
     price,
+    source,
     isLoading,
     error: priceError,
   };

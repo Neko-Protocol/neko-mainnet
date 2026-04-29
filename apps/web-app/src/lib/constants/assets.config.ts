@@ -3,13 +3,15 @@ export interface ReflectorAsset {
   value: string;
 }
 
+export type AssetPriceSource = "reflector" | "soroswap" | "coingecko";
+
 export interface AssetConfig {
   code: string;
   name: string;
   contract: string;
   decimals: number;
   icon: string;
-  priceSource: "soroswap";
+  priceSource: AssetPriceSource;
   isStablecoin?: boolean;
   /**
    * CoinGecko `/simple/price` id (e.g. `stellar`, `usd-coin`).
@@ -27,86 +29,7 @@ export interface AssetConfig {
 type NetworkId = "testnet" | "standalone" | "mainnet";
 
 const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
-  testnet: {
-    XLM: {
-      code: "XLM",
-      name: "Stellar Lumens",
-      contract: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
-      decimals: 7,
-      icon: "/assets/xlm-logo.png",
-      priceSource: "soroswap",
-      coinGeckoId: "stellar",
-    },
-    USDC: {
-      code: "USDC",
-      name: "USD Coin",
-      contract: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
-      decimals: 7,
-      icon: "/assets/usdc-logo.png",
-      priceSource: "soroswap",
-      isStablecoin: true,
-      coinGeckoId: "usd-coin",
-    },
-    USTRY: {
-      code: "USTRY",
-      name: "US Treasury Token",
-      contract: "CCAYGJWQI5NJN7XRVNSENF47PICNSNTG4FAQHHFOJWZIRTEAC5JPMLGN",
-      decimals: 7,
-      icon: "https://stablebonds.s3.us-west-2.amazonaws.com/stablebond/spl-ustry.png",
-      priceSource: "soroswap",
-      isStablecoin: false,
-      coinGeckoId: "etherfuse-ustry",
-    },
-    TESOURO: {
-      code: "TESOURO",
-      name: "Brazil Government Bonds",
-      contract: "CAPFX3QEAHE7JVT6E7PYZQTFSVS5Z7AV4RE7GRJRVCPKXGQHCWSCOMTW",
-      decimals: 7,
-      icon: "https://stablebonds.s3.us-west-2.amazonaws.com/stablebond/spl-tesouro.png",
-      priceSource: "soroswap",
-      isStablecoin: false,
-      coinGeckoId: "etherfuse-tesouro",
-    },
-    CETES: {
-      code: "CETES",
-      name: "Mexican Treasury Token",
-      contract: "CAJ4B2ZWU2GA7UYQZ7N7QQCTZAUSSXNKKQ326ADYVH3ALN4FFQ6LPO4U",
-      decimals: 7,
-      icon: "https://stablebonds.s3.us-west-2.amazonaws.com/stablebond/spl-cetes.png",
-      priceSource: "soroswap",
-      isStablecoin: false,
-      coinGeckoId: "etherfuse-cetes",
-    },
-    USDY: {
-      code: "USDY",
-      name: "US Dollar Yield",
-      contract: "CDRQV3D3GLWF73MWTEQWFZWMBQ47KZ3KECYPOBKBDRQBWQQ74KDH5ECT",
-      decimals: 7,
-      icon: "/assets/usdy-logo.png",
-      priceSource: "soroswap",
-      isStablecoin: true,
-      coinGeckoId: "ondo-us-dollar-yield",
-    },
-    PYUSD: {
-      code: "PYUSD",
-      name: "PayPal USD",
-      contract: "CBNHH37BJ2G4ZT6PLWDXPOWHKLR75IGNLBRCXZNOS7YPAYS53JPEPSSS",
-      decimals: 7,
-      icon: "/assets/pyusd-logo.png",
-      priceSource: "soroswap",
-      isStablecoin: true,
-      coinGeckoId: "paypal-usd",
-    },
-    KTB: {
-      code: "KTB",
-      name: "Korean Treasury Bond",
-      contract: "CCACIMR6I2XR35HSQSPYNTIZSK7IRVLPKAMSZPHW57SSUC44IZGN3TCX",
-      decimals: 7,
-      icon: "https://stellar.myfilebase.com/ipfs/Qma8QsiniBJHxydHtJZ4QX7X8Cx9kUkwKM9VbbAUEfTgWb",
-      priceSource: "soroswap",
-      isStablecoin: false,
-    },
-  },
+  testnet: {},
   standalone: {
     XLM: {
       code: "XLM",
@@ -135,7 +58,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CAL6ER2TI6CTRAY6BFXWNWA7WTYXUXTQCHUBCIBU5O6KM3HJFG6Z6VXV",
       decimals: 7,
       icon: "https://stablebonds.s3.us-west-2.amazonaws.com/stablebond/spl-cetes.png",
-      priceSource: "soroswap",
+      priceSource: "reflector",
       isStablecoin: false,
       coinGeckoId: "etherfuse-cetes",
       reflectorAsset: {
@@ -159,7 +82,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
       decimals: 7,
       icon: "/assets/usdc-logo.png",
-      priceSource: "soroswap",
+      priceSource: "reflector",
       isStablecoin: true,
       coinGeckoId: "usd-coin",
       reflectorAsset: {
@@ -173,7 +96,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
       decimals: 7,
       icon: "/assets/xlm-logo.png",
-      priceSource: "soroswap",
+      priceSource: "reflector",
       coinGeckoId: "stellar",
       reflectorAsset: {
         tag: "Stellar",
@@ -186,7 +109,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV",
       decimals: 7,
       icon: "https://ipfs.io/ipfs/bafkreidizqlammdzrrurfq3o5owta77fiyonn6ri72h6rltqimn2xs2by4",
-      priceSource: "soroswap",
+      priceSource: "reflector",
       isStablecoin: true,
       coinGeckoId: "eurc",
       reflectorAsset: {
@@ -200,7 +123,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR",
       decimals: 7,
       icon: "https://stablebonds.s3.us-west-2.amazonaws.com/stablebond/spl-ustry.png",
-      priceSource: "soroswap",
+      priceSource: "reflector",
       isStablecoin: false,
       coinGeckoId: "etherfuse-ustry",
       reflectorAsset: {
@@ -214,7 +137,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CD6M4R2322BYCY2LNWM74PEBQAQ63SA3DUJLI3L4225U4ZVCLMSCBCIS",
       decimals: 7,
       icon: "https://stablebonds.s3.us-west-2.amazonaws.com/stablebond/spl-tesouro.png",
-      priceSource: "soroswap",
+      priceSource: "reflector",
       isStablecoin: false,
       coinGeckoId: "etherfuse-tesouro",
       reflectorAsset: {
@@ -250,10 +173,6 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       priceSource: "soroswap",
       isStablecoin: true,
       coinGeckoId: "gyen",
-      reflectorAsset: {
-        tag: "Stellar",
-        value: "CA67EQNWGPGXHVT6E4HQ65WEV54KFDB6HJDHVCJM33VKZ7XKR5MN3KPJ",
-      },
     },
   },
 };
@@ -287,9 +206,7 @@ export function getReflectorAssetForToken(
 
 export function getRwaTokenCodes(): string[] {
   const assets = getAssetsConfig();
-  return Object.values(assets)
-    .filter((a) => a.priceSource === "soroswap")
-    .map((a) => a.code);
+  return Object.values(assets).map((a) => a.code);
 }
 
 export function getStablecoinCodes(): string[] {
