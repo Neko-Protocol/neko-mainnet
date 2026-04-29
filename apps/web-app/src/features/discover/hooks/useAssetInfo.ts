@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ASSET_INFO } from "../utils/stockInfo";
+import { ASSET_INFO } from "../utils/assetInfo";
 import type { AssetInfo } from "../types/discover";
 
 export function useAssetInfo(symbol: string): AssetInfo | undefined {

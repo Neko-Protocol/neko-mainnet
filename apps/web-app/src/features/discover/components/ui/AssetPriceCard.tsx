@@ -10,7 +10,7 @@ import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { ROUTES } from "../../constants/discover";
-import { ASSET_INFO } from "../../utils/stockInfo";
+import { ASSET_INFO } from "../../utils/assetInfo";
 import type { AssetInfo } from "../../types/discover";
 import { useAssetInfo } from "../../hooks/useAssetInfo";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";

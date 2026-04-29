@@ -7,7 +7,7 @@ import { AssetPriceCard } from "../ui/AssetPriceCard";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { ASSET_CLASS_FILTERS, getAssetTaxonomy } from "../../utils/assetClass";
-import { ASSET_INFO } from "../../utils/stockInfo";
+import { ASSET_INFO } from "../../utils/assetInfo";
 import type { AssetClass } from "../../types/discover";
 
 type ClassFilter = AssetClass | "all";

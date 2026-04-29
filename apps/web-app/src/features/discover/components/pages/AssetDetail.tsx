@@ -21,7 +21,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { ASSET_INFO } from "../../utils/stockInfo";
+import { ASSET_INFO } from "../../utils/assetInfo";
 import type { AssetInfo } from "../../types/discover";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { ROUTES } from "../../constants/discover";

@@ -30,7 +30,7 @@ const RAW: Record<string, AssetInfo> = {
     ],
   },
   EURC: {
-    logo: "https://ipfs.io/ipfs/bafkreidizqlammdzrrurfq3o5owta77fiyonn6ri72h6rltqimn2xs2by4",
+    logo: "/assets/eurc-logo.png",
     name: "Euro Coin",
     description: "Euro-backed stablecoin issued by Circle, pegged 1:1 to EUR",
     summary:
