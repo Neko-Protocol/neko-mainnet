@@ -13,6 +13,13 @@ export interface QuoteRequest {
   protocols?: string[];
   slippageBps?: number;
   maxHops?: number; // Max intermediate hops for routing (default: 3)
+  feeBps?: number; // Platform fee in basis points (requires referralId)
+  referralId?: string; // Treasury wallet address that receives the fee split
+}
+
+export interface PlatformFee {
+  feeBps: number;
+  feeAmount: string; // In smallest unit (7 decimals), as returned by API
 }
 
 export interface QuoteResponse {
@@ -21,6 +28,7 @@ export interface QuoteResponse {
   routes?: unknown[];
   priceImpact?: string;
   protocol?: string;
+  platformFee?: PlatformFee; // Present when feeBps was sent in the request
   _sdkQuote?: unknown; // Store full SDK response for build()
 }
 
@@ -28,6 +36,7 @@ export interface BuildRequest {
   quote: QuoteResponse;
   from: string;
   to?: string;
+  referralId?: string; // Required by /quote/build when platformFee is present in the quote
 }
 
 export interface BuildResponse {
