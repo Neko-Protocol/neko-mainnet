@@ -11,6 +11,15 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { ASSET_INFO } from "../../utils/stockInfo";
 import type { AssetInfo } from "../../types/discover";
@@ -22,6 +31,7 @@ import { useFxRate } from "@/hooks/useFxRate";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useAssetPriceHistory } from "../../hooks/useAssetPriceHistory";
 import {
   CLASS_ACCENT,
   CLASS_EXPLANATIONS,
@@ -30,7 +40,7 @@ import {
 import type { PriceSource } from "@/lib/services/stellar-price.service";
 
 const PRICE_SOURCE_LABEL: Record<PriceSource, string> = {
-  reflector: "Reflector oracle",
+  reflector: "Reflector",
   soroswap: "Soroswap",
   coingecko: "CoinGecko",
 };
@@ -39,7 +49,7 @@ function priceSourceLabel(source: PriceSource | null): string | null {
   return source ? PRICE_SOURCE_LABEL[source] : null;
 }
 
-type InfoTab = "overview" | "details" | "buy";
+type InfoTab = "overview" | "details";
 
 function CopyAddress({ address }: { address: string }) {
   const [copied, setCopied] = useState(false);
@@ -125,15 +135,13 @@ const AssetDetail: React.FC = () => {
   const [activeTab, setActiveTab] = useState<InfoTab>("overview");
   const overviewRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
-  const buyRef = useRef<HTMLDivElement>(null);
   const sectionRefs: Record<InfoTab, React.RefObject<HTMLDivElement | null>> = {
     overview: overviewRef,
     details: detailsRef,
-    buy: buyRef,
   };
 
   useEffect(() => {
-    const orderedTabs: InfoTab[] = ["overview", "details", "buy"];
+    const orderedTabs: InfoTab[] = ["overview", "details"];
     const anchorOffset = 140;
 
     const updateActiveTab = () => {
@@ -173,6 +181,26 @@ const AssetDetail: React.FC = () => {
     }
   }, [symbol, router]);
 
+  const formattedPrice =
+    Number.isFinite(price) && price > 0
+      ? formatCurrency(convertUsdToSelected(price, fxRate), selectedCurrency)
+      : null;
+  const { data: priceHistory, isLoading: isLoadingHistory } =
+    useAssetPriceHistory(symbolUpper || undefined);
+  const chartData = useMemo(
+    () =>
+      (priceHistory ?? []).map((point) => ({
+        date: point.date,
+        value: convertUsdToSelected(point.price, fxRate),
+      })),
+    [priceHistory, fxRate]
+  );
+
+  const tabs: { id: InfoTab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "details", label: "Details" },
+  ];
+
   if (!symbol) return null;
 
   if (!hasAsset || !stockInfo) {
@@ -191,19 +219,6 @@ const AssetDetail: React.FC = () => {
       </PageContainer>
     );
   }
-
-  const formattedPrice =
-    Number.isFinite(price) && price > 0
-      ? formatCurrency(convertUsdToSelected(price, fxRate), selectedCurrency)
-      : null;
-
-  const tabs: { id: InfoTab; label: string }[] = [
-    { id: "overview", label: "Overview" },
-    { id: "details", label: "Details" },
-    ...(stockInfo.buyInfo
-      ? [{ id: "buy" as InfoTab, label: "Where to buy" }]
-      : []),
-  ];
 
   return (
     <div className="w-full min-w-0 max-w-full min-h-screen overflow-x-hidden flex flex-col px-4 sm:px-6 lg:px-8">
@@ -320,6 +335,73 @@ const AssetDetail: React.FC = () => {
 
             <div className="border-t border-white/5 mt-10" />
 
+            <section className="mt-8 rounded-xl border border-white/7 p-5 bg-[#0E0E0E]">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-white text-base font-semibold">
+                  Price (last 7 days)
+                </h2>
+                {chartData.length > 0 && (
+                  <div className="inline-flex items-center gap-2 text-emerald-300 text-xs font-medium">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Live
+                  </div>
+                )}
+              </div>
+
+              {isLoadingHistory ? (
+                <div className="h-[220px] flex items-center justify-center">
+                  <LoadingSpinner variant="spinner" size="md" />
+                </div>
+              ) : chartData.length > 0 ? (
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid stroke="rgba(255,255,255,0.07)" />
+                      <XAxis
+                        dataKey="date"
+                        tick={{ fill: "rgba(255,255,255,0.55)", fontSize: 12 }}
+                        tickLine={false}
+                        axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                      />
+                      <YAxis
+                        width={90}
+                        tick={{ fill: "rgba(255,255,255,0.55)", fontSize: 12 }}
+                        tickLine={false}
+                        axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                        tickFormatter={(v) =>
+                          formatCurrency(Number(v), selectedCurrency)
+                        }
+                      />
+                      <Tooltip
+                        formatter={(v) =>
+                          formatCurrency(Number(v), selectedCurrency)
+                        }
+                        contentStyle={{
+                          background: "#111111",
+                          border: "1px solid rgba(255,255,255,0.12)",
+                          borderRadius: "10px",
+                          color: "white",
+                        }}
+                        labelStyle={{ color: "rgba(255,255,255,0.75)" }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#10B981"
+                        strokeWidth={2}
+                        dot={{ r: 3 }}
+                        activeDot={{ r: 5 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[220px] rounded-lg border border-white/5 bg-white/[0.02] flex items-center justify-center">
+                  <p className="text-white/45 text-sm">Not enough data yet</p>
+                </div>
+              )}
+            </section>
+
             {/* Tabs */}
             <div className="mt-8">
               <div
@@ -430,27 +512,6 @@ const AssetDetail: React.FC = () => {
                   </AttributeRow>
                 </div>
               </div>
-
-              {stockInfo.buyInfo && (
-                <div ref={buyRef} className="mt-12 scroll-mt-16 pb-12">
-                  <h2 className="text-white text-xl font-bold mb-4">
-                    Where to buy
-                  </h2>
-                  <p className="text-white/60 text-sm leading-relaxed mb-5 max-w-2xl">
-                    {stockInfo.buyInfo.description}
-                  </p>
-                  <a
-                    href={stockInfo.buyInfo.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:opacity-90"
-                    style={{ backgroundColor: "#229EDF" }}
-                  >
-                    Open {stockInfo.buyInfo.platform}
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </div>
-              )}
             </div>
           </div>
 
@@ -473,9 +534,11 @@ const AssetDetail: React.FC = () => {
                   </p>
                 )}
                 <p className="text-white/30 text-[10px] mt-1">
-                  Quoted in {selectedCurrency}
+                  {selectedCurrency === "USD"
+                    ? `Quoted in ${selectedCurrency}`
+                    : `Quoted in USD, changed to ${selectedCurrency}`}
                   {priceSourceLabel(priceSource)
-                    ? ` via ${priceSourceLabel(priceSource)}`
+                    ? `. Fetched from ${priceSourceLabel(priceSource)}`
                     : ""}
                 </p>
               </div>
