@@ -4,7 +4,11 @@ import { InfoTabs } from "./InfoTabs";
 import { PoolDetailHero } from "./PoolDetailHero";
 import { PoolDetailMetrics } from "./PoolDetailMetrics";
 import { PoolDetailPanel } from "./PoolDetailPanel";
+import { POOL_DETAIL_MAIN_SCROLL_ID } from "./scrollIds";
 import type { PoolDetailLayoutProps } from "./types";
+
+const panelInnerScroll =
+  "flex max-h-[min(calc(100dvh-7rem),calc(100svh-7rem))] flex-col overflow-y-auto overscroll-contain rounded-2xl bg-[#111111] p-6 lg:rounded-xl";
 
 export function PoolDetailLayout({
   pool,
@@ -30,19 +34,15 @@ export function PoolDetailLayout({
 }: PoolDetailLayoutProps) {
   return (
     <div
-      className="w-full rounded-2xl border border-white/7 grid grid-cols-1 lg:grid-cols-[1fr_24rem] items-start"
+      className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl"
       style={{ background: "#111111" }}
     >
-      <div className="min-w-0 p-8 lg:border-r border-white/7 order-2 lg:order-1">
-        <PoolDetailHero pool={pool} />
-        <div className="border-t border-white/5 mb-8" />
-        <PoolDetailMetrics pool={pool} />
-        <div className="border-t border-white/5 mt-10 mb-0" />
-        <InfoTabs pool={pool} />
-      </div>
-
-      <div className="order-1 lg:order-2 lg:sticky lg:top-6 lg:self-start h-auto">
-        <div className="p-6 flex flex-col rounded-2xl lg:rounded-none lg:max-h-[calc(100dvh-3rem)] lg:overflow-y-auto">
+      {/* lg: viewport-fixed panel; reserve space so main column does not sit underneath */}
+      <aside
+        className="z-30 w-full min-w-0 shrink-0 lg:fixed lg:right-8 lg:top-28 lg:z-40 lg:w-[min(24rem,calc(100vw-4rem))] lg:max-w-[calc(100vw-4rem)] lg:p-0"
+        aria-label="Pool actions"
+      >
+        <div className={panelInnerScroll}>
           <PoolDetailPanel
             pool={pool}
             type={type}
@@ -66,7 +66,21 @@ export function PoolDetailLayout({
             isLendingActionPending={isLendingActionPending}
           />
         </div>
-      </div>
+      </aside>
+
+      <section
+        id={POOL_DETAIL_MAIN_SCROLL_ID}
+        className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-8 pb-8 pt-0 lg:pr-6 lg:mr-[calc(24rem+2rem)]"
+      >
+        {/* pt-8 here (not on section) so sticky tab bar top-0 meets scrollport edge and blur covers the top */}
+        <div className="pt-8">
+          <PoolDetailHero pool={pool} />
+          <div className="border-t border-white/5 mb-8" />
+          <PoolDetailMetrics pool={pool} />
+          <div className="border-t border-white/5 mt-10 mb-0" />
+        </div>
+        <InfoTabs pool={pool} />
+      </section>
     </div>
   );
 }

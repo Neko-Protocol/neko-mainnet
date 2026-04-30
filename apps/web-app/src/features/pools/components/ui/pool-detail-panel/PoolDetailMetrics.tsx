@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { getPoolTokenIcon } from "../../../utils/poolTokenIcons";
 import type { PoolDetailPanelPool } from "./types";
+import { MetricValueText } from "./MetricValueText";
 
 export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
   const resolvedIssuerIcon =
@@ -15,8 +16,8 @@ export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
         <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
           Total Liquidity
         </p>
-        <p className="text-white text-3xl font-bold tabular-nums leading-none">
-          {pool.totalLiquidity}
+        <p className="pool-detail-metric-value">
+          <MetricValueText value={pool.totalLiquidity} />
         </p>
         {pool.totalLiquidityRaw && (
           <p className="text-white/30 text-xs mt-2 tabular-nums">
@@ -30,8 +31,8 @@ export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
           <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
             Total Borrowed
           </p>
-          <p className="text-white text-3xl font-bold tabular-nums leading-none">
-            {pool.totalBorrowed}
+          <p className="pool-detail-metric-value">
+            <MetricValueText value={pool.totalBorrowed} />
           </p>
           {pool.totalBorrowedRaw && (
             <p className="text-white/30 text-xs mt-2 tabular-nums">
@@ -45,8 +46,8 @@ export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
         <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
           Supply APY
         </p>
-        <p className="text-white text-3xl font-bold tabular-nums leading-none">
-          {pool.supplyApy}
+        <p className="pool-detail-metric-value">
+          <MetricValueText value={pool.supplyApy} />
         </p>
         {pool.supplyApySub && (
           <p className="text-white/30 text-xs mt-2 tabular-nums">
@@ -60,8 +61,8 @@ export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
           <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
             Borrow APY
           </p>
-          <p className="text-white text-3xl font-bold tabular-nums leading-none">
-            {pool.borrowApyLabel}
+          <p className="pool-detail-metric-value">
+            <MetricValueText value={pool.borrowApyLabel} />
           </p>
         </div>
       )}
@@ -71,8 +72,8 @@ export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
           <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
             Pool Type
           </p>
-          <p className="text-white text-3xl font-bold tabular-nums leading-none">
-            {pool.poolType}
+          <p className="pool-detail-metric-value">
+            <MetricValueText value={pool.poolType} />
           </p>
           {pool.poolTypeDetail && (
             <p className="text-white/30 text-xs mt-2 tabular-nums">

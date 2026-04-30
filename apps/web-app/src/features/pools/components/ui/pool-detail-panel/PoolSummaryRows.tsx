@@ -31,7 +31,7 @@ export function PoolSummaryRows({
   collateralInputUsdDisplay: string;
 }) {
   return (
-    <div className="rounded-xl bg-[#1C1C1C] border border-white/5 px-4 py-1">
+    <div className="rounded-xl px-4 py-1">
       <InfoRow
         label="Network"
         valueEl={

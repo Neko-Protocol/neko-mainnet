@@ -44,7 +44,7 @@ export function AmountInput({
     t: PoolDetailPanelToken,
     icon: string | null | undefined
   ) => (
-    <div className="w-5 h-5 rounded-full bg-[#2A2A2A] flex items-center justify-center overflow-hidden shrink-0">
+    <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center overflow-hidden shrink-0">
       {icon ? (
         <Image
           src={icon}
@@ -61,10 +61,7 @@ export function AmountInput({
   );
 
   return (
-    <div
-      className="rounded-xl border border-white/10 bg-[#1C1C1C] p-4 focus-within:border-[#229EDF]/40 transition-colors"
-      style={{ borderWidth: 1 }}
-    >
+    <div className="rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <p className="text-white/50 text-xs font-medium">{label}</p>
         <div className="flex items-center gap-1.5">

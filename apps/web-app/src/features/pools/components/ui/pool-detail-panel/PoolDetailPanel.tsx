@@ -111,9 +111,8 @@ export function PoolDetailPanel({
   const collateralInputUsdDisplay = formatUsdValue(collateralInputUsd);
 
   return (
-    <div className="w-full flex flex-col h-full">
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-3">
-        <PoolPanelModeTabs
+    <div className="flex w-full flex-col gap-3">
+      <PoolPanelModeTabs
           depositWithdrawMode={depositWithdrawMode}
           ammTab={ammTab}
           onAmmTabChange={onAmmTabChange}
@@ -263,7 +262,6 @@ export function PoolDetailPanel({
           poolCollateralOptionsLength={pool.collateralOptions?.length ?? 0}
           borrowExceedsHf={borrowExceedsHf}
         />
-      </div>
     </div>
   );
 }

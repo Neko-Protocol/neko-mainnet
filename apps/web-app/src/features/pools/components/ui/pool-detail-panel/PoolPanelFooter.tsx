@@ -67,7 +67,7 @@ export function PoolPanelFooter({
   return (
     <>
       {depositWithdrawMode && onAmmSubmit && (
-        <div className="sticky bottom-0 pt-3 bg-[#121212]">
+        <div className="sticky bottom-0 pt-3 bg-[#111111]">
           {walletHint}
           <button
             type="button"
@@ -85,7 +85,7 @@ export function PoolPanelFooter({
       )}
 
       {!depositWithdrawMode && supportsBorrow && (canLend || canBorrow) && (
-        <div className="sticky bottom-0 pt-3 bg-[#121212]">
+        <div className="sticky bottom-0 pt-3 bg-[#111111]">
           {walletHint}
           {mode === "lend" && canLend && onLendSubmit && (
             <button
@@ -136,7 +136,7 @@ export function PoolPanelFooter({
       )}
 
       {!depositWithdrawMode && !supportsBorrow && canLend && onLendSubmit && (
-        <div className="sticky bottom-0 pt-3 bg-[#121212]">
+        <div className="sticky bottom-0 pt-3 bg-[#111111]">
           {walletHint}
           <button
             type="button"

@@ -679,8 +679,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
   if (isLoading) {
     return (
-      <div className="w-full flex flex-col px-4 sm:px-6 lg:px-8">
-        <div className="py-4 shrink-0">
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
+        <div className="shrink-0 py-4">
           <Link
             href="/pools"
             className="inline-flex items-center gap-1 text-white/60 hover:text-white font-medium text-sm transition-colors"
@@ -688,7 +688,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
             &larr; Back to Pools
           </Link>
         </div>
-        <div className="pb-4">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-4">
           <PoolDetailSkeleton />
         </div>
       </div>
@@ -719,8 +719,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   }
 
   return (
-    <div className="w-full flex flex-col px-4 sm:px-6 lg:px-8">
-      <div className="py-4 shrink-0">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
+      <div className="shrink-0 py-4">
         <Link
           href="/pools"
           className="inline-flex items-center gap-1 text-white/60 hover:text-white font-medium text-sm transition-colors"
@@ -729,7 +729,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         </Link>
       </div>
 
-      <div className="pb-4">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-4">
         <PoolDetailLayout
           pool={panelPool}
           type={initialTab}

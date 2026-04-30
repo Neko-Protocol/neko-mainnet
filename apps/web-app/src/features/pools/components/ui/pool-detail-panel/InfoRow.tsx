@@ -16,7 +16,7 @@ export function InfoRow({
   dimmed?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+    <div className="flex items-center justify-between py-2">
       {labelEl ?? <span className="text-white/40 text-xs">{label}</span>}
       {valueEl ?? (
         <span

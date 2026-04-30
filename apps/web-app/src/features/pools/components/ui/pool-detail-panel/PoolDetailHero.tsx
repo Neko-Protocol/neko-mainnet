@@ -5,6 +5,27 @@ import { CopyAddress } from "./CopyAddress";
 import { OverlappingTokens } from "./OverlappingTokens";
 import type { PoolDetailPanelPool } from "./types";
 
+const TITLE_SLASH_SPLIT = /(\s*\/\s*)/;
+
+function PoolDetailHeroTitle({ pool }: { pool: PoolDetailPanelPool }) {
+  const raw = pool.name || `${pool.token1.symbol} / ${pool.token2.symbol}`;
+  const parts = raw.split(TITLE_SLASH_SPLIT);
+
+  return (
+    <>
+      {parts.map((part, i) =>
+        /^\s*\/\s*$/.test(part) ? (
+          <span key={i} className="pool-detail-hero-slash">
+            {part}
+          </span>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
 export function PoolDetailHero({ pool }: { pool: PoolDetailPanelPool }) {
   return (
     <div className="flex items-center gap-5 mb-10">
@@ -15,8 +36,8 @@ export function PoolDetailHero({ pool }: { pool: PoolDetailPanelPool }) {
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-white font-bold text-3xl sm:text-4xl leading-none">
-            {pool.name || `${pool.token1.symbol} / ${pool.token2.symbol}`}
+          <h1 className="pool-detail-hero-title">
+            <PoolDetailHeroTitle pool={pool} />
           </h1>
         </div>
         <div className="flex items-center gap-4 mt-2.5 flex-wrap">

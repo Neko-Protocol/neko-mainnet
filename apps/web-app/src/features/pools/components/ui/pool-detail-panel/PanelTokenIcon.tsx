@@ -17,7 +17,7 @@ export function PanelTokenIcon({
     icon ?? getPoolTokenIcon({ type: "contract", code: symbol });
   return (
     <div
-      className="rounded-full bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden shrink-0"
+      className="rounded-full bg-white/10 flex items-center justify-center overflow-hidden shrink-0"
       style={{ width: size, height: size }}
     >
       {resolvedIcon ? (

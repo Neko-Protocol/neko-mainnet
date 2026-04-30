@@ -30,7 +30,7 @@ export function BlendCollateralCard({
   collateralBelowMinimum: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-white/10 bg-[#1C1C1C] p-4 flex flex-col gap-3">
+    <div className="rounded-xl p-4 flex flex-col gap-3">
       <p className="text-white/50 text-xs font-medium">Collateral</p>
 
       <div className="flex flex-wrap gap-3">
@@ -48,10 +48,8 @@ export function BlendCollateralCard({
               className="flex flex-col items-center gap-1 transition-colors"
             >
               <div
-                className={`w-9 h-9 shrink-0 rounded-full border-2 overflow-hidden flex items-center justify-center bg-white/5 transition-colors ${
-                  isSelected
-                    ? "border-[#229EDF]"
-                    : "border-white/10 hover:border-white/30"
+                className={`w-9 h-9 shrink-0 rounded-full overflow-hidden flex items-center justify-center transition-colors ${
+                  isSelected ? "bg-white/[0.14]" : "bg-white/5"
                 }`}
               >
                 {icon ? (

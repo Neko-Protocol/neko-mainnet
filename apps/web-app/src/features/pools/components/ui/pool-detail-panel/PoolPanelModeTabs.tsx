@@ -20,7 +20,7 @@ export function PoolPanelModeTabs({
   return (
     <>
       {depositWithdrawMode && (
-        <div className="flex bg-[#2A2A2A] rounded-xl p-1 gap-1">
+        <div className="flex rounded-xl p-1 gap-1">
           {(["deposit", "withdraw"] as const).map((t) => (
             <button
               key={t}
@@ -39,7 +39,7 @@ export function PoolPanelModeTabs({
       )}
 
       {!depositWithdrawMode && supportsBorrow && (
-        <div className="flex bg-[#2A2A2A] rounded-xl p-1 gap-1">
+        <div className="flex rounded-xl p-1 gap-1">
           {lendingTabs.map((m) => (
             <button
               type="button"
@@ -58,7 +58,7 @@ export function PoolPanelModeTabs({
       )}
 
       {!depositWithdrawMode && !supportsBorrow && (
-        <span className="inline-flex w-fit items-center px-3 py-1.5 rounded-lg bg-[#2A2A2A] text-xs font-semibold text-white">
+        <span className="inline-flex w-fit items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-white/70">
           Lending
         </span>
       )}
