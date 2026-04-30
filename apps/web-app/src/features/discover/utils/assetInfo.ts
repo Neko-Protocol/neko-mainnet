@@ -82,7 +82,7 @@ const RAW: Record<string, AssetInfo> = {
     description:
       "Japanese yen stablecoin issued by GMO-Z.com Trust Company, pegged 1:1 to JPY",
     summary:
-      "GYEN is the first regulated Japanese yen stablecoin, issued by GMO-Z.com Trust Company — a New York State-chartered limited purpose trust company. Each GYEN is backed 1:1 by JPY held in trust, with regular audits. Provides on-chain exposure to JPY for payments, remittances, and DeFi without counterparty risk from unregulated issuers.",
+      "GYEN is the first regulated Japanese yen stablecoin, issued by GMO-Z.com Trust Company, a New York State-chartered limited purpose trust company. Each GYEN is backed 1:1 by JPY held in trust, with regular audits. Provides on-chain exposure to JPY for payments, remittances, and DeFi without counterparty risk from unregulated issuers.",
     highlights: [
       "First regulated JPY stablecoin, supervised by NYDFS",
       "Reserves held 1:1 in JPY at regulated Japanese banks",
@@ -102,7 +102,7 @@ const RAW: Record<string, AssetInfo> = {
     description:
       "Tokenized US Treasury notes providing on-chain yield via Etherfuse",
     summary:
-      "USTRY is an Etherfuse Stablebond backed 1:1 by short-to-medium-term US Treasury notes issued by the US Department of the Treasury. The token uses a rebase mechanism — your balance automatically increases as interest accrues daily, so you never need to manually claim yield. Purchase through Etherfuse at app.etherfuse.com.",
+      "USTRY is an Etherfuse Stablebond backed 1:1 by short-to-medium-term US Treasury notes issued by the US Department of the Treasury. The token uses a rebase mechanism, your balance automatically increases as interest accrues daily, so you never need to manually claim yield.",
     highlights: [
       "Backed 1:1 by short-duration US Treasury notes held by a regulated custodian",
       "Yield from the underlying bonds passed through to holders daily",
@@ -122,10 +122,10 @@ const RAW: Record<string, AssetInfo> = {
     description:
       "Tokenized Brazilian government bonds (Letras do Tesouro Nacional)",
     summary:
-      "TESOURO is an Etherfuse Stablebond backed by Brazilian Letras do Tesouro Nacional (LTN) — zero-coupon government bonds issued by Brazil's National Treasury. Yield accrues until maturity and is reflected in the token price. Offers on-chain exposure to Brazilian sovereign debt with transparent, 24/7 access. Available on Stellar, Solana, and Base.",
+      "TESOURO is an Etherfuse Stablebond backed by Brazilian Letras do Tesouro Nacional (LTN), zero-coupon government bonds issued by Brazil's National Treasury. Yield accrues until maturity and is reflected in the token price. Offers on-chain exposure to Brazilian sovereign debt with transparent, 24/7 access.",
     highlights: [
       "Backed by Letras do Tesouro Nacional (LTN), the Brazilian government's zero-coupon bonds",
-      "Denominated in BRL — provides on-chain exposure to Brazilian real interest rates",
+      "Denominated in BRL, provides on-chain exposure to Brazilian real interest rates",
       "Bonds custodied with regulated Brazilian institutions",
       "Historically among the highest-yielding sovereign instruments in the major economies",
     ],
@@ -141,11 +141,11 @@ const RAW: Record<string, AssetInfo> = {
     name: "Mexican Treasury Token",
     description: "Tokenized Mexican government treasury certificates (CETES)",
     summary:
-      "CETES tokens represent Mexican Federal Treasury Certificates (Certificados de la Tesorería) on blockchain — short-term government debt instruments issued by the Mexican federal government and denominated in MXN. Etherfuse's CNBV-cleared Stablebond provides transparent, yield-bearing exposure to CETES with 24/7 trading.",
+      "CETES tokens represent Mexican Federal Treasury Certificates (Certificados de la Tesorería) on blockchain, short-term government debt instruments issued by the Mexican federal government and denominated in MXN. Etherfuse's CNBV-cleared Stablebond provides transparent, yield-bearing exposure to CETES with 24/7 trading.",
     highlights: [
       "Backed by Certificados de la Tesorería de la Federación (CETES) issued by the Mexican Treasury",
       "Cleared by Mexico's banking regulator (CNBV) for retail distribution",
-      "Tracks short-term MXN interest rates — typical maturities of 28 to 364 days",
+      "Tracks short-term MXN interest rates, typical maturities of 28 to 364 days",
       "Daily price accrual reflects yield up to maturity, with no manual claim",
     ],
     buyInfo: {
@@ -161,7 +161,7 @@ const RAW: Record<string, AssetInfo> = {
     description:
       "Tokenized Korean government bonds issued via Etherfuse and Shinhan Securities",
     summary:
-      "KTB is an Etherfuse Stablebond backed by short-term Korean Treasury Bonds — sovereign debt instruments issued by the South Korean government and denominated in KRW. Launched in partnership with Shinhan Securities, KTB brings exposure to one of Asia's largest and most stable government bond markets on-chain.",
+      "KTB is an Etherfuse Stablebond backed by short-term Korean Treasury Bonds, sovereign debt instruments issued by the South Korean government and denominated in KRW. Launched in partnership with Shinhan Securities, KTB brings exposure to one of Asia's largest and most stable government bond markets on-chain.",
     highlights: [
       "Backed by Korean Treasury Bonds, sovereign debt of the Republic of Korea",
       "Distributed in partnership with Shinhan Securities, a top-tier Korean broker",
