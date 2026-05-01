@@ -19,6 +19,7 @@ import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { usePoolDetail } from "@/features/pools/hooks/usePoolDetail";
 import {
   PoolDetailLayout,
+  PoolDetailSkeleton,
   type PoolDetailPanelPool,
   type CollateralOption,
 } from "../ui/PoolDetailPanel";
@@ -678,10 +679,17 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
   if (isLoading) {
     return (
-      <div className="w-full flex items-center justify-center px-4 py-8 h-dvh">
-        <div className="w-full max-w-md rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-white/10 border-t-[#229EDF] mx-auto mb-4" />
-          <p className="text-white/40 text-sm">Loading pool...</p>
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
+        <div className="shrink-0 py-4">
+          <Link
+            href="/pools"
+            className="inline-flex items-center gap-1 text-white/60 hover:text-white font-medium text-sm transition-colors"
+          >
+            &larr; Back to Pools
+          </Link>
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-4">
+          <PoolDetailSkeleton />
         </div>
       </div>
     );
@@ -711,8 +719,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   }
 
   return (
-    <div className="w-full flex flex-col px-4 sm:px-6 lg:px-8">
-      <div className="py-4 shrink-0">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
+      <div className="shrink-0 py-4">
         <Link
           href="/pools"
           className="inline-flex items-center gap-1 text-white/60 hover:text-white font-medium text-sm transition-colors"
@@ -721,7 +729,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         </Link>
       </div>
 
-      <div className="pb-4">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-4">
         <PoolDetailLayout
           pool={panelPool}
           type={initialTab}
