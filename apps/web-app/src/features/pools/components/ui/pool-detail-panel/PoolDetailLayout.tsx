@@ -8,7 +8,7 @@ import { POOL_DETAIL_MAIN_SCROLL_ID } from "./scrollIds";
 import type { PoolDetailLayoutProps } from "./types";
 
 const panelInnerScroll =
-  "flex max-h-[min(calc(100dvh-7rem),calc(100svh-7rem))] flex-col overflow-y-auto overscroll-contain rounded-2xl bg-[#111111] p-6 lg:rounded-xl";
+  "pool-detail-scroll flex max-h-[min(calc(100dvh-7rem),calc(100svh-7rem))] flex-col overflow-y-auto overscroll-contain rounded-2xl bg-[#111111] p-6 lg:rounded-xl";
 
 export function PoolDetailLayout({
   pool,
@@ -70,7 +70,7 @@ export function PoolDetailLayout({
 
       <section
         id={POOL_DETAIL_MAIN_SCROLL_ID}
-        className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-8 pb-8 pt-0 lg:pr-6 lg:mr-[calc(24rem+2rem)]"
+        className="pool-detail-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-8 pb-8 pt-0 lg:pr-6 lg:mr-[calc(24rem+2rem)]"
       >
         {/* pt-8 here (not on section) so sticky tab bar top-0 meets scrollport edge and blur covers the top */}
         <div className="pt-8">
