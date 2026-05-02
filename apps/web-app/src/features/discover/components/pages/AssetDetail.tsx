@@ -453,9 +453,6 @@ const AssetDetail: React.FC = () => {
 
               <div ref={detailsRef} className="mt-12 scroll-mt-16">
                 <h2 className="text-white text-xl font-bold mb-4">Details</h2>
-                <h3 className="text-white/50 text-sm font-medium mb-2">
-                  Asset Attributes
-                </h3>
                 <div>
                   <AttributeRow label="Symbol">{symbolUpper}</AttributeRow>
                   <AttributeRow label="Name">{stockInfo.name}</AttributeRow>
