@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Swap from "@/features/swap/components/pages/Swap";
 
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function SwapPage() {
-  return <Swap />;
+  return (
+    <Suspense>
+      <Swap />
+    </Suspense>
+  );
 }

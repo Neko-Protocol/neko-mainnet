@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import Image from "next/image";
 import { ChevronDown, ArrowLeftRight } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { getTokenAddress } from "@/lib/helpers/stellar/soroswap";
@@ -143,14 +144,18 @@ const Swap: React.FC = () => {
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
 
+  const searchParams = useSearchParams();
   const availableTokens = getAvailableTokens();
   const tokenCodes = Object.keys(availableTokens);
   const tokens = getTokens();
 
-  const defaultTokenIn =
-    availableTokens[tokenCodes[0]]?.contract || tokens.XLM || "";
+  const defaultTokenIn = tokens.XLM || "";
+  const toParam = searchParams.get("to")?.toUpperCase();
   const defaultTokenOut =
-    availableTokens[tokenCodes[1]]?.contract || tokens.USDC || "";
+    (toParam && tokens[toParam]) ||
+    availableTokens[tokenCodes[1]]?.contract ||
+    tokens.USDC ||
+    "";
 
   const swapState = useSwapState(defaultTokenIn, defaultTokenOut);
   const {
