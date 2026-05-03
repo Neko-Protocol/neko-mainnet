@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -47,6 +53,19 @@ const PRICE_SOURCE_LABEL: Record<PriceSource, string> = {
 
 function priceSourceLabel(source: PriceSource | null): string | null {
   return source ? PRICE_SOURCE_LABEL[source] : null;
+}
+
+/** Tailwind `sm` is 640px — matches max-sm mobile-only overrides. */
+function useIsMaxSm() {
+  return useSyncExternalStore(
+    (onStoreChange) => {
+      const mq = window.matchMedia("(max-width: 639px)");
+      mq.addEventListener("change", onStoreChange);
+      return () => mq.removeEventListener("change", onStoreChange);
+    },
+    () => window.matchMedia("(max-width: 639px)").matches,
+    () => false
+  );
 }
 
 type InfoTab = "overview" | "details";
@@ -208,6 +227,8 @@ const AssetDetail: React.FC = () => {
     [priceHistory, fxRate]
   );
 
+  const isMaxSm = useIsMaxSm();
+
   const tabs: { id: InfoTab; label: string }[] = [
     { id: "overview", label: "Overview" },
     { id: "details", label: "Details" },
@@ -249,10 +270,10 @@ const AssetDetail: React.FC = () => {
           style={{ background: "#111111" }}
         >
           {/* ── Left column ── */}
-          <div className="min-w-0 p-8 lg:border-r border-white/7 order-2 lg:order-1">
+          <div className="min-w-0 p-8 max-sm:p-4 lg:border-r border-white/7 order-2 lg:order-1">
             {/* Header */}
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between mb-10">
-              <div className="flex items-start gap-4 min-w-0">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between mb-10 max-sm:items-center">
+              <div className="flex items-start gap-4 min-w-0 max-sm:flex-col max-sm:items-center">
                 <div className="relative w-16 h-16 rounded-full bg-white ring-1 ring-white/10 overflow-hidden shrink-0 flex items-center justify-center">
                   <Image
                     src={stockInfo.logo || "/assets/xlm-logo.png"}
@@ -262,9 +283,9 @@ const AssetDetail: React.FC = () => {
                     className="object-cover scale-110"
                   />
                 </div>
-                <div className="min-w-0 flex-1 h-16 flex flex-col justify-between">
-                  <div className="min-h-0 flex items-center gap-2">
-                    <h1 className="text-white font-bold text-2xl leading-none truncate">
+                <div className="min-w-0 flex-1 h-16 flex flex-col justify-between max-sm:h-auto max-sm:w-full max-sm:flex-none max-sm:items-center max-sm:justify-start max-sm:gap-2">
+                  <div className="min-h-0 flex items-center gap-2 max-sm:flex-wrap max-sm:justify-center max-sm:gap-x-2 max-sm:gap-y-1">
+                    <h1 className="text-white font-bold text-2xl leading-none truncate max-sm:text-xl max-sm:leading-tight max-sm:overflow-visible max-sm:whitespace-normal max-sm:text-center">
                       {symbolUpper}
                     </h1>
                     {taxonomy && accent && (
@@ -275,23 +296,23 @@ const AssetDetail: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <div className="min-h-0 flex items-center gap-3">
-                    <span className="text-white/70 text-sm font-medium truncate">
+                  <div className="min-h-0 flex items-center gap-3 max-sm:flex-col max-sm:items-center max-sm:gap-2">
+                    <span className="text-white/70 text-sm font-medium truncate max-sm:max-w-full max-sm:overflow-visible max-sm:whitespace-normal max-sm:leading-snug max-sm:text-center">
                       {stockInfo.name}
                     </span>
-                    <span className="shrink-0">
+                    <span className="shrink-0 max-sm:flex max-sm:justify-center">
                       <CopyAddress address={cfg!.contract} />
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="shrink-0 sm:text-right">
+              <div className="shrink-0 sm:text-right max-sm:w-full max-sm:text-center">
                 <p className="text-white/40 text-xs font-medium mb-2 uppercase tracking-wider">
                   Spot Price ({selectedCurrency})
                 </p>
                 {isLoadingPrice ? (
-                  <div className="sm:flex sm:justify-end">
+                  <div className="flex sm:justify-end max-sm:justify-center">
                     <LoadingSpinner variant="spinner" size="md" />
                   </div>
                 ) : (
@@ -313,7 +334,7 @@ const AssetDetail: React.FC = () => {
 
             <div className="border-t border-white/5" />
 
-            <section className="mt-8 rounded-xl border border-white/7 p-5 bg-[#0E0E0E]">
+            <section className="mt-8 rounded-xl border border-white/7 p-5 max-sm:p-4 bg-[#0E0E0E]">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-white text-base font-semibold">
                   Price (last 7 days)
@@ -342,8 +363,11 @@ const AssetDetail: React.FC = () => {
                         axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
                       />
                       <YAxis
-                        width={90}
-                        tick={{ fill: "rgba(255,255,255,0.55)", fontSize: 12 }}
+                        width={isMaxSm ? 64 : 90}
+                        tick={{
+                          fill: "rgba(255,255,255,0.55)",
+                          fontSize: isMaxSm ? 11 : 12,
+                        }}
                         tickLine={false}
                         axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
                         tickFormatter={(v) =>
@@ -380,10 +404,32 @@ const AssetDetail: React.FC = () => {
               )}
             </section>
 
+            {/* Action buttons — mobile only, sits below the chart */}
+            <div className="flex w-full justify-center gap-3 mt-4 lg:hidden">
+              <Link
+                href={`/swap?to=${symbolUpper}`}
+                className="flex flex-1 min-w-0 items-center justify-center gap-2 px-3 py-3 rounded-xl bg-[#229EDF] text-white font-semibold text-sm text-center hover:bg-[#1a8bc7] transition-colors border border-[#229EDF]/50"
+              >
+                <ArrowLeftRight className="h-4 w-4 shrink-0" />
+                <span className="leading-tight">Swap on Neko</span>
+              </Link>
+              {stockInfo.buyInfo && (
+                <Link
+                  href={stockInfo.buyInfo.url}
+                  className="flex flex-1 min-w-0 items-center justify-center gap-2 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold text-sm text-center transition-colors border border-white/20"
+                >
+                  <ExternalLink className="h-4 w-4 shrink-0" />
+                  <span className="leading-tight">
+                    Buy on {stockInfo.buyInfo.platform}
+                  </span>
+                </Link>
+              )}
+            </div>
+
             {/* Tabs */}
             <div className="mt-8">
               <div
-                className="sticky top-0 z-10 -mx-8 px-8 border-b border-white/5"
+                className="sticky top-0 z-10 -mx-8 px-8 max-sm:-mx-4 max-sm:px-4 border-b border-white/5"
                 style={{ background: "#111111" }}
               >
                 <div className="flex gap-6">
@@ -490,52 +536,25 @@ const AssetDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* ── Right sticky panel ── */}
-          <div className="order-1 lg:order-2 lg:sticky lg:top-6 lg:self-start h-auto">
+          {/* ── Right sticky panel — desktop only ── */}
+          <div className="hidden lg:block order-1 lg:order-2 lg:sticky lg:top-6 lg:self-start h-auto">
             <div className="p-6 flex flex-col gap-3 rounded-2xl lg:rounded-none">
-              <div className="rounded-xl bg-[#1C1C1C] border border-white/5 p-5">
-                <p className="text-white/50 text-xs font-medium uppercase tracking-wider mb-2">
-                  Current price
-                </p>
-                {isLoadingPrice ? (
-                  <LoadingSpinner variant="spinner" size="md" />
-                ) : (
-                  <p
-                    className={`text-2xl font-bold tabular-nums ${
-                      formattedPrice ? "text-white" : "text-white/40"
-                    }`}
-                  >
-                    {formattedPrice ?? "No data"}
-                  </p>
-                )}
-                <p className="text-white/30 text-[10px] mt-1">
-                  {selectedCurrency === "USD"
-                    ? `Quoted in ${selectedCurrency}`
-                    : `Quoted in USD, changed to ${selectedCurrency}`}
-                  {priceSourceLabel(priceSource)
-                    ? `. Fetched from ${priceSourceLabel(priceSource)}`
-                    : ""}
-                </p>
-              </div>
-
               <Link
                 href={`/swap?to=${symbolUpper}`}
-                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors border border-[#229EDF]/50"
               >
                 <ArrowLeftRight className="h-4 w-4" />
                 Swap on Neko
               </Link>
 
               {stockInfo.buyInfo && (
-                <a
+                <Link
                   href={stockInfo.buyInfo.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold text-sm transition-colors border border-white/5"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold text-sm transition-colors border border-white/20"
                 >
-                  Buy on {stockInfo.buyInfo.platform}
                   <ExternalLink className="h-4 w-4" />
-                </a>
+                  Buy on {stockInfo.buyInfo.platform}
+                </Link>
               )}
             </div>
           </div>
