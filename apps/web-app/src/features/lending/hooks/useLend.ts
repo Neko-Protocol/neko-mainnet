@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
 import { rpc } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
@@ -38,6 +39,7 @@ function toBTokens(tokensAmount: string, bTokenRate: string): string {
 }
 
 export function useLend() {
+  const searchParams = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeposit, setIsDeposit] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +50,11 @@ export function useLend() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [protocolFilter, setProtocolFilterState] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const q = searchParams.get("supply")?.trim();
+    if (q) setSearchQuery(q);
+  }, [searchParams]);
 
   const { address, signTransaction, networkPassphrase } = useWallet();
   const { addNotification } = useToast();
