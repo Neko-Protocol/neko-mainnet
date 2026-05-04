@@ -19,6 +19,7 @@ import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { usePoolDetail } from "@/features/pools/hooks/usePoolDetail";
 import {
   PoolDetailLayout,
+  PoolDetailSkeleton,
   type PoolDetailPanelPool,
   type CollateralOption,
 } from "../ui/PoolDetailPanel";
@@ -231,6 +232,36 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     const d2 = pool.tokens[1]?.decimals ?? 7;
     return fromSmallestUnit(amtB.toString(), d2);
   }, [pool, ammTab, ammAmount, decimals]);
+
+  const maxAmmDepositAmount = useMemo(() => {
+    if (!pool || pool.type !== "aqua") return token1Balance ?? "0";
+    const reserves = pool.metadata.reserves as string[] | undefined;
+    if (!reserves?.length || pool.tokens.length < 2)
+      return token1Balance ?? "0";
+
+    const d1 = pool.tokens[0]?.decimals ?? 7;
+    const d2 = pool.tokens[1]?.decimals ?? 7;
+
+    const t1MaxStroops =
+      pool.tokens[0]?.code === "XLM"
+        ? spendableXlmStroops
+        : BigInt(toSmallestUnit(token1Balance ?? "0", d1));
+
+    const t2BalStroops = BigInt(toSmallestUnit(token2Balance ?? "0", d2));
+    const reserveA = reserveStroopsFromApiString(reserves[0]);
+    const reserveB = reserveStroopsFromApiString(reserves[1]);
+
+    if (reserveA <= 0n || reserveB <= 0n) {
+      return fromSmallestUnit(t1MaxStroops.toString(), d1);
+    }
+
+    const maxT1FromT2Stroops =
+      (t2BalStroops * reserveA * 100n) / (reserveB * 101n);
+    const limitingStroops =
+      t1MaxStroops < maxT1FromT2Stroops ? t1MaxStroops : maxT1FromT2Stroops;
+
+    return fromSmallestUnit(limitingStroops.toString(), d1);
+  }, [pool, token1Balance, token2Balance, spendableXlmStroops]);
 
   const amountExceedsSpendableXlm =
     depositWithdrawMode &&
@@ -647,6 +678,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         icon: ISSUER_ICONS[pool.type] ?? null,
       },
       token1Balance: token1Balance ?? "0",
+      token2Balance: token2Balance ?? "0",
       /** LP / supplied position in human units (withdraw max) */
       lpBalance: position?.depositedFormatted ?? "0",
       collateralBalance: collateralRaw,
@@ -669,10 +701,17 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
   if (isLoading) {
     return (
-      <div className="w-full flex items-center justify-center px-4 py-8 h-dvh">
-        <div className="w-full max-w-md rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-4 border-white/10 border-t-[#229EDF] mx-auto mb-4" />
-          <p className="text-white/40 text-sm">Loading pool...</p>
+      <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
+        <div className="shrink-0 py-4">
+          <Link
+            href="/pools"
+            className="inline-flex items-center gap-1 text-white/60 hover:text-white font-medium text-sm transition-colors"
+          >
+            &larr; Back to Pools
+          </Link>
+        </div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-4">
+          <PoolDetailSkeleton />
         </div>
       </div>
     );
@@ -702,8 +741,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   }
 
   return (
-    <div className="w-full flex flex-col px-4 sm:px-6 lg:px-8">
-      <div className="py-4 shrink-0">
+    <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
+      <div className="shrink-0 py-4">
         <Link
           href="/pools"
           className="inline-flex items-center gap-1 text-white/60 hover:text-white font-medium text-sm transition-colors"
@@ -712,7 +751,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         </Link>
       </div>
 
-      <div className="pb-4">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-4">
         <PoolDetailLayout
           pool={panelPool}
           type={initialTab}
@@ -722,6 +761,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           ammTab={ammTab}
           onAmmTabChange={handleAmmTabChange}
           ammAmount={ammAmount}
+          ammAmount2={requiredSecondLegFormatted ?? undefined}
+          ammMaxAmount={maxAmmDepositAmount}
           onAmmAmountChange={setAmmAmount}
           onAmmSubmit={handleAmmSubmit}
           isAmmSubmitting={isActionPending}

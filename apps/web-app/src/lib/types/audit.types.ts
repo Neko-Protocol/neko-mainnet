@@ -20,6 +20,8 @@ export interface AuditEvent {
   amount_out?: number;
   pool_id?: string;
   tx_hash?: string;
+  platform_fee_bps?: number;
+  platform_fee_amount?: string;
 }
 
 export interface AuditLog extends AuditEvent {

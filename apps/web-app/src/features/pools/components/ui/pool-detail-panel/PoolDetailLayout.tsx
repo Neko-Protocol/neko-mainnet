@@ -1,0 +1,86 @@
+"use client";
+
+import { InfoTabs } from "./InfoTabs";
+import { PoolDetailHero } from "./PoolDetailHero";
+import { PoolDetailMetrics } from "./PoolDetailMetrics";
+import { PoolDetailPanel } from "./PoolDetailPanel";
+import { POOL_DETAIL_MAIN_SCROLL_ID } from "./scrollIds";
+import type { PoolDetailLayoutProps } from "./types";
+
+const panelInnerScroll =
+  "pool-detail-scroll flex max-h-[min(calc(100dvh-7rem),calc(100svh-7rem))] flex-col overflow-y-auto overscroll-contain rounded-2xl bg-[#111111] p-6 lg:rounded-xl";
+
+export function PoolDetailLayout({
+  pool,
+  type,
+  isWalletConnected,
+  supportsBorrow,
+  depositWithdrawMode,
+  ammTab,
+  onAmmTabChange,
+  ammAmount,
+  ammAmount2,
+  ammMaxAmount,
+  onAmmAmountChange,
+  onAmmSubmit,
+  isAmmSubmitting,
+  ammSubmitDisabled,
+  ammInsufficientFundsMessage,
+  canLend,
+  canBorrow,
+  onLendSubmit,
+  onBorrowSubmit,
+  isLendingActionPending,
+}: PoolDetailLayoutProps) {
+  return (
+    <div
+      className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl"
+      style={{ background: "#111111" }}
+    >
+      {/* lg: viewport-fixed panel; reserve space so main column does not sit underneath */}
+      <aside
+        className="z-30 w-full min-w-0 shrink-0 lg:fixed lg:right-8 lg:top-28 lg:z-40 lg:w-[min(24rem,calc(100vw-4rem))] lg:max-w-[calc(100vw-4rem)] lg:p-0"
+        aria-label="Pool actions"
+      >
+        <div className={panelInnerScroll}>
+          <PoolDetailPanel
+            pool={pool}
+            type={type}
+            isWalletConnected={isWalletConnected}
+            supportsBorrow={supportsBorrow}
+            depositWithdrawMode={depositWithdrawMode}
+            ammTab={ammTab}
+            onAmmTabChange={onAmmTabChange}
+            ammAmount={ammAmount}
+            ammAmount2={ammAmount2}
+            ammMaxAmount={ammMaxAmount}
+            onAmmAmountChange={onAmmAmountChange}
+            onAmmSubmit={onAmmSubmit}
+            isAmmSubmitting={isAmmSubmitting}
+            ammSubmitDisabled={ammSubmitDisabled}
+            ammInsufficientFundsMessage={ammInsufficientFundsMessage}
+            canLend={canLend}
+            canBorrow={canBorrow}
+            onLendSubmit={onLendSubmit}
+            onBorrowSubmit={onBorrowSubmit}
+            isLendingActionPending={isLendingActionPending}
+          />
+        </div>
+      </aside>
+
+      <section
+        id={POOL_DETAIL_MAIN_SCROLL_ID}
+        className="pool-detail-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-8 pb-8 pt-0 lg:pr-6 lg:mr-[calc(24rem+2rem)]"
+      >
+        {/* pt-8 here (not on section) so sticky tab bar top-0 meets scrollport edge and blur covers the top */}
+        <div className="pt-8">
+          <PoolDetailHero pool={pool} />
+          <div className="border-t border-white/5 mb-8" />
+          <PoolDetailMetrics pool={pool} />
+          <div className="border-t border-white/5 mt-10 mb-0" />
+        </div>
+        <InfoTabs pool={pool} />
+      </section>
+    </div>
+  );
+}
