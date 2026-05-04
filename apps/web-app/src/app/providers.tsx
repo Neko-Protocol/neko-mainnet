@@ -1,5 +1,6 @@
 "use client";
 
+import { PrivyProvider } from "@privy-io/react-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ToastProvider } from "@/providers/ToastProvider";
 import { ReactNode, useState } from "react";
@@ -19,8 +20,23 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>{children}</ToastProvider>
-    </QueryClientProvider>
+    <PrivyProvider
+      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID ?? ""}
+      config={{
+        loginMethods: ["email", "google"],
+        appearance: {
+          theme: "dark",
+          accentColor: "#229EDF",
+        },
+        embeddedWallets: {
+          ethereum: { createOnLogin: "off" },
+          solana: { createOnLogin: "off" },
+        },
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>{children}</ToastProvider>
+      </QueryClientProvider>
+    </PrivyProvider>
   );
 }

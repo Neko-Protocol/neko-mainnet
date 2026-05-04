@@ -19,11 +19,11 @@ import { useStellarWalletStore } from "@/stores/stellarWalletStore";
  * platform-wrapper wallet is detected.
  */
 export function WalletAutoConnect() {
-  const { address, setWallet } = useStellarWalletStore();
+  const { address, source, setWallet } = useStellarWalletStore();
   const attempted = useRef(false);
 
   useEffect(() => {
-    if (address || attempted.current) return;
+    if (source === "privy" || address || attempted.current) return;
     attempted.current = true;
 
     void (async () => {
@@ -43,13 +43,14 @@ export function WalletAutoConnect() {
           setWallet({
             address: walletAddress,
             walletName: platformWallet.name,
+            source: "kit",
           });
         }
       } catch {
         // Silently fail — user can always connect manually via the button.
       }
     })();
-  }, [address, setWallet]);
+  }, [address, source, setWallet]);
 
   return null;
 }

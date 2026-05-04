@@ -1,8 +1,10 @@
 "use client";
 
+import { useSignRawHash } from "@privy-io/react-auth/extended-chains";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchBalances,
+  signStellarTxWithPrivy,
   signStellarTransactionWithWallet,
   type MappedBalances,
 } from "@/lib/helpers/stellar/wallet";
@@ -10,7 +12,8 @@ import { stellarNetwork, networkPassphrase } from "@/lib/constants/network";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 
 export function useWallet() {
-  const { address: stellarAddress } = useStellarWalletStore();
+  const { address: stellarAddress, source } = useStellarWalletStore();
+  const { signRawHash } = useSignRawHash();
   const address = stellarAddress ?? undefined;
 
   const {
@@ -41,10 +44,14 @@ export function useWallet() {
       throw new Error("Connect Stellar wallet to sign");
     }
     const signerPublicKey = options?.address ?? address;
-    const signedTxXdr = await signStellarTransactionWithWallet({
-      unsignedTransactionXdr: xdr,
-      signerPublicKey,
-    });
+    const signedTxXdr =
+      source === "privy"
+        ? await signStellarTxWithPrivy(xdr, signerPublicKey, signRawHash)
+        : await signStellarTransactionWithWallet({
+            unsignedTransactionXdr: xdr,
+            signerPublicKey,
+          });
+
     return { signedTxXdr };
   };
 

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:docs.privy.io)",
+      "WebFetch(domain:www.privy.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:developers.stellar.org)",
+      "WebFetch(domain:x.com)",
+      "WebFetch(domain:www.linkedin.com)",
+      "WebFetch(domain:privy.io)",
+      "WebFetch(domain:stellarwalletskit.dev)"
+    ]
+  }
+}

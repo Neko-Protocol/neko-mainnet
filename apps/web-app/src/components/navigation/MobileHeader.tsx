@@ -10,6 +10,7 @@ import { NAV_ITEMS } from "./sidebarConfig";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { truncateAddress } from "@/lib/utils";
+import { ConnectWalletModal } from "@/features/wallet/components/ConnectWalletModal";
 
 const NETWORK = (
   process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET"
@@ -20,9 +21,10 @@ const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_LENDING_ADMIN_ADDRESS ?? "";
 export function MobileHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
+  const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const pathname = usePathname();
   const { isStellarConnected, stellarAddress } = useWalletType();
-  const { connect, disconnect } = useStellarWallet();
+  const { disconnect } = useStellarWallet();
   const menuRef = useRef<HTMLDivElement>(null);
   const walletButtonRef = useRef<HTMLDivElement>(null);
 
@@ -63,8 +65,11 @@ export function MobileHeader() {
   }, [isOpen, walletDropdownOpen]);
 
   useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+    if (!isOpen) return;
+
+    const timeout = window.setTimeout(() => setIsOpen(false), 0);
+    return () => window.clearTimeout(timeout);
+  }, [isOpen, pathname]);
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
@@ -138,7 +143,7 @@ export function MobileHeader() {
             ) : (
               <button
                 type="button"
-                onClick={() => void connect()}
+                onClick={() => setIsConnectModalOpen(true)}
                 className="whitespace-nowrap rounded-full self-center bg-[#229EDF] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1a8bc7] transition-colors sm:px-4 sm:py-2 sm:text-sm"
               >
                 Connect Wallet
@@ -213,6 +218,11 @@ export function MobileHeader() {
           })}
         </div>
       </div>
+
+      <ConnectWalletModal
+        isOpen={isConnectModalOpen}
+        onClose={() => setIsConnectModalOpen(false)}
+      />
     </>
   );
 }
