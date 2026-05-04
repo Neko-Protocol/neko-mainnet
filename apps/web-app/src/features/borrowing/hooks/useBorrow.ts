@@ -119,10 +119,20 @@ export function useBorrow() {
         const rawAmount = BigInt(
           Math.floor(parseFloat(borrowAmount) * 10 ** decimals)
         );
+        const poolMeta = orchestratorPools.find(
+          (p: PoolInfo) => p.id === selectedAsset.orchestratorId
+        );
         await executePoolAction({
           poolId: selectedAsset.orchestratorId,
           action: "borrow",
           amount: rawAmount,
+          audit: poolMeta
+            ? {
+                tokens: poolMeta.tokens,
+                poolType: poolMeta.type,
+                metadata: poolMeta.metadata,
+              }
+            : undefined,
         });
         closeModal();
         return;
@@ -139,7 +149,13 @@ export function useBorrow() {
       });
       if (result?.success) closeModal();
     },
-    [selectedAsset, handleBorrow, executePoolAction, closeModal]
+    [
+      selectedAsset,
+      handleBorrow,
+      executePoolAction,
+      closeModal,
+      orchestratorPools,
+    ]
   );
 
   const changeRowsPerPage = useCallback((value: number) => {

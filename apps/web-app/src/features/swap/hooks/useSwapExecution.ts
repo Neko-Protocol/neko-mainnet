@@ -9,6 +9,10 @@ import {
   type QuoteRequest,
 } from "@/lib/helpers/stellar/soroswap";
 import {
+  resolveDecimalsForSwapToken,
+  smallestUnitsStringToHuman,
+} from "@/lib/helpers/auditAssetAmounts";
+import {
   DEFAULT_SLIPPAGE_BPS,
   MAX_HOPS,
 } from "@/features/swap/constants/swapConfig";
@@ -60,6 +64,12 @@ export function useSwapExecution() {
           "No liquidity found for this pair — try a different token combination"
         );
       }
+
+      const outDecimals = resolveDecimalsForSwapToken(tokenOut);
+      const amountOutHuman =
+        outDecimals != null
+          ? smallestUnitsStringToHuman(newQuote.amountOut, outDecimals)
+          : undefined;
 
       const maxTrustlineRounds = 3;
       let buildResult: Awaited<ReturnType<typeof buildTransaction>> | undefined;
@@ -154,6 +164,9 @@ export function useSwapExecution() {
               : (tokenOut.code ??
                 (tokenOut.type === "native" ? "XLM" : tokenOut.contract)),
           amount_in: parseFloat(amountIn),
+          ...(amountOutHuman != null && Number.isFinite(amountOutHuman)
+            ? { amount_out: amountOutHuman }
+            : {}),
           tx_hash: sendResult.txHash,
         });
         return { orderId: sendResult.txHash, txHash: sendResult.txHash };

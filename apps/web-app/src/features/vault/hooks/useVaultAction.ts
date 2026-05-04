@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
+import { TransactionBuilder } from "@stellar/stellar-sdk";
 import { rpc } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useQueryClient } from "@tanstack/react-query";
@@ -18,12 +18,55 @@ import {
   stellarNetwork,
 } from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
-import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { resolveDecimalsForAuditAssetKey } from "@/lib/helpers/auditAssetAmounts";
 import { auditService } from "@/lib/services/audit.service";
 import { useVaultBalance } from "./useVaultBalance";
 import { useVaultData } from "./useVaultData";
 
 const SLIPPAGE = 0.01;
+
+const VAULT_SHARE_DECIMALS = 7;
+
+function unwrapAssembledContractResult<T>(result: unknown): T | undefined {
+  if (result === null || result === undefined) return undefined;
+  if (typeof (result as { unwrap?: () => T }).unwrap === "function") {
+    try {
+      return (result as { unwrap: () => T }).unwrap();
+    } catch {
+      return undefined;
+    }
+  }
+  if ((result as { tag?: string }).tag === "ok") {
+    return (result as { value: T }).value;
+  }
+  return result as T;
+}
+
+function vaultDepositMintedShares(
+  depositTxResult: unknown
+): bigint | undefined {
+  const row =
+    unwrapAssembledContractResult<readonly unknown[]>(depositTxResult);
+  if (!Array.isArray(row) || row.length < 2) return undefined;
+  try {
+    return BigInt(String(row[1]));
+  } catch {
+    return undefined;
+  }
+}
+
+function vaultWithdrawUnderlyingOut(
+  withdrawTxResult: unknown
+): bigint | undefined {
+  const amounts = unwrapAssembledContractResult<unknown[]>(withdrawTxResult);
+  if (!Array.isArray(amounts) || amounts[0] == null) return undefined;
+  try {
+    return BigInt(String(amounts[0]));
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Signs and submits a simulated AssembledTransaction by:
@@ -83,7 +126,8 @@ async function waitForTx(
 
 export function useVaultAction(
   vaultContractId: string | null | undefined,
-  symbol = "tokens"
+  supplyAssetSymbol = "tokens",
+  vaultShareSymbol?: string
 ) {
   const [isLoading, setIsLoading] = useState(false);
 
@@ -183,11 +227,23 @@ export function useVaultAction(
           );
         }
 
+        const minted = vaultDepositMintedShares(depositTx.result);
+        const mintedSharesHuman =
+          minted != null
+            ? parseFloat(
+                fromSmallestUnit(minted.toString(), VAULT_SHARE_DECIMALS)
+              )
+            : undefined;
+
         auditService.log({
           wallet_address: address,
           action_type: "vaults_deposit",
-          asset_in: symbol,
+          asset_in: supplyAssetSymbol,
           amount_in: parseFloat(amount),
+          asset_out: vaultShareSymbol ?? "vault_shares",
+          ...(mintedSharesHuman != null && Number.isFinite(mintedSharesHuman)
+            ? { amount_out: mintedSharesHuman }
+            : {}),
           pool_id: vaultContractId,
           tx_hash: sendResult.hash,
         });
@@ -197,7 +253,7 @@ export function useVaultAction(
           refetchVaultData(),
           refetchSupplyBalance(),
         ]);
-        showSuccess(`Successfully deposited ${amount} ${symbol}`);
+        showSuccess(`Successfully deposited ${amount} ${supplyAssetSymbol}`);
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
         showError(
@@ -216,8 +272,9 @@ export function useVaultAction(
       refetchSupplyBalance,
       showError,
       showSuccess,
-      symbol,
+      supplyAssetSymbol,
       vaultContractId,
+      vaultShareSymbol,
     ]
   );
 
@@ -275,11 +332,24 @@ export function useVaultAction(
           );
         }
 
+        const underlyingBi = vaultWithdrawUnderlyingOut(withdrawTx.result);
+        const undDec =
+          resolveDecimalsForAuditAssetKey(supplyAssetSymbol) ??
+          VAULT_SHARE_DECIMALS;
+        const underlyingHuman =
+          underlyingBi != null
+            ? parseFloat(fromSmallestUnit(underlyingBi.toString(), undDec))
+            : undefined;
+
         auditService.log({
           wallet_address: address,
           action_type: "vaults_withdraw",
-          asset_out: symbol,
-          amount_out: parseFloat(shares),
+          asset_in: vaultShareSymbol ?? "vault_shares",
+          amount_in: parseFloat(shares),
+          asset_out: supplyAssetSymbol,
+          ...(underlyingHuman != null && Number.isFinite(underlyingHuman)
+            ? { amount_out: underlyingHuman }
+            : {}),
           pool_id: vaultContractId,
           tx_hash: sendResult.hash,
         });
@@ -289,7 +359,9 @@ export function useVaultAction(
           refetchVaultData(),
           refetchSupplyBalance(),
         ]);
-        showSuccess(`Successfully withdrew ${shares} ${symbol ?? "shares"}`);
+        showSuccess(
+          `Successfully withdrew ${shares} ${vaultShareSymbol ?? "shares"}`
+        );
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
         showError(
@@ -308,8 +380,9 @@ export function useVaultAction(
       refetchSupplyBalance,
       showError,
       showSuccess,
-      symbol,
+      supplyAssetSymbol,
       vaultContractId,
+      vaultShareSymbol,
     ]
   );
 
