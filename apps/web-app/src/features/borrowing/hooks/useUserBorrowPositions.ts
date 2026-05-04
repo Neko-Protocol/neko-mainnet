@@ -5,12 +5,12 @@ import {
   rpcUrl,
   networkPassphrase,
   allowHttpForSoroban,
+  STELLAR_DECIMALS,
 } from "@/lib/constants/network";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import { useBorrowPools } from "./useBorrowPools";
 
 const SCALAR_12 = 1_000_000_000_000n;
-const STELLAR_DECIMALS = 7;
 
 export interface BorrowPosition {
   assetCode: string;

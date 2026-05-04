@@ -23,8 +23,11 @@ import {
   type PoolDetailPanelPool,
   type CollateralOption,
 } from "../ui/PoolDetailPanel";
-import { formatAmount } from "@/lib/helpers/formatUtils";
-import { formatLiquidity, safeParseFloat } from "../../utils/poolUtils";
+import {
+  formatAmount,
+  formatLiquidity,
+  safeParseFloat,
+} from "@/lib/helpers/formatUtils";
 import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
 import {
   reserveStroopsFromApiString,

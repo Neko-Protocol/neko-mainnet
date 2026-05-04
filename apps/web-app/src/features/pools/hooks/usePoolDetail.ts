@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { usePoolInfo } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
-import { formatLiquidity } from "../utils/poolUtils";
+import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolDetailView } from "../types/pools";
 
 export type PoolDetailData = PoolInfo & PoolDetailView;

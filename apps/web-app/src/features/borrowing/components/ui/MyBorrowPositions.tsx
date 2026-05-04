@@ -59,8 +59,7 @@ import { getTokenBalance } from "@/lib/helpers/stellar/lending";
 import { usePoolAction } from "@/lib/orchestrator";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import type { UserPositionWithPool } from "@/features/dashboard/hooks/useUserPositions";
-
-const STELLAR_DECIMALS = 7;
+import { STELLAR_DECIMALS } from "@/lib/constants/network";
 
 interface MyBorrowPositionsProps {
   headerAction?: React.ReactNode;

@@ -1,5 +1,4 @@
 import { PoolRegistry, poolRegistry } from "./PoolRegistry";
-// import { NekoLendingAdapter } from "../adapters/NekoLendingAdapter";
 import { BlendPoolAdapter } from "../adapters/BlendPoolAdapter";
 import { SoroswapPoolAdapter } from "../adapters/SoroswapPoolAdapter";
 import { AquaPoolAdapter } from "../adapters/AquaPoolAdapter";
@@ -181,8 +180,6 @@ export class Orchestrator {
     }
   }
 }
-
-// poolRegistry.register(new NekoLendingAdapter());
 
 for (const blendPoolId of getBlendPoolIds()) {
   poolRegistry.register(new BlendPoolAdapter(blendPoolId));

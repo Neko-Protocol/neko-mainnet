@@ -91,6 +91,8 @@ const networkToId = (network: string): NetworkType => {
   }
 };
 
+export const STELLAR_DECIMALS = 7;
+
 export const network: Network = {
   id: networkToId(stellarNetwork),
   label: stellarNetwork.toLowerCase(),

@@ -9,12 +9,10 @@ import { useHealthFactor } from "./useHealthFactor";
 import type { PoolHealthFactor } from "./useHealthFactor";
 import { lendingService } from "@/lib/services/lending.service";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
-import { stellarNetwork } from "@/lib/constants/network";
+import { stellarNetwork, STELLAR_DECIMALS } from "@/lib/constants/network";
 import { getLendingContracts } from "@/lib/constants/lendingContracts";
 
 export type { LendingPosition, BorrowPosition, PoolHealthFactor };
-
-const STELLAR_DECIMALS = 7;
 
 export interface CollateralPosition {
   tokenCode: string;

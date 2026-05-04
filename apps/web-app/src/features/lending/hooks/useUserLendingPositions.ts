@@ -3,8 +3,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { getBTokenBalanceRaw } from "@/lib/helpers/stellar/lending";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import { useLendingPools } from "./useLendingPools";
-
-const STELLAR_DECIMALS = 7;
+import { STELLAR_DECIMALS } from "@/lib/constants/network";
 
 export interface LendingPosition {
   assetCode: string;
