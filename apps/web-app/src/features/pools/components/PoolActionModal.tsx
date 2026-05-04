@@ -171,12 +171,29 @@ export function PoolActionModal({
         ? BigInt("999999999999999999") // adapter clamps this to exact on-chain total
         : BigInt(toSmallestUnit(amount, decimals));
 
+      const audit = {
+        tokens: pool.tokens,
+        poolType: pool.type,
+        metadata: pool.metadata,
+      };
       mutate.mutate(
-        { poolId, action, amount: amountBigInt, tokenIndex: 0 },
+        { poolId, action, amount: amountBigInt, tokenIndex: 0, audit },
         { onSuccess }
       );
     } else {
-      mutate.mutate({ poolId, action, amount: 0n }, { onSuccess });
+      mutate.mutate(
+        {
+          poolId,
+          action,
+          amount: 0n,
+          audit: {
+            tokens: pool.tokens,
+            poolType: pool.type,
+            metadata: pool.metadata,
+          },
+        },
+        { onSuccess }
+      );
     }
   };
 

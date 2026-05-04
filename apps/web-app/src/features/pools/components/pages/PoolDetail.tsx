@@ -35,6 +35,7 @@ import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
 import { rpcUrl } from "@/lib/constants/network";
 import { useToast } from "@/hooks/useToast";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
+import { auditService } from "@/lib/services/audit.service";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
@@ -270,15 +271,21 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
   const runPoolAction = useCallback(
     async (action: PoolAction, amount: bigint) => {
+      if (!pool) return;
       await executePoolAction({
         poolId: contractid,
         action,
         amount,
         tokenIndex: 0,
+        audit: {
+          tokens: pool.tokens,
+          poolType: pool.type,
+          metadata: pool.metadata,
+        },
       });
       await refetchAfterTx();
     },
-    [contractid, executePoolAction, refetchAfterTx]
+    [contractid, executePoolAction, refetchAfterTx, pool]
   );
 
   const ammFirstLegDepositInsufficient = useMemo(() => {
@@ -410,6 +417,20 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
                 : "Transaction confirmation timeout"
             );
           }
+          const borrowedCode = pool?.tokens[0]?.code ?? "?";
+          const borrowedHuman = parseFloat(borrowAmount);
+          const collateralCode = collateralOption?.symbol ?? "?";
+          const collateralHuman = parseFloat(collateralAmt);
+          void auditService.log({
+            wallet_address: address,
+            action_type: "borrow_deposit",
+            pool_id: contractid,
+            asset_in: collateralCode,
+            amount_in: collateralHuman,
+            asset_out: borrowedCode,
+            amount_out: borrowedHuman,
+            tx_hash: txResult.hash,
+          });
           addNotification("Borrow successful", "success");
           await refetchAfterTx();
         } catch (error) {
@@ -436,6 +457,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       collateralOptionsWithBalances,
       runPoolAction,
       refetchAfterTx,
+      addNotification,
     ]
   );
 
