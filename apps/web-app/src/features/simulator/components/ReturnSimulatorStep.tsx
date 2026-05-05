@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useVaultApy } from "@/features/vault/hooks/useVaultApy";
 import { useWallet } from "@/hooks/useWallet";
@@ -15,13 +14,25 @@ import {
   resolveEtherfuseBondApy,
 } from "../hooks/useFilteredDestinations";
 import { useProjectedReturns } from "../hooks/useProjectedReturns";
+import { useSimulatorStablecoinBondQuote } from "../hooks/useSimulatorStablecoinBondQuote";
 import { ProjectionTable } from "./ui/ProjectionTable";
 import { StrategySummaryCard } from "./ui/StrategySummaryCard";
 import type {
   SimulatorDestination,
   SimulatorToken,
 } from "../types/simulator.types";
+import {
+  isStablecoinBondExplorer,
+  type SimulationResolved,
+} from "../utils/wizardPhases";
 import type { VaultView } from "@/features/vault/types/vault";
+
+/** Stable bond deposit amount string after swap (vault / pool hooks expect human). */
+function bondOutToDepositString(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return "";
+  const s = n.toFixed(10).replace(/\.?0+$/, "");
+  return s || "";
+}
 
 function parseBalanceString(raw: string | undefined): number {
   if (!raw) return 0;
@@ -47,88 +58,141 @@ function getHoldingsAmount(balances: MappedBalances, code: string): number {
 
 interface ReturnSimulatorStepProps {
   token: SimulatorToken;
-  destination: SimulatorDestination;
+  simulation: SimulationResolved;
   amount: string;
   onAmountChange: (next: string) => void;
-  onStartEarning: (args: {
-    kind: "pool" | "vault";
-    poolId?: string;
-    vault?: VaultView;
-  }) => void;
+  /** Vault modal opener — wizard resolves VaultView from raw */
+  onStartDepositVault?: (vault: VaultView) => void;
+  /** Lending supply deposit — wizard builds tx */
+  onStartDepositLending?: () => void;
+  /** Orchestrator pool deposit — wizard builds tx */
+  onStartDepositOrchestrator?: () => void;
+  /**
+   * Stablecoin → bond swap then open deposit (same session).
+   * `expectedBondOutHuman` is the quoted bond amount used to pre-fill deposit.
+   */
+  onSwapAndDeposit?: (payload: {
+    stableAmount: string;
+    expectedBondOutHuman: string;
+  }) => void | Promise<void>;
+  /** While swap tx is signing / submitting */
+  isSwapDepositPending?: boolean;
 }
 
 export function ReturnSimulatorStep({
   token,
-  destination,
+  simulation,
   amount,
   onAmountChange,
-  onStartEarning,
+  onStartDepositVault,
+  onStartDepositLending,
+  onStartDepositOrchestrator,
+  onSwapAndDeposit,
+  isSwapDepositPending = false,
 }: ReturnSimulatorStepProps) {
-  const router = useRouter();
-  const { balances } = useWallet();
+  const { balances, address } = useWallet();
+  const walletConnected = Boolean(address);
 
-  const isYieldToken = destination.kind === "yield-token";
-  const isVault = destination.kind === "vault";
-  const isBondToken = isEtherfuseBondToken(token.code);
+  const { bondHold, depositVenue, projectionDestination, amountAssetCode } =
+    simulation;
+
+  const isYieldOnlyHold =
+    Boolean(bondHold) &&
+    !depositVenue &&
+    projectionDestination.kind === "yield-token";
+
+  const venue = isYieldOnlyHold
+    ? projectionDestination
+    : (depositVenue ?? projectionDestination);
+
+  const isVault = venue.kind === "vault";
+  const bondSymbolForEtherfuse =
+    bondHold?.bondSymbol ??
+    (isEtherfuseBondToken(token.code) ? token.code : null);
 
   const yieldsQuery = useEtherfuseYields();
   const bondQuote = useMemo(
     () =>
-      isBondToken
-        ? resolveEtherfuseBondApy(token.code, yieldsQuery.data)
+      bondSymbolForEtherfuse
+        ? resolveEtherfuseBondApy(bondSymbolForEtherfuse, yieldsQuery.data)
         : null,
-    [isBondToken, token.code, yieldsQuery.data]
+    [bondSymbolForEtherfuse, yieldsQuery.data]
   );
 
-  const amountDisplayCode =
-    isYieldToken && destination.bondSymbol
-      ? destination.bondSymbol
-      : token.code;
+  const isBondToken = isEtherfuseBondToken(token.code);
+
+  const bondSymbolResolved =
+    bondHold?.bondSymbol ?? bondHold?.acceptedTokenCodes[0] ?? amountAssetCode;
+
+  const stableFundsBondPurchase =
+    Boolean(bondHold) && isStablecoinBondExplorer(token.code);
+
+  const swapQuote = useSimulatorStablecoinBondQuote({
+    stableCoinCode: token.code,
+    bondSymbol: bondSymbolResolved,
+    amountStableHuman: amount,
+    enabled: stableFundsBondPurchase,
+  });
 
   const summaryToken: SimulatorToken =
-    isYieldToken && destination.bondSymbol
-      ? { ...token, code: destination.bondSymbol }
-      : token;
+    bondHold && bondHold.bondSymbol
+      ? { ...token, code: bondHold.bondSymbol }
+      : { ...token, code: amountAssetCode };
 
   const walletBalanceForAmount = useMemo(() => {
     if (!token.hasWallet) return 0;
-    if (isYieldToken && destination.bondSymbol) {
-      return getHoldingsAmount(balances, destination.bondSymbol);
-    }
-    return token.balance;
+    const code = stableFundsBondPurchase ? token.code : amountAssetCode;
+    return getHoldingsAmount(balances, code);
   }, [
     token.hasWallet,
-    token.balance,
     balances,
-    isYieldToken,
-    destination.bondSymbol,
+    amountAssetCode,
+    stableFundsBondPurchase,
+    token.code,
   ]);
 
-  const { price, isLoading: priceLoading } = useTokenPrice(amountDisplayCode);
+  const { price, isLoading: priceLoading } = useTokenPrice(amountAssetCode);
 
   const { vaultApy, isLoading: apyLoading } = useVaultApy(
-    isVault ? destination.id : null
+    isVault ? venue.id : null
   );
 
   const effectiveApy = useMemo(() => {
-    if (destination.kind === "yield-token") {
-      return destination.apy;
+    if (isYieldOnlyHold) {
+      return projectionDestination.apy;
     }
-    if (isBondToken && bondQuote) {
-      if (isVault) {
+
+    const stackedBondLeg =
+      bondQuote &&
+      depositVenue &&
+      bondHold &&
+      (depositVenue.kind === "pool" || depositVenue.kind === "vault");
+
+    const bondTokenDirectVenue =
+      bondQuote &&
+      !bondHold &&
+      isBondToken &&
+      (venue.kind === "pool" || venue.kind === "vault");
+
+    if (stackedBondLeg || bondTokenDirectVenue) {
+      if (venue.kind === "vault") {
         if (apyLoading && vaultApy === null) return null;
-        return bondQuote.apy + (vaultApy ?? 0);
+        return bondQuote!.apy + (vaultApy ?? 0);
       }
-      return bondQuote.apy + (destination.apy ?? 0);
+      return bondQuote!.apy + (venue.apy ?? 0);
     }
-    if (isVault) return vaultApy;
-    return destination.apy;
+
+    if (venue.kind === "vault") return vaultApy;
+    return venue.apy;
   }, [
-    destination.kind,
-    destination.apy,
-    isBondToken,
+    isYieldOnlyHold,
+    projectionDestination.apy,
     bondQuote,
-    isVault,
+    depositVenue,
+    bondHold,
+    isBondToken,
+    venue.kind,
+    venue.apy,
     apyLoading,
     vaultApy,
   ]);
@@ -136,39 +200,91 @@ export function ReturnSimulatorStep({
   const apy = effectiveApy;
 
   const stackedYieldNote = useMemo(() => {
-    if (!isBondToken || isYieldToken || !bondQuote) return null;
-    if (isVault && apyLoading && vaultApy === null) return null;
-    const bondPct = bondQuote.apy.toFixed(2);
-    if (isVault) {
-      const v =
-        vaultApy !== null && vaultApy !== undefined
-          ? vaultApy.toFixed(2)
-          : "0.00";
-      const sum = (bondQuote.apy + (vaultApy ?? 0)).toFixed(2);
-      return `Approximate combined yield: ${bondPct}% bond + ${v}% vault = ${sum}% yearly (percentages added; actual compounding may differ).`;
+    if (!bondQuote || isYieldOnlyHold) return null;
+
+    if (bondHold && depositVenue) {
+      if (depositVenue.kind === "vault") {
+        if (apyLoading && vaultApy === null) return null;
+        const v =
+          vaultApy !== null && vaultApy !== undefined
+            ? vaultApy.toFixed(2)
+            : "0.00";
+        const sum = (bondQuote.apy + (vaultApy ?? 0)).toFixed(2);
+        return `Approximate combined yield: ${bondQuote.apy.toFixed(2)}% bond + ${v}% vault = ${sum}% yearly (percentages added; actual compounding may differ).`;
+      }
+      const p = depositVenue.apy;
+      const poolPct = p !== null && p !== undefined ? p.toFixed(2) : "0.00";
+      const sum = (bondQuote.apy + (depositVenue.apy ?? 0)).toFixed(2);
+      return `Approximate combined yield: ${bondQuote.apy.toFixed(2)}% bond + ${poolPct}% pool = ${sum}% yearly (percentages added; actual compounding may differ).`;
     }
-    const p = destination.apy;
-    const poolPct = p !== null && p !== undefined ? p.toFixed(2) : "0.00";
-    const sum = (bondQuote.apy + (destination.apy ?? 0)).toFixed(2);
-    return `Approximate combined yield: ${bondPct}% bond + ${poolPct}% pool = ${sum}% yearly (percentages added; actual compounding may differ).`;
+
+    if (
+      !bondHold &&
+      isBondToken &&
+      (venue.kind === "pool" || venue.kind === "vault")
+    ) {
+      if (venue.kind === "vault") {
+        if (apyLoading && vaultApy === null) return null;
+        const v =
+          vaultApy !== null && vaultApy !== undefined
+            ? vaultApy.toFixed(2)
+            : "0.00";
+        const sum = (bondQuote.apy + (vaultApy ?? 0)).toFixed(2);
+        return `Approximate combined yield: ${bondQuote.apy.toFixed(2)}% bond + ${v}% vault = ${sum}% yearly (percentages added; actual compounding may differ).`;
+      }
+      const p = venue.apy;
+      const poolPct = p !== null && p !== undefined ? p.toFixed(2) : "0.00";
+      const sum = (bondQuote.apy + (venue.apy ?? 0)).toFixed(2);
+      return `Approximate combined yield: ${bondQuote.apy.toFixed(2)}% bond + ${poolPct}% pool = ${sum}% yearly (percentages added; actual compounding may differ).`;
+    }
+
+    return null;
   }, [
-    isBondToken,
-    isYieldToken,
     bondQuote,
-    isVault,
+    isYieldOnlyHold,
+    bondHold,
+    depositVenue,
+    isBondToken,
+    venue.kind,
+    venue.apy,
     apyLoading,
     vaultApy,
-    destination.apy,
   ]);
 
   const projectionFooterExtra = useMemo(() => {
-    if (!isBondToken || isYieldToken || !bondQuote) return null;
-    return "Combined rate sums sovereign bond APR and this venue's APR as a simple additive estimate.";
-  }, [isBondToken, isYieldToken, bondQuote]);
+    if (!bondQuote || isYieldOnlyHold) return null;
+    if (bondHold && depositVenue) {
+      return "Combined rate sums sovereign bond APR and this venue's APR as a simple additive estimate.";
+    }
+    if (
+      !bondHold &&
+      isBondToken &&
+      (venue.kind === "pool" || venue.kind === "vault")
+    ) {
+      return "Combined rate sums sovereign bond APR and this venue's APR as a simple additive estimate.";
+    }
+    return null;
+  }, [
+    bondQuote,
+    isYieldOnlyHold,
+    bondHold,
+    depositVenue,
+    isBondToken,
+    venue.kind,
+  ]);
 
-  const principal = useMemo(() => safeParseFloat(amount), [amount]);
+  const stableAmountNum = useMemo(() => safeParseFloat(amount), [amount]);
+
+  const principalBondTokens = useMemo(() => {
+    if (stableFundsBondPurchase) {
+      const q = swapQuote.data?.bondOutHuman;
+      return typeof q === "number" && Number.isFinite(q) ? q : 0;
+    }
+    return stableAmountNum;
+  }, [stableFundsBondPurchase, swapQuote.data?.bondOutHuman, stableAmountNum]);
+
   const projections = useProjectedReturns({
-    principalToken: principal,
+    principalToken: principalBondTokens,
     apy,
     tokenPriceUsd: price,
   });
@@ -176,7 +292,29 @@ export function ReturnSimulatorStep({
 
   const hasPrice = price > 0 && !priceLoading;
   const isWaitingForApy = isVault && apyLoading && apy === null;
-  const ctaDisabled = principal <= 0 || isWaitingForApy;
+
+  const ctaDisabled =
+    stableAmountNum <= 0 ||
+    isWaitingForApy ||
+    principalBondTokens <= 0 ||
+    (stableFundsBondPurchase &&
+      stableAmountNum > 0 &&
+      (swapQuote.isFetching || swapQuote.isError)) ||
+    isSwapDepositPending;
+
+  const useSwapThenDeposit =
+    stableFundsBondPurchase &&
+    Boolean(depositVenue) &&
+    Boolean(onSwapAndDeposit);
+
+  const canDeposit =
+    Boolean(depositVenue) ||
+    (!bondHold && projectionDestination.kind !== "yield-token");
+
+  const summaryDestination: SimulatorDestination =
+    isYieldOnlyHold && bondHold
+      ? bondHold
+      : (depositVenue ?? projectionDestination);
 
   const handleMax = () => {
     if (!token.hasWallet) return;
@@ -184,40 +322,69 @@ export function ReturnSimulatorStep({
     onAmountChange(walletBalanceForAmount.toString());
   };
 
-  const handleStart = () => {
-    if (ctaDisabled) return;
-    if (isVault) {
-      onStartEarning({ kind: "vault", vault: destination.raw as VaultView });
-    } else if (destination.lendingContractId && destination.lendingAssetCode) {
-      router.push(
-        `/pools?supply=${encodeURIComponent(destination.lendingAssetCode)}`
-      );
-      onStartEarning({ kind: "pool", poolId: destination.id });
-    } else {
-      router.push(`/pools/${encodeURIComponent(destination.id)}`);
-      onStartEarning({ kind: "pool", poolId: destination.id });
+  const handleDepositClick = () => {
+    if (ctaDisabled || !walletConnected) return;
+    if (useSwapThenDeposit) return;
+    const target = depositVenue ?? projectionDestination;
+    if (target.kind === "vault") {
+      onStartDepositVault?.(target.raw as VaultView);
+      return;
+    }
+    if (target.kind === "pool") {
+      if (target.lendingContractId && target.lendingAssetCode) {
+        onStartDepositLending?.();
+        return;
+      }
+      onStartDepositOrchestrator?.();
     }
   };
 
-  const earningsTokenLabel =
-    isYieldToken && destination.bondSymbol
-      ? destination.bondSymbol
-      : token.code;
+  const handleSwapAndDepositClick = async () => {
+    if (
+      ctaDisabled ||
+      !walletConnected ||
+      !useSwapThenDeposit ||
+      !onSwapAndDeposit ||
+      !swapQuote.data
+    ) {
+      return;
+    }
+    const outStr = bondOutToDepositString(swapQuote.data.bondOutHuman);
+    if (!outStr) return;
+    await onSwapAndDeposit({
+      stableAmount: amount,
+      expectedBondOutHuman: outStr,
+    });
+  };
+
+  const earningsTokenLabel = bondHold?.bondSymbol ?? amountAssetCode;
+
+  const showBondEtherfuseNote =
+    bondHold &&
+    depositVenue &&
+    bondQuote &&
+    projectionDestination.kind !== "yield-token";
 
   return (
     <section className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h2 className="text-xl font-semibold text-white">
-          {isYieldToken
+          {isYieldOnlyHold
             ? "Project yield while you hold"
             : "See what you could earn"}
         </h2>
         <p className="text-sm text-white/60">
-          {isYieldToken
-            ? "The token is already yield-bearing. Adjust the amount to see how balance and value might grow over time."
-            : isBondToken
-              ? "Adjust the amount to see projected growth. For bond tokens in a pool or vault, bond APR and venue APR are added to approximate total yearly growth."
-              : "Adjust the amount to see your projected earnings over time."}
+          {stableFundsBondPurchase && depositVenue
+            ? `Enter ${token.code} to swap into ${bondSymbolResolved}. Projections use the estimated ${bondSymbolResolved} you receive, then stacked venue yield. Confirm once to swap and deposit.`
+            : stableFundsBondPurchase
+              ? `Enter ${token.code} to see how much ${bondSymbolResolved} you could receive via swap and how it might grow while held (illustrative).`
+              : isYieldOnlyHold
+                ? "The token is already yield-bearing. Adjust the amount to see how balance and value might grow over time."
+                : bondHold && depositVenue
+                  ? "Adjust the amount to see stacked growth: sovereign bond yield plus this venue."
+                  : isBondToken
+                    ? "Adjust the amount to see projected growth. For bond tokens in a pool or vault, bond APR and venue APR are added to approximate total yearly growth."
+                    : "Adjust the amount to see your projected earnings over time."}
         </p>
       </header>
 
@@ -228,7 +395,9 @@ export function ReturnSimulatorStep({
               htmlFor="simulator-amount"
               className="text-xs font-semibold uppercase tracking-widest text-white/40"
             >
-              How much?
+              {stableFundsBondPurchase
+                ? `How much ${token.code}?`
+                : "How much?"}
             </label>
             <div className="mt-2 flex items-center gap-2">
               <input
@@ -243,24 +412,35 @@ export function ReturnSimulatorStep({
                 className="w-full bg-transparent text-3xl font-semibold text-white outline-none placeholder:text-white/30"
               />
               <span className="flex shrink-0 items-center gap-2 text-base font-semibold text-white/80">
-                {destination.bondIcon && isYieldToken ? (
+                {bondHold?.bondIcon &&
+                isYieldOnlyHold &&
+                !stableFundsBondPurchase ? (
                   <Image
-                    src={destination.bondIcon}
-                    alt={amountDisplayCode}
+                    src={bondHold.bondIcon}
+                    alt={amountAssetCode}
+                    width={24}
+                    height={24}
+                    unoptimized
+                    className="rounded-full"
+                  />
+                ) : token.iconSrc && stableFundsBondPurchase ? (
+                  <Image
+                    src={token.iconSrc}
+                    alt={token.code}
                     width={24}
                     height={24}
                     unoptimized
                     className="rounded-full"
                   />
                 ) : null}
-                {amountDisplayCode}
+                {stableFundsBondPurchase ? token.code : amountAssetCode}
               </span>
             </div>
             <div className="mt-3 flex items-center justify-between text-xs text-white/50">
               <span>
                 {token.hasWallet
-                  ? `Balance: ${formatAmount(walletBalanceForAmount)} ${amountDisplayCode}`
-                  : "Connect wallet to see your balance"}
+                  ? `Balance: ${formatAmount(walletBalanceForAmount)} ${stableFundsBondPurchase ? token.code : amountAssetCode}`
+                  : "Connect wallet to deposit or see your balance"}
               </span>
               {token.hasWallet && walletBalanceForAmount > 0 && (
                 <button
@@ -272,68 +452,112 @@ export function ReturnSimulatorStep({
                 </button>
               )}
             </div>
-            {isYieldToken &&
-              token.code !== amountDisplayCode &&
-              destination.bondSymbol && (
+            {stableFundsBondPurchase && stableAmountNum > 0 && (
+              <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+                {swapQuote.isFetching ? (
+                  <span>Fetching swap estimate…</span>
+                ) : swapQuote.isError ? (
+                  <span className="text-amber-200/90">
+                    Could not price {token.code} → {bondSymbolResolved}. Try a
+                    smaller amount or swap manually on the Swap page.
+                  </span>
+                ) : swapQuote.data ? (
+                  <span>
+                    ≈{" "}
+                    <span className="font-mono font-semibold text-white">
+                      {formatAmount(swapQuote.data.bondOutHuman)}{" "}
+                      {bondSymbolResolved}
+                    </span>{" "}
+                    after swap (estimate; actual output may differ slightly).
+                    Projections below use this bond amount.
+                  </span>
+                ) : null}
+              </div>
+            )}
+            {bondHold &&
+              token.code !== amountAssetCode &&
+              bondHold.bondSymbol &&
+              !stableFundsBondPurchase && (
                 <p className="mt-2 text-xs text-white/45">
-                  Amount is in {destination.bondSymbol}. You picked {token.code}{" "}
-                  in step 1 to explore bond options.
+                  Amount is in {bondHold.bondSymbol}. You picked {token.code} in
+                  step 1 to explore bond options.
                 </p>
               )}
           </div>
 
           <StrategySummaryCard
             token={summaryToken}
-            destination={{ ...destination, apy: apy ?? destination.apy }}
-            amount={principal}
+            destination={{
+              ...summaryDestination,
+              apy: apy ?? summaryDestination.apy,
+            }}
+            amount={principalBondTokens}
             apy={apy}
             oneYearProjection={oneYear}
             hasPrice={hasPrice}
-            isYieldBearingBond={isYieldToken || isBondToken}
-            stackedYieldNote={
-              !isYieldToken && isBondToken ? stackedYieldNote : null
+            isYieldBearingBond={
+              isYieldOnlyHold || isBondToken || Boolean(bondHold)
             }
+            stackedYieldNote={stackedYieldNote}
           />
         </div>
 
         <div className="flex flex-col gap-2">
           <ProjectionTable
             projections={projections}
-            tokenCode={amountDisplayCode}
+            tokenCode={amountAssetCode}
             hasPrice={hasPrice}
-            isLoading={isWaitingForApy}
-            isYieldBearingBond={isYieldToken || isBondToken}
+            isLoading={
+              isWaitingForApy ||
+              (stableFundsBondPurchase &&
+                swapQuote.isFetching &&
+                stableAmountNum > 0)
+            }
+            isYieldBearingBond={
+              isYieldOnlyHold || isBondToken || Boolean(bondHold)
+            }
             extraFooterNote={projectionFooterExtra}
           />
-          {isYieldToken && destination.bondCurrency && (
+          {isYieldOnlyHold && projectionDestination.bondCurrency && (
             <p className="text-xs text-white/50">
-              These are {destination.bondCurrency}-denominated returns. What you
-              see as &ldquo;earned&rdquo; includes both more{" "}
+              These are {projectionDestination.bondCurrency}-denominated
+              returns. What you see as &ldquo;earned&rdquo; includes both more{" "}
               {earningsTokenLabel} and each token tending to be worth more over
               time. You can redeem {earningsTokenLabel} for{" "}
-              {destination.bondCurrency} when you like via Etherfuse.
+              {projectionDestination.bondCurrency} when you like via Etherfuse.
             </p>
           )}
-          {isBondToken && !isYieldToken && bondQuote && (
+          {showBondEtherfuseNote && bondQuote && (
             <p className="text-xs text-white/50">
               Bond leg ~{bondQuote.apy.toFixed(2)}% APR (
               {bondQuote.bondCurrency} oriented, Etherfuse) plus this{" "}
-              {isVault ? "vault" : "pool"}
+              {depositVenue!.kind === "vault" ? "vault" : "pool"}
               &apos;s APR feeds the combined rate above. Figures are
               illustrative; markets and compounding paths differ in practice.
             </p>
           )}
+          {!bondHold &&
+            isBondToken &&
+            bondQuote &&
+            venue.kind !== "yield-token" && (
+              <p className="text-xs text-white/50">
+                Bond leg ~{bondQuote.apy.toFixed(2)}% APR (
+                {bondQuote.bondCurrency} oriented, Etherfuse) plus this{" "}
+                {venue.kind === "vault" ? "vault" : "pool"}
+                &apos;s APR feeds the combined rate above.
+              </p>
+            )}
         </div>
       </div>
 
       <div className="flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
-        {isYieldToken ? (
+        {!canDeposit ? (
           <button
             type="button"
-            disabled={principal <= 0}
+            disabled={stableAmountNum <= 0}
             className={cn(
               "rounded-full px-6 py-3 text-sm font-semibold transition-colors",
-              principal <= 0
+              stableAmountNum <= 0
                 ? "cursor-not-allowed bg-white/10 text-white/40"
                 : "border border-white/15 bg-transparent text-white hover:bg-white/5"
             )}
@@ -343,16 +567,28 @@ export function ReturnSimulatorStep({
         ) : (
           <button
             type="button"
-            onClick={handleStart}
-            disabled={ctaDisabled}
+            onClick={() =>
+              useSwapThenDeposit
+                ? void handleSwapAndDepositClick()
+                : handleDepositClick()
+            }
+            disabled={ctaDisabled || !walletConnected}
             className={cn(
               "rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors",
-              ctaDisabled
+              ctaDisabled || !walletConnected
                 ? "cursor-not-allowed bg-white/10 text-white/40"
                 : "bg-[#229EDF] hover:bg-[#1f8ec9]"
             )}
           >
-            Start Earning
+            {!walletConnected
+              ? useSwapThenDeposit
+                ? "Connect wallet to swap & deposit"
+                : "Connect wallet to deposit"
+              : isSwapDepositPending
+                ? "Swapping…"
+                : useSwapThenDeposit
+                  ? "Swap & deposit"
+                  : "Deposit"}
           </button>
         )}
       </div>
