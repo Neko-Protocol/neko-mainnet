@@ -290,7 +290,7 @@ const AssetDetail: React.FC = () => {
                     </h1>
                     {taxonomy && accent && (
                       <span
-                        className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-md px-2.5 py-1 text-sm font-medium text-white/70 ${accent.bg}`}
+                        className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium text-white/70 ${accent.bg}`}
                       >
                         {taxonomy.classLabel}
                       </span>
