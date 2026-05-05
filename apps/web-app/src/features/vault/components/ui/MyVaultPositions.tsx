@@ -2,7 +2,11 @@
 
 import React from "react";
 import Image from "next/image";
-import { getTokenIconFitClass, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { formatAmount } from "@/lib/helpers/formatUtils";
+import {
+  getTokenIconFitClass,
+  fromSmallestUnit,
+} from "@/lib/helpers/tokenUtils";
 import { Wallet, Coins } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import type { VaultView } from "../../types/vault";
@@ -33,9 +37,7 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
     );
   }
 
-  const positionVaults = vaults.filter(
-    (v) => (userBalances[v.id] ?? 0n) > 0n
-  );
+  const positionVaults = vaults.filter((v) => (userBalances[v.id] ?? 0n) > 0n);
 
   if (positionVaults.length === 0) {
     return (
@@ -98,7 +100,9 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
                         width={20}
                         height={20}
                         unoptimized
-                        className={getTokenIconFitClass(vault.supplyAsset.symbol)}
+                        className={getTokenIconFitClass(
+                          vault.supplyAsset.symbol
+                        )}
                       />
                     </div>
                     <span className="text-white font-medium text-sm">
@@ -115,9 +119,7 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
 
                 <td className="px-4 py-4 text-center">
                   <span className="text-white font-bold text-sm tabular-nums">
-                    {parseFloat(sharesFormatted).toLocaleString("en-US", {
-                      maximumFractionDigits: 4,
-                    })}
+                    {formatAmount(parseFloat(sharesFormatted))}
                   </span>
                   <p className="text-white/30 text-xs mt-0.5">shares</p>
                 </td>

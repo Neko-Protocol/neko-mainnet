@@ -2,7 +2,7 @@ import { Horizon } from "@stellar/stellar-sdk";
 import { stellarNetwork, horizonUrl } from "@/lib/constants/network";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap/tokens";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
-import { parseBalance } from "@/lib/helpers/formatUtils";
+import { formatAmount, parseBalance } from "@/lib/helpers/formatUtils";
 import { horizonNativeBalanceToStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
 
 const getHorizon = (): Horizon.Server | null => {
@@ -20,8 +20,6 @@ const getHorizon = (): Horizon.Server | null => {
     return null;
   }
 };
-
-const formatter = new Intl.NumberFormat();
 
 type HorizonBalance = Horizon.HorizonApi.BalanceLine & { balance: string };
 
@@ -70,7 +68,7 @@ export const fetchBalances = async (
       if (b.asset_type === "native") {
         nativeBalanceStroops = horizonNativeBalanceToStroops(b.balance);
       }
-      const formattedBalance = formatter.format(Number(b.balance));
+      const formattedBalance = formatAmount(Number(b.balance));
       const balanceEntry = { ...b, balance: formattedBalance };
       const key =
         b.asset_type === "native"
@@ -130,7 +128,7 @@ export const fetchBalances = async (
           asset_type: "credit_alphanum4",
           asset_code: code,
           asset_issuer: "soroban",
-          balance: formatter.format(parseBalance(balance)),
+          balance: formatAmount(parseBalance(balance)),
         };
         mapped[key] = sorobanEntry;
       }

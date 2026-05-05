@@ -9,6 +9,7 @@ import {
   vaultArtForSymbol,
   vaultDedicatedArtKey,
 } from "@/features/vault/utils/vaultAssetArt";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 
 // Per-vault static overrides: contractId → fields that differ from the defaults.
@@ -111,11 +112,11 @@ function shortAddr(addr: string): string {
 function formatManagedAmount(amountStr: string): string {
   const n = Number(amountStr) / 1e7;
   if (Number.isNaN(n)) return "—";
-  if (n <= 0) return "0";
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(2)}k`;
-  if (n < 0.0001) return n.toExponential(2);
-  return n.toLocaleString(undefined, { maximumFractionDigits: 6 });
+  if (n <= 0) return formatAmount(0);
+  if (n >= 1_000_000) return `${formatAmount(n / 1_000_000)}M`;
+  if (n >= 1_000) return `${formatAmount(n / 1_000)}k`;
+  if (n !== 0 && Math.abs(n) < 0.0001) return n.toExponential(4);
+  return formatAmount(n);
 }
 
 function buildStrategyAllocations(
@@ -160,9 +161,9 @@ function formatTvl(info: VaultInfoResponse): string {
     if (!Number.isNaN(n)) sum += n / 1e7;
   }
   if (sum <= 0) return "—";
-  if (sum >= 1_000_000) return `$${(sum / 1_000_000).toFixed(2)}M`;
-  if (sum >= 1_000) return `$${(sum / 1_000).toFixed(2)}k`;
-  return `$${sum.toFixed(2)}`;
+  if (sum >= 1_000_000) return `$${formatAmount(sum / 1_000_000)}M`;
+  if (sum >= 1_000) return `$${formatAmount(sum / 1_000)}k`;
+  return `$${formatAmount(sum)}`;
 }
 
 /**
@@ -205,7 +206,7 @@ export function defindexInfoToVaultView(
 
   const apyStr =
     info.apy != null && !Number.isNaN(Number(info.apy))
-      ? `${Number(info.apy).toFixed(2)}%`
+      ? `${formatAmount(Number(info.apy))}%`
       : "—";
 
   const overrides = STATIC_OVERRIDES[contractId] ?? {};
