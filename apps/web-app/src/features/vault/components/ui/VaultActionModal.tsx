@@ -17,6 +17,8 @@ interface VaultActionModalProps {
   supplyAssetContractAddress?: string;
   supplyAssetSymbol?: string;
   vaultShareSymbol?: string;
+  /** Pre-fill deposit amount (e.g. simulator wizard). */
+  initialAmount?: string;
 }
 
 export function VaultActionModal({
@@ -26,9 +28,10 @@ export function VaultActionModal({
   supplyAssetContractAddress,
   supplyAssetSymbol,
   vaultShareSymbol,
+  initialAmount = "",
 }: VaultActionModalProps) {
   const [visible, setVisible] = useState(false);
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(initialAmount);
   const [mode, setMode] = useState<"deposit" | "withdraw">(
     isDeposit ? "deposit" : "withdraw"
   );
@@ -121,7 +124,7 @@ export function VaultActionModal({
               <button
                 onClick={() => {
                   setMode("deposit");
-                  setAmount("");
+                  setAmount(initialAmount ?? "");
                 }}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
                   mode === "deposit"
