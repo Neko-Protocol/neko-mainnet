@@ -73,6 +73,16 @@ const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
     creatorIconSrc: "/assets/vault-creators/meru.jpg",
     issuerIconSrc: "/assets/vault-assets/meru.svg",
   },
+  // EURC Neko
+  CB3FUMFGCF6DHSFK6N2TOKHRMYXS34HFKQR45UKVORCRUM35AF3ES7WQ: {
+    createdBy: "Neko",
+    creatorIconSrc: "/neko-logo.png",
+  },
+  // USDC Neko
+  CCPKQH3K5XUGP5GXCT6WTABS7TGXRR745BJ4MEFSGNATB7AOBRL4VEOT: {
+    createdBy: "Neko",
+    creatorIconSrc: "/neko-logo.png",
+  },
 };
 
 function toVaultAsset(
@@ -151,13 +161,18 @@ function buildStrategyAllocations(
   return rows.length ? rows : undefined;
 }
 
-function formatTvl(info: VaultInfoResponse): string {
+function formatTvl(
+  info: VaultInfoResponse,
+  priceUsdByAsset: Record<string, number> = {}
+): string {
   const funds = info.totalManagedFunds ?? [];
   if (funds.length === 0) return "—";
   let sum = 0;
   for (const a of funds) {
-    const n = Number(a.total_amount ?? 0);
-    if (!Number.isNaN(n)) sum += n / 1e7;
+    const tokens = Number(a.total_amount ?? 0) / 1e7;
+    if (Number.isNaN(tokens)) continue;
+    const price = priceUsdByAsset[a.asset] ?? 1;
+    sum += tokens * price;
   }
   if (sum <= 0) return "—";
   if (sum >= 1_000_000) return `$${(sum / 1_000_000).toFixed(2)}M`;
@@ -170,7 +185,8 @@ function formatTvl(info: VaultInfoResponse): string {
  */
 export function defindexInfoToVaultView(
   contractId: string,
-  info: VaultInfoResponse
+  info: VaultInfoResponse,
+  priceUsdByAsset: Record<string, number> = {}
 ): VaultView {
   const assets = info.assets ?? [];
   const primary = assets[0];
@@ -203,9 +219,10 @@ export function defindexInfoToVaultView(
 
   const strategyAllocations = buildStrategyAllocations(info);
 
+  const apyNum = info.apy != null ? Number(info.apy) : null;
   const apyStr =
-    info.apy != null && !Number.isNaN(Number(info.apy))
-      ? `${Number(info.apy).toFixed(2)}%`
+    apyNum != null && !Number.isNaN(apyNum) && apyNum > 0
+      ? `${apyNum.toFixed(2)}%`
       : "—";
 
   const overrides = STATIC_OVERRIDES[contractId] ?? {};
@@ -239,7 +256,7 @@ export function defindexInfoToVaultView(
 
   return {
     ...config,
-    tvl: formatTvl(info),
+    tvl: formatTvl(info, priceUsdByAsset),
     apy7d: apyStr,
     utilization: "—",
     totalSupply: "—",
