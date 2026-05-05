@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Vault } from "lucide-react";
+import { parseDefindexVaultIds } from "@/lib/defindex/vaultIds";
 import type { VaultView } from "../../types/vault";
 import { VaultCard } from "./VaultCard";
 
@@ -39,9 +40,12 @@ const VaultCardSkeleton = () => (
   </div>
 );
 
-interface VaultGridProps {
+export interface VaultGridProps {
   vaults: VaultView[];
   isLoading?: boolean;
+  walletAddress?: string | null;
+  balancePendingByVaultId?: Record<string, boolean>;
+  fetchingFooterMessage?: string | null;
   userBalances?: Record<string, bigint>;
   onDetailsClick?: (vault: VaultView) => void;
   onDepositClick?: (vault: VaultView) => void;
@@ -49,20 +53,26 @@ interface VaultGridProps {
   emptySubtitle?: string;
 }
 
-export const VaultGrid: React.FC<VaultGridProps> = ({
+export function VaultGrid({
   vaults,
   isLoading,
+  walletAddress,
+  balancePendingByVaultId,
+  fetchingFooterMessage,
   userBalances,
   onDetailsClick,
   onDepositClick,
   onWithdrawClick,
   emptySubtitle = "Try adjusting your filters",
-}) => {
+}: VaultGridProps) {
+  const configuredVaultCount = parseDefindexVaultIds().length;
+
   if (isLoading && vaults.length === 0) {
+    const placeholderSlots = Math.max(configuredVaultCount, 1);
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <VaultCardSkeleton key={`vault-card-skeleton-${index}`} />
+        {Array.from({ length: placeholderSlots }).map((_, index) => (
+          <VaultCardSkeleton key={`vault-list-skeleton-${index}`} />
         ))}
       </div>
     );
@@ -83,18 +93,43 @@ export const VaultGrid: React.FC<VaultGridProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {vaults.map((vault) => (
-        <VaultCard
-          key={vault.id}
-          vault={vault}
-          isLoading={isLoading}
-          userBalance={userBalances?.[vault.id]}
-          onDetailsClick={onDetailsClick}
-          onDepositClick={onDepositClick}
-          onWithdrawClick={onWithdrawClick}
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {vaults.map((vault) => {
+          const balancePending =
+            Boolean(walletAddress) && !!balancePendingByVaultId?.[vault.id];
+          if (balancePending) {
+            return <VaultCardSkeleton key={vault.id} />;
+          }
+          return (
+            <VaultCard
+              key={vault.id}
+              vault={vault}
+              isLoading={isLoading}
+              userBalance={userBalances?.[vault.id]}
+              onDetailsClick={onDetailsClick}
+              onDepositClick={onDepositClick}
+              onWithdrawClick={onWithdrawClick}
+            />
+          );
+        })}
+      </div>
+      {fetchingFooterMessage ? (
+        <div
+          className="mt-10 flex justify-center"
+          role="status"
+          aria-live="polite"
+        >
+          <div className="flex items-center justify-center gap-2 text-sm text-white/50">
+            <span
+              className="inline-block animate-spin rounded-full border-2 border-white/20 border-t-[#229EDF]"
+              style={{ width: 14, height: 14 }}
+              aria-hidden
+            />
+            <span>{fetchingFooterMessage}</span>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
-};
+}
