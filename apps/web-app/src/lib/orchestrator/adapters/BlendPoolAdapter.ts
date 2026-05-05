@@ -193,6 +193,44 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     }
   }
 
+  /**
+   * Load pool + user ONCE and return positions for every reserve.
+   * Use this on the dashboard instead of N separate getUserPosition calls.
+   */
+  async getAllUserPositions(userAddress: string): Promise<PoolPosition[]> {
+    const network = getBlendNetwork();
+    try {
+      const pool = await PoolV2.load(network, this.poolContractId);
+      const poolUser = await pool.loadUser(userAddress);
+      const reserves = Array.from(pool.reserves.values());
+      const { claimedTokens } = poolUser.estimateEmissions(reserves);
+
+      return Array.from(pool.reserves.entries()).map(
+        ([assetAddress, reserve]) => {
+          const supplied = poolUser.getSupply(reserve);
+          const collateral = poolUser.getCollateral(reserve);
+          const liabilities = poolUser.getLiabilities(reserve);
+          const deposited = supplied + collateral;
+          return {
+            poolId: `blend:${this.poolContractId}:${assetAddress}`,
+            deposited,
+            depositedFormatted: formatUnits(deposited, reserve.config.decimals),
+            rewards: 0n,
+            rewardsFormatted: "0",
+            metadata: {
+              supplied: supplied.toString(),
+              collateral: collateral.toString(),
+              liabilities: liabilities.toString(),
+              claimedTokens,
+            },
+          };
+        }
+      );
+    } catch {
+      return [];
+    }
+  }
+
   async getUserPosition(
     rawId: string,
     userAddress: string

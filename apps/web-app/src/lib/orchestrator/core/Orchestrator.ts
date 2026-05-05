@@ -133,6 +133,24 @@ export class Orchestrator {
     return adapter.claimRewards(rawId, userAddress);
   }
 
+  /** One PoolV2.load + one loadUser for ALL blend reserves — far fewer RPC calls than per-reserve queries. */
+  async getAllBlendUserPositions(userAddress: string): Promise<PoolPosition[]> {
+    const blendAdapters = this.registry
+      .getAdapters()
+      .filter((a): a is BlendPoolAdapter => a instanceof BlendPoolAdapter);
+
+    const settled = await Promise.allSettled(
+      blendAdapters.map((a) => a.getAllUserPositions(userAddress))
+    );
+
+    return settled
+      .filter(
+        (r): r is PromiseFulfilledResult<PoolPosition[]> =>
+          r.status === "fulfilled"
+      )
+      .flatMap((r) => r.value);
+  }
+
   async getAllPools(): Promise<PoolInfo[]> {
     const adapters = this.registry.getAdapters();
 
