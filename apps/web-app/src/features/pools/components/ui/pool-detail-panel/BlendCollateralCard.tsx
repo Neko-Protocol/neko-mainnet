@@ -10,24 +10,24 @@ export function BlendCollateralCard({
   options,
   selectedCollateralAddress,
   onSelectCollateral,
+  selectedCollateral,
+  collateralBelowMinimum,
+  formatUsdValue,
+  minCollateralUsd,
   collateralInputAmount,
   onCollateralInputChange,
-  selectedCollateral,
-  isWalletConnected,
   collateralInputUsd,
-  formatUsdValue,
-  collateralBelowMinimum,
 }: {
   options: CollateralOption[];
   selectedCollateralAddress: string;
   onSelectCollateral: (address: string) => void;
-  collateralInputAmount: string;
-  onCollateralInputChange: (v: string) => void;
   selectedCollateral: CollateralOption | undefined;
-  isWalletConnected: boolean;
-  collateralInputUsd: number;
-  formatUsdValue: (amountUsd: number) => string;
   collateralBelowMinimum: boolean;
+  formatUsdValue: (amountUsd: number) => string;
+  minCollateralUsd?: number;
+  collateralInputAmount: string;
+  onCollateralInputChange: (value: string) => void;
+  collateralInputUsd: number;
 }) {
   return (
     <div className="rounded-xl p-4 flex flex-col gap-3">
@@ -81,62 +81,51 @@ export function BlendCollateralCard({
 
       {selectedCollateral && (
         <>
-          <div className="flex items-center justify-between">
-            <input
-              type="text"
-              inputMode="decimal"
-              placeholder="0.00"
-              value={collateralInputAmount}
-              onChange={(e) =>
-                onCollateralInputChange(
-                  e.target.value
-                    .replace(/[^0-9.]/g, "")
-                    .replace(/(\..*)\./g, "$1")
-                )
-              }
-              disabled={!isWalletConnected}
-              className="w-full bg-transparent text-white text-xl font-semibold outline-none placeholder:text-white/15 disabled:cursor-not-allowed"
-            />
-            <button
-              type="button"
-              onClick={() =>
-                onCollateralInputChange(
-                  selectedCollateral.walletBalance ??
-                    selectedCollateral.userBalance
-                )
-              }
-              disabled={!isWalletConnected}
-              className="ml-3 shrink-0 text-[#229EDF] text-xs font-semibold uppercase tracking-wide hover:text-[#1a8bc7] transition-colors disabled:opacity-40"
-            >
-              MAX
-            </button>
-          </div>
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="0.00"
+            value={collateralInputAmount}
+            onChange={(e) =>
+              onCollateralInputChange(
+                e.target.value
+                  .replace(/[^0-9.]/g, "")
+                  .replace(/(\..*)\./g, "$1")
+              )
+            }
+            className="w-full bg-transparent text-white text-2xl font-semibold outline-none placeholder:text-white/15"
+          />
 
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-white/30">
+          <div className="flex items-center justify-between">
+            <span className="text-white/30 text-xs">
               {formatUsdValue(collateralInputUsd)}
             </span>
-            <span className="text-white/30 tabular-nums">
-              {selectedCollateral.walletBalance ??
-                selectedCollateral.userBalance}{" "}
-              {selectedCollateral.symbol}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-white/30 text-xs tabular-nums">
+                {selectedCollateral.userBalance || "0"}{" "}
+                {selectedCollateral.symbol}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  onCollateralInputChange(selectedCollateral.userBalance || "0")
+                }
+                className="text-[#229EDF] text-xs font-semibold hover:text-[#1a8bc7] transition-colors uppercase tracking-wide"
+              >
+                MAX
+              </button>
+            </div>
           </div>
 
           {collateralBelowMinimum && (
             <p className="text-xs text-amber-400/80">
               Minimum collateral value:{" "}
-              {formatUsdValue(BLEND_MIN_COLLATERAL_USD)}
+              {formatUsdValue(
+                (minCollateralUsd ?? BLEND_MIN_COLLATERAL_USD) /
+                  (selectedCollateral.cFactor ?? 1)
+              )}
             </p>
           )}
-          {selectedCollateral.walletBalance !== undefined &&
-            collateralInputAmount !== "" &&
-            parseFloat(collateralInputAmount) >
-              parseFloat(selectedCollateral.walletBalance) && (
-              <p className="text-xs text-red-400/90">
-                Insufficient {selectedCollateral.symbol} balance
-              </p>
-            )}
         </>
       )}
     </div>
