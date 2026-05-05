@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useMemo,
-  useState,
-  useCallback,
-  useRef,
-  useEffect,
-} from "react";
+import React, { useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
@@ -70,8 +64,11 @@ const Vault: React.FC = () => {
     isDeposit: boolean;
   }>({ open: false, isDeposit: true });
 
-  const { data: defindexPayload, isLoading, isFetching } = useDefindexVaults();
+  const { data: defindexPayload, isPending, isFetching } = useDefindexVaults();
   const vaultsFromApi = defindexPayload?.vaults ?? [];
+
+  const isVaultListInitialLoad =
+    isPending || (isFetching && vaultsFromApi.length === 0);
 
   const emptyVaultSubtitle = useMemo(() => {
     if (defindexPayload?.error === "missing_defindex_api_key") {
@@ -109,8 +106,7 @@ const Vault: React.FC = () => {
     );
   }, [pendingActionVault, selectedVault, vaultsFromApi]);
 
-  const { data: liveVaultData, isLoading: isLoadingLive } =
-    useVaultData(activeContractId);
+  const { data: liveVaultData } = useVaultData(activeContractId);
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
 
@@ -193,11 +189,6 @@ const Vault: React.FC = () => {
       .sort((a, b) => a.symbol.localeCompare(b.symbol));
   }, [vaultsFromApi]);
 
-  const assetSymbols = useMemo(
-    () => assetOptions.map((o) => o.symbol),
-    [assetOptions]
-  );
-
   const filteredVaults = useMemo(() => {
     if (!assetFilter) return vaults;
     return vaults.filter((v) => v.supplyAsset?.symbol === assetFilter);
@@ -206,8 +197,49 @@ const Vault: React.FC = () => {
   const displayVault =
     pendingActionVault ?? selectedVault ?? vaultsFromApi[0] ?? null;
 
-  const gridLoading = isLoading || isFetching;
-  const rowLoading = isLoadingLive && !!activeContractId;
+  const balancePendingByVaultId = useMemo(() => {
+    const map: Record<string, boolean> = {};
+    if (!address) return map;
+    vaultsFromApi.forEach((vault, idx) => {
+      const q = balanceQueries[idx];
+      const canFetchBalance = Boolean(
+        address && vault.detail?.contracts?.vault
+      );
+      if (!q || !canFetchBalance) {
+        map[vault.id] = false;
+        return;
+      }
+      map[vault.id] = !q.isFetched;
+    });
+    return map;
+  }, [address, vaultsFromApi, balanceQueries]);
+
+  const vaultFetchingFooterMessage = useMemo(() => {
+    const anyBalanceStillLoading =
+      Boolean(address) &&
+      filteredVaults.some((vault) => {
+        const idx = vaultsFromApi.findIndex((v) => v.id === vault.id);
+        if (idx === -1) return false;
+        const q = balanceQueries[idx];
+        if (!vault.detail?.contracts?.vault || !q) return false;
+        return !q.isFetched;
+      });
+
+    const listStillRefreshing =
+      isFetching && vaultsFromApi.length > 0 && !isPending;
+
+    if (anyBalanceStillLoading || listStillRefreshing) {
+      return "Fetching more vaults";
+    }
+    return null;
+  }, [
+    address,
+    filteredVaults,
+    vaultsFromApi,
+    balanceQueries,
+    isFetching,
+    isPending,
+  ]);
 
   const openDepositModal = (isDeposit = true) =>
     setActionModal({ open: true, isDeposit });
@@ -299,7 +331,10 @@ const Vault: React.FC = () => {
       {activeTab === "vaults" ? (
         <VaultGrid
           vaults={filteredVaults}
-          isLoading={gridLoading || rowLoading}
+          isLoading={isVaultListInitialLoad}
+          walletAddress={address}
+          balancePendingByVaultId={balancePendingByVaultId}
+          fetchingFooterMessage={vaultFetchingFooterMessage}
           userBalances={userBalances}
           onDetailsClick={setSelectedVault}
           onDepositClick={(v) => {

@@ -35,6 +35,9 @@ function isRateLimitError(err: unknown): boolean {
   );
 }
 
+const VAULT_FETCH_CONCURRENCY = 5;
+const BATCH_GAP_MS = 50;
+
 async function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
@@ -92,20 +95,25 @@ export async function GET() {
   const vaults: VaultView[] = [];
   const fetchErrors: { contractId: string; message: string }[] = [];
 
-  // Fetch sequentially with a small gap to avoid rate limiting.
-  for (let i = 0; i < ids.length; i++) {
-    const contractId = ids[i]!;
-    try {
-      const view = await fetchVaultWithRetry(sdk, contractId, network);
-      vaults.push(view);
-    } catch (err) {
-      fetchErrors.push({
-        contractId,
-        message: formatVaultFetchError(err),
-      });
+  for (let i = 0; i < ids.length; i += VAULT_FETCH_CONCURRENCY) {
+    const batch = ids.slice(i, i + VAULT_FETCH_CONCURRENCY);
+    const settled = await Promise.allSettled(
+      batch.map((contractId) => fetchVaultWithRetry(sdk, contractId, network))
+    );
+    settled.forEach((result, j) => {
+      const contractId = batch[j]!;
+      if (result.status === "fulfilled") {
+        vaults.push(result.value);
+      } else {
+        fetchErrors.push({
+          contractId,
+          message: formatVaultFetchError(result.reason),
+        });
+      }
+    });
+    if (i + VAULT_FETCH_CONCURRENCY < ids.length) {
+      await delay(BATCH_GAP_MS);
     }
-    // 150 ms gap between requests keeps us well under typical API rate limits.
-    if (i < ids.length - 1) await delay(150);
   }
 
   return NextResponse.json({
