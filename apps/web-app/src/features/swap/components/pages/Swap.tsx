@@ -112,7 +112,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
     <div className="bg-[#252525] rounded-xl p-3.5">
       <div className="text-white font-bold text-xl">
         {isLoadingPrice ? (
-          <span className="text-white/40 text-sm animate-pulse">Loading…</span>
+          <span className="text-white/40 text-sm">Loading…</span>
         ) : (
           <>{fiatValue || "0.00"}</>
         )}
@@ -401,9 +401,7 @@ const Swap: React.FC = () => {
               </span>
               <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center gap-2">
                 {isLoadingQuote ? (
-                  <span className="text-white/40 text-sm animate-pulse">
-                    Loading…
-                  </span>
+                  <span className="text-white/40 text-sm">Loading…</span>
                 ) : (
                   <span className="text-white text-3xl font-bold">
                     {amountOut && amountOut !== "0.0"

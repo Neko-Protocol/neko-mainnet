@@ -178,7 +178,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
             TVL
           </span>
           {isLoading ? (
-            <div className="h-5 w-16 rounded bg-white/10 animate-pulse" />
+            <div className="h-5 w-16 rounded bg-white/10" />
           ) : (
             <span className="text-white text-base font-bold">{vault.tvl}</span>
           )}
@@ -191,7 +191,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
             APY (7d)
           </span>
           {isLoading ? (
-            <div className="h-5 w-14 rounded bg-white/10 animate-pulse" />
+            <div className="h-5 w-14 rounded bg-white/10" />
           ) : (
             <span className="text-[#4ADE80] text-base font-bold">
               {vault.apy7d}

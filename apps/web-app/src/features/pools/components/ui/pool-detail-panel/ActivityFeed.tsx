@@ -37,10 +37,10 @@ export function ActivityFeed({ poolId }: { poolId: string }) {
         </div>
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <div key={i} className={grid}>
-            <div className="h-3.5 rounded bg-white/[0.08] animate-pulse w-[min(100%,11rem)]" />
-            <div className="h-4 rounded bg-white/[0.08] animate-pulse w-14" />
-            <div className="h-3.5 rounded bg-white/[0.08] animate-pulse w-24 font-mono" />
-            <div className="h-3 w-3 rounded bg-white/[0.06] animate-pulse justify-self-end" />
+            <div className="h-3.5 rounded bg-white/[0.08] w-[min(100%,11rem)]" />
+            <div className="h-4 rounded bg-white/[0.08] w-14" />
+            <div className="h-3.5 rounded bg-white/[0.08] w-24 font-mono" />
+            <div className="h-3 w-3 rounded bg-white/[0.06] justify-self-end" />
           </div>
         ))}
       </div>
