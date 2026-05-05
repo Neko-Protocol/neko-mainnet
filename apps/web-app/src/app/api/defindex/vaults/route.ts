@@ -6,7 +6,7 @@ import { defindexInfoToVaultView } from "@/lib/defindex/mapToVaultView";
 import { defindexNetworkFromEnv } from "@/lib/defindex/network";
 import { getDefindexApiKeyFromEnv } from "@/lib/defindex/env";
 import { parseDefindexVaultIds } from "@/lib/defindex/vaultIds";
-import type { VaultView } from "@/features/vault/types/vault";
+import type { VaultView } from "@/features/shared/vault/types/vault";
 
 export const dynamic = "force-dynamic";
 

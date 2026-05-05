@@ -1,4 +1,4 @@
-import Settings from "@/features/settings/components/pages/Settings";
+import Settings from "@/features/shared/settings/components/pages/Settings";
 
 export const metadata = {
   title: "Settings | Neko",

@@ -4,11 +4,11 @@ import type {
   VaultConfig,
   VaultView,
   VaultStrategyAllocation,
-} from "@/features/vault/types/vault";
+} from "@/features/shared/vault/types/vault";
 import {
   vaultArtForSymbol,
   vaultDedicatedArtKey,
-} from "@/features/vault/utils/vaultAssetArt";
+} from "@/features/shared/vault/utils/vaultAssetArt";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 
 // Per-vault static overrides: contractId → fields that differ from the defaults.

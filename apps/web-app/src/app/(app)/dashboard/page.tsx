@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import Dashboard from "@/features/dashboard/components/pages/Dashboard";
+import { ModeSwitch } from "@/components/routing/ModeSwitch";
+import { BasicDashboard } from "@/features/basic/dashboard";
+import { Dashboard } from "@/features/expert/dashboard";
 
 export const metadata: Metadata = {
   title: "Dashboard | Neko Protocol",
@@ -7,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardPage() {
-  return <Dashboard />;
+  return <ModeSwitch basic={<BasicDashboard />} expert={<Dashboard />} />;
 }

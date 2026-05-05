@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Vault from "@/features/vault/components/pages/Vault";
+import Vault from "@/features/shared/vault/components/pages/Vault";
 
 export const metadata: Metadata = {
   title: "Vault | Neko Protocol",
