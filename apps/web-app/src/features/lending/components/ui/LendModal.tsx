@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { X, RefreshCw } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import type { PoolData } from "../../types/lending";
 
 interface LendModalProps {
@@ -41,7 +42,7 @@ export function LendModal({
       parseFloat(pool.bTokenRate) <= 0
     )
       return null;
-    return (parseFloat(amount) / parseFloat(pool.bTokenRate)).toFixed(7);
+    return (parseFloat(amount) / parseFloat(pool.bTokenRate)).toFixed(4);
   }, [amount, pool.bTokenRate, isAggregated]);
 
   const canSubmit =
@@ -66,8 +67,8 @@ export function LendModal({
         {
           label: "bToken Rate",
           value: pool.bTokenRate
-            ? parseFloat(pool.bTokenRate).toFixed(4)
-            : "1.0000",
+            ? formatAmount(pool.bTokenRate)
+            : formatAmount(1),
         },
       ];
 
@@ -157,7 +158,7 @@ export function LendModal({
           </div>
           {!isDeposit && !isAggregated && amount && bTokensToBurn && (
             <p className="text-white/30 text-xs mt-1 italic">
-              You will burn ~{parseFloat(bTokensToBurn).toFixed(4)} bTokens
+              You will burn ~{formatAmount(bTokensToBurn)} bTokens
             </p>
           )}
         </div>

@@ -114,7 +114,7 @@ export class AlfredPayClient implements Anchor {
   private mapQuote(response: AlfredPayQuoteResponse): Quote {
     const totalFee = response.fees
       .reduce((sum, fee) => sum + parseFloat(fee.amount), 0)
-      .toFixed(2);
+      .toFixed(4);
     return {
       id: response.quoteId,
       fromCurrency: response.fromCurrency,

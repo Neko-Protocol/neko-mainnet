@@ -1,3 +1,6 @@
+import { APP_DISPLAY_DECIMALS } from "@/lib/constants/display";
+import { formatAmount } from "@/lib/helpers/formatUtils";
+
 /**
  * Format a number as MXN currency.
  */
@@ -7,18 +10,18 @@ export function formatMxn(amount: string | number): string {
   return new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: "MXN",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: APP_DISPLAY_DECIMALS,
+    maximumFractionDigits: APP_DISPLAY_DECIMALS,
   }).format(num);
 }
 
 /**
- * Format a crypto amount with up to 7 decimal places.
+ * Format a crypto amount for display.
  */
 export function formatCrypto(amount: string | number, symbol: string): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
   if (isNaN(num)) return `— ${symbol}`;
-  return `${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 7 })} ${symbol}`;
+  return `${formatAmount(num)} ${symbol}`;
 }
 
 /**
@@ -47,5 +50,5 @@ export function formatCountdown(seconds: number): string {
 export function formatRate(rate: string, from: string, to: string): string {
   const num = parseFloat(rate);
   if (isNaN(num)) return `1 ${from} = — ${to}`;
-  return `1 ${from} = ${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 })} ${to}`;
+  return `1 ${from} = ${formatAmount(num)} ${to}`;
 }

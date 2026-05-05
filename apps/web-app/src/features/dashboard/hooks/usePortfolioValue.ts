@@ -80,8 +80,8 @@ export function usePortfolioValue(): PortfolioValue {
         .sort((a, b) => b.valueUsd - a.valueUsd);
     },
     enabled: Boolean(address) && balanceEntries.length > 0,
-    refetchInterval: 30_000,
-    staleTime: 15_000,
+    refetchInterval: 120_000,
+    staleTime: 60_000,
   });
 
   const totalUsd = holdings.reduce((sum, h) => sum + h.valueUsd, 0);

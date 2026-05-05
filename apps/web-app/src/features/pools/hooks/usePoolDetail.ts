@@ -29,7 +29,7 @@ export function usePoolDetail(contractId: string | undefined) {
     const tvlFormatted = formatLiquidity(
       fromSmallestUnit(pool.tvl.toString(), decimals)
     );
-    const apyFormatted = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
+    const apyFormatted = pool.apy > 0 ? `${pool.apy.toFixed(4)}%` : "0.0000%";
     const typeLabel =
       pool.type === "blend" || pool.type === "neko"
         ? "Lending"

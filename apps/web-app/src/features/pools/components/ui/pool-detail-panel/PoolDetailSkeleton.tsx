@@ -4,10 +4,7 @@ import { POOL_DETAIL_MAIN_SCROLL_ID } from "./scrollIds";
 
 function SkeletonBar({ className = "" }: { className?: string }) {
   return (
-    <div
-      className={`rounded-md bg-white/[0.08] animate-pulse ${className}`}
-      aria-hidden
-    />
+    <div className={`rounded-md bg-white/[0.08] ${className}`} aria-hidden />
   );
 }
 
@@ -89,9 +86,9 @@ export function PoolDetailSkeleton() {
             ))}
           </div>
           <SkeletonBar className="h-7 w-36 mt-10" />
-          <div className="h-52 rounded-xl border border-white/7 bg-white/[0.03] animate-pulse mt-4" />
+          <div className="h-52 rounded-xl border border-white/7 bg-white/[0.03] mt-4" />
           <SkeletonBar className="h-7 w-36 mt-16" />
-          <div className="h-40 rounded-xl border border-white/7 bg-white/[0.03] animate-pulse mt-4" />
+          <div className="h-40 rounded-xl border border-white/7 bg-white/[0.03] mt-4" />
         </div>
       </section>
     </div>

@@ -24,7 +24,7 @@ export const FiatAccountSelector: React.FC<FiatAccountSelectorProps> = ({
   if (isLoading) {
     return (
       <div className="bg-[#1C1C1C] rounded-[20px] p-5">
-        <div className="animate-pulse h-16 bg-white/5 rounded-xl" />
+        <div className="h-16 bg-white/5 rounded-xl" />
       </div>
     );
   }

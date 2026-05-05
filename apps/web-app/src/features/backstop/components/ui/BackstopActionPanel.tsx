@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { BackstopInfoAlert } from "./BackstopInfoAlert";
 
 type ActionTab = "deposit" | "withdraw";
@@ -101,7 +102,7 @@ export function BackstopActionPanel({
                   disabled={isLoading}
                   className="text-[#229EDF] text-xs font-semibold hover:text-[#229EDF]/70 transition-colors disabled:opacity-40"
                 >
-                  Max: {parseFloat(walletBalance).toFixed(4)}
+                  Max: {formatAmount(walletBalance)}
                 </button>
               )}
             </div>
@@ -167,7 +168,7 @@ export function BackstopActionPanel({
                       disabled={isLoading}
                       className="text-[#229EDF] text-xs font-semibold hover:text-[#229EDF]/70 transition-colors disabled:opacity-40"
                     >
-                      Max: {parseFloat(activeDepositAmount).toFixed(4)}
+                      Max: {formatAmount(activeDepositAmount)}
                     </button>
                   )}
                 </div>

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { squeezeSummaryDecimals } from "@/lib/helpers/formatUtils";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import type { VaultView, VaultCategory } from "../../types/vault";
 import { vaultArtForSymbol } from "../../utils/vaultAssetArt";
@@ -178,9 +179,11 @@ export const VaultCard: React.FC<VaultCardProps> = ({
             TVL
           </span>
           {isLoading ? (
-            <div className="h-5 w-16 rounded bg-white/10 animate-pulse" />
+            <div className="h-5 w-16 rounded bg-white/10" />
           ) : (
-            <span className="text-white text-base font-bold">{vault.tvl}</span>
+            <span className="text-white text-base font-bold">
+              {squeezeSummaryDecimals(vault.tvl)}
+            </span>
           )}
         </div>
 
@@ -191,10 +194,10 @@ export const VaultCard: React.FC<VaultCardProps> = ({
             APY (7d)
           </span>
           {isLoading ? (
-            <div className="h-5 w-14 rounded bg-white/10 animate-pulse" />
+            <div className="h-5 w-14 rounded bg-white/10" />
           ) : (
             <span className="text-[#4ADE80] text-base font-bold">
-              {vault.apy7d}
+              {squeezeSummaryDecimals(vault.apy7d)}
             </span>
           )}
         </div>

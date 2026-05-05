@@ -54,7 +54,7 @@ export const PaymentInstructionsDisplay: React.FC<PaymentInstructionsProps> = ({
     <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+          <div className="w-2 h-2 rounded-full bg-yellow-400" />
           <span className="text-white font-semibold text-sm">
             Send payment via SPEI
           </span>

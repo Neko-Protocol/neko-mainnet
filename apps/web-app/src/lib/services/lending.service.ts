@@ -674,7 +674,7 @@ export class LendingService {
         // Convert from smallest unit (assuming 7 decimals for USD)
         const limitValue = Number(borrowLimitResult.ok);
         // Since this is USD value, we can divide by 1e7 to get human-readable
-        return (limitValue / 1e7).toFixed(2);
+        return (limitValue / 1e7).toFixed(4);
       } else {
         return "0";
       }

@@ -1,9 +1,27 @@
 import {
+  APP_DISPLAY_DECIMALS,
+  SUMMARY_DISPLAY_DECIMALS,
+} from "@/lib/constants/display";
+import {
   convertUsdToSelected,
   formatCompactCurrency,
 } from "@/lib/helpers/currency";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { useFxRateStore } from "@/stores/fx-rate.store";
+
+const amountFormatters = new Map<number, Intl.NumberFormat>();
+
+function getAmountFormatter(fractionDigits: number): Intl.NumberFormat {
+  let f = amountFormatters.get(fractionDigits);
+  if (!f) {
+    f = new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    });
+    amountFormatters.set(fractionDigits, f);
+  }
+  return f;
+}
 
 export function safeParseFloat(
   value: string | number | null | undefined
@@ -19,41 +37,54 @@ export function parseBalance(balance: string | null | undefined): number {
   return safeParseFloat(balance);
 }
 
-export function formatLiquidity(value: number | string): string {
+export function formatLiquidity(
+  value: number | string,
+  fractionDigits: number = APP_DISPLAY_DECIMALS
+): string {
   const num = safeParseFloat(value);
   const selectedCurrency = useCurrencyStore.getState().selectedCurrency;
 
   if (selectedCurrency === "USD") {
-    return formatCompactCurrency(num, "USD");
+    return formatCompactCurrency(num, "USD", fractionDigits);
   }
 
   const { currency, rate } = useFxRateStore.getState();
   const effectiveRate = currency === selectedCurrency ? rate : 1;
   return formatCompactCurrency(
     convertUsdToSelected(num, effectiveRate),
-    selectedCurrency
+    selectedCurrency,
+    fractionDigits
   );
 }
 
 /**
- * Format a token amount for display, trimming trailing zeros and adapting
- * decimal places to the magnitude of the value.
- *
- * Examples:
- *   1.0000000  → "1"
- *   0.0100000  → "0.01"
- *   100.12300  → "100.123"
- *   0.0000015  → "0.0000015"
+ * Format a numeric value for UI with fixed fraction digits (default
+ * {@link APP_DISPLAY_DECIMALS}), grouped with en-US thousands separators.
  */
-export function formatAmount(value: number | string): string {
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  if (!Number.isFinite(num) || num === 0) return "0";
+export function formatAmount(
+  value: number | string,
+  fractionDigits: number = APP_DISPLAY_DECIMALS
+): string {
+  const num =
+    typeof value === "string"
+      ? parseFloat(String(value).replace(/,/g, ""))
+      : value;
+  const fmt = getAmountFormatter(fractionDigits);
+  if (!Number.isFinite(num)) return fmt.format(0);
+  return fmt.format(num);
+}
 
-  if (num >= 1_000_000) return `${parseFloat((num / 1_000_000).toFixed(2))}M`;
-  if (num >= 1_000)
-    return num.toLocaleString("en-US", { maximumFractionDigits: 2 });
-  // For numbers >= 0.001 show up to 4 decimals, trim trailing zeros
-  if (num >= 0.001) return parseFloat(num.toFixed(4)).toString();
-  // Very small: show up to 7 significant decimals, trim trailing zeros
-  return parseFloat(num.toFixed(7)).toString();
+/**
+ * Shorten decimal runs in a pre-formatted label (compact TVL, APY %, etc.).
+ * Used where the view needs {@link SUMMARY_DISPLAY_DECIMALS} without raw numbers.
+ */
+export function squeezeSummaryDecimals(
+  label: string,
+  fractionDigits: number = SUMMARY_DISPLAY_DECIMALS
+): string {
+  if (!label || label === "—") return label;
+  return label.replace(/(\d[\d,]*\.\d+)/g, (chunk) => {
+    const n = parseFloat(chunk.replace(/,/g, ""));
+    return Number.isFinite(n) ? n.toFixed(fractionDigits) : chunk;
+  });
 }

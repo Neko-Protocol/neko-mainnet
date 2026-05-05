@@ -8,6 +8,7 @@ import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import type { MappedBalances } from "@/lib/helpers/stellar/wallet";
@@ -69,12 +70,9 @@ const TokenItem: React.FC<TokenItemProps> = ({
 }) => {
   const formatBalance = (b: string): string => {
     const num = parseFloat(b);
-    if (num === 0) return "0";
-    if (num < 0.000001) return num.toExponential(2);
-    if (num < 0.001) return num.toFixed(6);
-    if (num < 1) return num.toFixed(4);
-    if (num < 1000) return num.toFixed(2);
-    return num.toLocaleString(undefined, { maximumFractionDigits: 2 });
+    if (!Number.isFinite(num)) return formatAmount(0);
+    if (num !== 0 && Math.abs(num) < 0.0001) return num.toExponential(4);
+    return formatAmount(num);
   };
 
   return (

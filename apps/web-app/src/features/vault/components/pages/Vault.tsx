@@ -25,6 +25,7 @@ import type { VaultView } from "../../types/vault";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdDisplayToSelectedCurrency } from "@/lib/helpers/currency";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 
 function vaultAssetFilterIconSrc(v: VaultView): string {
   const addr = v.supplyAsset.contractAddress?.trim();
@@ -190,7 +191,7 @@ const Vault: React.FC = () => {
         tvl: liveVaultData.tvl > 0n ? liveVaultData.tvlFormatted : baseTvl,
         totalSupply:
           liveVaultData.totalShares > 0n
-            ? `${(Number(liveVaultData.totalShares) / 1e7).toLocaleString()} shares`
+            ? `${formatAmount(Number(liveVaultData.totalShares) / 1e7)} shares`
             : v.totalSupply,
       };
     });

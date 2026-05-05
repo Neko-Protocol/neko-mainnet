@@ -14,9 +14,9 @@ import {
   type Token,
 } from "@/lib/helpers/stellar/soroswap";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import {
   sanitizeAmountInput,
-  formatSwapAmount,
   fromSmallestUnit,
   getTokenIconFitClass,
 } from "@/lib/helpers/tokenUtils";
@@ -112,7 +112,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
     <div className="bg-[#252525] rounded-xl p-3.5">
       <div className="text-white font-bold text-xl">
         {isLoadingPrice ? (
-          <span className="text-white/40 text-sm animate-pulse">Loading…</span>
+          <span className="text-white/40 text-sm">Loading…</span>
         ) : (
           <>{fiatValue || "0.00"}</>
         )}
@@ -130,9 +130,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
               : "text-white/40 hover:text-white/70 disabled:cursor-not-allowed"
           }`}
         >
-          {isLoadingBalance
-            ? "..."
-            : `${formatSwapAmount(maxAmt || "0", 6)} Max`}
+          {isLoadingBalance ? "..." : `${formatAmount(maxAmt || "0")} Max`}
         </button>
       </div>
     </div>
@@ -366,7 +364,7 @@ const Swap: React.FC = () => {
                   onChange={(e) =>
                     handleAmountChange(sanitizeAmountInput(e.target.value))
                   }
-                  placeholder="0.00"
+                  placeholder="0.0000"
                   disabled={!address || isLoading}
                   className="bg-transparent text-white text-3xl font-bold w-full outline-none placeholder:text-white/30 disabled:opacity-50"
                 />
@@ -401,13 +399,11 @@ const Swap: React.FC = () => {
               </span>
               <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center gap-2">
                 {isLoadingQuote ? (
-                  <span className="text-white/40 text-sm animate-pulse">
-                    Loading…
-                  </span>
+                  <span className="text-white/40 text-sm">Loading…</span>
                 ) : (
                   <span className="text-white text-3xl font-bold">
                     {amountOut && amountOut !== "0.0"
-                      ? formatSwapAmount(amountOut, 6)
+                      ? formatAmount(amountOut)
                       : "0.00"}
                   </span>
                 )}
@@ -449,17 +445,16 @@ const Swap: React.FC = () => {
           <div className="flex justify-between items-center text-white/60">
             <span>Platform fee</span>
             <span className="text-white/80 font-medium">
-              {platformFee.feeBps / 100}%{" · "}
-              {formatSwapAmount(
-                fromSmallestUnit(platformFee.feeAmount, 7),
-                4
-              )}{" "}
+              {(platformFee.feeBps / 100).toFixed(4)}%{" · "}
+              {formatAmount(fromSmallestUnit(platformFee.feeAmount, 7))}{" "}
               {getTokenId(tokenIn)}
             </span>
           </div>
           <div className="flex justify-between items-center text-white/60">
             <span>Slippage tolerance</span>
-            <span className="text-white/80">{DEFAULT_SLIPPAGE_BPS / 100}%</span>
+            <span className="text-white/80">
+              {(DEFAULT_SLIPPAGE_BPS / 100).toFixed(4)}%
+            </span>
           </div>
         </div>
       )}

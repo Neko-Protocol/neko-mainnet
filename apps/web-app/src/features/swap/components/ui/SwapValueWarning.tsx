@@ -83,7 +83,7 @@ export const SwapValueWarning: React.FC<SwapValueWarningProps> = ({
               <p className="text-xs text-gray-400">
                 Expected difference:{" "}
                 <span className="text-red-400 font-semibold">
-                  ~{analysis.differencePercent.toFixed(1)}%
+                  ~{analysis.differencePercent.toFixed(4)}%
                 </span>
               </p>
             </div>

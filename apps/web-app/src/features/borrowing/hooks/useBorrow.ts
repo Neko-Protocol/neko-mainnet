@@ -78,9 +78,9 @@ export function useBorrow() {
             fee: "0%",
             label: p.name,
           },
-          borrowApr: borrowApy > 0 ? `${borrowApy.toFixed(2)}%` : "0.00%",
+          borrowApr: borrowApy > 0 ? `${borrowApy.toFixed(4)}%` : "0.0000%",
           collateralFactorDisplay:
-            cFactor !== null ? `${(cFactor * 100).toFixed(0)}%` : "—",
+            cFactor !== null ? `${(cFactor * 100).toFixed(4)}%` : "—",
           liquidity,
           isActive: p.state === "active",
           assetCode: token?.code ?? "?",

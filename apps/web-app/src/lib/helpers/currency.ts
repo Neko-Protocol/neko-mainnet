@@ -1,3 +1,4 @@
+import { APP_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import type { SupportedCurrency } from "@/stores/currency.store";
 
 export function convertUsdToSelected(
@@ -21,29 +22,31 @@ export function convertUsdToSelected(
 
 export function formatCurrency(
   amount: number,
-  currencyCode: SupportedCurrency
+  currencyCode: SupportedCurrency,
+  fractionDigits: number = APP_DISPLAY_DECIMALS
 ): string {
   const safeAmount = Number.isFinite(amount) ? amount : 0;
 
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currencyCode,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(safeAmount);
 }
 
 export function formatCompactCurrency(
   amount: number,
-  currencyCode: SupportedCurrency
+  currencyCode: SupportedCurrency,
+  fractionDigits: number = APP_DISPLAY_DECIMALS
 ): string {
   const safeAmount = Number.isFinite(amount) ? amount : 0;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: currencyCode,
     notation: "compact",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(safeAmount);
 }
 
@@ -72,7 +75,8 @@ function parseUsdDisplayValue(value: string): number | null {
 export function convertUsdDisplayToSelectedCurrency(
   usdDisplayValue: string,
   fxRate: number,
-  currencyCode: SupportedCurrency
+  currencyCode: SupportedCurrency,
+  fractionDigits: number = APP_DISPLAY_DECIMALS
 ): string {
   const parsed = parseUsdDisplayValue(usdDisplayValue);
   if (!Number.isFinite(parsed)) {
@@ -81,6 +85,7 @@ export function convertUsdDisplayToSelectedCurrency(
 
   return formatCompactCurrency(
     convertUsdToSelected(parsed, fxRate),
-    currencyCode
+    currencyCode,
+    fractionDigits
   );
 }
