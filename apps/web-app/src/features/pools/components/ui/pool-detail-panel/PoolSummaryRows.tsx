@@ -15,8 +15,6 @@ export function PoolSummaryRows({
   borrowAmount,
   borrowUsdDisplay,
   selectedCollateral,
-  collateralInputAmount,
-  collateralInputUsdDisplay,
 }: {
   pool: PoolDetailPanelPool;
   mode: "lend" | "borrow";
@@ -27,8 +25,6 @@ export function PoolSummaryRows({
   borrowAmount: string;
   borrowUsdDisplay: string;
   selectedCollateral: CollateralOption | undefined;
-  collateralInputAmount: string;
-  collateralInputUsdDisplay: string;
 }) {
   return (
     <div className="rounded-xl px-4 py-1">
@@ -97,10 +93,7 @@ export function PoolSummaryRows({
           valueEl={
             <div className="text-right">
               <span className="text-xs font-medium tabular-nums text-white/80">
-                {collateralInputAmount || "0.00"}
-              </span>
-              <span className="block text-[10px] tabular-nums text-white/35">
-                {collateralInputUsdDisplay}
+                {selectedCollateral.userBalance || "0.00"}
               </span>
             </div>
           }

@@ -42,6 +42,7 @@ export interface PoolDetailPanelPool {
   lpBalance?: string;
   borrowLimit?: string;
   lFactor?: number;
+  minCollateralUsd?: number;
   collateralOptions?: CollateralOption[];
 }
 
