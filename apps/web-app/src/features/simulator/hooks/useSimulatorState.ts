@@ -6,13 +6,15 @@ import type {
   SimulatorDestination,
   SimulatorState,
   SimulatorToken,
-  WizardStep,
+  WizardPhaseId,
 } from "../types/simulator.types";
+import { shouldOfferOptionalStack } from "../utils/wizardPhases";
 
 const initialState: SimulatorState = {
-  step: 1,
+  phase: "select_token",
   token: null,
   destination: null,
+  stackVenue: null,
   amount: "",
 };
 
@@ -27,31 +29,58 @@ function reducer(
         ...state,
         token: action.token,
         destination: isSameToken ? state.destination : null,
+        stackVenue: isSameToken ? state.stackVenue : null,
         amount: isSameToken ? state.amount : "",
       };
     }
     case "selectDestination": {
-      const isSame = state.destination?.id === action.destination.id;
+      const isSameId = state.destination?.id === action.destination.id;
+      const isYield = action.destination.kind === "yield-token";
       return {
         ...state,
         destination: action.destination,
-        amount: isSame ? state.amount : "",
+        stackVenue: !isYield || !isSameId ? null : state.stackVenue,
+        amount: isSameId ? state.amount : "",
       };
     }
+    case "selectStackVenue":
+      return { ...state, stackVenue: action.venue };
     case "setAmount":
       return { ...state, amount: action.amount };
     case "goNext": {
-      if (state.step === 1 && !state.token) return state;
-      if (state.step === 2 && !state.destination) return state;
-      const nextStep = Math.min(3, state.step + 1) as WizardStep;
-      return { ...state, step: nextStep };
+      if (state.phase === "select_token") {
+        if (!state.token) return state;
+        return { ...state, phase: "select_destination" };
+      }
+      if (state.phase === "select_destination") {
+        if (!state.destination) return state;
+        if (shouldOfferOptionalStack(state.token, state.destination)) {
+          return { ...state, phase: "optional_stack", stackVenue: null };
+        }
+        return { ...state, phase: "simulate" };
+      }
+      if (state.phase === "optional_stack") {
+        return { ...state, phase: "simulate" };
+      }
+      return state;
     }
     case "goBack": {
-      const prevStep = Math.max(1, state.step - 1) as WizardStep;
-      return { ...state, step: prevStep };
+      if (state.phase === "simulate") {
+        if (shouldOfferOptionalStack(state.token, state.destination)) {
+          return { ...state, phase: "optional_stack" };
+        }
+        return { ...state, phase: "select_destination" };
+      }
+      if (state.phase === "optional_stack") {
+        return { ...state, phase: "select_destination" };
+      }
+      if (state.phase === "select_destination") {
+        return { ...state, phase: "select_token" };
+      }
+      return state;
     }
-    case "goToStep":
-      return { ...state, step: action.step };
+    case "goToPhase":
+      return { ...state, phase: action.phase };
     case "reset":
       return initialState;
     default:
@@ -71,14 +100,19 @@ export function useSimulatorState() {
       dispatch({ type: "selectDestination", destination }),
     []
   );
+  const selectStackVenue = useCallback(
+    (venue: SimulatorDestination | null) =>
+      dispatch({ type: "selectStackVenue", venue }),
+    []
+  );
   const setAmount = useCallback(
     (amount: string) => dispatch({ type: "setAmount", amount }),
     []
   );
   const goNext = useCallback(() => dispatch({ type: "goNext" }), []);
   const goBack = useCallback(() => dispatch({ type: "goBack" }), []);
-  const goToStep = useCallback(
-    (step: WizardStep) => dispatch({ type: "goToStep", step }),
+  const goToPhase = useCallback(
+    (phase: WizardPhaseId) => dispatch({ type: "goToPhase", phase }),
     []
   );
   const reset = useCallback(() => dispatch({ type: "reset" }), []);
@@ -87,10 +121,11 @@ export function useSimulatorState() {
     state,
     selectToken,
     selectDestination,
+    selectStackVenue,
     setAmount,
     goNext,
     goBack,
-    goToStep,
+    goToPhase,
     reset,
   };
 }

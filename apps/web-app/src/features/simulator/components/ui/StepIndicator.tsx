@@ -1,26 +1,32 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { WizardStep } from "../../types/simulator.types";
+import type { WizardPhaseId } from "../../types/simulator.types";
 
-interface StepIndicatorProps {
-  current: WizardStep;
+export interface WizardStepMeta {
+  phase: WizardPhaseId;
+  label: string;
 }
 
-const STEPS: { id: WizardStep; label: string }[] = [
-  { id: 1, label: "Pick a token" },
-  { id: 2, label: "Pick a destination" },
-  { id: 3, label: "See projections" },
-];
+interface StepIndicatorProps {
+  steps: WizardStepMeta[];
+  currentPhase: WizardPhaseId;
+}
 
-export function StepIndicator({ current }: StepIndicatorProps) {
+export function StepIndicator({ steps, currentPhase }: StepIndicatorProps) {
+  const activeIdx = Math.max(
+    0,
+    steps.findIndex((s) => s.phase === currentPhase)
+  );
+
   return (
     <ol className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-      {STEPS.map((step, idx) => {
-        const isActive = step.id === current;
-        const isDone = step.id < current;
+      {steps.map((step, idx) => {
+        const isActive = step.phase === currentPhase;
+        const isDone = idx < activeIdx;
+        const displayNum = idx + 1;
         return (
-          <li key={step.id} className="flex items-center gap-2">
+          <li key={step.phase} className="flex items-center gap-2">
             <span
               className={cn(
                 "flex items-center gap-2 rounded-full px-3 py-1.5 transition-colors",
@@ -37,15 +43,15 @@ export function StepIndicator({ current }: StepIndicatorProps) {
                   !isActive && !isDone && "bg-white/10 text-white/50"
                 )}
               >
-                {step.id}
+                {displayNum}
               </span>
               <span className="font-medium">{step.label}</span>
             </span>
-            {idx < STEPS.length - 1 && (
+            {idx < steps.length - 1 && (
               <span
                 className={cn(
                   "h-px w-4 sm:w-8",
-                  step.id < current ? "bg-[#229EDF]/40" : "bg-white/10"
+                  idx < activeIdx ? "bg-[#229EDF]/40" : "bg-white/10"
                 )}
               />
             )}

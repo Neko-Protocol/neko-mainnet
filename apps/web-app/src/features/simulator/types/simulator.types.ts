@@ -50,20 +50,30 @@ export interface Projection {
   totalUsd: number;
 }
 
+export type WizardPhaseId =
+  | "select_token"
+  | "select_destination"
+  | "optional_stack"
+  | "simulate";
+
+/** @deprecated Use WizardPhaseId */
 export type WizardStep = 1 | 2 | 3;
 
 export interface SimulatorState {
-  step: WizardStep;
+  phase: WizardPhaseId;
   token: SimulatorToken | null;
   destination: SimulatorDestination | null;
+  /** Pool/vault layered on bond hold (only valid after yield-token pick when optional step applies). */
+  stackVenue: SimulatorDestination | null;
   amount: string;
 }
 
 export type SimulatorAction =
   | { type: "selectToken"; token: SimulatorToken }
   | { type: "selectDestination"; destination: SimulatorDestination }
+  | { type: "selectStackVenue"; venue: SimulatorDestination | null }
   | { type: "setAmount"; amount: string }
   | { type: "goNext" }
   | { type: "goBack" }
-  | { type: "goToStep"; step: WizardStep }
+  | { type: "goToPhase"; phase: WizardPhaseId }
   | { type: "reset" };
