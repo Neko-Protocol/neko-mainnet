@@ -155,14 +155,17 @@ export class Orchestrator {
     return pools;
   }
 
-  async getPoolsByType(type: PoolInfo["type"]): Promise<PoolInfo[]> {
+  async getPoolsByType(
+    type: PoolInfo["type"],
+    limit?: number
+  ): Promise<PoolInfo[]> {
     const adapter = this.registry.getAdapters().find((a) => a.type === type);
     if (!adapter) {
       return [];
     }
 
     try {
-      return await adapter.listPools();
+      return await adapter.listPools(limit);
     } catch (error) {
       console.error(`[Orchestrator] ${type}.listPools failed:`, error);
       return [];

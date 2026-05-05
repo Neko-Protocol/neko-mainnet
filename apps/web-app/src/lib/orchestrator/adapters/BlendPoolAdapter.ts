@@ -129,14 +129,18 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     }
   }
 
-  async listPools(): Promise<PoolInfo[]> {
+  async listPools(limit?: number): Promise<PoolInfo[]> {
     const network = getBlendNetwork();
 
     try {
       const pool = await PoolV2.load(network, this.poolContractId);
       const pools: PoolInfo[] = [];
 
-      for (const [assetAddress, reserve] of pool.reserves) {
+      const reserveEntries = [...pool.reserves.entries()];
+      const toProcess =
+        limit !== undefined ? reserveEntries.slice(0, limit) : reserveEntries;
+
+      for (const [assetAddress, reserve] of toProcess) {
         let tokenMeta: TokenMetadata | undefined;
         try {
           tokenMeta = await TokenMetadata.load(network, assetAddress);

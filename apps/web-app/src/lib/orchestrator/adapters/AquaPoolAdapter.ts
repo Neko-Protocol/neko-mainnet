@@ -172,10 +172,11 @@ async function fetchAquaPools(addresses: string[]): Promise<AquaApiPool[]> {
 export class AquaPoolAdapter implements BasePoolAdapter {
   readonly type: PoolType = "aqua";
 
-  async listPools(): Promise<PoolInfo[]> {
+  async listPools(limit?: number): Promise<PoolInfo[]> {
     try {
       const raw = await fetchAquaPools(getAquaPoolAddresses());
-      return raw.map(mapApiPool);
+      const mapped = raw.map(mapApiPool);
+      return limit !== undefined ? mapped.slice(0, limit) : mapped;
     } catch (error) {
       throw new AdapterError("aqua", "listPools", error);
     }
