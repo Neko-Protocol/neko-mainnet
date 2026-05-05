@@ -1,4 +1,4 @@
-import { parseDefindexVaultIds } from "./vaultIds";
+import { parseDefindexVaultIds, parseAllVaultIds } from "./vaultIds";
 
 export function getVaultContractId(): string | null {
   const ids = parseDefindexVaultIds();
@@ -9,7 +9,7 @@ export function resolveVaultIdForApi(
   requested: string | null | undefined
 ): string | null {
   const primary = getVaultContractId();
-  const allowed = new Set(parseDefindexVaultIds());
+  const allowed = new Set(parseAllVaultIds());
   if (primary) {
     allowed.add(primary);
   }
