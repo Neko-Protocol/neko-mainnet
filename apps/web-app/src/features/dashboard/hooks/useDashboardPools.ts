@@ -7,8 +7,8 @@ import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 
-const DASHBOARD_LIMITS = { blend: 5, aqua: 2, soroswap: 2 } as const;
-const POOL_QUERY_OPTS = {
+export const DASHBOARD_LIMITS = { blend: 5, aqua: 2, soroswap: 2 } as const;
+export const DASHBOARD_POOL_QUERY_OPTS = {
   refetchInterval: 5 * 60_000,
   staleTime: 3 * 60_000,
 } as const;
@@ -55,20 +55,20 @@ export function useDashboardPools(): UseDashboardPoolsResult {
   const blendQuery = useQuery<PoolInfo[]>({
     queryKey: ["orchestrator", "pools", "blend", DASHBOARD_LIMITS.blend],
     queryFn: () => orchestrator.getPoolsByType("blend", DASHBOARD_LIMITS.blend),
-    ...POOL_QUERY_OPTS,
+    ...DASHBOARD_POOL_QUERY_OPTS,
   });
 
   const aquaQuery = useQuery<PoolInfo[]>({
     queryKey: ["orchestrator", "pools", "aqua", DASHBOARD_LIMITS.aqua],
     queryFn: () => orchestrator.getPoolsByType("aqua", DASHBOARD_LIMITS.aqua),
-    ...POOL_QUERY_OPTS,
+    ...DASHBOARD_POOL_QUERY_OPTS,
   });
 
   const soroswapQuery = useQuery<PoolInfo[]>({
     queryKey: ["orchestrator", "pools", "soroswap", DASHBOARD_LIMITS.soroswap],
     queryFn: () =>
       orchestrator.getPoolsByType("soroswap", DASHBOARD_LIMITS.soroswap),
-    ...POOL_QUERY_OPTS,
+    ...DASHBOARD_POOL_QUERY_OPTS,
   });
 
   const allPools = useMemo(
