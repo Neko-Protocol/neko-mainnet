@@ -2,13 +2,18 @@
 
 import React from "react";
 import { DollarSign, Coins, TrendingUp } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
+import { parseBalance } from "@/lib/helpers/formatUtils";
+import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { stellarPriceService } from "@/lib/services/stellar-price.service";
 import { usePortfolioValue } from "@/features/dashboard/hooks/usePortfolioValue";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
+import { useDashboardPositions } from "@/features/dashboard/hooks/useDashboardPositions";
 import { StatCard } from "@/features/discover/components/ui/StatCard";
 
 const MainStats: React.FC = () => {
@@ -18,6 +23,7 @@ const MainStats: React.FC = () => {
     holdings,
     isLoading: isLoadingPortfolio,
   } = usePortfolioValue();
+  const { positions, isLoading: isLoadingPositions } = useDashboardPositions();
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate();
   const { assets } = useDashboardPools();
@@ -31,8 +37,80 @@ const MainStats: React.FC = () => {
     return (sum / assets.length).toFixed(SUMMARY_DISPLAY_DECIMALS);
   }, [assets]);
 
-  const isLoading = isFetchingBalances || isLoadingPortfolio;
-  const totalInSelected = convertUsdToSelected(totalUsd, fxRate);
+  const walletPriceByCode = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const h of holdings) {
+      map[h.code] = h.priceUsd;
+    }
+    return map;
+  }, [holdings]);
+
+  const missingPositionAssets = React.useMemo(() => {
+    const dedup = new Map<string, { code: string; contract?: string }>();
+    for (const entry of positions) {
+      const token = entry.pool.tokens[0];
+      if (!token?.code || walletPriceByCode[token.code]) continue;
+      const key = `${token.code}:${token.address ?? ""}`;
+      dedup.set(key, {
+        code: token.code,
+        contract: token.address || undefined,
+      });
+    }
+    return Array.from(dedup.values()).sort((a, b) =>
+      a.code.localeCompare(b.code)
+    );
+  }, [positions, walletPriceByCode]);
+
+  const { data: missingPriceMap = {}, isLoading: isLoadingMissingPrices } =
+    useQuery<Record<string, number>>({
+      queryKey: [
+        "dashboard-missing-position-prices",
+        missingPositionAssets
+          .map((asset) => `${asset.code}:${asset.contract ?? ""}`)
+          .join("|"),
+      ],
+      queryFn: async () => {
+        const entries = await Promise.all(
+          missingPositionAssets.map(async ({ code, contract }) => {
+            const price = await stellarPriceService.getPrice(code, contract);
+            return [code, price] as const;
+          })
+        );
+        return Object.fromEntries(entries);
+      },
+      enabled: missingPositionAssets.length > 0,
+      staleTime: 60_000,
+      refetchInterval: 120_000,
+    });
+
+  const positionsNetUsd = React.useMemo(() => {
+    return positions.reduce((sum, item) => {
+      const token = item.pool.tokens[0];
+      if (!token?.code) return sum;
+
+      const price =
+        walletPriceByCode[token.code] ?? missingPriceMap[token.code] ?? 0;
+
+      const deposited = parseBalance(item.position.depositedFormatted);
+      const liabilitiesRaw = item.position.metadata?.liabilities;
+      const liabilities =
+        liabilitiesRaw == null
+          ? 0
+          : Number(
+              fromSmallestUnit(String(liabilitiesRaw), token.decimals ?? 7)
+            );
+
+      return sum + (deposited - liabilities) * price;
+    }, 0);
+  }, [positions, walletPriceByCode, missingPriceMap]);
+
+  const portfolioTotalUsd = totalUsd + positionsNetUsd;
+  const isLoading =
+    isFetchingBalances ||
+    isLoadingPortfolio ||
+    isLoadingPositions ||
+    isLoadingMissingPrices;
+  const totalInSelected = convertUsdToSelected(portfolioTotalUsd, fxRate);
   const formattedTotal = formatCurrency(
     totalInSelected,
     selectedCurrency,
@@ -52,6 +130,7 @@ const MainStats: React.FC = () => {
           label="Total Portfolio Value"
           value={address ? formattedTotal : formattedZero}
           isLoading={isLoading && !!address}
+          tooltip="Aggregates tokens on wallet, pools positions, vaults, etc."
         />
         <StatCard
           icon={<Coins className="h-5 w-5" />}
