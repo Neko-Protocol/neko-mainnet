@@ -33,6 +33,7 @@ import {
   reserveStroopsFromApiString,
   aquaProportionalAmountB,
 } from "@/lib/helpers/stellar/aquaDeposit";
+import { ensureTrustlineForSAC } from "@/lib/helpers/stellar/trustline";
 import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
 import { calculateBorrowLimit } from "@/features/borrowing/utils/borrowUtils";
 import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
@@ -393,6 +394,25 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       if (!address || !signTransaction) return;
       const b = parseFloat(borrowAmount);
       if (isNaN(b) || b <= 0) return;
+
+      const borrowTokenAddress = pool?.tokens[0]?.address;
+      const borrowTokenCode = pool?.tokens[0]?.code;
+      if (borrowTokenAddress && borrowTokenCode) {
+        try {
+          await ensureTrustlineForSAC(
+            borrowTokenAddress,
+            borrowTokenCode,
+            address,
+            signTransaction
+          );
+        } catch (err) {
+          if (isUserCancellationError(err)) return;
+          const msg =
+            err instanceof Error ? err.message : "Failed to add trustline";
+          addNotification(`Trustline setup failed: ${msg}`, "error");
+          return;
+        }
+      }
       const bDec = pool?.tokens[0]?.decimals ?? 7;
       const borrowBigInt = BigInt(toSmallestUnit(borrowAmount, bDec));
 
@@ -666,6 +686,11 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       loanBalance: loanRaw,
       borrowLimit,
       lFactor: (pool.metadata.lFactor as number | undefined) ?? 1,
+      minCollateralUsd: (() => {
+        const raw = pool.metadata.minCollateral as bigint | undefined;
+        // minCollateral is in oracle base-asset units; Reflector oracle uses 14 decimals
+        return raw && raw > 0n ? Number(raw) / 1e14 : undefined;
+      })(),
       currentLtv: 0,
       collateralOptions: collateralOptionsWithBalances,
     };
