@@ -364,6 +364,11 @@ const MyBorrowPositions: React.FC<MyBorrowPositionsProps> = ({
                   poolId: aggregatedRepayPos.pool.id,
                   action: "repay",
                   amount,
+                  audit: {
+                    tokens: aggregatedRepayPos.pool.tokens,
+                    poolType: aggregatedRepayPos.pool.type,
+                    metadata: aggregatedRepayPos.pool.metadata,
+                  },
                 });
                 setAggregatedRepayPos(null);
               }}

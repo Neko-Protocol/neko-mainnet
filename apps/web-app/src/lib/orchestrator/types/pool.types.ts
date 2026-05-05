@@ -61,3 +61,17 @@ export interface PoolActionResult {
 
   preTx?: TransactionResult;
 }
+
+export interface PoolActionAuditContext {
+  tokens: TokenInfo[];
+  poolType: PoolType;
+  metadata: Record<string, unknown>;
+}
+
+export interface PoolActionParams {
+  poolId: string;
+  action: PoolAction;
+  amount: bigint;
+  tokenIndex?: number;
+  audit?: PoolActionAuditContext;
+}

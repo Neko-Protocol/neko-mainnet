@@ -20,6 +20,7 @@ import { ColHeader } from "./ColHeader";
 import MyBorrowPositions from "@/features/borrowing/components/ui/MyBorrowPositions";
 import { getPoolTokenIcon } from "@/features/pools/utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getAssetsConfig } from "@/lib/constants/assets.config";
 
 const PROTOCOL_ICONS: Record<string, string> = {
   neko: "/neko-logo.png",
@@ -279,11 +280,30 @@ const MyPositions: React.FC<MyPositionsProps> = ({
                           }
                           onClick={() => {
                             setClaimingPoolId(pos.orchestratorId!);
+                            const cfg = getAssetsConfig()[pos.assetCode];
+                            const auditToken = cfg
+                              ? {
+                                  address: cfg.contract,
+                                  code: cfg.code,
+                                  name: cfg.name,
+                                  decimals: cfg.decimals,
+                                }
+                              : {
+                                  address: "",
+                                  code: pos.assetCode,
+                                  name: pos.assetCode,
+                                  decimals: 7,
+                                };
                             executePoolAction(
                               {
                                 poolId: pos.orchestratorId!,
                                 action: "claimRewards",
                                 amount: 0n,
+                                audit: {
+                                  tokens: [auditToken],
+                                  poolType: "blend",
+                                  metadata: {},
+                                },
                               },
                               { onSettled: () => setClaimingPoolId(null) }
                             );
