@@ -235,11 +235,11 @@ export async function GET(request: NextRequest) {
       const vaultApy = defindexApy ?? manualVaultApy;
 
       return NextResponse.json({
-        vaultApy: vaultApy !== null ? parseFloat(vaultApy.toFixed(2)) : null,
+        vaultApy: vaultApy !== null ? parseFloat(vaultApy.toFixed(4)) : null,
         strategies: strategies.map((s) => ({
           name: s.name,
-          apy: s.apy !== null ? parseFloat(s.apy.toFixed(2)) : null,
-          weight: parseFloat((s.weight * 100).toFixed(1)),
+          apy: s.apy !== null ? parseFloat(s.apy.toFixed(4)) : null,
+          weight: parseFloat((s.weight * 100).toFixed(4)),
         })),
         note:
           soroswapApy === null
@@ -251,7 +251,7 @@ export async function GET(request: NextRequest) {
     // All other vaults: SDK APY only, no on-chain strategy data.
     return NextResponse.json({
       vaultApy:
-        defindexApy !== null ? parseFloat(defindexApy.toFixed(2)) : null,
+        defindexApy !== null ? parseFloat(defindexApy.toFixed(4)) : null,
       strategies: [],
     });
   } catch (err) {

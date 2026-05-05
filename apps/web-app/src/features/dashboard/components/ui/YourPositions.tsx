@@ -3,11 +3,11 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight, Layers } from "lucide-react";
-import { useUserPositions } from "@/features/dashboard/hooks/useUserPositions";
+import { useDashboardPositions } from "@/features/dashboard/hooks/useDashboardPositions";
 import { YourPositionsTable } from "./YourPositionsTable";
 
 const YourPositions: React.FC = () => {
-  const { positions, isLoading, hasWallet } = useUserPositions();
+  const { positions, isLoading, hasWallet } = useDashboardPositions();
 
   if (!hasWallet) return null;
 

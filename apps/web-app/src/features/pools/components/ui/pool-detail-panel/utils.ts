@@ -1,10 +1,9 @@
+import { formatAmount } from "@/lib/helpers/formatUtils";
+
 export function trimBalance(value: string): string {
   const n = parseFloat(value);
   if (isNaN(n)) return value;
-  if (n === 0) return "0";
-  if (n >= 1000) return n.toFixed(2);
-  if (n >= 1) return n.toFixed(2);
-  return n.toFixed(4);
+  return formatAmount(n);
 }
 
 export const PAGE_SIZE = 10;

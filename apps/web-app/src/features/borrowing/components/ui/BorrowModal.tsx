@@ -92,7 +92,7 @@ export function BorrowModal({
           <div className="mb-3 rounded-xl bg-[#229EDF]/10 border border-[#229EDF]/20 p-3">
             <p className="text-[#229EDF]/70 text-xs">Your Borrow Limit</p>
             <p className="text-[#229EDF] font-bold text-lg">
-              {borrowLimit.toFixed(2)} {asset.assetCode}
+              {borrowLimit.toFixed(4)} {asset.assetCode}
             </p>
           </div>
 

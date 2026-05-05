@@ -1,7 +1,8 @@
 import { useRef, useCallback } from "react";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { getQuote, type QuoteRequest } from "@/lib/helpers/stellar/soroswap";
-import { formatSwapAmount, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { formatAmount } from "@/lib/helpers/formatUtils";
+import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import {
   DEFAULT_SLIPPAGE_BPS,
   MAX_HOPS,
@@ -74,7 +75,7 @@ export function useStellarQuote(
           const amountOutBigInt = BigInt(amountOutStr);
           if (amountOutBigInt > BigInt(0)) {
             return {
-              amount: formatSwapAmount(fromSmallestUnit(amountOutStr, 7), 6),
+              amount: formatAmount(fromSmallestUnit(amountOutStr, 7)),
               error: null,
               platformFee: quote.platformFee,
             };

@@ -117,7 +117,7 @@ function mapApiPool(raw: AquaApiPool): PoolInfo {
   // liquidity_usd from the API is in stroops-denominated USD (7 decimal places)
   // Values like "15963137326050.91" → divide by 1e7 → "$1596313.73"
   const liquidityUsd = raw.liquidity_usd
-    ? (parseFloat(raw.liquidity_usd) / 1e7).toFixed(2)
+    ? (parseFloat(raw.liquidity_usd) / 1e7).toFixed(4)
     : "0";
 
   // Store reserves for use in deposit ratio calculation (avoids RPC call)
@@ -172,10 +172,11 @@ async function fetchAquaPools(addresses: string[]): Promise<AquaApiPool[]> {
 export class AquaPoolAdapter implements BasePoolAdapter {
   readonly type: PoolType = "aqua";
 
-  async listPools(): Promise<PoolInfo[]> {
+  async listPools(limit?: number): Promise<PoolInfo[]> {
     try {
       const raw = await fetchAquaPools(getAquaPoolAddresses());
-      return raw.map(mapApiPool);
+      const mapped = raw.map(mapApiPool);
+      return limit !== undefined ? mapped.slice(0, limit) : mapped;
     } catch (error) {
       throw new AdapterError("aqua", "listPools", error);
     }

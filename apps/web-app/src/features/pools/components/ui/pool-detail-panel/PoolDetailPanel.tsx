@@ -8,6 +8,7 @@ import { PoolPanelModeTabs } from "./PoolPanelModeTabs";
 import { PoolSummaryRows } from "./PoolSummaryRows";
 import type { PoolDetailPanelProps } from "./types";
 import { usePoolDetailPanelLogic } from "@/features/pools/hooks/usePoolDetailPanelLogic";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { BLEND_MIN_COLLATERAL_USD } from "./utils";
 
 export function PoolDetailPanel({
@@ -89,20 +90,20 @@ export function PoolDetailPanel({
 
   const ammUsdValue = useMemo(() => {
     const parsed = parseFloat(ammAmount);
-    if (!parsed || !token1Price) return "0.00";
-    return (parsed * token1Price).toFixed(2);
+    if (!parsed || !token1Price) return formatAmount(0);
+    return formatAmount(parsed * token1Price);
   }, [ammAmount, token1Price]);
 
   const collateralUsdValue = useMemo(() => {
     const parsed = parseFloat(collateralAmount);
-    if (!parsed || !token1Price) return "0.00";
-    return (parsed * token1Price).toFixed(2);
+    if (!parsed || !token1Price) return formatAmount(0);
+    return formatAmount(parsed * token1Price);
   }, [collateralAmount, token1Price]);
 
   const borrowUsdValue = useMemo(() => {
     const parsed = parseFloat(borrowAmount);
-    if (!parsed || !token2Price) return "0.00";
-    return (parsed * token2Price).toFixed(2);
+    if (!parsed || !token2Price) return formatAmount(0);
+    return formatAmount(parsed * token2Price);
   }, [borrowAmount, token2Price]);
 
   const collateralUsdDisplay = formatUsdValue(
@@ -184,13 +185,13 @@ export function PoolDetailPanel({
                 balanceLabel="MAX"
                 balanceValue={
                   dynamicBorrowMax != null
-                    ? dynamicBorrowMax.toFixed(4)
-                    : (pool.borrowLimit ?? "0.00")
+                    ? formatAmount(dynamicBorrowMax)
+                    : (pool.borrowLimit ?? formatAmount(0))
                 }
                 onMax={() =>
                   setBorrowAmount(
                     dynamicBorrowMax != null
-                      ? dynamicBorrowMax.toFixed(7)
+                      ? formatAmount(dynamicBorrowMax)
                       : (pool.borrowLimit ?? "0")
                   )
                 }
@@ -200,7 +201,7 @@ export function PoolDetailPanel({
               {borrowExceedsHf && (
                 <p className="text-xs text-red-400/90 px-0.5">
                   Borrow amount exceeds your collateral limit (~
-                  {dynamicBorrowMax!.toFixed(4)} {pool.token2.symbol} max)
+                  {formatAmount(dynamicBorrowMax!)} {pool.token2.symbol} max)
                 </p>
               )}
 

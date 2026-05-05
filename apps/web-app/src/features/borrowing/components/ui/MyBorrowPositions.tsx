@@ -57,6 +57,7 @@ import { RepayPositionModal } from "./RepayPositionModal";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { getTokenBalance } from "@/lib/helpers/stellar/lending";
 import { usePoolAction } from "@/lib/orchestrator";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import type { UserPositionWithPool } from "@/features/dashboard/hooks/useUserPositions";
 import { STELLAR_DECIMALS } from "@/lib/constants/network";
@@ -287,7 +288,7 @@ const MyBorrowPositions: React.FC<MyBorrowPositionsProps> = ({
                       </div>
                     </td>
                     <td className="px-4 py-4 text-center text-white font-bold text-sm tabular-nums">
-                      {parseFloat(liabilitiesFormatted).toFixed(4)}{" "}
+                      {formatAmount(liabilitiesFormatted)}{" "}
                       <span className="text-white/40 font-normal">
                         {tokenCode}
                       </span>

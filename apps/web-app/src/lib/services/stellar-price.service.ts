@@ -4,8 +4,7 @@ import {
   getSoroswapSDK,
 } from "@/lib/helpers/stellar/soroswap/utils";
 import {
-  getCoinGeckoIdForToken,
-  getReflectorAssetForToken,
+  getAssetsConfig,
   type AssetPriceSource,
 } from "@/lib/constants/assets.config";
 import type { Asset as ReflectorAsset } from "@neko/reflector";
@@ -220,34 +219,56 @@ export class StellarPriceService {
     tokenCode: string,
     contractAddress?: string
   ): Promise<PricedResult> {
-    // The flow is: Reflector -> Soroswap -> CoinGecko
     if (!tokenCode || typeof tokenCode !== "string") {
       return { price: 0, source: null };
     }
 
-    const reflectorAsset = getReflectorAssetForToken(tokenCode);
-    const coinGeckoId = getCoinGeckoIdForToken(tokenCode);
-
-    if (reflectorAsset) {
-      // USDC is the Reflector pubnet base asset, therefore lastprice returns None
-      // for the base, so short-circuit to 1.00, we'll still attribute to Reflector.
-      if (tokenCode === "USDC") {
-        return { price: 1, source: "reflector" };
-      }
-      const reflectorPrice = await this.getReflectorUsdPrice(reflectorAsset);
-      if (reflectorPrice > 0) {
-        return { price: reflectorPrice, source: "reflector" };
-      }
+    // USDC is the Reflector base asset — always 1:1 USD
+    if (tokenCode === "USDC") {
+      return { price: 1, source: "reflector" };
     }
 
-    if (contractAddress) {
-      const spot = await this.getSoroswapUsdPrice(contractAddress);
-      if (spot > 0) return { price: spot, source: "soroswap" };
-    }
+    const config = getAssetsConfig()[tokenCode];
+    const reflectorAsset = config?.reflectorAsset;
+    const coinGeckoId = config?.coinGeckoId;
+    const preferredSource: AssetPriceSource | undefined = config?.priceSource;
 
-    if (coinGeckoId) {
-      const price = await this.getCoinGeckoSimpleUsd(coinGeckoId);
-      if (price > 0) return { price, source: "coingecko" };
+    // All three fetchers as lazy thunks (only called when needed)
+    const sources: { key: AssetPriceSource; fetch: () => Promise<number> }[] = [
+      {
+        key: "reflector",
+        fetch: () =>
+          reflectorAsset
+            ? this.getReflectorUsdPrice(reflectorAsset)
+            : Promise.resolve(0),
+      },
+      {
+        key: "soroswap",
+        fetch: () =>
+          contractAddress
+            ? this.getSoroswapUsdPrice(contractAddress)
+            : Promise.resolve(0),
+      },
+      {
+        key: "coingecko",
+        fetch: () =>
+          coinGeckoId
+            ? this.getCoinGeckoSimpleUsd(coinGeckoId)
+            : Promise.resolve(0),
+      },
+    ];
+
+    // Preferred source (from assets.config) goes first; others follow as fallback
+    const ordered = preferredSource
+      ? [
+          ...sources.filter((s) => s.key === preferredSource),
+          ...sources.filter((s) => s.key !== preferredSource),
+        ]
+      : sources;
+
+    for (const { key, fetch } of ordered) {
+      const price = await fetch();
+      if (price > 0) return { price, source: key };
     }
 
     return { price: 0, source: null };

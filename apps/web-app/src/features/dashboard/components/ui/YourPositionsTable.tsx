@@ -8,6 +8,7 @@ import type { UserPositionWithPool } from "@/features/dashboard/hooks/useUserPos
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { getPoolTokenIcon } from "@/features/pools/utils/poolTokenIcons";
 import type { PoolInfo } from "@/lib/orchestrator/types/pool.types";
+import { formatAmount, safeParseFloat } from "@/lib/helpers/formatUtils";
 
 const DEFAULT_MAX_ROWS = 4;
 
@@ -124,11 +125,12 @@ export function YourPositionsTable({
                 </td>
                 <td className="px-4 py-3.5 align-middle text-right">
                   <p className="text-white font-semibold text-sm tabular-nums">
-                    {position.depositedFormatted}
+                    {formatAmount(safeParseFloat(position.depositedFormatted))}
                   </p>
                   {position.rewards > 0n && (
                     <p className="text-[#76C464] text-xs font-semibold mt-0.5">
-                      +{position.rewardsFormatted} rewards
+                      +{formatAmount(safeParseFloat(position.rewardsFormatted))}{" "}
+                      rewards
                     </p>
                   )}
                 </td>

@@ -95,7 +95,7 @@ export function RatesChart({
           <div>
             <p className="text-white/40 text-xs mb-1">Instantaneous Rate</p>
             <p className="text-white text-4xl font-bold tabular-nums leading-none">
-              {currentRate.toFixed(2)}%
+              {currentRate.toFixed(4)}%
             </p>
           </div>
           <div className="flex gap-1.5">

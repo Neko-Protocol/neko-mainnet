@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { X, AlertTriangle } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 
 interface RepayPositionModalProps {
@@ -101,7 +102,7 @@ export function RepayPositionModal({
             <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
               <p className="text-amber-400/70 text-xs mb-0.5">Amount Owed</p>
               <p className="text-amber-400 font-bold text-sm tabular-nums">
-                {parseFloat(debtFormatted).toFixed(4)}{" "}
+                {formatAmount(debtFormatted)}{" "}
                 <span className="text-amber-400/50 font-normal text-xs">
                   {tokenCode}
                 </span>
@@ -127,7 +128,7 @@ export function RepayPositionModal({
                 Your balance is below the full debt. You can partially repay up
                 to{" "}
                 <span className="font-semibold">
-                  {parseFloat(maxRepayFormatted).toFixed(4)} {tokenCode}
+                  {formatAmount(maxRepayFormatted)} {tokenCode}
                 </span>
                 .
               </p>
