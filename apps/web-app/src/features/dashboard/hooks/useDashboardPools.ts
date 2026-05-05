@@ -3,6 +3,7 @@ import { usePools } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import type { PoolData } from "@/features/lending/types/lending";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 
 interface UseDashboardPoolsResult {
@@ -46,7 +47,10 @@ export function useDashboardPools(): UseDashboardPoolsResult {
           pool.type === "aqua" && pool.metadata?.liquidityUsd
             ? String(pool.metadata.liquidityUsd)
             : fromSmallestUnit(pool.tvl.toString(), decimals);
-        const liquidity = formatLiquidity(rawLiquidity);
+        const liquidity = formatLiquidity(
+          rawLiquidity,
+          SUMMARY_DISPLAY_DECIMALS
+        );
 
         const apy = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
 

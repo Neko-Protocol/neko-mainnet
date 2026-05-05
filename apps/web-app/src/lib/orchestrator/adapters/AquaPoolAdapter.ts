@@ -117,7 +117,7 @@ function mapApiPool(raw: AquaApiPool): PoolInfo {
   // liquidity_usd from the API is in stroops-denominated USD (7 decimal places)
   // Values like "15963137326050.91" → divide by 1e7 → "$1596313.73"
   const liquidityUsd = raw.liquidity_usd
-    ? (parseFloat(raw.liquidity_usd) / 1e7).toFixed(2)
+    ? (parseFloat(raw.liquidity_usd) / 1e7).toFixed(4)
     : "0";
 
   // Store reserves for use in deposit ratio calculation (avoids RPC call)

@@ -48,7 +48,7 @@ export function HealthFactorBadge({
     >
       <div className={`h-2 w-2 rounded-full ${dotColor}`} />
       <span className={`font-bold text-sm ${color}`}>
-        {healthFactor !== null ? healthFactor.toFixed(2) : "—"}
+        {healthFactor !== null ? healthFactor.toFixed(4) : "—"}
       </span>
       <span className={`text-xs opacity-70 ${color}`}>{label}</span>
     </div>

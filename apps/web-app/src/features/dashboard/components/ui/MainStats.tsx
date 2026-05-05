@@ -5,6 +5,7 @@ import { DollarSign, Coins, TrendingUp } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
+import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { usePortfolioValue } from "@/features/dashboard/hooks/usePortfolioValue";
 import { useDashboardPools } from "@/features/dashboard/hooks/useDashboardPools";
@@ -27,13 +28,21 @@ const MainStats: React.FC = () => {
       const parsed = parseFloat(a.roi.replace("%", ""));
       return acc + (Number.isFinite(parsed) ? parsed : 0);
     }, 0);
-    return (sum / assets.length).toFixed(1);
+    return (sum / assets.length).toFixed(SUMMARY_DISPLAY_DECIMALS);
   }, [assets]);
 
   const isLoading = isFetchingBalances || isLoadingPortfolio;
   const totalInSelected = convertUsdToSelected(totalUsd, fxRate);
-  const formattedTotal = formatCurrency(totalInSelected, selectedCurrency);
-  const formattedZero = formatCurrency(0, selectedCurrency);
+  const formattedTotal = formatCurrency(
+    totalInSelected,
+    selectedCurrency,
+    SUMMARY_DISPLAY_DECIMALS
+  );
+  const formattedZero = formatCurrency(
+    0,
+    selectedCurrency,
+    SUMMARY_DISPLAY_DECIMALS
+  );
 
   return (
     <div className="space-y-4 sm:space-y-5">
