@@ -18,7 +18,8 @@ import type {
   TransactionResult,
 } from "../types/pool.types";
 import { AdapterError, UnsupportedActionError } from "../types/errors";
-import { getBlendNetwork } from "./blend-config";
+import { getBlendNetwork, BLEND_POOL_VAULTS } from "./blend-config";
+import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 
 const SUPPORTED_ACTIONS: PoolAction[] = [
   "deposit",
@@ -236,8 +237,65 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     userAddress: string
   ): Promise<PoolPosition> {
     const { poolContractId, assetAddress } = parseRawId(rawId);
-    const network = getBlendNetwork();
     const fullId = `blend:${poolContractId}:${assetAddress}`;
+    const vaultId = BLEND_POOL_VAULTS[`${poolContractId}:${assetAddress}`];
+
+    if (vaultId) {
+      try {
+        const vault = new DefindexVaultClient({
+          contractId: vaultId,
+          rpcUrl,
+          networkPassphrase,
+          publicKey: userAddress,
+        });
+
+        const [balanceTx, fundsTx, supplyTx] = await Promise.all([
+          vault.balance({ id: userAddress }),
+          vault.fetch_total_managed_funds({ simulate: true }),
+          vault.total_supply({ simulate: true }),
+        ]);
+
+        let sharesRaw = balanceTx.result as any;
+        if (typeof sharesRaw?.unwrap === "function")
+          sharesRaw = sharesRaw.unwrap();
+        else if (sharesRaw?.tag === "ok") sharesRaw = sharesRaw.value;
+        const sharesBig = BigInt(sharesRaw.toString());
+
+        if (sharesBig === 0n) return emptyPosition(fullId);
+
+        let funds = fundsTx.result as any;
+        if (typeof funds?.unwrap === "function") funds = funds.unwrap();
+        else if (funds?.tag === "ok") funds = funds.value;
+
+        let totalSharesRaw = supplyTx.result as any;
+        if (typeof totalSharesRaw?.unwrap === "function")
+          totalSharesRaw = totalSharesRaw.unwrap();
+        else if (totalSharesRaw?.tag === "ok")
+          totalSharesRaw = totalSharesRaw.value;
+
+        const totalUnderlying = BigInt(funds[0].total_amount.toString());
+        const totalSupply = BigInt(totalSharesRaw.toString());
+        const deposited =
+          totalSupply > 0n ? (sharesBig * totalUnderlying) / totalSupply : 0n;
+
+        return {
+          poolId: fullId,
+          deposited,
+          depositedFormatted: formatUnits(deposited, 7),
+          rewards: 0n,
+          rewardsFormatted: "0",
+          metadata: {
+            supplied: deposited.toString(),
+            collateral: "0",
+            liabilities: "0",
+          },
+        };
+      } catch {
+        return emptyPosition(fullId);
+      }
+    }
+
+    const network = getBlendNetwork();
 
     try {
       const pool = await PoolV2.load(network, poolContractId);
@@ -282,6 +340,25 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     userAddress: string,
     amount: bigint
   ): Promise<TransactionResult> {
+    const { poolContractId, assetAddress } = parseRawId(rawId);
+    const vaultId = BLEND_POOL_VAULTS[`${poolContractId}:${assetAddress}`];
+
+    if (vaultId) {
+      const vault = new DefindexVaultClient({
+        contractId: vaultId,
+        rpcUrl,
+        networkPassphrase,
+        publicKey: userAddress,
+      });
+      const tx = await vault.deposit({
+        amounts_desired: [amount],
+        amounts_min: [(amount * 99n) / 100n],
+        from: userAddress,
+        invest: false,
+      });
+      return { xdr: tx.toXDR(), networkPassphrase };
+    }
+
     return this.buildSubmitTx(rawId, userAddress, amount, "deposit");
   }
 
@@ -291,6 +368,44 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     amount: bigint
   ): Promise<TransactionResult> {
     const { poolContractId, assetAddress } = parseRawId(rawId);
+    const vaultId = BLEND_POOL_VAULTS[`${poolContractId}:${assetAddress}`];
+
+    if (vaultId) {
+      const vault = new DefindexVaultClient({
+        contractId: vaultId,
+        rpcUrl,
+        networkPassphrase,
+        publicKey: userAddress,
+      });
+
+      const [fundsTx, supplyTx] = await Promise.all([
+        vault.fetch_total_managed_funds({ simulate: true }),
+        vault.total_supply({ simulate: true }),
+      ]);
+
+      let funds = fundsTx.result as any;
+      if (typeof funds?.unwrap === "function") funds = funds.unwrap();
+      else if (funds?.tag === "ok") funds = funds.value;
+
+      let totalSharesRaw = supplyTx.result as any;
+      if (typeof totalSharesRaw?.unwrap === "function")
+        totalSharesRaw = totalSharesRaw.unwrap();
+      else if (totalSharesRaw?.tag === "ok")
+        totalSharesRaw = totalSharesRaw.value;
+
+      const totalUnderlying = BigInt(funds[0].total_amount.toString());
+      const totalSupply = BigInt(totalSharesRaw.toString());
+      const shares =
+        totalUnderlying > 0n ? (amount * totalSupply) / totalUnderlying : 0n;
+
+      const tx = await vault.withdraw({
+        withdraw_shares: shares,
+        min_amounts_out: [0n],
+        from: userAddress,
+      });
+      return { xdr: tx.toXDR(), networkPassphrase };
+    }
+
     const network = getBlendNetwork();
 
     try {

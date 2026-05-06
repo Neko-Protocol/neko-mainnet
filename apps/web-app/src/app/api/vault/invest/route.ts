@@ -35,6 +35,52 @@ const VAULT_STRATEGIES: Record<
       addr: "CCY5WW3VXVJDBBXNYXCCH33XTQICHPU6RPFWYJJCT4PTYPN3SXJN2XBJ",
     },
   ],
+  // CETES Neko Blend vault (fee-capture via DeFindex Blend strategy)
+  CDI2ZW5CKT4OIHX3IGMVJ4VGOH6Z64N2M3URKATYJIX7JRITJFQJPFD7: [
+    {
+      name: "Blend CETES Neko",
+      addr: "CAZ3LLLKPWEOVK6K4G5NCQ2VXWABLFIPKKNMN5GLKMZKEN7JSKTEMIKN",
+    },
+  ],
+  // USTRY Neko Blend vault (fee-capture via DeFindex Blend strategy)
+  CBYTDU4JKTMFG5CNIUYJTOVMNIN5ADU2PDG4QWIUVT6SSVK3VTXYTF4K: [
+    {
+      name: "Blend USTRY Neko",
+      addr: "CA3SO5RRKOONAPWVR5XY6CMOYZGN4M4QKVIGX5DFRIIJUJW2SFSELBXL",
+    },
+  ],
+  // USDC Neko Blend vault (fee-capture via DeFindex Blend strategy)
+  CCM3CKJI7BBMZ357644KLAE6NH4D7JQ6MUJHSV4UBRWJY7IMGHBJRNGR: [
+    {
+      name: "Blend USDC Neko",
+      addr: "CCBTSHPUVNKCT5V675AAVYNANHXBU26PTZK2QLS7ZLFNYRJZT5HW3VL6",
+    },
+  ],
+  // TESOURO Neko Blend vault (fee-capture via DeFindex Blend strategy)
+  CAXRLUOSI7DL3SYNZW5UGRIPVNRKKSZTW35OX5DWKZSJ4PFEVA2VEFCQ: [
+    {
+      name: "Blend TESOURO Neko",
+      addr: "CDSCVJHJWUZQMR64FVK3XMND5NKSN7Z23KPRCHKFHVGOEJBWPVH5B5XA",
+    },
+  ],
+  // EURC vault (Neko-managed, standalone vault — not a Blend pool fee-capture)
+  CB3FUMFGCF6DHSFK6N2TOKHRMYXS34HFKQR45UKVORCRUM35AF3ES7WQ: [
+    {
+      name: "EURC Neko",
+      addr: "CC5CE6MWISDXT3MLNQ7R3FVILFVFEIH3COWGH45GJKL6BD2ZHF7F7JVI",
+    },
+  ],
+  // USDC vault (Neko-managed, standalone vault — two strategies, even split)
+  CCPKQH3K5XUGP5GXCT6WTABS7TGXRR745BJ4MEFSGNATB7AOBRL4VEOT: [
+    {
+      name: "USDC Fixed Neko",
+      addr: "CDB2WMKQQNVZMEBY7Q7GZ5C7E7IAFSNMZ7GGVD6WKTCEWK7XOIAVZSAP",
+    },
+    {
+      name: "USDC Etherfuse Neko",
+      addr: "CCBTSHPUVNKCT5V675AAVYNANHXBU26PTZK2QLS7ZLFNYRJZT5HW3VL6",
+    },
+  ],
 };
 
 const MIN_IDLE_THRESHOLD = 10_000_000n; // 1 unit (7 decimals)
@@ -119,6 +165,45 @@ async function harvestAquarius(
           contract: AQUARIUS_STRATEGY,
           function: "harvest",
           args: [new Address(vaultContractId).toScVal(), xdr.ScVal.scvVoid()],
+        })
+      )
+      .setTimeout(30)
+      .build();
+
+    const prepared = await server.prepareTransaction(tx);
+    prepared.sign(keypair);
+    const sendResult = await server.sendTransaction(prepared);
+    if (sendResult.status !== "PENDING")
+      return { hash: sendResult.hash ?? "", status: "submit_error" };
+    const finalStatus = await waitForTx(server, sendResult.hash);
+    return { hash: sendResult.hash, status: finalStatus };
+  } catch (e) {
+    return { hash: "", status: `error: ${e}` };
+  }
+}
+
+// ─── Harvest Blend strategy rewards ──────────────────────────────────────────
+
+async function harvestBlendCetes(
+  keypair: Keypair,
+  server: rpc.Server,
+  networkPassphrase: string,
+  strategyAddress: string
+): Promise<{ hash: string; status: string }> {
+  try {
+    const account = await server.getAccount(keypair.publicKey());
+    const tx = new TransactionBuilder(account, {
+      fee: BASE_FEE,
+      networkPassphrase,
+    })
+      .addOperation(
+        Operation.invokeContractFunction({
+          contract: strategyAddress,
+          function: "harvest",
+          args: [
+            xdr.ScVal.scvVoid(),
+            new Address(keypair.publicKey()).toScVal(),
+          ],
         })
       )
       .setTimeout(30)
@@ -327,11 +412,18 @@ export async function POST(request: NextRequest) {
 
     const strategies = VAULT_STRATEGIES[vaultId] ?? [];
 
-    // Harvest Aquarius rewards only for the CETES vault (which has Aquarius strategy).
-    const hasCetesStrategies = strategies.some((s) => s.name === "Aquarius");
-    const harvestResult = hasCetesStrategies
+    const hasAquarius = strategies.some((s) => s.name === "Aquarius");
+    const blendStrategy = strategies.find((s) => s.name.startsWith("Blend "));
+    const harvestResult = hasAquarius
       ? await harvestAquarius(keypair, server, networkPassphrase, vaultId)
-      : { hash: "", status: "skipped" };
+      : blendStrategy
+        ? await harvestBlendCetes(
+            keypair,
+            server,
+            networkPassphrase,
+            blendStrategy.addr
+          )
+        : { hash: "", status: "skipped" };
 
     const investResult = await investIdle(
       client,

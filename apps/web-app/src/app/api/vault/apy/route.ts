@@ -8,10 +8,12 @@ import {
   scValToNative,
   rpc,
 } from "@stellar/stellar-sdk";
+import { PoolV2, Backstop } from "@blend-capital/blend-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { resolveVaultIdForApi } from "@/lib/defindex/vaultContract";
 import { createDefindexServerSdk } from "@/lib/defindex/createServerSdk";
 import { defindexNetworkFromEnv } from "@/lib/defindex/network";
+import { getBlendNetwork } from "@/lib/orchestrator/adapters/blend-config";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -19,6 +21,38 @@ export const maxDuration = 30;
 // CETES vault — the only vault with custom per-strategy APY getters.
 const CETES_VAULT_ID =
   "CCFWKCD52JNSQLN5OS4F7EG6BPDT4IRJV6KODIEIZLWPM35IKHOKT6S2";
+
+// BLND token contract on Stellar mainnet (emitted as liquidity incentives by Blend pools)
+const BLND_CONTRACT =
+  "CD25MNVTZDL4Y3XBCPCJXGXATV5WUHHOWMYFF4YBEGU5FCPGMYTVG5JY";
+
+// Neko standalone vaults backed by Blend strategies.
+// Each entry is one or more { poolId, assetAddress } pairs. When multiple pools
+// are listed the APY is averaged (equal weight assumed until on-chain allocations
+// are fetched).
+const NEKO_VAULT_BLEND_ASSETS: Record<
+  string,
+  Array<{ poolId: string; assetAddress: string }>
+> = {
+  // EURC vault → EURC in the Fixed Pool
+  CB3FUMFGCF6DHSFK6N2TOKHRMYXS34HFKQR45UKVORCRUM35AF3ES7WQ: [
+    {
+      poolId: "CAJJZSGMMM3PD7N33TAPHGBUGTB43OC73HVIK2L2G6BNGGGYOSSYBXBD",
+      assetAddress: "CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV",
+    },
+  ],
+  // USDC vault → USDC in both Etherfuse Pool and Fixed Pool (2 strategies, equal split)
+  CCPKQH3K5XUGP5GXCT6WTABS7TGXRR745BJ4MEFSGNATB7AOBRL4VEOT: [
+    {
+      poolId: "CDMAVJPFXPADND3YRL4BSM3AKZWCTFMX27GLLXCML3PD62HEQS5FPVAI",
+      assetAddress: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
+    },
+    {
+      poolId: "CAJJZSGMMM3PD7N33TAPHGBUGTB43OC73HVIK2L2G6BNGGGYOSSYBXBD",
+      assetAddress: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
+    },
+  ],
+};
 const NEKO_POOL_CONTRACT =
   "CB4HAFD6ECCOQZXOD6FXUVDM3E773LKR5JHVGA3DBJXIWHZUWX2THEDJ";
 const AQUARIUS_POOL =
@@ -152,6 +186,64 @@ async function getDefindexVaultApy(vaultId: string): Promise<number | null> {
   }
 }
 
+// ─── Blend supply APY (base + BLND emissions) ─────────────────────────────────
+
+async function getBlndPriceUsd(backstopId: string): Promise<number> {
+  try {
+    const network = getBlendNetwork();
+    const backstop = await Backstop.load(network, backstopId);
+    const bt = backstop.backstopToken;
+    // Comet LP is 80/20 BLND/USDC → total LP value = usdc * 5
+    // BLND value = 80% of LP → blnd_price = (usdc * 4) / blnd (both 7-decimal, cancel out)
+    const blnd = Number(bt.blnd);
+    const usdc = Number(bt.usdc);
+    if (blnd === 0) return 0;
+    return (usdc * 4) / blnd;
+  } catch {
+    return 0;
+  }
+}
+
+async function getBlendSupplyApy(
+  poolId: string,
+  assetAddress: string,
+  blndPriceUsd: number
+): Promise<number | null> {
+  try {
+    const network = getBlendNetwork();
+    const pool = await PoolV2.load(network, poolId);
+    const reserve = pool.reserves.get(assetAddress);
+    if (!reserve) return null;
+
+    const baseApy = reserve.estSupplyApy * 100;
+
+    // Add BLND emissions APY if emissions are active and BLND price is known
+    if (reserve.supplyEmissions && blndPriceUsd > 0) {
+      let assetPriceUsd = 1;
+      try {
+        const oracle = await pool.loadOracle();
+        assetPriceUsd = oracle.getPriceFloat(assetAddress) ?? 1;
+      } catch {
+        // fall back to 1.0 (stablecoin assumption)
+      }
+      const blndPerYearPerToken =
+        reserve.supplyEmissions.emissionsPerYearPerToken(
+          reserve.data.bSupply,
+          reserve.config.decimals
+        );
+      if (blndPerYearPerToken > 0 && assetPriceUsd > 0) {
+        const emissionsApy =
+          ((blndPerYearPerToken * blndPriceUsd) / assetPriceUsd) * 100;
+        return baseApy + emissionsApy;
+      }
+    }
+
+    return baseApy;
+  } catch {
+    return null;
+  }
+}
+
 // ─── GET /api/vault/apy ───────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
@@ -248,7 +340,47 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // All other vaults: SDK APY only, no on-chain strategy data.
+    // Neko Blend-backed vaults: fall back to Blend supply APY when DeFindex has no history yet.
+    const blendPools = NEKO_VAULT_BLEND_ASSETS[vaultId];
+    if (blendPools) {
+      // Load first pool to get backstop ID, then fetch BLND price once for all pools
+      let blndPrice = 0;
+      try {
+        const firstPool = await PoolV2.load(
+          getBlendNetwork(),
+          blendPools[0].poolId
+        );
+        blndPrice = await getBlndPriceUsd(firstPool.metadata.backstop);
+      } catch {
+        // BLND price unavailable — emissions will be skipped
+      }
+      const poolApys = await Promise.all(
+        blendPools.map((p) =>
+          getBlendSupplyApy(p.poolId, p.assetAddress, blndPrice)
+        )
+      );
+      const validApys = poolApys.filter((a): a is number => a !== null);
+      const blendApy =
+        validApys.length > 0
+          ? validApys.reduce((s, a) => s + a, 0) / validApys.length
+          : null;
+      const vaultApy = defindexApy ?? blendApy;
+      return NextResponse.json({
+        vaultApy: vaultApy !== null ? parseFloat(vaultApy.toFixed(2)) : null,
+        strategies:
+          blendApy !== null
+            ? [
+                {
+                  name: "Blend",
+                  apy: parseFloat(blendApy.toFixed(2)),
+                  weight: 100,
+                },
+              ]
+            : [],
+      });
+    }
+
+    // All other vaults: SDK APY only.
     return NextResponse.json({
       vaultApy:
         defindexApy !== null ? parseFloat(defindexApy.toFixed(4)) : null,

@@ -113,6 +113,24 @@ const Vault: React.FC = () => {
 
   const { address } = useWallet();
 
+  // Fetch APY for each vault in parallel from /api/vault/apy
+  const apyQueries = useQueries({
+    queries: (vaultsFromApi || []).map((v) => ({
+      queryKey: ["vault-apy", v.id],
+      queryFn: async (): Promise<number | null> => {
+        const res = await fetch(`/api/vault/apy?vault=${v.id}`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        return typeof data.vaultApy === "number" ? data.vaultApy : null;
+      },
+      staleTime: 5 * 60_000,
+      gcTime: 15 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: false,
+      enabled: !!v.id,
+    })),
+  });
+
   // Fetch all vault balances in parallel
   const balanceQueries = useQueries({
     queries: (vaultsFromApi || []).map((v) => ({
@@ -146,23 +164,30 @@ const Vault: React.FC = () => {
 
   const vaults = useMemo<VaultView[]>(() => {
     if (vaultsFromApi.length === 0) return [];
-    return vaultsFromApi.map((v) => {
+    return vaultsFromApi.map((v, idx) => {
       const baseTvl = convertUsdDisplayToSelectedCurrency(
         v.tvl,
         fxRate,
         selectedCurrency
       );
 
+      const liveApyNum = apyQueries[idx]?.data;
+      const apy7d =
+        liveApyNum != null && liveApyNum > 0
+          ? `${liveApyNum.toFixed(2)}%`
+          : v.apy7d;
+
       if (!liveVaultData || !activeContractId) {
-        return { ...v, tvl: baseTvl };
+        return { ...v, tvl: baseTvl, apy7d };
       }
 
       if (v.detail?.contracts?.vault !== activeContractId) {
-        return { ...v, tvl: baseTvl };
+        return { ...v, tvl: baseTvl, apy7d };
       }
 
       return {
         ...v,
+        apy7d,
         tvl: liveVaultData.tvl > 0n ? liveVaultData.tvlFormatted : baseTvl,
         totalSupply:
           liveVaultData.totalShares > 0n
@@ -176,6 +201,7 @@ const Vault: React.FC = () => {
     activeContractId,
     fxRate,
     selectedCurrency,
+    apyQueries,
   ]);
 
   const assetOptions = useMemo(() => {

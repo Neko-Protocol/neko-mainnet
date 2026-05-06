@@ -6,6 +6,8 @@ import { defindexInfoToVaultView } from "@/lib/defindex/mapToVaultView";
 import { defindexNetworkFromEnv } from "@/lib/defindex/network";
 import { getDefindexApiKeyFromEnv } from "@/lib/defindex/env";
 import { parseDefindexVaultIds } from "@/lib/defindex/vaultIds";
+import { stellarPriceService } from "@/lib/services/stellar-price.service";
+import { getAssetsConfig } from "@/lib/constants/assets.config";
 import type { VaultView } from "@/features/vault/types/vault";
 
 export const dynamic = "force-dynamic";
@@ -47,12 +49,13 @@ async function fetchVaultWithRetry(
   sdk: InstanceType<typeof DefindexSDK>,
   contractId: string,
   network: SupportedNetworks,
+  priceUsdByAsset: Record<string, number>,
   maxRetries = 3
 ): Promise<VaultView> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const info = await sdk.getVaultInfo(contractId, network);
-      return defindexInfoToVaultView(contractId, info);
+      return defindexInfoToVaultView(contractId, info, priceUsdByAsset);
     } catch (err) {
       if (isRateLimitError(err) && attempt < maxRetries) {
         await delay(600 * (attempt + 1));
@@ -95,10 +98,32 @@ export async function GET() {
   const vaults: VaultView[] = [];
   const fetchErrors: { contractId: string; message: string }[] = [];
 
+  // Fetch USD prices for all known assets once, so TVL shows real dollar value.
+  const priceUsdByAsset: Record<string, number> = {};
+  try {
+    const assetsConfig = Object.values(getAssetsConfig());
+    const prices = await Promise.allSettled(
+      assetsConfig.map((a) =>
+        stellarPriceService
+          .getPriceWithSource(a.code, a.contract)
+          .then(({ price }) => ({ contract: a.contract, price }))
+      )
+    );
+    for (const r of prices) {
+      if (r.status === "fulfilled" && r.value.price > 0) {
+        priceUsdByAsset[r.value.contract] = r.value.price;
+      }
+    }
+  } catch {
+    // error fetching prices
+  }
+
   for (let i = 0; i < ids.length; i += VAULT_FETCH_CONCURRENCY) {
     const batch = ids.slice(i, i + VAULT_FETCH_CONCURRENCY);
     const settled = await Promise.allSettled(
-      batch.map((contractId) => fetchVaultWithRetry(sdk, contractId, network))
+      batch.map((contractId) =>
+        fetchVaultWithRetry(sdk, contractId, network, priceUsdByAsset)
+      )
     );
     settled.forEach((result, j) => {
       const contractId = batch[j]!;
