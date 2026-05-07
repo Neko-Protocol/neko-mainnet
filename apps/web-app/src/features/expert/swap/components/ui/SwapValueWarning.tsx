@@ -1,12 +1,12 @@
 import React from "react";
-import { Tooltip, IconButton } from "@mui/material";
 import {
   Info,
-  Warning,
-  WaterDrop,
-  AttachMoney,
+  AlertTriangle,
+  Droplet,
+  DollarSign,
   TrendingDown,
-} from "@mui/icons-material";
+} from "lucide-react";
+import { AppTooltip } from "@/components/ui/AppTooltip";
 
 interface SwapValueAnalysis {
   expectedOutput: number;
@@ -28,106 +28,55 @@ export const SwapValueWarning: React.FC<SwapValueWarningProps> = ({
     return null;
   }
 
-  return (
-    <Tooltip
-      title={
-        <div className="max-w-xs p-3 bg-gray-900 border border-gray-700 rounded-lg">
-          <div className="flex items-center gap-2 mb-3">
-            <Warning sx={{ fontSize: 18, color: "#fbbf24" }} />
-            <p className="font-semibold text-white text-sm">
-              Why is the value low?
-            </p>
+  const tooltipContent = (
+    <div className="space-y-2">
+      <div className="flex items-center gap-1.5">
+        <AlertTriangle className="h-3 w-3 text-amber-400" />
+        <p className="font-semibold text-white text-[10px]">
+          Why is the value low?
+        </p>
+      </div>
+      <div className="space-y-1.5">
+        <div className="flex items-start gap-1.5">
+          <Droplet className="h-3 w-3 text-blue-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <span className="text-blue-400 font-semibold">
+              Limited Liquidity:
+            </span>{" "}
+            There may be low liquidity in this pair
           </div>
-          <div className="space-y-2.5">
-            <div className="flex items-start gap-2">
-              <WaterDrop
-                sx={{
-                  fontSize: 16,
-                  color: "#60a5fa",
-                  marginTop: "2px",
-                  flexShrink: 0,
-                }}
-              />
-              <div className="text-xs text-gray-300">
-                <span className="text-blue-400 font-semibold">
-                  Limited Liquidity:
-                </span>{" "}
-                There may be low liquidity in this pair
-              </div>
-            </div>
-            <div className="flex items-start gap-2">
-              <AttachMoney
-                sx={{
-                  fontSize: 16,
-                  color: "#f59e0b",
-                  marginTop: "2px",
-                  flexShrink: 0,
-                }}
-              />
-              <div className="text-xs text-gray-300">
-                <span className="text-amber-400 font-semibold">
-                  Protocol Fees:
-                </span>{" "}
-                Commissions reduce the amount received
-              </div>
-            </div>
-          </div>
-          {analysis.differencePercent > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-700 flex items-center gap-2">
-              <TrendingDown
-                sx={{
-                  fontSize: 16,
-                  color: "#ef4444",
-                }}
-              />
-              <p className="text-xs text-gray-400">
-                Expected difference:{" "}
-                <span className="text-red-400 font-semibold">
-                  ~{analysis.differencePercent.toFixed(4)}%
-                </span>
-              </p>
-            </div>
-          )}
         </div>
-      }
-      arrow
-      placement="right"
-      componentsProps={{
-        tooltip: {
-          sx: {
-            bgcolor: "transparent",
-            padding: 0,
-            boxShadow: "none",
-            maxWidth: "none",
-          },
-        },
-        popper: {
-          sx: {
-            "& .MuiTooltip-tooltip": {
-              bgcolor: "transparent",
-              padding: 0,
-              boxShadow: "none",
-            },
-            "& .MuiTooltip-arrow": {
-              color: "#374151",
-            },
-          },
-        },
-      }}
-    >
-      <IconButton
-        size="small"
-        sx={{
-          padding: "2px",
-          color: "#fbbf24",
-          "&:hover": {
-            color: "#f59e0b",
-            backgroundColor: "rgba(251, 191, 36, 0.1)",
-          },
-        }}
+        <div className="flex items-start gap-1.5">
+          <DollarSign className="h-3 w-3 text-amber-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <span className="text-amber-400 font-semibold">Protocol Fees:</span>{" "}
+            Commissions reduce the amount received
+          </div>
+        </div>
+      </div>
+      {analysis.differencePercent > 0 && (
+        <div className="pt-2 mt-2 border-t border-white/10 flex items-center gap-1.5">
+          <TrendingDown className="h-3 w-3 text-red-400" />
+          <p>
+            Expected difference:{" "}
+            <span className="text-red-400 font-semibold">
+              ~{analysis.differencePercent.toFixed(4)}%
+            </span>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <AppTooltip content={tooltipContent} widthClassName="w-64">
+      <button
+        type="button"
+        aria-label="Why is the value low?"
+        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-amber-400 hover:text-amber-300 hover:bg-amber-400/10 transition-colors"
       >
-        <Info sx={{ fontSize: 18 }} />
-      </IconButton>
-    </Tooltip>
+        <Info className="h-4 w-4" />
+      </button>
+    </AppTooltip>
   );
 };
