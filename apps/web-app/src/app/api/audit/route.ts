@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
 import { normalizeAuditAssetKey } from "@/lib/helpers/auditAssetAmounts";
 import { stellarNetwork } from "@/lib/constants/network";
+import { getSupabaseAdmin } from "@/lib/services/supabase.server";
 import type { AuditEvent } from "@/lib/types/audit.types";
-import type { Database } from "@/lib/types/database.types";
 
 function auditDbNetwork(): "mainnet" | "testnet" {
   const envNet =
@@ -14,19 +13,6 @@ function auditDbNetwork(): "mainnet" | "testnet" {
 }
 
 const NETWORK = auditDbNetwork();
-
-let _supabase: ReturnType<typeof createClient<Database>> | null | undefined;
-
-function getSupabaseAdmin() {
-  if (_supabase !== undefined) return _supabase;
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  _supabase =
-    url && key
-      ? createClient<Database>(url, key, { auth: { persistSession: false } })
-      : null;
-  return _supabase;
-}
 
 export async function POST(request: NextRequest) {
   try {
