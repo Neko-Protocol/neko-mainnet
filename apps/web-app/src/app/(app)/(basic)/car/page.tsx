@@ -1,11 +1,6 @@
-import type { Metadata } from "next";
-import { CarPage } from "@/features/basic/car";
+import { permanentRedirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Car | Neko Protocol",
-  description: "Review and confirm your pending asset purchases.",
-};
-
-export default function CarRoute() {
-  return <CarPage />;
+/** Legacy URL — bookmarks and old links redirect to `/cart`. */
+export default function LegacyCarRoute() {
+  permanentRedirect("/cart");
 }
