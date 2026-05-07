@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { X, Menu, LogOut, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NAV_ITEMS } from "./sidebarConfig";
+import { useNavItems } from "@/hooks/useNavItems";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { truncateAddress } from "@/lib/utils";
@@ -15,7 +15,6 @@ const NETWORK = (
   process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET"
 ).toUpperCase();
 const IS_TESTNET = NETWORK === "TESTNET";
-const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_LENDING_ADMIN_ADDRESS ?? "";
 
 export function MobileHeader() {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,19 +25,9 @@ export function MobileHeader() {
   const menuRef = useRef<HTMLDivElement>(null);
   const walletButtonRef = useRef<HTMLDivElement>(null);
 
+  const navItems = useNavItems();
   const isConnected = isStellarConnected;
   const activeAddress = stellarAddress ?? "";
-
-  const navItems = useMemo(() => {
-    return NAV_ITEMS.filter((item) => {
-      const adminOnly = "adminOnly" in item && item.adminOnly;
-      // Admin link: ONLY show when admin is configured AND connected wallet is admin
-      if (adminOnly) {
-        return Boolean(ADMIN_ADDRESS && activeAddress === ADMIN_ADDRESS);
-      }
-      return true;
-    });
-  }, [activeAddress]);
 
   const isActive = (href: string) =>
     href === "/dashboard"

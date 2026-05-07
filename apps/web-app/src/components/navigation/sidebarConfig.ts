@@ -7,18 +7,29 @@ import {
   Shield,
   Banknote,
   Vault,
+  ShoppingCart,
 } from "lucide-react";
+import type { UIMode } from "@/stores/ui-mode.store";
 
-export const NAV_ITEMS = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Discover", href: "/discover", icon: BarChart2 },
-  { label: "Pools", href: "/pools", icon: Landmark },
-  { label: "Swap", href: "/swap", icon: ArrowLeftRight },
-  { label: "Vault", href: "/vaults", icon: Vault },
-  { label: "Ramps", href: "/ramps", icon: Banknote },
-  { label: "Settings", href: "/settings", icon: Settings },
-  { label: "Admin", href: "/dashboard/admin", icon: Shield, adminOnly: true },
-] as const;
+export function getNavItems(
+  mode: UIMode | null,
+  isAdmin: boolean
+): { label: string; href: string; icon: React.ElementType }[] {
+  return [
+    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Discover", href: "/discover", icon: BarChart2 },
+    { label: "Pools", href: "/pools", icon: Landmark },
+    ...(mode !== "basic"
+      ? [{ label: "Swap", href: "/swap", icon: ArrowLeftRight }]
+      : [{ label: "Cart", href: "/cart", icon: ShoppingCart }]),
+    { label: "Vault", href: "/vaults", icon: Vault },
+    { label: "Ramps", href: "/ramps", icon: Banknote },
+    { label: "Settings", href: "/settings", icon: Settings },
+    ...(isAdmin
+      ? [{ label: "Admin", href: "/dashboard/admin", icon: Shield }]
+      : []),
+  ];
+}
 
 export const CARD_STYLES = "rounded-[20px] bg-[#D3D3D3] p-5" as const;
 

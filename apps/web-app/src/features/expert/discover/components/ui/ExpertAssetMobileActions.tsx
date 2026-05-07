@@ -1,0 +1,39 @@
+"use client";
+
+import React from "react";
+import Link from "next/link";
+import { ArrowLeftRight, ExternalLink } from "lucide-react";
+import type { AssetInfo } from "@/features/shared/discover/types/discover";
+
+interface ExpertAssetMobileActionsProps {
+  symbolUpper: string;
+  stockInfo: AssetInfo;
+}
+
+export function ExpertAssetMobileActions({
+  symbolUpper,
+  stockInfo,
+}: ExpertAssetMobileActionsProps) {
+  return (
+    <div className="flex w-full justify-center gap-3">
+      <Link
+        href={`/swap?to=${symbolUpper}`}
+        className="flex flex-1 min-w-0 items-center justify-center gap-2 px-3 py-3 rounded-xl bg-[#229EDF] text-white font-semibold text-sm text-center hover:bg-[#1a8bc7] transition-colors border border-[#229EDF]/50"
+      >
+        <ArrowLeftRight className="h-4 w-4 shrink-0" />
+        <span className="leading-tight">Swap on Neko</span>
+      </Link>
+      {stockInfo.buyInfo && (
+        <Link
+          href={stockInfo.buyInfo.url}
+          className="flex flex-1 min-w-0 items-center justify-center gap-2 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold text-sm text-center transition-colors border border-white/20"
+        >
+          <ExternalLink className="h-4 w-4 shrink-0" />
+          <span className="leading-tight">
+            Buy on {stockInfo.buyInfo.platform}
+          </span>
+        </Link>
+      )}
+    </div>
+  );
+}

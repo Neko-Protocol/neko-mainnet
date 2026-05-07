@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import DiscoverPage from "@/features/discover/components/pages/DiscoverPage";
+import { ModeSwitch } from "@/components/routing/ModeSwitch";
+import { BasicDiscoverPage } from "@/features/basic/discover";
+import { ExpertDiscoverPage } from "@/features/expert/discover";
 
 export const metadata: Metadata = {
   title: "Discover Assets | Neko Protocol",
@@ -8,5 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default function DiscoverRoute() {
-  return <DiscoverPage />;
+  return (
+    <ModeSwitch basic={<BasicDiscoverPage />} expert={<ExpertDiscoverPage />} />
+  );
 }

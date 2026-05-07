@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import AdminPageClient from "@/features/admin/components/AdminPageClient";
+import AdminPageClient from "@/features/shared/admin/components/AdminPageClient";
 
 export const metadata: Metadata = {
   title: "Admin | Neko Protocol",

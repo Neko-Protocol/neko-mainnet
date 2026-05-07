@@ -4,18 +4,18 @@ import type {
   VaultConfig,
   VaultView,
   VaultStrategyAllocation,
-} from "@/features/vault/types/vault";
+} from "@/features/shared/vault/types/vault";
 import {
   vaultArtForSymbol,
   vaultDedicatedArtKey,
-} from "@/features/vault/utils/vaultAssetArt";
+} from "@/features/shared/vault/utils/vaultAssetArt";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 
 // Per-vault static overrides: contractId → fields that differ from the defaults.
 // Merge order: defaults → STATIC_OVERRIDES[contractId] → derived fields.
 const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
-  // CETES vault — Neko-managed, keep DeFindex as platform
+  // CETES vault - Neko-managed, keep DeFindex as platform
   CCFWKCD52JNSQLN5OS4F7EG6BPDT4IRJV6KODIEIZLWPM35IKHOKT6S2: {
     createdBy: "DeFindex",
     creatorIconSrc: "/defindex-logo.svg",
@@ -121,7 +121,7 @@ function shortAddr(addr: string): string {
 
 function formatManagedAmount(amountStr: string): string {
   const n = Number(amountStr) / 1e7;
-  if (Number.isNaN(n)) return "—";
+  if (Number.isNaN(n)) return "-";
   if (n <= 0) return formatAmount(0);
   if (n >= 1_000_000) return `${formatAmount(n / 1_000_000)}M`;
   if (n >= 1_000) return `${formatAmount(n / 1_000)}k`;
@@ -167,7 +167,7 @@ function formatTvl(
   priceUsdByAsset: Record<string, number> = {}
 ): string {
   const funds = info.totalManagedFunds ?? [];
-  if (funds.length === 0) return "—";
+  if (funds.length === 0) return "-";
   let sum = 0;
   for (const a of funds) {
     const tokens = Number(a.total_amount ?? 0) / 1e7;
@@ -175,7 +175,7 @@ function formatTvl(
     const price = priceUsdByAsset[a.asset] ?? 1;
     sum += tokens * price;
   }
-  if (sum <= 0) return "—";
+  if (sum <= 0) return "-";
   if (sum >= 1_000_000) return `$${formatAmount(sum / 1_000_000)}M`;
   if (sum >= 1_000) return `$${formatAmount(sum / 1_000)}k`;
   return `$${formatAmount(sum)}`;
@@ -224,7 +224,7 @@ export function defindexInfoToVaultView(
   const apyStr =
     apyNum != null && !Number.isNaN(apyNum) && apyNum > 0
       ? `${apyNum.toFixed(2)}%`
-      : "—";
+      : "-";
 
   const overrides = STATIC_OVERRIDES[contractId] ?? {};
 
@@ -259,7 +259,7 @@ export function defindexInfoToVaultView(
     ...config,
     tvl: formatTvl(info, priceUsdByAsset),
     apy7d: apyStr,
-    utilization: "—",
-    totalSupply: "—",
+    utilization: "-",
+    totalSupply: "-",
   };
 }
