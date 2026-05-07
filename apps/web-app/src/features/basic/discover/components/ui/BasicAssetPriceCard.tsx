@@ -19,7 +19,7 @@ import {
   CLASS_ACCENT,
   getAssetTaxonomy,
 } from "@/features/shared/discover/utils/assetClass";
-import { AddToCarModal } from "./AddToCarModal";
+import { AddToCartModal } from "./AddToCartModal";
 
 export interface BasicAssetPriceCardProps {
   tokenCode: string;
@@ -147,12 +147,12 @@ export function BasicAssetPriceCard({
             className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-semibold text-white/60 transition-colors hover:bg-white/10 hover:text-white/90"
           >
             <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
-            Shopping Car
+            Shopping Cart
           </button>
         </div>
       </div>
 
-      <AddToCarModal
+      <AddToCartModal
         symbol={codeUpper}
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}

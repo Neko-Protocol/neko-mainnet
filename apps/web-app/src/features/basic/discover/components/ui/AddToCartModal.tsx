@@ -5,18 +5,22 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { BasicBuyForm, type BuyConfirmPayload } from "./BasicBuyForm";
-import { useCarStore } from "@/stores/car.store";
+import { useCartStore } from "@/stores/cart.store";
 import { ASSET_INFO } from "@/features/shared/discover/utils/assetInfo";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 
-interface AddToCarModalProps {
+interface AddToCartModalProps {
   symbol: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function AddToCarModal({ symbol, isOpen, onClose }: AddToCarModalProps) {
-  const addItem = useCarStore((s) => s.addItem);
+export function AddToCartModal({
+  symbol,
+  isOpen,
+  onClose,
+}: AddToCartModalProps) {
+  const addItem = useCartStore((s) => s.addItem);
 
   if (!isOpen) return null;
 
@@ -71,7 +75,7 @@ export function AddToCarModal({ symbol, isOpen, onClose }: AddToCarModalProps) {
 
           <BasicBuyForm
             symbol={symbol}
-            confirmLabel="Add to car"
+            confirmLabel="Add to cart"
             onConfirm={handleConfirm}
           />
         </div>
