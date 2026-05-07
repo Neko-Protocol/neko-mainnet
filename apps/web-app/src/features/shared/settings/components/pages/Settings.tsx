@@ -8,6 +8,7 @@ import { SettingsWalletSection } from "../ui/SettingsWalletSection";
 import { SettingsNetworkSection } from "../ui/SettingsNetworkSection";
 import { SettingsPreferencesSection } from "../ui/SettingsPreferencesSection";
 import { SettingsUIModeSection } from "../ui/SettingsUIModeSection";
+import { SettingsEmailSection } from "../ui/SettingsEmailSection";
 
 export default function Settings() {
   const { copy, copiedKey } = useCopyToClipboard({ showNotification: true });
@@ -27,6 +28,9 @@ export default function Settings() {
         <div className="flex flex-col gap-4 lg:h-full">
           <div className="lg:flex-1">
             <SettingsWalletSection copy={copy} copiedKey={copiedKey} />
+          </div>
+          <div>
+            <SettingsEmailSection />
           </div>
           <div className="lg:flex-1">
             <SettingsPreferencesSection />
