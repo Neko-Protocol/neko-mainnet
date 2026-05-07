@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export interface CarItem {
+export interface CartItem {
   id: string;
   symbol: string;
   paymentToken: string;
@@ -9,14 +9,14 @@ export interface CarItem {
   estimatedReceive: string;
 }
 
-interface CarState {
-  items: CarItem[];
-  addItem: (item: Omit<CarItem, "id">) => void;
+interface CartState {
+  items: CartItem[];
+  addItem: (item: Omit<CartItem, "id">) => void;
   removeItem: (id: string) => void;
-  clearCar: () => void;
+  clearCart: () => void;
 }
 
-export const useCarStore = create<CarState>()(
+export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       items: [],
@@ -34,8 +34,8 @@ export const useCarStore = create<CarState>()(
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
         })),
-      clearCar: () => set({ items: [] }),
+      clearCart: () => set({ items: [] }),
     }),
-    { name: "neko_car" }
+    { name: "neko_cart" }
   )
 );
