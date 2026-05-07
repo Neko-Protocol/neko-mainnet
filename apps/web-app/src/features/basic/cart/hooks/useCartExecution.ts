@@ -6,7 +6,7 @@ import { getTokens, getTokenAddress } from "@/lib/helpers/stellar/soroswap";
 import { useSwapExecution } from "@/features/expert/swap/hooks/useSwapExecution";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
-import { useCarStore, type CarItem } from "@/stores/car.store";
+import { useCartStore, type CartItem } from "@/stores/cart.store";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
@@ -22,11 +22,11 @@ export interface ItemStatus {
   errorMsg?: string;
 }
 
-export function useCarExecution() {
+export function useCartExecution() {
   const { address, networkPassphrase, refetchBalances } = useWallet();
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
-  const { items, removeItem } = useCarStore();
+  const { items, removeItem } = useCartStore();
   const { executeSwap } = useSwapExecution();
 
   const [statuses, setStatuses] = useState<Record<string, ItemStatus>>({});
@@ -128,7 +128,7 @@ export function useCarExecution() {
     addNotification,
   ]);
 
-  const getStatus = (item: CarItem): ItemStatus =>
+  const getStatus = (item: CartItem): ItemStatus =>
     statuses[item.id] ?? { status: "idle" };
 
   return { isExecuting, getStatus, executeAll };

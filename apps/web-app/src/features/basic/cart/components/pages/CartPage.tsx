@@ -13,11 +13,11 @@ import {
 import Link from "next/link";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { BannerPage } from "@/components/ui/BannerPage";
-import { useCarStore } from "@/stores/car.store";
+import { useCartStore } from "@/stores/cart.store";
 import {
-  useCarExecution,
+  useCartExecution,
   type ItemExecutionStatus,
-} from "../../hooks/useCarExecution";
+} from "../../hooks/useCartExecution";
 import { useWallet } from "@/hooks/useWallet";
 import { ASSET_INFO } from "@/features/shared/discover/utils/assetInfo";
 import {
@@ -36,9 +36,9 @@ function ItemStatusIcon({ status }: { status: ItemExecutionStatus }) {
   return null;
 }
 
-export function CarPage() {
-  const { items, removeItem } = useCarStore();
-  const { isExecuting, getStatus, executeAll } = useCarExecution();
+export function CartPage() {
+  const { items, removeItem } = useCartStore();
+  const { isExecuting, getStatus, executeAll } = useCartExecution();
   const { address } = useWallet();
   const assetsCfg = getAssetsConfig();
   const tokenIconMap = getTokenIconMap();
@@ -46,11 +46,11 @@ export function CarPage() {
   return (
     <PageContainer maxWidth="4xl">
       <BannerPage
-        title="Your Car"
+        title="Your Cart"
         subtitle="Review your pending purchases and confirm them all at once."
         badge="Checkout"
         imageSrc="/banners/swap.svg"
-        imageAlt="Car illustration"
+        imageAlt="Cart illustration"
         className="mb-6"
       />
 
@@ -58,14 +58,14 @@ export function CarPage() {
         <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] p-12 text-center">
           <ShoppingBag className="mx-auto mb-4 h-10 w-10 text-white/20" />
           <p className="text-white/50 text-base font-medium">
-            Your car is empty
+            Your cart is empty
           </p>
           <p className="mt-1 text-white/30 text-sm">
             Browse assets in{" "}
             <Link href="/discover" className="text-[#229EDF] hover:underline">
               Discover
             </Link>{" "}
-            and add items to your car.
+            and add items to your cart.
           </p>
         </div>
       ) : (
@@ -173,7 +173,7 @@ export function CarPage() {
               Estimated total spend
             </p>
             <p className="text-white/30 text-xs">
-              Amounts shown are estimates at the time of adding to car. Final
+              Amounts shown are estimates at the time of adding to cart. Final
               amounts are determined at execution using live quotes.
             </p>
           </div>
