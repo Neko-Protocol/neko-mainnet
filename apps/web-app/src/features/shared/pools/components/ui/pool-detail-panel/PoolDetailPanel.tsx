@@ -8,6 +8,7 @@ import { PoolPanelModeTabs } from "./PoolPanelModeTabs";
 import { PoolSummaryRows } from "./PoolSummaryRows";
 import type { PoolDetailPanelProps } from "./types";
 import { usePoolDetailPanelLogic } from "@/features/shared/pools/hooks/usePoolDetailPanelLogic";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { BLEND_MIN_COLLATERAL_USD } from "./utils";
 
 export function PoolDetailPanel({
@@ -58,11 +59,14 @@ export function PoolDetailPanel({
     ? `${pool.token1.symbol}/${pool.token2.symbol}`
     : pool.token1.symbol;
 
+  const effectiveMinCollateral =
+    pool.minCollateralUsd ?? BLEND_MIN_COLLATERAL_USD;
+  const selectedCFactor = selectedCollateral?.cFactor ?? 1;
   const collateralBelowMinimum =
     !!pool.collateralOptions?.length &&
     mode === "borrow" &&
     collateralInputAmount !== "" &&
-    collateralInputUsd < BLEND_MIN_COLLATERAL_USD;
+    collateralInputUsd * selectedCFactor < effectiveMinCollateral;
 
   const borrowExceedsHf =
     dynamicBorrowMax !== null &&
@@ -86,20 +90,20 @@ export function PoolDetailPanel({
 
   const ammUsdValue = useMemo(() => {
     const parsed = parseFloat(ammAmount);
-    if (!parsed || !token1Price) return "0.00";
-    return (parsed * token1Price).toFixed(2);
+    if (!parsed || !token1Price) return formatAmount(0);
+    return formatAmount(parsed * token1Price);
   }, [ammAmount, token1Price]);
 
   const collateralUsdValue = useMemo(() => {
     const parsed = parseFloat(collateralAmount);
-    if (!parsed || !token1Price) return "0.00";
-    return (parsed * token1Price).toFixed(2);
+    if (!parsed || !token1Price) return formatAmount(0);
+    return formatAmount(parsed * token1Price);
   }, [collateralAmount, token1Price]);
 
   const borrowUsdValue = useMemo(() => {
     const parsed = parseFloat(borrowAmount);
-    if (!parsed || !token2Price) return "0.00";
-    return (parsed * token2Price).toFixed(2);
+    if (!parsed || !token2Price) return formatAmount(0);
+    return formatAmount(parsed * token2Price);
   }, [borrowAmount, token2Price]);
 
   const collateralUsdDisplay = formatUsdValue(
@@ -108,160 +112,152 @@ export function PoolDetailPanel({
   const borrowUsdDisplay = formatUsdValue(
     Number.parseFloat(borrowUsdValue) || 0
   );
-  const collateralInputUsdDisplay = formatUsdValue(collateralInputUsd);
-
   return (
     <div className="flex w-full flex-col gap-3">
       <PoolPanelModeTabs
-          depositWithdrawMode={depositWithdrawMode}
-          ammTab={ammTab}
-          onAmmTabChange={onAmmTabChange}
-          supportsBorrow={supportsBorrow}
-          lendingTabs={lendingTabs}
-          mode={mode}
-          setMode={setMode}
-        />
+        depositWithdrawMode={depositWithdrawMode}
+        ammTab={ammTab}
+        onAmmTabChange={onAmmTabChange}
+        supportsBorrow={supportsBorrow}
+        lendingTabs={lendingTabs}
+        mode={mode}
+        setMode={setMode}
+      />
 
-        {depositWithdrawMode && ammInsufficientFundsMessage && (
-          <p
-            className="text-sm text-red-400/90 font-medium px-0.5"
-            role="alert"
-          >
-            {ammInsufficientFundsMessage}
-          </p>
-        )}
+      {depositWithdrawMode && ammInsufficientFundsMessage && (
+        <p className="text-sm text-red-400/90 font-medium px-0.5" role="alert">
+          {ammInsufficientFundsMessage}
+        </p>
+      )}
 
-        {depositWithdrawMode ? (
-          <>
+      {depositWithdrawMode ? (
+        <>
+          <AmountInput
+            label={isDepositTab ? "Supply" : "Withdraw"}
+            token={pool.token1}
+            value={ammAmount}
+            onChange={(v) => onAmmAmountChange?.(v)}
+            balanceLabel="MAX"
+            balanceValue={balanceForAmm}
+            onMax={maxAmm}
+            disabled={!isWalletConnected}
+            usdValue={formatUsdValue(Number.parseFloat(ammUsdValue) || 0)}
+          />
+          {isPair && isDepositTab && (
             <AmountInput
-              label={isDepositTab ? "Supply" : "Withdraw"}
-              token={pool.token1}
-              value={ammAmount}
-              onChange={(v) => onAmmAmountChange?.(v)}
-              balanceLabel="MAX"
-              balanceValue={balanceForAmm}
-              onMax={maxAmm}
+              label="Supply"
+              token={pool.token2}
+              value={ammAmount2 ?? ""}
+              onChange={() => {}}
+              balanceLabel=""
+              balanceValue={pool.token2Balance ?? "0.00"}
+              readOnly
               disabled={!isWalletConnected}
-              usdValue={formatUsdValue(Number.parseFloat(ammUsdValue) || 0)}
             />
-            {isPair && isDepositTab && (
+          )}
+        </>
+      ) : (
+        <>
+          {mode === "lend" && (
+            <AmountInput
+              label="Supply"
+              token={pool.token1}
+              token2={isPair ? pool.token2 : undefined}
+              value={collateralAmount}
+              onChange={setCollateralAmount}
+              balanceLabel="MAX"
+              balanceValue={pool.token1Balance ?? "0.00"}
+              balanceValue2={
+                isPair ? (pool.token2Balance ?? "0.00") : undefined
+              }
+              onMax={() => setCollateralAmount(pool.token1Balance ?? "0")}
+              disabled={!isWalletConnected}
+              usdValue={collateralUsdDisplay}
+            />
+          )}
+          {mode === "borrow" && (
+            <>
               <AmountInput
-                label="Supply"
+                label={`Borrow ${pool.token2.symbol}`}
                 token={pool.token2}
-                value={ammAmount2 ?? ""}
-                onChange={() => {}}
-                balanceLabel=""
-                balanceValue={pool.token2Balance ?? "0.00"}
-                readOnly
-                disabled={!isWalletConnected}
-              />
-            )}
-          </>
-        ) : (
-          <>
-            {mode === "lend" && (
-              <AmountInput
-                label="Supply"
-                token={pool.token1}
-                token2={isPair ? pool.token2 : undefined}
-                value={collateralAmount}
-                onChange={setCollateralAmount}
+                value={borrowAmount}
+                onChange={setBorrowAmount}
                 balanceLabel="MAX"
-                balanceValue={pool.token1Balance ?? "0.00"}
-                balanceValue2={
-                  isPair ? (pool.token2Balance ?? "0.00") : undefined
+                balanceValue={
+                  dynamicBorrowMax != null
+                    ? formatAmount(dynamicBorrowMax)
+                    : (pool.borrowLimit ?? formatAmount(0))
                 }
-                onMax={() => setCollateralAmount(pool.token1Balance ?? "0")}
-                disabled={!isWalletConnected}
-                usdValue={collateralUsdDisplay}
-              />
-            )}
-            {mode === "borrow" && (
-              <>
-                <AmountInput
-                  label={`Borrow ${pool.token2.symbol}`}
-                  token={pool.token2}
-                  value={borrowAmount}
-                  onChange={setBorrowAmount}
-                  balanceLabel="MAX"
-                  balanceValue={
+                onMax={() =>
+                  setBorrowAmount(
                     dynamicBorrowMax != null
-                      ? dynamicBorrowMax.toFixed(4)
-                      : (pool.borrowLimit ?? "0.00")
-                  }
-                  onMax={() =>
-                    setBorrowAmount(
-                      dynamicBorrowMax != null
-                        ? dynamicBorrowMax.toFixed(7)
-                        : (pool.borrowLimit ?? "0")
-                    )
-                  }
-                  disabled={!isWalletConnected}
-                  usdValue={borrowUsdDisplay}
+                      ? formatAmount(dynamicBorrowMax)
+                      : (pool.borrowLimit ?? "0")
+                  )
+                }
+                disabled={!isWalletConnected}
+                usdValue={borrowUsdDisplay}
+              />
+              {borrowExceedsHf && (
+                <p className="text-xs text-red-400/90 px-0.5">
+                  Borrow amount exceeds your collateral limit (~
+                  {formatAmount(dynamicBorrowMax!)} {pool.token2.symbol} max)
+                </p>
+              )}
+
+              {pool.collateralOptions && pool.collateralOptions.length > 0 && (
+                <BlendCollateralCard
+                  options={pool.collateralOptions}
+                  selectedCollateralAddress={selectedCollateralAddress}
+                  onSelectCollateral={selectCollateral}
+                  selectedCollateral={selectedCollateral}
+                  formatUsdValue={formatUsdValue}
+                  collateralBelowMinimum={collateralBelowMinimum}
+                  minCollateralUsd={effectiveMinCollateral}
+                  collateralInputAmount={collateralInputAmount}
+                  onCollateralInputChange={setCollateralInputAmount}
+                  collateralInputUsd={collateralInputUsd}
                 />
-                {borrowExceedsHf && (
-                  <p className="text-xs text-red-400/90 px-0.5">
-                    Borrow amount exceeds your collateral limit (~
-                    {dynamicBorrowMax!.toFixed(4)} {pool.token2.symbol} max)
-                  </p>
-                )}
+              )}
+            </>
+          )}
+        </>
+      )}
 
-                {pool.collateralOptions &&
-                  pool.collateralOptions.length > 0 && (
-                    <BlendCollateralCard
-                      options={pool.collateralOptions}
-                      selectedCollateralAddress={selectedCollateralAddress}
-                      onSelectCollateral={selectCollateral}
-                      collateralInputAmount={collateralInputAmount}
-                      onCollateralInputChange={setCollateralInputAmount}
-                      selectedCollateral={selectedCollateral}
-                      isWalletConnected={isWalletConnected}
-                      collateralInputUsd={collateralInputUsd}
-                      formatUsdValue={formatUsdValue}
-                      collateralBelowMinimum={collateralBelowMinimum}
-                    />
-                  )}
-              </>
-            )}
-          </>
-        )}
+      <PoolSummaryRows
+        pool={pool}
+        mode={mode}
+        isPair={!!isPair}
+        pairLabel={pairLabel}
+        collateralAmount={collateralAmount}
+        collateralUsdDisplay={collateralUsdDisplay}
+        borrowAmount={borrowAmount}
+        borrowUsdDisplay={borrowUsdDisplay}
+        selectedCollateral={selectedCollateral}
+      />
 
-        <PoolSummaryRows
-          pool={pool}
-          mode={mode}
-          isPair={!!isPair}
-          pairLabel={pairLabel}
-          collateralAmount={collateralAmount}
-          collateralUsdDisplay={collateralUsdDisplay}
-          borrowAmount={borrowAmount}
-          borrowUsdDisplay={borrowUsdDisplay}
-          selectedCollateral={selectedCollateral}
-          collateralInputAmount={collateralInputAmount}
-          collateralInputUsdDisplay={collateralInputUsdDisplay}
-        />
-
-        <PoolPanelFooter
-          depositWithdrawMode={depositWithdrawMode}
-          isWalletConnected={isWalletConnected}
-          onAmmSubmit={onAmmSubmit}
-          ammSubmitDisabled={ammSubmitDisabled}
-          isAmmSubmitting={isAmmSubmitting}
-          isDepositTab={isDepositTab}
-          supportsBorrow={supportsBorrow}
-          canLend={canLend}
-          canBorrow={canBorrow}
-          mode={mode}
-          onLendSubmit={onLendSubmit}
-          collateralAmount={collateralAmount}
-          isLendingActionPending={isLendingActionPending}
-          onBorrowSubmit={onBorrowSubmit}
-          borrowAmount={borrowAmount}
-          selectedCollateral={selectedCollateral}
-          collateralInputAmount={collateralInputAmount}
-          collateralBelowMinimum={collateralBelowMinimum}
-          poolCollateralOptionsLength={pool.collateralOptions?.length ?? 0}
-          borrowExceedsHf={borrowExceedsHf}
-        />
+      <PoolPanelFooter
+        depositWithdrawMode={depositWithdrawMode}
+        isWalletConnected={isWalletConnected}
+        onAmmSubmit={onAmmSubmit}
+        ammSubmitDisabled={ammSubmitDisabled}
+        isAmmSubmitting={isAmmSubmitting}
+        isDepositTab={isDepositTab}
+        supportsBorrow={supportsBorrow}
+        canLend={canLend}
+        canBorrow={canBorrow}
+        mode={mode}
+        onLendSubmit={onLendSubmit}
+        collateralAmount={collateralAmount}
+        isLendingActionPending={isLendingActionPending}
+        onBorrowSubmit={onBorrowSubmit}
+        borrowAmount={borrowAmount}
+        selectedCollateral={selectedCollateral}
+        collateralInputAmount={collateralInputAmount}
+        collateralBelowMinimum={collateralBelowMinimum}
+        poolCollateralOptionsLength={pool.collateralOptions?.length ?? 0}
+        borrowExceedsHf={borrowExceedsHf}
+      />
     </div>
   );
 }

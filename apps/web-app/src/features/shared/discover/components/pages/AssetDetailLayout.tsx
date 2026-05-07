@@ -38,11 +38,7 @@ import {
   getAssetTaxonomy,
 } from "../../utils/assetClass";
 import type { PriceSource } from "@/lib/services/stellar-price.service";
-import {
-  AttributeRow,
-  CopyAddress,
-  useIsMaxSm,
-} from "../ui/AssetDetailAtoms";
+import { AttributeRow, CopyAddress, useIsMaxSm } from "../ui/AssetDetailAtoms";
 
 const PRICE_SOURCE_LABEL: Record<PriceSource, string> = {
   reflector: "Reflector",
@@ -235,9 +231,9 @@ export function AssetDetailLayout({
           {/* ── Left column ── */}
           <div className="min-w-0 p-8 max-sm:p-4 lg:border-r border-white/7 order-2 lg:order-1">
             {/* Header */}
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between mb-10 max-sm:items-center">
-              <div className="flex items-start gap-4 min-w-0 max-sm:flex-col max-sm:items-center">
-                <div className="relative w-16 h-16 rounded-full bg-white ring-1 ring-white/10 overflow-hidden shrink-0 flex items-center justify-center">
+            <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between max-sm:items-center">
+              <div className="flex min-w-0 items-start gap-5 max-sm:flex-col max-sm:items-center">
+                <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-white/10">
                   <Image
                     src={stockInfo.logo || "/assets/xlm-logo.png"}
                     alt={stockInfo.name}
@@ -246,21 +242,21 @@ export function AssetDetailLayout({
                     className="object-cover scale-110"
                   />
                 </div>
-                <div className="min-w-0 flex-1 h-16 flex flex-col justify-between max-sm:h-auto max-sm:w-full max-sm:flex-none max-sm:items-center max-sm:justify-start max-sm:gap-2">
-                  <div className="min-h-0 flex items-center gap-2 max-sm:flex-wrap max-sm:justify-center max-sm:gap-x-2 max-sm:gap-y-1">
-                    <h1 className="text-white font-bold text-2xl leading-none truncate max-sm:text-xl max-sm:leading-tight max-sm:overflow-visible max-sm:whitespace-normal max-sm:text-center">
+                <div className="flex h-20 min-w-0 flex-1 flex-col justify-between max-sm:h-auto max-sm:w-full max-sm:flex-none max-sm:items-center max-sm:justify-start max-sm:gap-2">
+                  <div className="min-h-0 flex items-center gap-3 max-sm:flex-wrap max-sm:justify-center max-sm:gap-x-2 max-sm:gap-y-1">
+                    <h1 className="pool-detail-hero-title truncate max-sm:overflow-visible max-sm:whitespace-normal max-sm:text-center">
                       {symbolUpper}
                     </h1>
                     {taxonomy && accent && (
                       <span
-                        className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-semibold ${accent.chip}`}
+                        className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium text-white/70 ${accent.bg}`}
                       >
                         {taxonomy.classLabel}
                       </span>
                     )}
                   </div>
                   <div className="min-h-0 flex items-center gap-3 max-sm:flex-col max-sm:items-center max-sm:gap-2">
-                    <span className="text-white/70 text-sm font-medium truncate max-sm:max-w-full max-sm:overflow-visible max-sm:whitespace-normal max-sm:leading-snug max-sm:text-center">
+                    <span className="truncate text-base font-medium leading-snug text-white/70 max-sm:max-w-full max-sm:overflow-visible max-sm:whitespace-normal max-sm:text-center">
                       {stockInfo.name}
                     </span>
                     <span className="shrink-0 max-sm:flex max-sm:justify-center">
@@ -271,7 +267,7 @@ export function AssetDetailLayout({
               </div>
 
               <div className="shrink-0 sm:text-right max-sm:w-full max-sm:text-center">
-                <p className="text-white/40 text-xs font-medium mb-2 uppercase tracking-wider">
+                <p className="mb-3 text-xs font-medium uppercase tracking-wider text-white/40">
                   Spot Price ({selectedCurrency})
                 </p>
                 {isLoadingPrice ? (
@@ -280,14 +276,14 @@ export function AssetDetailLayout({
                   </div>
                 ) : (
                   <p
-                    className={`text-3xl font-bold tabular-nums leading-none ${
+                    className={`pool-detail-metric-value ${
                       formattedPrice ? "text-white" : "text-white/40"
                     }`}
                   >
                     {formattedPrice ?? "No data"}
                   </p>
                 )}
-                <p className="text-white/30 text-xs mt-2">
+                <p className="mt-2 text-xs text-white/30">
                   {priceSourceLabel(priceSource)
                     ? `via ${priceSourceLabel(priceSource)}`
                     : "Source unavailable"}
@@ -297,13 +293,13 @@ export function AssetDetailLayout({
 
             <div className="border-t border-white/5" />
 
-            <section className="mt-8 rounded-xl border border-white/7 p-5 max-sm:p-4 bg-[#0E0E0E]">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-white text-base font-semibold">
+            <section className="mt-8 rounded-2xl border border-white/7 bg-[#0E0E0E] p-5 max-sm:p-4">
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="text-base font-semibold leading-tight text-white">
                   Price (last 7 days)
                 </h2>
                 {chartData.length > 0 && (
-                  <div className="inline-flex items-center gap-2 text-emerald-300 text-xs font-medium">
+                  <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-300">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                     Live
                   </div>
@@ -361,22 +357,22 @@ export function AssetDetailLayout({
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="h-[220px] rounded-lg border border-white/5 bg-white/2 flex items-center justify-center">
-                  <p className="text-white/45 text-sm">Not enough data yet</p>
+                <div className="h-[220px] rounded-lg border border-white/5 bg-white/[0.02] flex items-center justify-center">
+                  <p className="text-sm leading-relaxed text-white/45">
+                    Not enough data yet
+                  </p>
                 </div>
               )}
             </section>
 
             {renderMobileActions && (
-              <div className="mt-4 lg:hidden">
-                {renderMobileActions(ctx)}
-              </div>
+              <div className="mt-4 lg:hidden">{renderMobileActions(ctx)}</div>
             )}
 
             {/* Tabs */}
             <div className="mt-8">
               <div
-                className="sticky top-0 z-10 -mx-8 px-8 max-sm:-mx-4 max-sm:px-4 border-b border-white/5"
+                className="sticky top-0 z-10 -mx-8 border-b border-white/5 px-8 max-sm:-mx-4 max-sm:px-4"
                 style={{ background: "#111111" }}
               >
                 <div className="flex gap-6">
@@ -384,7 +380,7 @@ export function AssetDetailLayout({
                     <button
                       key={t.id}
                       onClick={() => scrollTo(t.id)}
-                      className={`pb-3 text-sm font-medium transition-colors relative ${
+                      className={`relative pb-3 text-sm font-medium leading-tight transition-colors ${
                         activeTab === t.id
                           ? "text-white"
                           : "text-white/40 hover:text-white/70"
@@ -400,21 +396,21 @@ export function AssetDetailLayout({
               </div>
 
               <div ref={overviewRef} className="mt-10 scroll-mt-16">
-                <h2 className="text-white text-xl font-bold mb-4">Overview</h2>
-                <p className="text-white/70 text-sm leading-relaxed">
+                <h2 className="mb-6 text-xl font-bold text-white">Overview</h2>
+                <p className="text-sm leading-relaxed text-white/70">
                   {stockInfo.summary ?? stockInfo.description}
                 </p>
 
                 {stockInfo.highlights && stockInfo.highlights.length > 0 && (
                   <div className="mt-6">
-                    <h3 className="text-white/50 text-sm font-medium mb-3 uppercase tracking-wider">
+                    <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-white/50">
                       Highlights
                     </h3>
                     <ul className="space-y-2">
                       {stockInfo.highlights.map((item) => (
                         <li
                           key={item}
-                          className="flex items-start gap-3 text-white/80 text-sm leading-relaxed"
+                          className="flex items-start gap-3 text-sm leading-relaxed text-white/80"
                         >
                           <span
                             className={`mt-1.5 h-1.5 w-1.5 rounded-full shrink-0 ${
@@ -434,10 +430,10 @@ export function AssetDetailLayout({
                       accent ? accent.bg : "bg-white/5"
                     }`}
                   >
-                    <h3 className="text-white text-sm font-semibold mb-2">
+                    <h3 className="mb-2 text-sm font-semibold leading-tight text-white">
                       {classExplanation.title}
                     </h3>
-                    <p className="text-white/70 text-sm leading-relaxed">
+                    <p className="text-sm leading-relaxed text-white/70">
                       {classExplanation.body}
                     </p>
                   </div>
@@ -445,7 +441,7 @@ export function AssetDetailLayout({
               </div>
 
               <div ref={detailsRef} className="mt-12 scroll-mt-16">
-                <h2 className="text-white text-xl font-bold mb-4">Details</h2>
+                <h2 className="mb-6 text-xl font-bold text-white">Details</h2>
                 <div>
                   <AttributeRow label="Symbol">{symbolUpper}</AttributeRow>
                   <AttributeRow label="Name">{stockInfo.name}</AttributeRow>

@@ -33,12 +33,14 @@ import {
   reserveStroopsFromApiString,
   aquaProportionalAmountB,
 } from "@/lib/helpers/stellar/aquaDeposit";
+import { ensureTrustlineForSAC } from "@/lib/helpers/stellar/trustline";
 import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
 import { calculateBorrowLimit } from "@/features/shared/borrowing/utils/borrowUtils";
 import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
 import { rpcUrl } from "@/lib/constants/network";
 import { useToast } from "@/hooks/useToast";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
+import { auditService } from "@/lib/services/audit.service";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
@@ -304,15 +306,21 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
   const runPoolAction = useCallback(
     async (action: PoolAction, amount: bigint) => {
+      if (!pool) return;
       await executePoolAction({
         poolId: contractid,
         action,
         amount,
         tokenIndex: 0,
+        audit: {
+          tokens: pool.tokens,
+          poolType: pool.type,
+          metadata: pool.metadata,
+        },
       });
       await refetchAfterTx();
     },
-    [contractid, executePoolAction, refetchAfterTx]
+    [contractid, executePoolAction, refetchAfterTx, pool]
   );
 
   const ammFirstLegDepositInsufficient = useMemo(() => {
@@ -393,6 +401,25 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       if (!address || !signTransaction) return;
       const b = parseFloat(borrowAmount);
       if (isNaN(b) || b <= 0) return;
+
+      const borrowTokenAddress = pool?.tokens[0]?.address;
+      const borrowTokenCode = pool?.tokens[0]?.code;
+      if (borrowTokenAddress && borrowTokenCode) {
+        try {
+          await ensureTrustlineForSAC(
+            borrowTokenAddress,
+            borrowTokenCode,
+            address,
+            signTransaction
+          );
+        } catch (err) {
+          if (isUserCancellationError(err)) return;
+          const msg =
+            err instanceof Error ? err.message : "Failed to add trustline";
+          addNotification(`Trustline setup failed: ${msg}`, "error");
+          return;
+        }
+      }
       const bDec = pool?.tokens[0]?.decimals ?? 7;
       const borrowBigInt = BigInt(toSmallestUnit(borrowAmount, bDec));
 
@@ -444,6 +471,20 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
                 : "Transaction confirmation timeout"
             );
           }
+          const borrowedCode = pool?.tokens[0]?.code ?? "?";
+          const borrowedHuman = parseFloat(borrowAmount);
+          const collateralCode = collateralOption?.symbol ?? "?";
+          const collateralHuman = parseFloat(collateralAmt);
+          void auditService.log({
+            wallet_address: address,
+            action_type: "borrow_deposit",
+            pool_id: contractid,
+            asset_in: collateralCode,
+            amount_in: collateralHuman,
+            asset_out: borrowedCode,
+            amount_out: borrowedHuman,
+            tx_hash: txResult.hash,
+          });
           addNotification("Borrow successful", "success");
           await refetchAfterTx();
         } catch (error) {
@@ -470,6 +511,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       collateralOptionsWithBalances,
       runPoolAction,
       refetchAfterTx,
+      addNotification,
     ]
   );
 
@@ -516,7 +558,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       position?.metadata?.collateral &&
       String(position.metadata.collateral) !== "0"
         ? fromSmallestUnit(String(position.metadata.collateral), d)
-        : "0.00";
+        : formatAmount(0);
 
     const collateralNum = parseFloat(collateralRaw);
     const borrowLimitNum =
@@ -527,10 +569,12 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           )
         : 0;
     const borrowLimit =
-      borrowLimitNum > 0 ? borrowLimitNum.toFixed(7) : undefined;
+      borrowLimitNum > 0 ? formatAmount(borrowLimitNum) : undefined;
 
     const loanRaw =
-      liabilitiesStr !== "0" ? fromSmallestUnit(liabilitiesStr, d) : "0.00";
+      liabilitiesStr !== "0"
+        ? fromSmallestUnit(liabilitiesStr, d)
+        : formatAmount(0);
 
     const supplyApyFromMeta =
       (pool.metadata.supplyApy as number | undefined) ?? pool.apy;
@@ -573,9 +617,9 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       const baseSup = (pool.metadata.supplyApy as number | undefined) ?? 0;
       const rewards = (pool.metadata.rewardsApy as number | undefined) ?? 0;
       const totalApy = pool.apy;
-      supplyApyDisplay = `${Number.isFinite(totalApy) ? totalApy.toFixed(2) : "0.00"}%`;
+      supplyApyDisplay = `${Number.isFinite(totalApy) ? totalApy.toFixed(4) : "0.0000"}%`;
       if (rewards > 0.0001) {
-        supplyApySub = `Base ${baseSup.toFixed(2)}% + ${rewards.toFixed(2)}% rewards`;
+        supplyApySub = `Base ${baseSup.toFixed(4)}% + ${rewards.toFixed(4)}% rewards`;
       }
       const aquaPoolType = pool.metadata.aquaPoolType as string | undefined;
       if (aquaPoolType === "stable_swap" || aquaPoolType === "stable") {
@@ -600,9 +644,9 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           ? availableLiquidityNum * primaryTokenPrice
           : availableLiquidityNum;
       totalLiquidity = formatLiquidity(String(liqUsd));
-      totalLiquidityRaw = `${availableLiquidityNum.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${t1?.code ?? ""}`;
-      supplyApyDisplay = `${supplyApyFromMeta.toFixed(2)}%`;
-      borrowApyLabel = `${borrowApy.toFixed(2)}%`;
+      totalLiquidityRaw = `${formatAmount(availableLiquidityNum)} ${t1?.code ?? ""}`;
+      supplyApyDisplay = `${supplyApyFromMeta.toFixed(4)}%`;
+      borrowApyLabel = `${borrowApy.toFixed(4)}%`;
 
       if (totalLiabilities > 0) {
         const borrowUsd =
@@ -610,9 +654,9 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
             ? totalLiabilities * primaryTokenPrice
             : totalLiabilities;
         totalBorrowedStat = formatLiquidity(String(borrowUsd));
-        totalBorrowedStatRaw = `${totalLiabilities.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${t1?.code ?? ""}`;
+        totalBorrowedStatRaw = `${formatAmount(totalLiabilities)} ${t1?.code ?? ""}`;
         if (tvlNum > 0) {
-          utilization = `${((totalLiabilities / tvlNum) * 100).toFixed(2)}%`;
+          utilization = `${((totalLiabilities / tvlNum) * 100).toFixed(4)}%`;
         }
       }
       if (primaryTokenPrice > 0 && t1?.code) {
@@ -623,8 +667,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       }
     } else {
       totalLiquidity = formatLiquidity(availableLiquidityNum.toString());
-      totalLiquidityRaw = `${availableLiquidityNum.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${t1?.code ?? ""}`;
-      supplyApyDisplay = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
+      totalLiquidityRaw = `${formatAmount(availableLiquidityNum)} ${t1?.code ?? ""}`;
+      supplyApyDisplay = pool.apy > 0 ? `${pool.apy.toFixed(4)}%` : "0.0000%";
     }
 
     return {
@@ -666,6 +710,11 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       loanBalance: loanRaw,
       borrowLimit,
       lFactor: (pool.metadata.lFactor as number | undefined) ?? 1,
+      minCollateralUsd: (() => {
+        const raw = pool.metadata.minCollateral as bigint | undefined;
+        // minCollateral is in oracle base-asset units; Reflector oracle uses 14 decimals
+        return raw && raw > 0n ? Number(raw) / 1e14 : undefined;
+      })(),
       currentLtv: 0,
       collateralOptions: collateralOptionsWithBalances,
     };

@@ -3,10 +3,11 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight, Layers } from "lucide-react";
-import { useUserPositions } from "@/features/expert/dashboard/hooks/useUserPositions";
+import { useDashboardPositions } from "@/features/expert/dashboard/hooks/useDashboardPositions";
+import { YourPositionsTable } from "./YourPositionsTable";
 
 const YourPositions: React.FC = () => {
-  const { positions, isLoading, hasWallet } = useUserPositions();
+  const { positions, isLoading, hasWallet } = useDashboardPositions();
 
   if (!hasWallet) return null;
 
@@ -51,36 +52,7 @@ const YourPositions: React.FC = () => {
           </Link>
         </div>
       ) : (
-        <div className="space-y-3">
-          {positions.map(({ pool, position }) => (
-            <Link
-              key={pool.id}
-              href={`/pools/${encodeURIComponent(pool.id)}`}
-              className="block rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 hover:border-white/10 hover:bg-[#222222] transition-all duration-200"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-white font-semibold text-sm">
-                    {pool.name}
-                  </p>
-                  <p className="text-white/40 text-xs mt-0.5">
-                    {pool.tokens.map((t) => t.code).join(" / ")}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-white font-semibold text-sm">
-                    {position.depositedFormatted}
-                  </p>
-                  {position.rewards > 0n && (
-                    <p className="text-[#76C464] text-xs font-semibold mt-0.5">
-                      +{position.rewardsFormatted} rewards
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <YourPositionsTable positions={positions} />
       )}
     </div>
   );

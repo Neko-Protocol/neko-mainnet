@@ -19,6 +19,8 @@ export type {
   PoolType,
   PoolState,
   PoolAction,
+  PoolActionParams,
+  PoolActionAuditContext,
   TokenInfo,
   PoolInfo,
   PoolPosition,

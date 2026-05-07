@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { X, AlertTriangle } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 
 interface RepayPositionModalProps {
@@ -45,11 +46,6 @@ export function RepayPositionModal({
   const maxRepayFormatted = useMemo(
     () => fromSmallestUnit(maxRepayStroops.toString(), decimals),
     [maxRepayStroops, decimals]
-  );
-
-  const walletBalanceFormatted = useMemo(
-    () => fromSmallestUnit(walletBalance.toString(), decimals),
-    [walletBalance, decimals]
   );
 
   const canFullyRepay = walletBalance >= debtInStroops;
@@ -101,29 +97,16 @@ export function RepayPositionModal({
             </button>
           </div>
 
-          {/* Debt + balance info */}
-          <div className="mb-4 grid grid-cols-2 gap-2">
+          {/* Debt info */}
+          <div className="mb-4">
             <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
               <p className="text-amber-400/70 text-xs mb-0.5">Amount Owed</p>
               <p className="text-amber-400 font-bold text-sm tabular-nums">
-                {parseFloat(debtFormatted).toFixed(4)}{" "}
+                {formatAmount(debtFormatted)}{" "}
                 <span className="text-amber-400/50 font-normal text-xs">
                   {tokenCode}
                 </span>
               </p>
-            </div>
-            <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-              <p className="text-white/40 text-xs mb-0.5">Wallet Balance</p>
-              {isBalanceLoading ? (
-                <p className="text-white/40 text-sm">Loading…</p>
-              ) : (
-                <p className="text-white font-bold text-sm tabular-nums">
-                  {parseFloat(walletBalanceFormatted).toFixed(4)}{" "}
-                  <span className="text-white/40 font-normal text-xs">
-                    {tokenCode}
-                  </span>
-                </p>
-              )}
             </div>
           </div>
 
@@ -145,7 +128,7 @@ export function RepayPositionModal({
                 Your balance is below the full debt. You can partially repay up
                 to{" "}
                 <span className="font-semibold">
-                  {parseFloat(maxRepayFormatted).toFixed(4)} {tokenCode}
+                  {formatAmount(maxRepayFormatted)} {tokenCode}
                 </span>
                 .
               </p>
@@ -154,22 +137,10 @@ export function RepayPositionModal({
 
           {/* Amount input */}
           <div className="mb-4">
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-white/60 text-xs font-medium">
-                Amount to repay
-              </label>
-              <button
-                type="button"
-                onClick={handleMax}
-                disabled={
-                  isProcessing || isBalanceLoading || maxRepayStroops <= 0n
-                }
-                className="text-[#229EDF] text-xs font-semibold hover:text-[#229EDF]/80 transition-colors disabled:opacity-50"
-              >
-                MAX
-              </button>
-            </div>
-            <div className="relative">
+            <label className="text-white/60 text-xs font-medium block mb-1.5">
+              Amount to repay
+            </label>
+            <div className="flex items-center bg-[#2A2A2A] border border-white/10 rounded-lg px-3 py-2.5 gap-2 focus-within:border-[#229EDF]/50 transition-colors">
               <input
                 type="text"
                 inputMode="decimal"
@@ -177,11 +148,21 @@ export function RepayPositionModal({
                 value={amount}
                 onChange={(e) => handleChange(e.target.value)}
                 disabled={isProcessing}
-                className="w-full bg-[#2A2A2A] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-[#229EDF]/50 transition-colors disabled:opacity-50 pr-16"
+                className="flex-1 bg-transparent text-sm text-white placeholder:text-white/20 outline-none disabled:opacity-50"
               />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 text-xs font-medium pointer-events-none">
+              <span className="text-white/30 text-xs font-medium shrink-0">
                 {tokenCode}
               </span>
+              <button
+                type="button"
+                onClick={handleMax}
+                disabled={
+                  isProcessing || isBalanceLoading || maxRepayStroops <= 0n
+                }
+                className="text-[#229EDF] text-[8px] font-semibold hover:text-[#229EDF]/80 transition-colors disabled:opacity-50 shrink-0"
+              >
+                MAX
+              </button>
             </div>
             {exceedsBalance && (
               <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">

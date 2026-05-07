@@ -11,7 +11,7 @@ export interface BasePoolAdapter {
 
   getPoolInfo(poolId: string): Promise<PoolInfo>;
 
-  listPools(): Promise<PoolInfo[]>;
+  listPools(limit?: number): Promise<PoolInfo[]>;
 
   getUserPosition(poolId: string, userAddress: string): Promise<PoolPosition>;
 

@@ -24,7 +24,7 @@ import {
   getAssetsConfig,
   getTokenIconMap,
 } from "@/lib/constants/assets.config";
-import { formatSwapAmount } from "@/lib/helpers/tokenUtils";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 
 function ItemStatusIcon({ status }: { status: ItemExecutionStatus }) {
   if (status === "executing")
@@ -128,13 +128,13 @@ export function CarPage() {
                             </div>
                           )}
                           <span className="text-white/60 text-xs font-medium tabular-nums">
-                            {formatSwapAmount(item.paymentAmount, 4)}{" "}
+                            {formatAmount(item.paymentAmount, 4)}{" "}
                             {item.paymentToken}
                           </span>
                         </div>
                         <ArrowRight className="h-3 w-3 text-white/20 self-end" />
                         <span className="text-white text-sm font-semibold tabular-nums">
-                          ~{formatSwapAmount(item.estimatedReceive, 4)}{" "}
+                          ~{formatAmount(item.estimatedReceive, 4)}{" "}
                           {item.symbol}
                         </span>
                       </div>

@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
 import { useBuyForm } from "../../hooks/useBuyForm";
-import { formatSwapAmount } from "@/lib/helpers/tokenUtils";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { useWallet } from "@/hooks/useWallet";
 import { getTokenIconMap } from "@/lib/constants/assets.config";
 
@@ -118,7 +118,7 @@ export function BasicBuyForm({
             {isLoadingBalance
               ? "Loading balance…"
               : paymentBalance
-                ? `Balance: ${formatSwapAmount(paymentBalance, 4)} ${paymentToken}`
+                ? `Balance: ${formatAmount(paymentBalance, 4)} ${paymentToken}`
                 : ""}
           </span>
         </div>
@@ -141,11 +141,11 @@ export function BasicBuyForm({
             </span>
           ) : hasOutput ? (
             <span className="text-white text-xl font-bold tabular-nums">
-              {formatSwapAmount(amountOut, 6)}{" "}
+              {formatAmount(amountOut, 6)}{" "}
               <span className="text-white/60 text-base">{symbol}</span>
             </span>
           ) : (
-            <span className="text-white/30 text-xl font-bold">—</span>
+            <span className="text-white/30 text-xl font-bold">-</span>
           )}
         </div>
         {quoteError && !isLoadingQuote && (

@@ -304,7 +304,7 @@ export const getBorrowLimit = async (
     if ("ok" in borrowLimitResult && borrowLimitResult.ok) {
       const limitValue = Number(borrowLimitResult.ok);
 
-      return (limitValue / 1e7).toFixed(2);
+      return (limitValue / 1e7).toFixed(4);
     } else {
       return "0";
     }

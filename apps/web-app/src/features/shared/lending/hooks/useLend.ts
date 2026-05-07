@@ -17,6 +17,7 @@ import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { usePools, usePoolAction } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
+import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolData } from "../types/lending";
@@ -34,7 +35,7 @@ function toBTokens(tokensAmount: string, bTokenRate: string): string {
     parseFloat(bTokenRate) <= 0
   )
     return "0";
-  return (parseFloat(tokensAmount) / parseFloat(bTokenRate)).toFixed(7);
+  return (parseFloat(tokensAmount) / parseFloat(bTokenRate)).toFixed(4);
 }
 
 export function useLend() {
@@ -96,8 +97,8 @@ export function useLend() {
       const balanceNum = parseFloat(pool.poolBalance);
       const liquidity =
         balanceNum >= 1000
-          ? `$${(balanceNum / 1000).toFixed(2)}k`
-          : `$${balanceNum.toFixed(2)}`;
+          ? `$${(balanceNum / 1000).toFixed(SUMMARY_DISPLAY_DECIMALS)}k`
+          : `$${balanceNum.toFixed(SUMMARY_DISPLAY_DECIMALS)}`;
       return {
         id: `pool-${index}`,
         protocolId: "neko",
@@ -105,8 +106,8 @@ export function useLend() {
         token1: pool.assetCode,
         token2: "",
         fee: "0%",
-        roi: `${pool.interestRate.toFixed(2)}%`,
-        feeApy: `${pool.interestRate.toFixed(2)}%`,
+        roi: `${pool.interestRate.toFixed(SUMMARY_DISPLAY_DECIMALS)}%`,
+        feeApy: `${pool.interestRate.toFixed(SUMMARY_DISPLAY_DECIMALS)}%`,
         liquidity,
         isActive: pool.isActive,
         assetCode: pool.assetCode,
@@ -127,9 +128,12 @@ export function useLend() {
         const liquidityUsd = p.metadata?.liquidityUsd as string | undefined;
         const liquidity =
           liquidityUsd && parseFloat(liquidityUsd) > 0
-            ? formatLiquidity(liquidityUsd)
+            ? formatLiquidity(liquidityUsd, SUMMARY_DISPLAY_DECIMALS)
             : p.tvl > 0n
-              ? formatLiquidity(fromSmallestUnit(p.tvl.toString(), decimals))
+              ? formatLiquidity(
+                  fromSmallestUnit(p.tvl.toString(), decimals),
+                  SUMMARY_DISPLAY_DECIMALS
+                )
               : "—";
         const contractId = p.id.split(":")[1] ?? p.id;
         const canInteract = p.supportedActions.includes("deposit");
@@ -145,12 +149,12 @@ export function useLend() {
             (p.metadata?.totalLiabilities as string | undefined) ?? "0"
           );
           const liabTokens = fromSmallestUnit(liabRaw, decimals);
-          totalBorrowed = formatLiquidity(liabTokens);
+          totalBorrowed = formatLiquidity(liabTokens, SUMMARY_DISPLAY_DECIMALS);
           liquidityTokenAmount = fromSmallestUnit(p.tvl.toString(), decimals);
           liquidityTokenCode = token?.code;
           totalBorrowedTokenAmount = liabTokens;
           const bApy = (p.metadata?.borrowApy as number | undefined) ?? 0;
-          borrowApy = `${bApy.toFixed(2)}%`;
+          borrowApy = `${bApy.toFixed(SUMMARY_DISPLAY_DECIMALS)}%`;
         }
 
         return {
@@ -160,8 +164,10 @@ export function useLend() {
           token1: token?.code ?? "?",
           token2: p.tokens[1]?.code ?? (canInteract ? "Lending" : ""),
           fee: "0%",
-          roi: p.apy > 0 ? `${p.apy.toFixed(2)}%` : "0.00%",
-          feeApy: p.apy > 0 ? `${p.apy.toFixed(2)}%` : "0.00%",
+          roi:
+            p.apy > 0 ? `${p.apy.toFixed(SUMMARY_DISPLAY_DECIMALS)}%` : "0.00%",
+          feeApy:
+            p.apy > 0 ? `${p.apy.toFixed(SUMMARY_DISPLAY_DECIMALS)}%` : "0.00%",
           liquidity,
           isActive: p.state === "active",
           assetCode: token?.code ?? "?",

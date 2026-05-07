@@ -1,24 +1,9 @@
-import { getAvailableTokens } from "./stellar/soroswap";
-import type { Token } from "./stellar/soroswap";
 import {
   STELLAR_TOKEN_ICON_MAP,
   STELLAR_FALLBACK_CONTRACTS,
 } from "@/lib/constants/tokenIcons";
-
-export const formatSwapAmount = (
-  amount: string | number,
-  decimals: number = 7
-): string => {
-  const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(numAmount)) return "0";
-
-  const formatter = new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: decimals,
-  });
-
-  return formatter.format(numAmount);
-};
+import { getAvailableTokens } from "./stellar/soroswap";
+import type { Token } from "./stellar/soroswap";
 
 export const toSmallestUnit = (
   amount: string | number,

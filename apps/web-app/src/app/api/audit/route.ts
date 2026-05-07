@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { normalizeAuditAssetKey } from "@/lib/helpers/auditAssetAmounts";
+import { stellarNetwork } from "@/lib/constants/network";
 import type { AuditEvent } from "@/lib/types/audit.types";
 import type { Database } from "@/lib/types/database.types";
 
-const NETWORK =
-  process.env.NEXT_PUBLIC_STELLAR_NETWORK === "PUBLIC" ? "mainnet" : "testnet";
+function auditDbNetwork(): "mainnet" | "testnet" {
+  const envNet =
+    process.env.NEXT_PUBLIC_STELLAR_NETWORK?.trim().toUpperCase() ?? "";
+  if (envNet === "MAINNET" || envNet === "PUBLIC") return "mainnet";
+  if (stellarNetwork === "PUBLIC") return "mainnet";
+  return "testnet";
+}
+
+const NETWORK = auditDbNetwork();
 
 let _supabase: ReturnType<typeof createClient<Database>> | null | undefined;
 
@@ -29,20 +38,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    await supabase
+    const assetIn = normalizeAuditAssetKey(body.asset_in);
+    const assetOut = normalizeAuditAssetKey(body.asset_out);
+
+    const { data: inserted, error: insertError } = await supabase
       .from("audit_logs")
       .insert({
         wallet_address: body.wallet_address,
         action_type: body.action_type,
-        asset_in: body.asset_in ?? null,
-        asset_out: body.asset_out ?? null,
+        asset_in: assetIn,
+        asset_out: assetOut,
         amount_in: body.amount_in ?? null,
         amount_out: body.amount_out ?? null,
         pool_id: body.pool_id ?? null,
         network: NETWORK,
         tx_hash: body.tx_hash ?? null,
       })
-      .throwOnError();
+      .select("id")
+      .single();
+
+    if (insertError || !inserted?.id) {
+      return NextResponse.json({ ok: true });
+    }
+
+    const auditId = inserted.id;
+
+    const bumpLeg = (
+      assetKey: string | null | undefined,
+      amount: number | null | undefined
+    ) => {
+      if (
+        assetKey == null ||
+        assetKey === "" ||
+        amount == null ||
+        !Number.isFinite(amount)
+      ) {
+        return Promise.resolve();
+      }
+      return supabase.rpc("increment_asset_volume", {
+        p_network: NETWORK,
+        p_asset_key: assetKey,
+        p_delta: amount,
+        p_audit_id: auditId,
+      });
+    };
+
+    await Promise.all([
+      bumpLeg(assetIn, body.amount_in),
+      bumpLeg(assetOut, body.amount_out),
+    ]);
 
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch {

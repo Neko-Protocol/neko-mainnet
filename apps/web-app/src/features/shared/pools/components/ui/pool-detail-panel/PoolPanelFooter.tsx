@@ -60,7 +60,7 @@ export function PoolPanelFooter({
 
   const btnSkeleton = (
     <span className="flex items-center justify-center py-0.5">
-      <span className="h-3.5 w-[7rem] rounded-md bg-white/25 animate-pulse" />
+      <span className="h-3.5 w-[7rem] rounded-md bg-white/25" />
     </span>
   );
 
@@ -75,11 +75,11 @@ export function PoolPanelFooter({
             disabled={ammSubmitDisabled}
             className={primaryBtn}
           >
-            {isAmmSubmitting ? btnSkeleton : isDepositTab ? (
-              "Deposit"
-            ) : (
-              "Withdraw"
-            )}
+            {isAmmSubmitting
+              ? btnSkeleton
+              : isDepositTab
+                ? "Deposit"
+                : "Withdraw"}
           </button>
         </div>
       )}
@@ -120,7 +120,8 @@ export function PoolPanelFooter({
                 collateralBelowMinimum ||
                 (!!poolCollateralOptionsLength &&
                   (!collateralInputAmount ||
-                    parseFloat(collateralInputAmount) <= 0)) ||
+                    parseFloat(collateralInputAmount) <= 0) &&
+                  parseFloat(selectedCollateral?.userBalance ?? "0") <= 0) ||
                 (!!selectedCollateral?.walletBalance &&
                   !!collateralInputAmount &&
                   parseFloat(collateralInputAmount) >

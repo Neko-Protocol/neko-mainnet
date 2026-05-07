@@ -37,7 +37,8 @@ export function VaultActionModal({
   const { sharesFormatted } = useVaultBalance(vaultContractId);
   const { isLoading, handleDeposit, handleWithdraw } = useVaultAction(
     vaultContractId,
-    supplyAssetSymbol
+    supplyAssetSymbol,
+    vaultShareSymbol
   );
 
   const { data: supplyBalance = "0" } = useQuery({

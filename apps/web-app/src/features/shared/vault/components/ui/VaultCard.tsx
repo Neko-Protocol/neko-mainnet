@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { squeezeSummaryDecimals } from "@/lib/helpers/formatUtils";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import type { VaultView, VaultCategory } from "../../types/vault";
 import { vaultArtForSymbol } from "../../utils/vaultAssetArt";
@@ -48,6 +49,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
           ? "0 2px 16px 0 rgba(0,0,0,0.08)"
           : "0 2px 16px 0 rgba(0,0,0,0.4)",
       }}
+      onClick={() => onDetailsClick?.(vault)}
     >
       <div
         className="relative overflow-hidden"
@@ -117,7 +119,6 @@ export const VaultCard: React.FC<VaultCardProps> = ({
       <div
         className="flex items-stretch px-5 py-3"
         style={{ background: isLight ? "#141414" : "#181818" }}
-        onClick={() => onDetailsClick?.(vault)}
       >
         <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
@@ -136,12 +137,12 @@ export const VaultCard: React.FC<VaultCardProps> = ({
               {vault.supplyAsset.symbol}
             </span>
             <span className="text-white/40 text-xs">on</span>
-            <div className="w-4 h-4 rounded-full overflow-hidden shrink-0">
+            <div className="w-6 h-6 rounded-full overflow-hidden shrink-0">
               <Image
                 src="/assets/xlm-logo.png"
                 alt="Stellar"
-                width={16}
-                height={16}
+                width={24}
+                height={24}
                 unoptimized
                 className={getTokenIconFitClass("XLM")}
               />
@@ -178,9 +179,11 @@ export const VaultCard: React.FC<VaultCardProps> = ({
             TVL
           </span>
           {isLoading ? (
-            <div className="h-5 w-16 rounded bg-white/10 animate-pulse" />
+            <div className="h-5 w-16 rounded bg-white/10" />
           ) : (
-            <span className="text-white text-base font-bold">{vault.tvl}</span>
+            <span className="text-white text-base font-bold">
+              {squeezeSummaryDecimals(vault.tvl)}
+            </span>
           )}
         </div>
 
@@ -191,10 +194,10 @@ export const VaultCard: React.FC<VaultCardProps> = ({
             APY (7d)
           </span>
           {isLoading ? (
-            <div className="h-5 w-14 rounded bg-white/10 animate-pulse" />
+            <div className="h-5 w-14 rounded bg-white/10" />
           ) : (
             <span className="text-[#4ADE80] text-base font-bold">
-              {vault.apy7d}
+              {squeezeSummaryDecimals(vault.apy7d)}
             </span>
           )}
         </div>
@@ -210,16 +213,20 @@ export const VaultCard: React.FC<VaultCardProps> = ({
               ? `Withdraw from ${vault.name}`
               : `View details for ${vault.name}`
           }
-          onClick={() =>
-            hasPosition ? onWithdrawClick?.(vault) : onDetailsClick?.(vault)
-          }
+          onClick={(e) => {
+            e.stopPropagation();
+            hasPosition ? onWithdrawClick?.(vault) : onDetailsClick?.(vault);
+          }}
           className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-white/15 hover:border-white/35 text-white/60 hover:text-white bg-transparent"
         >
           {hasPosition ? "Withdraw" : "Details"}
         </button>
         <button
           aria-label={`Deposit into ${vault.name}`}
-          onClick={() => onDepositClick?.(vault)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDepositClick?.(vault);
+          }}
           className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-[#229EDF]/50 hover:border-[#229EDF] text-[#229EDF] hover:text-white hover:bg-[#229EDF]/10 bg-transparent"
         >
           Deposit

@@ -119,29 +119,16 @@ export function RepayModal({
             </button>
           </div>
 
-          {/* Debt + balance info */}
-          <div className="mb-3 grid grid-cols-2 gap-2">
+          {/* Debt info */}
+          <div className="mb-3">
             <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3">
-              <p className="text-amber-400/70 text-xs">Current Debt</p>
+              <p className="text-amber-400/70 text-xs">Amount Owed</p>
               <p className="text-amber-400 font-bold text-sm tabular-nums">
                 {position.debtFormatted}{" "}
                 <span className="text-amber-400/50 font-normal text-xs">
                   {position.assetCode}
                 </span>
               </p>
-            </div>
-            <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-              <p className="text-white/40 text-xs">Wallet Balance</p>
-              {isBalanceLoading ? (
-                <p className="text-white/40 text-sm">Loading…</p>
-              ) : (
-                <p className="text-white font-bold text-sm tabular-nums">
-                  {formatRaw(walletBalance)}{" "}
-                  <span className="text-white/40 font-normal text-xs">
-                    {position.assetCode}
-                  </span>
-                </p>
-              )}
             </div>
           </div>
 
@@ -163,26 +150,29 @@ export function RepayModal({
 
           {/* Amount input */}
           <div className="mb-4">
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-white/60 text-xs font-medium">
-                Repay Amount ({position.assetCode})
-              </label>
+            <label className="text-white/60 text-xs font-medium block mb-1">
+              Repay Amount
+            </label>
+            <div className="flex items-center bg-[#2A2A2A] border border-white/10 rounded-lg px-3 py-2.5 gap-2 focus-within:border-amber-500/50 transition-colors">
+              <input
+                type="number"
+                placeholder="0.00"
+                value={repayAmount}
+                onChange={(e) => handleAmountChange(e.target.value)}
+                disabled={isProcessing}
+                className="flex-1 bg-transparent text-sm text-white placeholder:text-white/20 outline-none disabled:opacity-50"
+              />
+              <span className="text-white/30 text-xs shrink-0">
+                {position.assetCode}
+              </span>
               <button
                 onClick={handleMax}
                 disabled={isProcessing || isBalanceLoading}
-                className="text-[#229EDF] text-xs font-semibold hover:text-[#229EDF]/80 transition-colors disabled:opacity-50"
+                className="text-[#229EDF] text-xs font-semibold hover:text-[#229EDF]/80 transition-colors disabled:opacity-50 shrink-0"
               >
                 MAX
               </button>
             </div>
-            <input
-              type="number"
-              placeholder="0.00"
-              value={repayAmount}
-              onChange={(e) => handleAmountChange(e.target.value)}
-              disabled={isProcessing}
-              className="w-full bg-[#2A2A2A] border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-amber-500/50 transition-colors disabled:opacity-50"
-            />
             {exceedsBalance && (
               <p className="text-red-400 text-xs mt-1">
                 Exceeds your wallet balance

@@ -7,6 +7,7 @@ import { useUserBorrowPositions } from "./useUserBorrowPositions";
 import type { BorrowPosition } from "./useUserBorrowPositions";
 import { useHealthFactor } from "./useHealthFactor";
 import type { PoolHealthFactor } from "./useHealthFactor";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { lendingService } from "@/lib/services/lending.service";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { stellarNetwork, STELLAR_DECIMALS } from "@/lib/constants/network";
@@ -102,9 +103,7 @@ export function useUserPosition(
       tokenCode: token.code,
       contract: token.contract,
       raw,
-      formatted: (Number(raw) / 10 ** STELLAR_DECIMALS).toFixed(
-        STELLAR_DECIMALS
-      ),
+      formatted: formatAmount(Number(raw) / 10 ** STELLAR_DECIMALS),
     });
   });
 

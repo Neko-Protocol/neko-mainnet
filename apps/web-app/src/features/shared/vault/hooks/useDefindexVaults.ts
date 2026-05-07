@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { VaultView } from "../types/vault";
 
 export type DefindexVaultsPayload = {
@@ -26,9 +26,10 @@ export function useDefindexVaults() {
   return useQuery({
     queryKey: ["defindex-vaults"],
     queryFn: fetchDefindexVaults,
-    staleTime: 60_000,
-    gcTime: 10 * 60_000,
+    staleTime: 2 * 60_000,
+    gcTime: 15 * 60_000,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
     retry: 1,
   });
 }

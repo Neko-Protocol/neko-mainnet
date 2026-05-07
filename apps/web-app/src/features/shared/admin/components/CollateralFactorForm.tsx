@@ -11,7 +11,6 @@ import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { POOLS, POOL2_COLLATERAL_ASSETS } from "../constants";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
-import { Networks } from "@stellar/stellar-sdk";
 import type { AssetType } from "@neko/lending";
 
 const SCALAR_7 = 10_000_000;
@@ -194,7 +193,7 @@ export default function CollateralFactorForm() {
             />
             {currentFactor !== undefined && currentFactor > 0 && (
               <p className="text-xs text-white/50 mt-1">
-                Current: {(currentFactor / 100_000).toFixed(2)}%
+                Current: {(currentFactor / 100_000).toFixed(4)}%
               </p>
             )}
           </div>

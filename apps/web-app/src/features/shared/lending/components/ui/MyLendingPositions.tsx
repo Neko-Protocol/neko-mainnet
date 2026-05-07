@@ -20,6 +20,8 @@ import { ColHeader } from "./ColHeader";
 import MyBorrowPositions from "@/features/shared/borrowing/components/ui/MyBorrowPositions";
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getAssetsConfig } from "@/lib/constants/assets.config";
+import { formatAmount, safeParseFloat } from "@/lib/helpers/formatUtils";
 
 const PROTOCOL_ICONS: Record<string, string> = {
   neko: "/neko-logo.png",
@@ -132,7 +134,7 @@ const MyPositions: React.FC<MyPositionsProps> = ({
       assetCode: pos.assetCode,
       poolName: `${pos.assetCode} Pool`,
       depositedFormatted: `${pos.depositedFormatted} ${pos.assetCode}`,
-      depositedRaw: pos.depositedFormatted,
+      depositedRaw: String(safeParseFloat(pos.depositedFormatted)),
       apy: `${pos.interestRate.toFixed(2)}%`,
       orchestratorId: undefined,
     })),
@@ -141,8 +143,8 @@ const MyPositions: React.FC<MyPositionsProps> = ({
       protocolId: pos.pool.type,
       assetCode: pos.pool.tokens[0]?.code ?? "?",
       poolName: pos.pool.name,
-      depositedFormatted: `${pos.position.depositedFormatted} ${pos.pool.tokens[0]?.code ?? ""}`,
-      depositedRaw: pos.position.depositedFormatted,
+      depositedFormatted: `${formatAmount(safeParseFloat(pos.position.depositedFormatted))} ${pos.pool.tokens[0]?.code ?? ""}`,
+      depositedRaw: String(safeParseFloat(pos.position.depositedFormatted)),
       apy: `${pos.pool.apy.toFixed(2)}%`,
       orchestratorId: pos.pool.id,
       hasEmissions: !!pos.pool.metadata?.hasEmissions,
@@ -279,11 +281,30 @@ const MyPositions: React.FC<MyPositionsProps> = ({
                           }
                           onClick={() => {
                             setClaimingPoolId(pos.orchestratorId!);
+                            const cfg = getAssetsConfig()[pos.assetCode];
+                            const auditToken = cfg
+                              ? {
+                                  address: cfg.contract,
+                                  code: cfg.code,
+                                  name: cfg.name,
+                                  decimals: cfg.decimals,
+                                }
+                              : {
+                                  address: "",
+                                  code: pos.assetCode,
+                                  name: pos.assetCode,
+                                  decimals: 7,
+                                };
                             executePoolAction(
                               {
                                 poolId: pos.orchestratorId!,
                                 action: "claimRewards",
                                 amount: 0n,
+                                audit: {
+                                  tokens: [auditToken],
+                                  poolType: "blend",
+                                  metadata: {},
+                                },
                               },
                               { onSettled: () => setClaimingPoolId(null) }
                             );

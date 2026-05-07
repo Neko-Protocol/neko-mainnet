@@ -176,30 +176,43 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
     }
   }
 
-  async listPools(): Promise<PoolInfo[]> {
+  async listPools(limit?: number): Promise<PoolInfo[]> {
     const now = Date.now();
+
+    // Adapter-level cache only applies to the full (unlimited) fetch
     if (
+      limit === undefined &&
       SoroswapPoolAdapter.listPoolsCache &&
       now - SoroswapPoolAdapter.listPoolsCache.at < LIST_POOLS_CACHE_TTL_MS
     ) {
       return SoroswapPoolAdapter.listPoolsCache.value;
     }
 
+    // If a cache exists and we just need a subset, slice it without re-fetching
+    if (
+      limit !== undefined &&
+      SoroswapPoolAdapter.listPoolsCache &&
+      now - SoroswapPoolAdapter.listPoolsCache.at < LIST_POOLS_CACHE_TTL_MS
+    ) {
+      return SoroswapPoolAdapter.listPoolsCache.value.slice(0, limit);
+    }
+
     const tokens = getAvailableTokens();
     const codes = Object.keys(tokens);
-    const knownPairs = this.buildDiscoveryPairs(codes);
+    const allPairs = this.buildDiscoveryPairs(codes);
+    const pairsToFetch =
+      limit !== undefined ? allPairs.slice(0, limit) : allPairs;
 
-    // Process in bounded batches. On shared/public APIs this is usually faster
-    // than full pair scans while still avoiding bursty 429 spikes.
+    // Process in bounded batches to avoid bursty 429 spikes
     const BATCH_SIZE = 4;
     const settled: PromiseSettledResult<PoolInfo>[] = [];
-    for (let i = 0; i < knownPairs.length; i += BATCH_SIZE) {
-      const batch = knownPairs.slice(i, i + BATCH_SIZE);
+    for (let i = 0; i < pairsToFetch.length; i += BATCH_SIZE) {
+      const batch = pairsToFetch.slice(i, i + BATCH_SIZE);
       const batchResults = await Promise.allSettled(
         batch.map((pair) => this.getPoolInfoWithTimeout(pair))
       );
       settled.push(...batchResults);
-      if (i + BATCH_SIZE < knownPairs.length) {
+      if (i + BATCH_SIZE < pairsToFetch.length) {
         const has429 = batchResults.some(
           (result) =>
             result.status === "rejected" &&
@@ -216,7 +229,10 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       )
       .map((r) => r.value);
 
-    SoroswapPoolAdapter.listPoolsCache = { at: now, value: pools };
+    // Only cache the full result so partial fetches don't poison it
+    if (limit === undefined) {
+      SoroswapPoolAdapter.listPoolsCache = { at: now, value: pools };
+    }
     return pools;
   }
 

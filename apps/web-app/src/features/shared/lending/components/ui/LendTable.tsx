@@ -10,6 +10,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
+import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import {
   convertUsdDisplayToSelectedCurrency,
   convertUsdToSelected,
@@ -707,14 +708,20 @@ function PricedCell({
       <span className="text-white">
         {formatCompactCurrency(
           convertUsdToSelected(usd, fxRate),
-          selectedCurrency
+          selectedCurrency,
+          SUMMARY_DISPLAY_DECIMALS
         )}
       </span>
     );
   }
   return (
     <span className="text-white">
-      {convertUsdDisplayToSelectedCurrency(fallback, fxRate, selectedCurrency)}
+      {convertUsdDisplayToSelectedCurrency(
+        fallback,
+        fxRate,
+        selectedCurrency,
+        SUMMARY_DISPLAY_DECIMALS
+      )}
     </span>
   );
 }
