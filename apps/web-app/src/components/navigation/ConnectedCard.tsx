@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, LogOut, ShoppingBag } from "lucide-react";
 import { truncateAddress } from "@/lib/utils";
 import { CARD_STYLES, CARD_BUTTON_STYLES } from "./sidebarConfig";
-import { useCarStore } from "@/stores/car.store";
+import { useCartStore } from "@/stores/cart.store";
 
 const NETWORK = (
   process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET"
@@ -20,13 +20,13 @@ interface ConnectedCardProps {
 
 export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
   const [open, setOpen] = React.useState(false);
-  const cartCount = useCarStore((s) => s.items.length);
+  const cartCount = useCartStore((s) => s.items.length);
 
   return (
     <div className={`${CARD_STYLES} relative`}>
       <Link
-        href="/car"
-        aria-label={`Car${cartCount > 0 ? `, ${cartCount} item${cartCount !== 1 ? "s" : ""}` : ""}`}
+        href="/cart"
+        aria-label={`Cart${cartCount > 0 ? `, ${cartCount} item${cartCount !== 1 ? "s" : ""}` : ""}`}
         className="absolute -top-3 -right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-110"
         style={{ backgroundColor: "#229EDF" }}
       >

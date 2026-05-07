@@ -20,9 +20,9 @@ const BASIC_ACTIONS = [
     icon: Droplets,
   },
   {
-    label: "Your Car",
+    label: "Your Cart",
     description: "Review pending purchases",
-    href: "/car",
+    href: "/cart",
     icon: ShoppingBag,
   },
 ] as const;

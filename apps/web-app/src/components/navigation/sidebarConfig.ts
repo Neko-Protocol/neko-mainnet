@@ -21,7 +21,7 @@ export function getNavItems(
     { label: "Pools", href: "/pools", icon: Landmark },
     ...(mode !== "basic"
       ? [{ label: "Swap", href: "/swap", icon: ArrowLeftRight }]
-      : [{ label: "Car", href: "/car", icon: ShoppingCart }]),
+      : [{ label: "Cart", href: "/cart", icon: ShoppingCart }]),
     { label: "Vault", href: "/vaults", icon: Vault },
     { label: "Ramps", href: "/ramps", icon: Banknote },
     { label: "Settings", href: "/settings", icon: Settings },
