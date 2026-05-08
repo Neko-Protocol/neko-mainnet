@@ -69,7 +69,7 @@ export function MobileHeader() {
           <div className="min-w-0 items-center justify-start">
             <Link
               href="/"
-              className="flex shrink-0 items-start justify-start bg-blue-500"
+              className="flex shrink-0 items-start justify-start"
               aria-label="Neko home"
             >
               <Image

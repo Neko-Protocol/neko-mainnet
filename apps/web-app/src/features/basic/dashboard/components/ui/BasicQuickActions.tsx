@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Droplets, Compass, ShoppingBag, ArrowRight } from "lucide-react";
+import { Droplets, Compass, ShoppingCart, ArrowRight } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 
@@ -23,7 +23,7 @@ const BASIC_ACTIONS = [
     label: "Your Cart",
     description: "Review pending purchases",
     href: "/cart",
-    icon: ShoppingBag,
+    icon: ShoppingCart,
   },
 ] as const;
 

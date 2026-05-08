@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
@@ -146,7 +146,7 @@ export function BasicAssetPriceCard({
             onClick={() => setModalOpen(true)}
             className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-semibold text-white/60 transition-colors hover:bg-white/10 hover:text-white/90"
           >
-            <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
+            <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
             Shopping Cart
           </button>
         </div>
