@@ -1,4 +1,8 @@
-import type { UserConnectEvent, UserPublic } from "@/lib/types/user.types";
+import type {
+  UserConnectEvent,
+  UserPreferences,
+  UserPublic,
+} from "@/lib/types/user.types";
 
 class UsersService {
   private readonly base = "/api/users";
@@ -26,6 +30,21 @@ class UsersService {
       return json && typeof json === "object" ? json : null;
     } catch {
       return null;
+    }
+  }
+
+  async updatePreferences(
+    wallet: string,
+    prefs: Partial<UserPreferences>
+  ): Promise<void> {
+    try {
+      await fetch(this.base, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ wallet_address: wallet, preferences: prefs }),
+      });
+    } catch {
+      // fire-and-forget - never propagate errors
     }
   }
 
