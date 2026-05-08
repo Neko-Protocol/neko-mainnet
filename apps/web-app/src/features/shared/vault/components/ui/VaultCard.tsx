@@ -113,6 +113,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
           collateralAssets={vault.collateralAssets}
           isLight={isLight}
           issuerIconSrc={vault.issuerIconSrc}
+          creatorIconSrc={!vault.issuerIconSrc ? vault.creatorIconSrc : undefined}
         />
       </div>
 
