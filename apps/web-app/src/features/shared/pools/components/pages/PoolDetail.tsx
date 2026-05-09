@@ -386,10 +386,21 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       if (!address) return;
       const n = parseFloat(supplyAmount);
       if (isNaN(n) || n <= 0) return;
+      if (n > parseFloat(token1Balance ?? "0") + 1e-10) {
+        addNotification("Insufficient balance to deposit", "error");
+        return;
+      }
       const amountBigInt = BigInt(toSmallestUnit(supplyAmount, decimals));
       await runPoolAction(lendAction, amountBigInt);
     },
-    [address, decimals, lendAction, runPoolAction]
+    [
+      address,
+      decimals,
+      lendAction,
+      runPoolAction,
+      token1Balance,
+      addNotification,
+    ]
   );
 
   const handleBorrowingSubmit = useCallback(
