@@ -85,17 +85,6 @@ export function usePoolAction() {
         throw new Error(`Transaction failed: ${txResult.status}`);
       }
 
-      const confirmed = await server.pollTransaction(txResult.hash, {
-        attempts: 30,
-      });
-      if (confirmed.status !== "SUCCESS") {
-        throw new Error(
-          confirmed.status === "FAILED"
-            ? "Transaction failed on-chain"
-            : "Transaction confirmation timeout"
-        );
-      }
-
       if (address && params.audit) {
         const payload = buildPoolAuditPayload(params, txResult.hash, address);
         if (payload) {
@@ -103,7 +92,26 @@ export function usePoolAction() {
         }
       }
 
-      return txResult.hash;
+      const hash = txResult.hash;
+      void server
+        .pollTransaction(hash, { attempts: 30 })
+        .then((confirmed) => {
+          if (confirmed.status !== "SUCCESS") {
+            addNotification(
+              `${capitalise(params.action)} failed on-chain`,
+              "error"
+            );
+          }
+          queryClient.invalidateQueries({ queryKey: [...POOLS_QUERY_KEY] });
+        })
+        .catch(() => {
+          addNotification(
+            "Could not confirm transaction. Please refresh.",
+            "error"
+          );
+        });
+
+      return hash;
     },
 
     onSuccess: (_hash, params) => {

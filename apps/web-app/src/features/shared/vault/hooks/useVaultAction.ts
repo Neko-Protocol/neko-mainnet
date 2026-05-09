@@ -218,15 +218,6 @@ export function useVaultAction(
           );
         }
 
-        const finalResult = await waitForTx(sendResult.hash);
-        console.log("[vault:deposit] final:", finalResult.status, finalResult);
-
-        if (finalResult.status !== "SUCCESS") {
-          throw new Error(
-            `Transaction failed on-chain (status=${finalResult.status}). Hash: ${sendResult.hash}`
-          );
-        }
-
         const minted = vaultDepositMintedShares(depositTx.result);
         const mintedSharesHuman =
           minted != null
@@ -248,12 +239,39 @@ export function useVaultAction(
           tx_hash: sendResult.hash,
         });
 
-        await Promise.all([
-          refetchBalance(),
-          refetchVaultData(),
-          refetchSupplyBalance(),
-        ]);
+        setIsLoading(false);
         showSuccess(`Successfully deposited ${amount} ${supplyAssetSymbol}`);
+
+        void waitForTx(sendResult.hash)
+          .then((finalResult) => {
+            console.log(
+              "[vault:deposit] final:",
+              finalResult.status,
+              finalResult
+            );
+            if (finalResult.status !== "SUCCESS") {
+              addNotification(
+                "Transaction failed on-chain. Please refresh your balance.",
+                "error"
+              );
+            }
+            void Promise.all([
+              refetchBalance(),
+              refetchVaultData(),
+              refetchSupplyBalance(),
+            ]);
+          })
+          .catch(() => {
+            addNotification(
+              "Could not confirm transaction. Please refresh.",
+              "error"
+            );
+            void Promise.all([
+              refetchBalance(),
+              refetchVaultData(),
+              refetchSupplyBalance(),
+            ]);
+          });
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
         showError(
@@ -270,6 +288,7 @@ export function useVaultAction(
       refetchBalance,
       refetchVaultData,
       refetchSupplyBalance,
+      addNotification,
       showError,
       showSuccess,
       supplyAssetSymbol,
@@ -323,15 +342,6 @@ export function useVaultAction(
           );
         }
 
-        const finalResult = await waitForTx(sendResult.hash);
-        console.log("[vault:withdraw] final:", finalResult.status, finalResult);
-
-        if (finalResult.status !== "SUCCESS") {
-          throw new Error(
-            `Transaction failed on-chain (status=${finalResult.status}). Hash: ${sendResult.hash}`
-          );
-        }
-
         const underlyingBi = vaultWithdrawUnderlyingOut(withdrawTx.result);
         const undDec =
           resolveDecimalsForAuditAssetKey(supplyAssetSymbol) ??
@@ -354,14 +364,41 @@ export function useVaultAction(
           tx_hash: sendResult.hash,
         });
 
-        await Promise.all([
-          refetchBalance(),
-          refetchVaultData(),
-          refetchSupplyBalance(),
-        ]);
+        setIsLoading(false);
         showSuccess(
           `Successfully withdrew ${shares} ${vaultShareSymbol ?? "shares"}`
         );
+
+        void waitForTx(sendResult.hash)
+          .then((finalResult) => {
+            console.log(
+              "[vault:withdraw] final:",
+              finalResult.status,
+              finalResult
+            );
+            if (finalResult.status !== "SUCCESS") {
+              addNotification(
+                "Transaction failed on-chain. Please refresh your balance.",
+                "error"
+              );
+            }
+            void Promise.all([
+              refetchBalance(),
+              refetchVaultData(),
+              refetchSupplyBalance(),
+            ]);
+          })
+          .catch(() => {
+            addNotification(
+              "Could not confirm transaction. Please refresh.",
+              "error"
+            );
+            void Promise.all([
+              refetchBalance(),
+              refetchVaultData(),
+              refetchSupplyBalance(),
+            ]);
+          });
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
         showError(
@@ -378,6 +415,7 @@ export function useVaultAction(
       refetchBalance,
       refetchVaultData,
       refetchSupplyBalance,
+      addNotification,
       showError,
       showSuccess,
       supplyAssetSymbol,
