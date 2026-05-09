@@ -6,6 +6,7 @@ import { PageContainer } from "@/components/ui/PageContainer";
 import MainStats from "@/features/expert/dashboard/components/ui/MainStats";
 import QuickActions from "@/features/expert/dashboard/components/ui/QuickActions";
 import DiscoverAssets from "@/features/shared/dashboard/components/ui/DiscoverAssets";
+import { EmailNudgeBanner } from "@/features/shared/dashboard/components/ui/EmailNudgeBanner";
 import AssetBreakdown from "@/features/expert/dashboard/components/ui/AssetBreakdown";
 import YourPositions from "@/features/expert/dashboard/components/ui/YourPositions";
 
@@ -20,6 +21,7 @@ const Dashboard: React.FC = () => {
           imageSrc="/banners/oracle.svg"
           imageAlt="Dashboard illustration"
         />
+        <EmailNudgeBanner />
         <MainStats />
         <QuickActions />
         <DiscoverAssets />

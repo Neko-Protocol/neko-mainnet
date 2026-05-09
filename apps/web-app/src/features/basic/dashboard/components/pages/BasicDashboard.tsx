@@ -7,6 +7,7 @@ import BasicMainStats from "@/features/basic/dashboard/components/ui/BasicMainSt
 import BasicQuickActions from "@/features/basic/dashboard/components/ui/BasicQuickActions";
 import { WalletHoldingsCard } from "@/features/basic/dashboard/components/ui/WalletHoldingsCard";
 import DiscoverAssets from "@/features/shared/dashboard/components/ui/DiscoverAssets";
+import { EmailNudgeBanner } from "@/features/shared/dashboard/components/ui/EmailNudgeBanner";
 import { useWalletHoldings } from "@/features/shared/wallet/hooks/useWalletHoldings";
 
 const BasicDashboard: React.FC = () => {
@@ -22,6 +23,7 @@ const BasicDashboard: React.FC = () => {
           imageSrc="/banners/oracle.svg"
           imageAlt="Dashboard illustration"
         />
+        <EmailNudgeBanner />
         <WalletHoldingsCard holdings={holdings} isLoading={isLoading} />
         <BasicMainStats />
         <BasicQuickActions />

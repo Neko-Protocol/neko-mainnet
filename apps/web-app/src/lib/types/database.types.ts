@@ -22,6 +22,30 @@ type AssetVolumeStatsUpdate = Partial<AssetVolumeStatsInsert> & {
   updated_at?: string;
 };
 
+export type UserInsert = {
+  wallet_address: string;
+  wallet_provider?: string | null;
+  network: string;
+  email?: string | null;
+  email_verified_at?: string | null;
+  auth_user_id?: string | null;
+  preferences?: Record<string, unknown>;
+};
+
+export type UserRow = {
+  wallet_address: string;
+  wallet_provider: string | null;
+  network: string;
+  email: string | null;
+  email_verified_at: string | null;
+  auth_user_id: string | null;
+  preferences: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type UserUpdate = Partial<UserInsert> & { updated_at?: string };
+
 export type Database = {
   public: {
     Tables: {
@@ -47,6 +71,12 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      users: {
+        Row: UserRow;
+        Insert: UserInsert;
+        Update: UserUpdate;
+        Relationships: [];
       };
     };
     Views: Record<string, never>;

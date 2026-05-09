@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import { ModuleType } from "@creit.tech/stellar-wallets-kit/types";
 import { getStellarWalletKit } from "@/lib/helpers/stellar/wallet";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
+import { useUserSync } from "@/hooks/useUserSync";
+import { usePreferencesSync } from "@/hooks/usePreferencesSync";
 
 /**
  * Silently auto-connects when the dApp is opened inside a wallet's in-app
@@ -21,6 +23,8 @@ import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 export function WalletAutoConnect() {
   const { address, setWallet } = useStellarWalletStore();
   const attempted = useRef(false);
+  useUserSync();
+  usePreferencesSync();
 
   useEffect(() => {
     if (address || attempted.current) return;
@@ -46,7 +50,7 @@ export function WalletAutoConnect() {
           });
         }
       } catch {
-        // Silently fail — user can always connect manually via the button.
+        // Silently fail - user can always connect manually via the button.
       }
     })();
   }, [address, setWallet]);

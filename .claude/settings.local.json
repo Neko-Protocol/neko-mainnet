@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -r \"SUPABASE\\\\|NEXT_PUBLIC\" /Users/villarley/Documents/GitHub/neko-mainnet/apps/web-app -name \".env*\")",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(npx -C /Users/villarley/Documents/GitHub/neko-mainnet/apps/web-app tsc --noEmit)"
+    ]
+  }
+}
