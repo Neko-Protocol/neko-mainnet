@@ -193,7 +193,7 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
               <span className="text-white/30 text-xs font-medium">Value</span>
             </th>
             <th className="px-4 py-3 text-center">
-              <span className="text-white/30 text-xs font-medium">APY 7d</span>
+              <span className="text-white/30 text-xs font-medium">APY</span>
             </th>
             <th className="px-4 py-3 text-center">
               <span className="text-white/30 text-xs font-medium">Status</span>
