@@ -52,8 +52,9 @@ export function useDashboardPositions() {
     queryKey: ["orchestrator", "blend-all-positions", address],
     queryFn: () => orchestrator.getAllBlendUserPositions(address!),
     enabled: Boolean(address),
-    staleTime: 60_000,
-    retry: 1,
+    staleTime: 5 * 60_000,
+    retry: 3,
+    refetchOnWindowFocus: false,
   });
 
   // ── Priority 2: LP balance pre-screen ─────────────────────────────────────
@@ -127,5 +128,7 @@ export function useDashboardPositions() {
     blendPositionsQuery.isLoading ||
     (nonBlendPools.length > 0 && lpScreenQuery.isLoading);
 
-  return { positions, isLoading, hasWallet: Boolean(address) };
+  const isError = blendPositionsQuery.isError;
+
+  return { positions, isLoading, isError, hasWallet: Boolean(address) };
 }

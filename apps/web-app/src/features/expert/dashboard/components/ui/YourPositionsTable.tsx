@@ -125,11 +125,18 @@ export function YourPositionsTable({
                 </td>
                 <td className="px-4 py-3.5 align-middle text-right">
                   <p className="text-white font-semibold text-sm tabular-nums">
-                    {formatAmount(safeParseFloat(position.depositedFormatted))}
+                    {formatAmount(
+                      safeParseFloat(position.depositedFormatted),
+                      2
+                    )}
                   </p>
                   {position.rewards > 0n && (
                     <p className="text-[#76C464] text-xs font-semibold mt-0.5">
-                      +{formatAmount(safeParseFloat(position.rewardsFormatted))}{" "}
+                      +
+                      {formatAmount(
+                        safeParseFloat(position.rewardsFormatted),
+                        2
+                      )}{" "}
                       rewards
                     </p>
                   )}
