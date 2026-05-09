@@ -202,31 +202,122 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     const network = getBlendNetwork();
     try {
       const pool = await PoolV2.load(network, this.poolContractId);
-      const poolUser = await pool.loadUser(userAddress);
-      const reserves = Array.from(pool.reserves.values());
-      const { claimedTokens } = poolUser.estimateEmissions(reserves);
+      const reserveEntries = Array.from(pool.reserves.entries());
 
-      return Array.from(pool.reserves.entries()).map(
-        ([assetAddress, reserve]) => {
-          const supplied = poolUser.getSupply(reserve);
-          const collateral = poolUser.getCollateral(reserve);
-          const liabilities = poolUser.getLiabilities(reserve);
-          const deposited = supplied + collateral;
-          return {
-            poolId: `blend:${this.poolContractId}:${assetAddress}`,
-            deposited,
-            depositedFormatted: formatUnits(deposited, reserve.config.decimals),
-            rewards: 0n,
-            rewardsFormatted: "0",
-            metadata: {
-              supplied: supplied.toString(),
-              collateral: collateral.toString(),
-              liabilities: liabilities.toString(),
-              claimedTokens,
-            },
-          };
+      const vaultReserves: typeof reserveEntries = [];
+      const directReserves: typeof reserveEntries = [];
+
+      for (const entry of reserveEntries) {
+        const [assetAddress] = entry;
+        const vaultId =
+          BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`];
+        if (vaultId) {
+          vaultReserves.push(entry);
+        } else {
+          directReserves.push(entry);
         }
+      }
+
+      const vaultResults = await Promise.all(
+        vaultReserves.map(async ([assetAddress, reserve]) => {
+          const fullId = `blend:${this.poolContractId}:${assetAddress}`;
+          const vaultId =
+            BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`]!;
+          try {
+            const vault = new DefindexVaultClient({
+              contractId: vaultId,
+              rpcUrl,
+              networkPassphrase,
+              publicKey: userAddress,
+            });
+
+            const [balanceTx, fundsTx, supplyTx] = await Promise.all([
+              vault.balance({ id: userAddress }, { simulate: true }),
+              vault.fetch_total_managed_funds({ simulate: true }),
+              vault.total_supply({ simulate: true }),
+            ]);
+
+            let sharesRaw = balanceTx.result as any;
+            if (typeof sharesRaw?.unwrap === "function")
+              sharesRaw = sharesRaw.unwrap();
+            else if (sharesRaw?.tag === "ok") sharesRaw = sharesRaw.value;
+            const sharesBig = BigInt(sharesRaw.toString());
+
+            if (sharesBig === 0n) return emptyPosition(fullId);
+
+            let funds = fundsTx.result as any;
+            if (typeof funds?.unwrap === "function") funds = funds.unwrap();
+            else if (funds?.tag === "ok") funds = funds.value;
+
+            let totalSharesRaw = supplyTx.result as any;
+            if (typeof totalSharesRaw?.unwrap === "function")
+              totalSharesRaw = totalSharesRaw.unwrap();
+            else if (totalSharesRaw?.tag === "ok")
+              totalSharesRaw = totalSharesRaw.value;
+
+            const totalUnderlying = BigInt(funds[0].total_amount.toString());
+            const totalSupply = BigInt(totalSharesRaw.toString());
+            const deposited =
+              totalSupply > 0n
+                ? (sharesBig * totalUnderlying) / totalSupply
+                : 0n;
+
+            return {
+              poolId: fullId,
+              deposited,
+              depositedFormatted: formatUnits(
+                deposited,
+                reserve.config.decimals
+              ),
+              rewards: 0n,
+              rewardsFormatted: "0",
+              metadata: {
+                supplied: deposited.toString(),
+                collateral: "0",
+                liabilities: "0",
+              },
+            };
+          } catch {
+            return emptyPosition(fullId);
+          }
+        })
       );
+
+      const directResults: PoolPosition[] = [];
+      if (directReserves.length > 0) {
+        try {
+          const poolUser = await pool.loadUser(userAddress);
+          const { claimedTokens } = poolUser.estimateEmissions(
+            Array.from(pool.reserves.values())
+          );
+          for (const [assetAddress, reserve] of directReserves) {
+            const supplied = poolUser.getSupply(reserve);
+            const collateral = poolUser.getCollateral(reserve);
+            const liabilities = poolUser.getLiabilities(reserve);
+            const deposited = supplied + collateral;
+            directResults.push({
+              poolId: `blend:${this.poolContractId}:${assetAddress}`,
+              deposited,
+              depositedFormatted: formatUnits(
+                deposited,
+                reserve.config.decimals
+              ),
+              rewards: 0n,
+              rewardsFormatted: "0",
+              metadata: {
+                supplied: supplied.toString(),
+                collateral: collateral.toString(),
+                liabilities: liabilities.toString(),
+                claimedTokens,
+              },
+            });
+          }
+        } catch {
+          // leave directResults empty
+        }
+      }
+
+      return [...vaultResults, ...directResults];
     } catch {
       return [];
     }
@@ -250,7 +341,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         });
 
         const [balanceTx, fundsTx, supplyTx] = await Promise.all([
-          vault.balance({ id: userAddress }),
+          vault.balance({ id: userAddress }, { simulate: true }),
           vault.fetch_total_managed_funds({ simulate: true }),
           vault.total_supply({ simulate: true }),
         ]);
