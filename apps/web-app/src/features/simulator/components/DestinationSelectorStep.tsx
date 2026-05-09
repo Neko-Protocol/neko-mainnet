@@ -128,8 +128,11 @@ export function DestinationSelectorStep({
 
   const handleTabChange = (next: Tab) => setTabOverride(next);
 
-  const visible =
-    tab === "pools" ? pools : tab === "vaults" ? vaults : yieldTokens;
+  const visible = useMemo(() => {
+    const raw =
+      tab === "pools" ? pools : tab === "vaults" ? vaults : yieldTokens;
+    return [...raw].sort((a, b) => (b.apy ?? -1) - (a.apy ?? -1));
+  }, [tab, pools, vaults, yieldTokens]);
 
   const total = pools.length + vaults.length + yieldTokens.length;
 
