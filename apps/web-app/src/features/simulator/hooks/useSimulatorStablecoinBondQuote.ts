@@ -10,7 +10,7 @@ import {
   MAX_HOPS,
   PLATFORM_FEE_BPS,
   NEKO_TREASURY_ADDRESS,
-} from "@/features/swap/constants/swapConfig";
+} from "@/features/expert/swap/constants/swapConfig";
 
 export function useSimulatorStablecoinBondQuote(opts: {
   stableCoinCode: string;
