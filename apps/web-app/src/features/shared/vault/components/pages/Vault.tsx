@@ -113,7 +113,6 @@ const Vault: React.FC = () => {
 
   const { address } = useWallet();
 
-  // Fetch APY for each vault in parallel from /api/vault/apy
   const apyQueries = useQueries({
     queries: (vaultsFromApi || []).map((v) => ({
       queryKey: ["vault-apy", v.id],
@@ -123,11 +122,11 @@ const Vault: React.FC = () => {
         const data = await res.json();
         return typeof data.vaultApy === "number" ? data.vaultApy : null;
       },
-      staleTime: 5 * 60_000,
+      staleTime: 10 * 60_000,
       gcTime: 15 * 60_000,
       refetchOnWindowFocus: false,
       retry: false,
-      enabled: !!v.id,
+      enabled: !!v.id && v.detail?.contracts?.vault === activeContractId,
     })),
   });
 
@@ -147,8 +146,10 @@ const Vault: React.FC = () => {
         return BigInt(tx.result?.toString() ?? "0");
       },
       enabled: !!address && !!v.detail?.contracts?.vault,
-      staleTime: 30_000,
-      refetchInterval: 30_000,
+      staleTime: 2 * 60_000,
+      gcTime: 10 * 60_000,
+      refetchInterval: false,
+      refetchOnWindowFocus: false,
       retry: false,
     })),
   });
