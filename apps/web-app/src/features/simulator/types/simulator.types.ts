@@ -26,7 +26,7 @@ export interface SimulatorDestination {
   strategyLabels: string[];
   acceptedTokenCodes: string[];
   raw: PoolInfo | VaultView | null;
-  /** Neko RWA lending supply row — deep-links to /pools?supply= (not orchestrator PoolDetail). */
+  /** Neko RWA lending supply row - deep-links to /pools?supply= (not orchestrator PoolDetail). */
   lendingContractId?: string;
   lendingAssetCode?: string;
   bondCurrency?: string;
@@ -76,4 +76,13 @@ export type SimulatorAction =
   | { type: "goNext" }
   | { type: "goBack" }
   | { type: "goToPhase"; phase: WizardPhaseId }
-  | { type: "reset" };
+  | { type: "reset" }
+  | {
+      type: "loadStrategy";
+      payload: {
+        token: SimulatorToken;
+        destination: SimulatorDestination;
+        stackVenue: SimulatorDestination | null;
+        amount: string;
+      };
+    };

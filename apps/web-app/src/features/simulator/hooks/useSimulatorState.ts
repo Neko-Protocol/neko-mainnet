@@ -83,6 +83,14 @@ function reducer(
       return { ...state, phase: action.phase };
     case "reset":
       return initialState;
+    case "loadStrategy":
+      return {
+        phase: "simulate",
+        token: action.payload.token,
+        destination: action.payload.destination,
+        stackVenue: action.payload.stackVenue,
+        amount: action.payload.amount,
+      };
     default:
       return state;
   }
@@ -116,6 +124,15 @@ export function useSimulatorState() {
     []
   );
   const reset = useCallback(() => dispatch({ type: "reset" }), []);
+  const loadFromSaved = useCallback(
+    (payload: {
+      token: SimulatorToken;
+      destination: SimulatorDestination;
+      stackVenue: SimulatorDestination | null;
+      amount: string;
+    }) => dispatch({ type: "loadStrategy", payload }),
+    []
+  );
 
   return {
     state,
@@ -127,5 +144,6 @@ export function useSimulatorState() {
     goBack,
     goToPhase,
     reset,
+    loadFromSaved,
   };
 }
