@@ -9,6 +9,7 @@ import type {
 
 export interface SavedStrategy {
   id: string;
+  walletAddress: string;
   name: string;
   createdAt: string;
   token: SimulatorToken;
@@ -22,8 +23,8 @@ interface StrategiesState {
   strategies: SavedStrategy[];
   pendingExecuteId: string | null;
   save: (s: Omit<SavedStrategy, "id" | "createdAt">) => string;
-  remove: (id: string) => void;
-  rename: (id: string, name: string) => void;
+  remove: (id: string, walletAddress: string) => void;
+  rename: (id: string, walletAddress: string, name: string) => void;
   setPendingExecuteId: (id: string | null) => void;
 }
 
@@ -48,14 +49,18 @@ export const useStrategiesStore = create<StrategiesState>()(
         set((st) => ({ strategies: [entry, ...st.strategies] }));
         return id;
       },
-      remove: (id) =>
+      remove: (id, walletAddress) =>
         set((st) => ({
-          strategies: st.strategies.filter((x) => x.id !== id),
+          strategies: st.strategies.filter(
+            (x) => !(x.id === id && x.walletAddress === walletAddress)
+          ),
         })),
-      rename: (id, name) =>
+      rename: (id, walletAddress, name) =>
         set((st) => ({
           strategies: st.strategies.map((x) =>
-            x.id === id ? { ...x, name } : x
+            x.id === id && x.walletAddress === walletAddress
+              ? { ...x, name }
+              : x
           ),
         })),
       setPendingExecuteId: (id) => set({ pendingExecuteId: id }),

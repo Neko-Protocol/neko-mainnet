@@ -58,12 +58,19 @@ export function SimulatorWizard() {
   const [swapDepositBusy, setSwapDepositBusy] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
+  const queryClient = useQueryClient();
+  const { executeSwap } = useSwapExecution();
+  const { address, networkPassphrase } = useWallet();
+  const { addNotification } = useToast();
+
   const { strategies, pendingExecuteId, setPendingExecuteId } =
     useStrategiesStore();
 
   useEffect(() => {
     if (!pendingExecuteId) return;
-    const saved = strategies.find((s) => s.id === pendingExecuteId);
+    const saved = strategies.find(
+      (s) => s.id === pendingExecuteId && s.walletAddress === address
+    );
     setPendingExecuteId(null);
     if (!saved) return;
     loadFromSaved({
@@ -72,12 +79,13 @@ export function SimulatorWizard() {
       stackVenue: saved.stackVenue,
       amount: saved.amount,
     });
-  }, [pendingExecuteId, strategies, setPendingExecuteId, loadFromSaved]);
-
-  const queryClient = useQueryClient();
-  const { executeSwap } = useSwapExecution();
-  const { address, networkPassphrase } = useWallet();
-  const { addNotification } = useToast();
+  }, [
+    pendingExecuteId,
+    strategies,
+    address,
+    setPendingExecuteId,
+    loadFromSaved,
+  ]);
 
   const { submit: submitOrchestrator, isPending: orchestratorPending } =
     useOrchestratorSupplyDeposit();
@@ -314,7 +322,7 @@ export function SimulatorWizard() {
           onBack={goBack}
           showContinue={false}
           rightSlot={
-            state.token && state.destination ? (
+            state.token && state.destination && address ? (
               <button
                 type="button"
                 onClick={() => setSaveDialogOpen(true)}
@@ -327,9 +335,10 @@ export function SimulatorWizard() {
         />
       )}
 
-      {saveDialogOpen && state.token && state.destination && (
+      {saveDialogOpen && state.token && state.destination && address && (
         <SaveStrategyDialog
           strategy={{
+            walletAddress: address,
             token: state.token,
             destination: state.destination,
             stackVenue: state.stackVenue,

@@ -8,11 +8,17 @@ import {
   useStrategiesStore,
   type SavedStrategy,
 } from "@/stores/strategies.store";
+import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 import { StrategyRow } from "../components/ui/StrategyRow";
 
 export default function StrategiesLibraryPage() {
   const { strategies, remove, setPendingExecuteId } = useStrategiesStore();
+  const { address } = useStellarWalletStore();
   const router = useRouter();
+
+  const myStrategies = address
+    ? strategies.filter((s) => s.walletAddress === address)
+    : [];
 
   const handleExecute = (strategy: SavedStrategy) => {
     setPendingExecuteId(strategy.id);
@@ -40,21 +46,36 @@ export default function StrategiesLibraryPage() {
         </Link>
       </div>
 
-      {strategies.length === 0 ? (
+      {!address ? (
+        <NoWalletState />
+      ) : myStrategies.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="flex flex-col gap-2.5">
-          {strategies.map((s) => (
+          {myStrategies.map((s) => (
             <StrategyRow
               key={s.id}
               strategy={s}
               onExecute={() => handleExecute(s)}
-              onDelete={() => remove(s.id)}
+              onDelete={() => remove(s.id, address)}
             />
           ))}
         </div>
       )}
     </PageContainer>
+  );
+}
+
+function NoWalletState() {
+  return (
+    <div className="flex flex-col items-center gap-4 py-24 text-center">
+      <p className="text-base font-medium text-white/50">
+        Connect your wallet to see your strategies
+      </p>
+      <p className="text-sm text-white/25">
+        Strategies are saved per wallet address.
+      </p>
+    </div>
   );
 }
 
