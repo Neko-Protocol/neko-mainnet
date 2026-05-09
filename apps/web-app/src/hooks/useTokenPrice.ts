@@ -11,34 +11,34 @@ import {
   type PricedResult,
 } from "@/lib/services/stellar-price.service";
 
+function getTokenCode(token: Token | string | undefined): string | null {
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const tokenAddress = getTokenAddress(token);
+    const availableTokens = getAvailableTokens();
+
+    for (const [code, info] of Object.entries(availableTokens)) {
+      if (info.contract === tokenAddress) {
+        return code;
+      }
+    }
+
+    if (typeof token === "string") {
+      return token;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error in getTokenCode:", error);
+    return null;
+  }
+}
+
 export const useTokenPrice = (token: Token | string | undefined) => {
-  const getTokenCode = (): string | null => {
-    if (!token) {
-      return null;
-    }
-
-    try {
-      const tokenAddress = getTokenAddress(token);
-      const availableTokens = getAvailableTokens();
-
-      for (const [code, info] of Object.entries(availableTokens)) {
-        if (info.contract === tokenAddress) {
-          return code;
-        }
-      }
-
-      if (typeof token === "string") {
-        return token;
-      }
-
-      return null;
-    } catch (error) {
-      console.error("Error in getTokenCode:", error);
-      return null;
-    }
-  };
-
-  const tokenCode = useMemo(() => getTokenCode(), [token]);
+  const tokenCode = useMemo(() => getTokenCode(token), [token]);
   const contractAddress = useMemo(
     () => (token ? getTokenAddress(token) : ""),
     [token]

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { stellarNetwork } from "@/lib/constants/network";
@@ -35,11 +35,8 @@ const Borrow: React.FC = () => {
     handleSubmit,
   } = useBorrow();
 
-  useEffect(() => {
-    if (!showLiquidations && activeTab === "liquidations") {
-      setActiveTab("pools");
-    }
-  }, [showLiquidations, activeTab]);
+  const effectiveTab =
+    !showLiquidations && activeTab === "liquidations" ? "pools" : activeTab;
 
   return (
     <PageContainer maxWidth="6xl">
@@ -56,7 +53,7 @@ const Borrow: React.FC = () => {
         <button
           onClick={() => setActiveTab("pools")}
           className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === "pools"
+            effectiveTab === "pools"
               ? "bg-[#229EDF] text-white"
               : "text-white/40 hover:text-white/70"
           }`}
@@ -67,7 +64,7 @@ const Borrow: React.FC = () => {
           <button
             onClick={() => setActiveTab("liquidations")}
             className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-              activeTab === "liquidations"
+              effectiveTab === "liquidations"
                 ? "bg-[#229EDF] text-white"
                 : "text-white/40 hover:text-white/70"
             }`}
@@ -78,7 +75,7 @@ const Borrow: React.FC = () => {
         <button
           onClick={() => setActiveTab("positions")}
           className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-            activeTab === "positions"
+            effectiveTab === "positions"
               ? "bg-[#229EDF] text-white"
               : "text-white/40 hover:text-white/70"
           }`}
@@ -87,7 +84,7 @@ const Borrow: React.FC = () => {
         </button>
       </div>
 
-      {activeTab === "pools" && (
+      {effectiveTab === "pools" && (
         <>
           <BorrowTable
             assets={assets}
@@ -114,11 +111,11 @@ const Borrow: React.FC = () => {
         </>
       )}
 
-      {showLiquidations && activeTab === "liquidations" && (
+      {showLiquidations && effectiveTab === "liquidations" && (
         <LiquidationsSection />
       )}
 
-      {activeTab === "positions" && <MyPositions defaultTab="borrow" />}
+      {effectiveTab === "positions" && <MyPositions defaultTab="borrow" />}
     </PageContainer>
   );
 };

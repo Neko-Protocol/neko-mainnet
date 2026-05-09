@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { stellarNetwork } from "@/lib/constants/network";
@@ -45,11 +45,8 @@ const Lend: React.FC = () => {
     refreshBalance,
   } = useLend();
 
-  useEffect(() => {
-    if (!showBackstop && activeTab === "backstop") {
-      setActiveTab("pools");
-    }
-  }, [showBackstop, activeTab]);
+  const effectiveTab =
+    !showBackstop && activeTab === "backstop" ? "pools" : activeTab;
 
   return (
     <PageContainer maxWidth="6xl">
@@ -67,7 +64,7 @@ const Lend: React.FC = () => {
           <button
             onClick={() => setActiveTab("pools")}
             className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-              activeTab === "pools"
+              effectiveTab === "pools"
                 ? "bg-[#229EDF] text-white"
                 : "text-white/40 hover:text-white/70"
             }`}
@@ -78,7 +75,7 @@ const Lend: React.FC = () => {
             <button
               onClick={() => setActiveTab("backstop")}
               className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-                activeTab === "backstop"
+                effectiveTab === "backstop"
                   ? "bg-[#229EDF] text-white"
                   : "text-white/40 hover:text-white/70"
               }`}
@@ -89,7 +86,7 @@ const Lend: React.FC = () => {
           <button
             onClick={() => setActiveTab("positions")}
             className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-              activeTab === "positions"
+              effectiveTab === "positions"
                 ? "bg-[#229EDF] text-white"
                 : "text-white/40 hover:text-white/70"
             }`}
@@ -97,7 +94,7 @@ const Lend: React.FC = () => {
             My Positions
           </button>
         </div>
-        {activeTab === "pools" && protocolOptions.length > 0 && (
+        {effectiveTab === "pools" && protocolOptions.length > 0 && (
           <div className="ml-auto shrink-0">
             <LendProtocolFilter
               value={protocolFilter}
@@ -109,7 +106,7 @@ const Lend: React.FC = () => {
         )}
       </div>
 
-      {activeTab === "pools" && (
+      {effectiveTab === "pools" && (
         <LendTable
           pools={pools}
           isLoading={isLoadingPools}
@@ -132,7 +129,7 @@ const Lend: React.FC = () => {
         />
       )}
 
-      {activeTab === "positions" && (
+      {effectiveTab === "positions" && (
         <MyLendingPositions
           onWithdraw={(assetCode, protocolId, orchestratorId) => {
             const pool = pools.find((p) =>
@@ -145,7 +142,7 @@ const Lend: React.FC = () => {
         />
       )}
 
-      {showBackstop && activeTab === "backstop" && <BackstopPanel />}
+      {showBackstop && effectiveTab === "backstop" && <BackstopPanel />}
     </PageContainer>
   );
 };

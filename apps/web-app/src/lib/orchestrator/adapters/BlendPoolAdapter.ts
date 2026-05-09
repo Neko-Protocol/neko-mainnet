@@ -21,6 +21,19 @@ import { AdapterError, UnsupportedActionError } from "../types/errors";
 import { getBlendNetwork, BLEND_POOL_VAULTS } from "./blend-config";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 
+type SdkResultLike = {
+  tag?: string;
+  value?: unknown;
+  unwrap?: () => unknown;
+};
+
+function unwrapSdkResult(raw: unknown): unknown {
+  const r = raw as SdkResultLike;
+  if (typeof r?.unwrap === "function") return r.unwrap();
+  if (r?.tag === "ok") return r.value;
+  return raw;
+}
+
 const SUPPORTED_ACTIONS: PoolAction[] = [
   "deposit",
   "withdraw",
@@ -49,7 +62,7 @@ function parseRawId(rawId: string): {
     throw new AdapterError(
       "blend",
       "parseRawId",
-      `Invalid raw id "${rawId}" — expected <poolContractId>:<assetAddress>`
+      `Invalid raw id "${rawId}" - expected <poolContractId>:<assetAddress>`
     );
   }
   return {
@@ -255,26 +268,22 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           vault.total_supply({ simulate: true }),
         ]);
 
-        let sharesRaw = balanceTx.result as any;
-        if (typeof sharesRaw?.unwrap === "function")
-          sharesRaw = sharesRaw.unwrap();
-        else if (sharesRaw?.tag === "ok") sharesRaw = sharesRaw.value;
-        const sharesBig = BigInt(sharesRaw.toString());
+        const sharesRaw = unwrapSdkResult(balanceTx.result);
+        const sharesBig = BigInt(
+          (sharesRaw as { toString(): string }).toString()
+        );
 
         if (sharesBig === 0n) return emptyPosition(fullId);
 
-        let funds = fundsTx.result as any;
-        if (typeof funds?.unwrap === "function") funds = funds.unwrap();
-        else if (funds?.tag === "ok") funds = funds.value;
-
-        let totalSharesRaw = supplyTx.result as any;
-        if (typeof totalSharesRaw?.unwrap === "function")
-          totalSharesRaw = totalSharesRaw.unwrap();
-        else if (totalSharesRaw?.tag === "ok")
-          totalSharesRaw = totalSharesRaw.value;
+        const funds = unwrapSdkResult(fundsTx.result) as Array<{
+          total_amount: { toString(): string };
+        }>;
+        const totalSharesRaw = unwrapSdkResult(supplyTx.result);
 
         const totalUnderlying = BigInt(funds[0].total_amount.toString());
-        const totalSupply = BigInt(totalSharesRaw.toString());
+        const totalSupply = BigInt(
+          (totalSharesRaw as { toString(): string }).toString()
+        );
         const deposited =
           totalSupply > 0n ? (sharesBig * totalUnderlying) / totalSupply : 0n;
 
@@ -383,18 +392,15 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         vault.total_supply({ simulate: true }),
       ]);
 
-      let funds = fundsTx.result as any;
-      if (typeof funds?.unwrap === "function") funds = funds.unwrap();
-      else if (funds?.tag === "ok") funds = funds.value;
-
-      let totalSharesRaw = supplyTx.result as any;
-      if (typeof totalSharesRaw?.unwrap === "function")
-        totalSharesRaw = totalSharesRaw.unwrap();
-      else if (totalSharesRaw?.tag === "ok")
-        totalSharesRaw = totalSharesRaw.value;
+      const funds = unwrapSdkResult(fundsTx.result) as Array<{
+        total_amount: { toString(): string };
+      }>;
+      const totalSharesRaw = unwrapSdkResult(supplyTx.result);
 
       const totalUnderlying = BigInt(funds[0].total_amount.toString());
-      const totalSupply = BigInt(totalSharesRaw.toString());
+      const totalSupply = BigInt(
+        (totalSharesRaw as { toString(): string }).toString()
+      );
       const shares =
         totalUnderlying > 0n ? (amount * totalSupply) / totalUnderlying : 0n;
 

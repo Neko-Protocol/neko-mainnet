@@ -63,14 +63,14 @@ const VAULT_STRATEGIES: Record<
       addr: "CDSCVJHJWUZQMR64FVK3XMND5NKSN7Z23KPRCHKFHVGOEJBWPVH5B5XA",
     },
   ],
-  // EURC vault (Neko-managed, standalone vault — not a Blend pool fee-capture)
+  // EURC vault (Neko-managed, standalone vault - not a Blend pool fee-capture)
   CB3FUMFGCF6DHSFK6N2TOKHRMYXS34HFKQR45UKVORCRUM35AF3ES7WQ: [
     {
       name: "EURC Neko",
       addr: "CC5CE6MWISDXT3MLNQ7R3FVILFVFEIH3COWGH45GJKL6BD2ZHF7F7JVI",
     },
   ],
-  // USDC vault (Neko-managed, standalone vault — two strategies, even split)
+  // USDC vault (Neko-managed, standalone vault - two strategies, even split)
   CCPKQH3K5XUGP5GXCT6WTABS7TGXRR745BJ4MEFSGNATB7AOBRL4VEOT: [
     {
       name: "USDC Fixed Neko",
@@ -118,16 +118,43 @@ async function waitForTx(
   return "TIMEOUT";
 }
 
+type AssembledTxLike = {
+  simulation?: { error?: unknown };
+  toXDR(): string;
+};
+
+type SdkResult = {
+  tag?: string;
+  value?: unknown;
+  unwrap?: () => unknown;
+};
+
+type FundEntry = {
+  idle_amount: { toString(): string };
+  total_amount: { toString(): string };
+  strategy_allocations: Array<{
+    strategy_address: string;
+    amount: { toString(): string };
+  }>;
+};
+
+function unwrapSdkResult(raw: unknown): unknown {
+  const r = raw as SdkResult;
+  if (r?.tag === "ok") return r.value;
+  if (typeof r?.unwrap === "function") return r.unwrap();
+  return raw;
+}
+
 async function sendTx(
-  assembledTx: Awaited<ReturnType<DefindexVaultClient["rebalance"]>>,
+  assembledTx: AssembledTxLike,
   keypair: Keypair,
   server: rpc.Server,
   networkPassphrase: string
 ): Promise<{ hash: string; status: string }> {
-  if ((assembledTx.simulation as any)?.error) {
+  if (assembledTx.simulation?.error) {
     return {
       hash: "",
-      status: `sim_error: ${(assembledTx.simulation as any).error}`,
+      status: `sim_error: ${assembledTx.simulation.error}`,
     };
   }
   const builtTx = TransactionBuilder.fromXDR(
@@ -235,9 +262,7 @@ async function investIdle(
   }
 
   const fundsTx = await client.fetch_total_managed_funds({ simulate: true });
-  let funds = fundsTx.result as any;
-  if (funds?.tag === "ok") funds = funds.value;
-  else if (typeof funds?.unwrap === "function") funds = funds.unwrap();
+  const funds = unwrapSdkResult(fundsTx.result) as FundEntry[];
 
   const idleAmount = BigInt(funds[0].idle_amount.toString());
   const idleHuman = Number(idleAmount) / 1e7;
@@ -259,7 +284,12 @@ async function investIdle(
       caller: keypair.publicKey(),
       instructions: [{ tag: "Invest", values: [addr, amount] }],
     });
-    const result = await sendTx(tx as any, keypair, server, networkPassphrase);
+    const result = await sendTx(
+      tx as AssembledTxLike,
+      keypair,
+      server,
+      networkPassphrase
+    );
     results.push({ strategy: name, ...result });
   }
 
@@ -276,7 +306,12 @@ async function collectFees(
 
   try {
     const reportTx = await client.report();
-    const r = await sendTx(reportTx as any, keypair, server, networkPassphrase);
+    const r = await sendTx(
+      reportTx as AssembledTxLike,
+      keypair,
+      server,
+      networkPassphrase
+    );
     results.push({ step: "report", ...r });
     if (r.status !== "SUCCESS") return { results, feesCollected: false };
   } catch (e) {
@@ -286,7 +321,12 @@ async function collectFees(
 
   try {
     const lockTx = await client.lock_fees({ new_fee_bps: undefined });
-    const r = await sendTx(lockTx as any, keypair, server, networkPassphrase);
+    const r = await sendTx(
+      lockTx as AssembledTxLike,
+      keypair,
+      server,
+      networkPassphrase
+    );
     results.push({ step: "lock_fees", ...r });
     if (r.status !== "SUCCESS") return { results, feesCollected: false };
   } catch (e) {
@@ -298,7 +338,12 @@ async function collectFees(
     const distTx = await client.distribute_fees({
       caller: keypair.publicKey(),
     });
-    const r = await sendTx(distTx as any, keypair, server, networkPassphrase);
+    const r = await sendTx(
+      distTx as AssembledTxLike,
+      keypair,
+      server,
+      networkPassphrase
+    );
     results.push({ step: "distribute_fees", ...r });
     return { results, feesCollected: r.status === "SUCCESS" };
   } catch (e) {
@@ -307,7 +352,7 @@ async function collectFees(
   }
 }
 
-// ─── GET — current vault state ───────────────────────────────────────────────
+// ─── GET - current vault state ───────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
   try {
@@ -335,13 +380,11 @@ export async function GET(request: NextRequest) {
     });
 
     const fundsTx = await client.fetch_total_managed_funds({ simulate: true });
-    let funds = fundsTx.result as any;
-    if (funds?.tag === "ok") funds = funds.value;
-    else if (typeof funds?.unwrap === "function") funds = funds.unwrap();
+    const funds = unwrapSdkResult(fundsTx.result) as FundEntry[];
 
     const idleAmount = Number(BigInt(funds[0].idle_amount.toString())) / 1e7;
     const totalAmount = Number(BigInt(funds[0].total_amount.toString())) / 1e7;
-    const allocations = funds[0].strategy_allocations.map((a: any) => ({
+    const allocations = funds[0].strategy_allocations.map((a) => ({
       strategy: a.strategy_address,
       amount: Number(BigInt(a.amount.toString())) / 1e7,
     }));
@@ -366,7 +409,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// ─── POST — invest idle + collect fees (cron or manual) ──────────────────────
+// ─── POST - invest idle + collect fees (cron or manual) ──────────────────────
 
 export async function POST(request: NextRequest) {
   try {
