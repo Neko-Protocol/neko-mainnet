@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { CLASS_ACCENT } from "@/features/discover/utils/assetClass";
+import { CLASS_ACCENT } from "@/features/shared/discover/utils/assetClass";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useFilteredDestinations } from "../hooks/useFilteredDestinations";
 import { DestinationCard } from "./ui/DestinationCard";
@@ -154,7 +154,7 @@ export function DestinationSelectorStep({
         </h2>
         <p className="text-sm text-white/60">
           {yieldTokens.length > 0
-            ? "Yield-bearing bonds accrue while you hold them. You can also supply the same asset—or stablecoins from step 1—to Pools (AMM liquidity + Neko lending supply) and Vaults for stacked scenarios."
+            ? "Yield-bearing bonds accrue while you hold them. You can also supply the same asset-or stablecoins from step 1-to Pools (AMM liquidity + Neko lending supply) and Vaults for stacked scenarios."
             : "Choose a pool or vault to simulate how your tokens might perform."}
         </p>
       </header>

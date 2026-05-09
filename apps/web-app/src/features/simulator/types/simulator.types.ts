@@ -1,5 +1,5 @@
 import type { PoolInfo } from "@/lib/orchestrator/types/pool.types";
-import type { VaultView } from "@/features/vault/types/vault";
+import type { VaultView } from "@/features/shared/vault/types/vault";
 
 export interface SimulatorToken {
   code: string;

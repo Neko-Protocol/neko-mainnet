@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { usePools } from "@/lib/orchestrator/hooks/usePools";
-import { useDefindexVaults } from "@/features/vault/hooks/useDefindexVaults";
+import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { useWallet } from "@/hooks/useWallet";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";

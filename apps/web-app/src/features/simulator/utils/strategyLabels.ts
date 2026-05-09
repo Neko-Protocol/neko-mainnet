@@ -1,5 +1,8 @@
 import type { PoolInfo, PoolType } from "@/lib/orchestrator/types/pool.types";
-import type { VaultView, VaultCategory } from "@/features/vault/types/vault";
+import type {
+  VaultView,
+  VaultCategory,
+} from "@/features/shared/vault/types/vault";
 import type { VaultApyStrategy } from "@/features/shared/vault/hooks/useVaultApy";
 
 const POOL_PROTOCOL_LABEL: Record<PoolType, string> = {

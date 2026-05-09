@@ -1,4 +1,4 @@
-import { getAssetTaxonomy } from "@/features/discover/utils/assetClass";
+import { getAssetTaxonomy } from "@/features/shared/discover/utils/assetClass";
 import { isEtherfuseBondToken } from "../hooks/useFilteredDestinations";
 import type {
   SimulatorDestination,

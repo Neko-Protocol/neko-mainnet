@@ -25,7 +25,7 @@ import {
   isStablecoinBondExplorer,
   type SimulationResolved,
 } from "../utils/wizardPhases";
-import type { VaultView } from "@/features/vault/types/vault";
+import type { VaultView } from "@/features/shared/vault/types/vault";
 
 /** Stable bond deposit amount string after swap (vault / pool hooks expect human). */
 function bondOutToDepositString(n: number): string {

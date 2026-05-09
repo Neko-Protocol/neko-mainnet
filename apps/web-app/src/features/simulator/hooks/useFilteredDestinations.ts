@@ -3,9 +3,9 @@
 import { useMemo } from "react";
 import { usePools } from "@/lib/orchestrator/hooks/usePools";
 import { useLendingPools } from "@/features/lending/hooks/useLendingPools";
-import { useDefindexVaults } from "@/features/vault/hooks/useDefindexVaults";
+import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
-import { getAssetTaxonomy } from "@/features/discover/utils/assetClass";
+import { getAssetTaxonomy } from "@/features/shared/discover/utils/assetClass";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import {
   getPoolProtocolLabel,

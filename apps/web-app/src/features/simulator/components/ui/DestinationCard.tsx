@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
 import { getVaultStrategyLabels } from "../../utils/strategyLabels";
 import type { SimulatorDestination } from "../../types/simulator.types";
-import type { VaultView } from "@/features/vault/types/vault";
+import type { VaultView } from "@/features/shared/vault/types/vault";
 
 interface DestinationCardProps {
   destination: SimulatorDestination;
