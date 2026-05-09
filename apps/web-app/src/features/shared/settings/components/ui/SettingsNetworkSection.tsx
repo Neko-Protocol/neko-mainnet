@@ -16,16 +16,28 @@ import { NETWORK_BADGE } from "@/lib/constants/networkDisplay";
 export interface SettingsNetworkSectionProps {
   copy: (key: string, value: string) => void;
   copiedKey: string | null;
+  open?: boolean;
+  onToggle?: () => void;
+  icon?: React.ElementType;
 }
 
 export function SettingsNetworkSection({
   copy,
   copiedKey,
+  open,
+  onToggle,
+  icon,
 }: SettingsNetworkSectionProps) {
   const badge = NETWORK_BADGE[network.id] ?? NETWORK_BADGE.custom;
 
   return (
-    <SectionCard title="Network" className="h-full">
+    <SectionCard
+      title="Network"
+      collapsible
+      open={open}
+      onToggle={onToggle}
+      icon={icon}
+    >
       <div className="flex items-center justify-between rounded-xl bg-[#2A2A2A] px-4 py-3">
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-white/40">Active Network</span>

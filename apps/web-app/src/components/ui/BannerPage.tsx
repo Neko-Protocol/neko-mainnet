@@ -15,6 +15,8 @@ export interface BannerPageProps {
 
   imageAlt?: string;
 
+  imagePosition?: "right" | "bottom-right";
+
   actions?: React.ReactNode;
 
   className?: string;
@@ -26,6 +28,7 @@ export function BannerPage({
   badge,
   imageSrc,
   imageAlt = "",
+  imagePosition = "right",
   actions,
   className,
 }: BannerPageProps) {
@@ -59,7 +62,11 @@ export function BannerPage({
       {}
       {imageSrc && (
         <div className="hidden sm:block">
-          <Illustration src={imageSrc} alt={imageAlt} />
+          <Illustration
+            src={imageSrc}
+            alt={imageAlt}
+            position={imagePosition}
+          />
         </div>
       )}
     </div>
@@ -81,9 +88,14 @@ function Badge({ label }: BadgeProps) {
 interface IllustrationProps {
   src: string;
   alt: string;
+  position: "right" | "bottom-right";
 }
 
-function Illustration({ src, alt }: IllustrationProps) {
+function Illustration({ src, alt, position }: IllustrationProps) {
+  const objectClass =
+    position === "bottom-right"
+      ? "object-contain object-bottom-right"
+      : "object-contain object-right";
   return (
     <div className="pointer-events-none absolute right-0 top-0 h-full w-[55%] select-none">
       <Image
@@ -92,7 +104,7 @@ function Illustration({ src, alt }: IllustrationProps) {
         fill
         unoptimized
         priority
-        className="object-contain object-right"
+        className={objectClass}
       />
     </div>
   );

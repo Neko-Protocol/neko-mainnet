@@ -26,11 +26,17 @@ import {
 export interface SettingsWalletSectionProps {
   copy: (key: string, value: string) => void;
   copiedKey: string | null;
+  open?: boolean;
+  onToggle?: () => void;
+  icon?: React.ElementType;
 }
 
 export function SettingsWalletSection({
   copy,
   copiedKey,
+  open,
+  onToggle,
+  icon,
 }: SettingsWalletSectionProps) {
   const { address, walletName, isConnected, disconnect } = useStellarWallet();
   const { signTransaction } = useWallet();
@@ -109,7 +115,13 @@ export function SettingsWalletSection({
   };
 
   return (
-    <SectionCard title="Wallet" className="h-full">
+    <SectionCard
+      title="Wallet"
+      collapsible
+      open={open}
+      onToggle={onToggle}
+      icon={icon}
+    >
       {isConnected && address ? (
         <>
           {walletName != null && walletName !== "" && (
