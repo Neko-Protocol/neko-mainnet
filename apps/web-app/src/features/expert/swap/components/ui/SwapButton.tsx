@@ -1,4 +1,5 @@
 import React from "react";
+import { Loader2, CheckCircle2 } from "lucide-react";
 
 export type OrderType = "swap" | "limit" | "twap";
 
@@ -58,19 +59,37 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
     );
   }
 
-  const label = txHash
-    ? "Swap Completed!"
-    : isLoading
-      ? "Processing..."
-      : "Swap";
+  if (txHash) {
+    return (
+      <button
+        disabled
+        className={`${baseClass} bg-green-500/20 text-green-400`}
+      >
+        <CheckCircle2 className="h-5 w-5" />
+        Swap Completed!
+      </button>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <button
+        disabled
+        className={`${baseClass} bg-[#229EDF] text-white shadow-lg shadow-[#229EDF]/20`}
+      >
+        <Loader2 className="h-5 w-5 animate-spin" />
+        Processing swap…
+      </button>
+    );
+  }
 
   return (
     <button
       onClick={onClick}
-      disabled={isLoading || !!txHash || isLoadingQuote}
+      disabled={isLoadingQuote}
       className={`${baseClass} bg-[#229EDF] hover:bg-[#1a8bc7] text-white shadow-lg shadow-[#229EDF]/20`}
     >
-      {label}
+      Swap
     </button>
   );
 };

@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import type { CollateralOption } from "./types";
 
 export function PoolPanelFooter({
@@ -58,9 +59,10 @@ export function PoolPanelFooter({
   const primaryBtn =
     "w-full py-3.5 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-40 disabled:cursor-not-allowed";
 
-  const btnSkeleton = (
-    <span className="flex items-center justify-center py-0.5">
-      <span className="h-3.5 w-[7rem] rounded-md bg-white/25" />
+  const btnSpinner = (label: string) => (
+    <span className="flex items-center justify-center gap-2">
+      <Loader2 className="h-4 w-4 animate-spin" />
+      {label}
     </span>
   );
 
@@ -76,7 +78,7 @@ export function PoolPanelFooter({
             className={primaryBtn}
           >
             {isAmmSubmitting
-              ? btnSkeleton
+              ? btnSpinner(isDepositTab ? "Depositing…" : "Withdrawing…")
               : isDepositTab
                 ? "Deposit"
                 : "Withdraw"}
@@ -99,7 +101,7 @@ export function PoolPanelFooter({
               }
               className={primaryBtn}
             >
-              {isLendingActionPending ? btnSkeleton : "Lend"}
+              {isLendingActionPending ? btnSpinner("Lending…") : "Lend"}
             </button>
           )}
           {mode === "borrow" && canBorrow && onBorrowSubmit && (
@@ -130,7 +132,7 @@ export function PoolPanelFooter({
               }
               className={primaryBtn}
             >
-              {isLendingActionPending ? btnSkeleton : "Borrow"}
+              {isLendingActionPending ? btnSpinner("Borrowing…") : "Borrow"}
             </button>
           )}
         </div>
@@ -150,7 +152,7 @@ export function PoolPanelFooter({
             }
             className={primaryBtn}
           >
-            {isLendingActionPending ? btnSkeleton : "Lend"}
+            {isLendingActionPending ? btnSpinner("Lending…") : "Lend"}
           </button>
         </div>
       )}
