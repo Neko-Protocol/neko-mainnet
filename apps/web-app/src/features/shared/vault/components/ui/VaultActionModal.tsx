@@ -81,7 +81,13 @@ export function VaultActionModal({
     handleClose();
   };
 
-  const isDisabled = isLoading || !amount || parseFloat(amount) <= 0;
+  const depositExceedsBalance =
+    mode === "deposit" &&
+    !!amount &&
+    parseFloat(amount) > parseFloat(supplyBalance) + 1e-10;
+
+  const isDisabled =
+    isLoading || !amount || parseFloat(amount) <= 0 || depositExceedsBalance;
 
   const supplyLabel = supplyAssetSymbol ?? "Token";
 
