@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import type { PoolInfo } from "@/lib/orchestrator";
@@ -13,6 +13,7 @@ import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import type { Token } from "@/lib/types/soroswapTypes";
+import { useStrategiesStore } from "@/stores/strategies.store";
 import { useSimulatorState } from "../hooks/useSimulatorState";
 import { useOrchestratorSupplyDeposit } from "../hooks/useOrchestratorSupplyDeposit";
 import { useLendingDepositSubmit } from "../hooks/useLendingDepositSubmit";
@@ -27,6 +28,7 @@ import { TokenSelectorStep } from "./TokenSelectorStep";
 import { DestinationSelectorStep } from "./DestinationSelectorStep";
 import { SimulatorStackStrategyStep } from "./SimulatorStackStrategyStep";
 import { ReturnSimulatorStep } from "./ReturnSimulatorStep";
+import { SaveStrategyDialog } from "./SaveStrategyDialog";
 
 type DepositIntent =
   | { kind: "vault"; vault: VaultView; depositAmountHuman?: string }
@@ -49,10 +51,28 @@ export function SimulatorWizard() {
     goNext,
     goBack,
     goToPhase,
+    loadFromSaved,
   } = useSimulatorState();
 
   const [depositIntent, setDepositIntent] = useState<DepositIntent>(null);
   const [swapDepositBusy, setSwapDepositBusy] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+
+  const { strategies, pendingExecuteId, setPendingExecuteId } =
+    useStrategiesStore();
+
+  useEffect(() => {
+    if (!pendingExecuteId) return;
+    const saved = strategies.find((s) => s.id === pendingExecuteId);
+    setPendingExecuteId(null);
+    if (!saved) return;
+    loadFromSaved({
+      token: saved.token,
+      destination: saved.destination,
+      stackVenue: saved.stackVenue,
+      amount: saved.amount,
+    });
+  }, [pendingExecuteId, strategies, setPendingExecuteId, loadFromSaved]);
 
   const queryClient = useQueryClient();
   const { executeSwap } = useSwapExecution();
@@ -293,6 +313,35 @@ export function SimulatorWizard() {
           showBack
           onBack={goBack}
           showContinue={false}
+          rightSlot={
+            state.token && state.destination ? (
+              <button
+                type="button"
+                onClick={() => setSaveDialogOpen(true)}
+                className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 transition-colors hover:border-white/30 hover:text-white"
+              >
+                Save strategy
+              </button>
+            ) : null
+          }
+        />
+      )}
+
+      {saveDialogOpen && state.token && state.destination && (
+        <SaveStrategyDialog
+          strategy={{
+            token: state.token,
+            destination: state.destination,
+            stackVenue: state.stackVenue,
+            amount: state.amount,
+            snapshotApy: state.destination.apy ?? state.stackVenue?.apy ?? null,
+          }}
+          suggestedName={
+            state.stackVenue
+              ? `${state.token.code} → ${state.destination.name} + ${state.stackVenue.name}`
+              : `${state.token.code} → ${state.destination.name}`
+          }
+          onClose={() => setSaveDialogOpen(false)}
         />
       )}
 
