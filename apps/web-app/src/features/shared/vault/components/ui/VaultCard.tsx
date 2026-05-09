@@ -191,7 +191,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
 
         <div className="flex flex-col justify-center gap-0.5 shrink-0">
           <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
-            APY (7d)
+            APY
           </span>
           {isLoading ? (
             <div className="h-5 w-14 rounded bg-white/10" />

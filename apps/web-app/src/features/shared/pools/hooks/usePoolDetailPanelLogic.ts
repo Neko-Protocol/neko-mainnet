@@ -31,7 +31,11 @@ export function usePoolDetailPanelLogic(pool: PoolDetailPanelPool) {
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
   const formatUsdValue = (amountUsd: number) =>
-    formatCurrency(convertUsdToSelected(amountUsd, fxRate), selectedCurrency);
+    formatCurrency(
+      convertUsdToSelected(amountUsd, fxRate),
+      selectedCurrency,
+      2
+    );
 
   const collateralInputUsd = useMemo(() => {
     const parsed = parseFloat(collateralInputAmount);

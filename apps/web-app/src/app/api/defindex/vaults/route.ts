@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type DefindexSDK from "@defindex/sdk";
-import type { SupportedNetworks } from "@defindex/sdk";
+import type { SupportedNetworks, VaultInfoResponse } from "@defindex/sdk";
 import { createDefindexServerSdk } from "@/lib/defindex/createServerSdk";
 import { defindexInfoToVaultView } from "@/lib/defindex/mapToVaultView";
 import { defindexNetworkFromEnv } from "@/lib/defindex/network";
@@ -11,6 +11,15 @@ import { getAssetsConfig } from "@/lib/constants/assets.config";
 import type { VaultView } from "@/features/shared/vault/types/vault";
 
 export const dynamic = "force-dynamic";
+
+const SERVER_CACHE_TTL_MS = 2 * 60_000;
+let serverCache: {
+  data: {
+    vaults: VaultView[];
+    fetchErrors?: { contractId: string; message: string }[];
+  };
+  ts: number;
+} | null = null;
 
 function formatVaultFetchError(reason: unknown): string {
   if (reason && typeof reason === "object") {
@@ -45,17 +54,16 @@ async function delay(ms: number) {
 }
 
 // Fetches a single vault with up to `maxRetries` retries on rate-limit errors.
-async function fetchVaultWithRetry(
+async function fetchVaultInfo(
   sdk: InstanceType<typeof DefindexSDK>,
   contractId: string,
   network: SupportedNetworks,
-  priceUsdByAsset: Record<string, number>,
   maxRetries = 3
-): Promise<VaultView> {
+): Promise<{ contractId: string; info: VaultInfoResponse }> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const info = await sdk.getVaultInfo(contractId, network);
-      return defindexInfoToVaultView(contractId, info, priceUsdByAsset);
+      return { contractId, info };
     } catch (err) {
       if (isRateLimitError(err) && attempt < maxRetries) {
         await delay(600 * (attempt + 1));
@@ -94,41 +102,78 @@ export async function GET() {
     });
   }
 
+  // Return cached response if still fresh
+  if (serverCache && Date.now() - serverCache.ts < SERVER_CACHE_TTL_MS) {
+    return NextResponse.json(serverCache.data);
+  }
+
   const sdk = createDefindexServerSdk();
   const vaults: VaultView[] = [];
   const fetchErrors: { contractId: string; message: string }[] = [];
 
-  // Fetch USD prices for all known assets once, so TVL shows real dollar value.
-  const priceUsdByAsset: Record<string, number> = {};
-  try {
-    const assetsConfig = Object.values(getAssetsConfig());
-    const prices = await Promise.allSettled(
-      assetsConfig.map((a) =>
-        stellarPriceService
-          .getPriceWithSource(a.code, a.contract)
-          .then(({ price }) => ({ contract: a.contract, price }))
-      )
+  // Build batch promises — vault info fetching does NOT need prices,
+  // so we kick off prices and all vault batches simultaneously.
+  const assetsConfig = Object.values(getAssetsConfig());
+
+  const pricePromise = Promise.allSettled(
+    assetsConfig.map((a) =>
+      stellarPriceService
+        .getPriceWithSource(a.code, a.contract)
+        .then(({ price }) => ({ contract: a.contract, price }))
+    )
+  );
+
+  // All batches start in parallel with price fetching
+  const batchCount = Math.ceil(ids.length / VAULT_FETCH_CONCURRENCY);
+  const batchPromises = Array.from({ length: batchCount }, async (_, bi) => {
+    if (bi > 0) await delay(bi * BATCH_GAP_MS);
+    const batch = ids.slice(
+      bi * VAULT_FETCH_CONCURRENCY,
+      (bi + 1) * VAULT_FETCH_CONCURRENCY
     );
-    for (const r of prices) {
-      if (r.status === "fulfilled" && r.value.price > 0) {
-        priceUsdByAsset[r.value.contract] = r.value.price;
-      }
+    return Promise.allSettled(
+      batch.map((contractId) => fetchVaultInfo(sdk, contractId, network))
+    );
+  });
+
+  // Wait for both prices and all vault batches concurrently
+  const [priceResults, ...batchResults] = await Promise.all([
+    pricePromise,
+    ...batchPromises,
+  ]);
+
+  // Build price map
+  const priceUsdByAsset: Record<string, number> = {};
+  for (const r of priceResults) {
+    if (r.status === "fulfilled" && r.value.price > 0) {
+      priceUsdByAsset[r.value.contract] = r.value.price;
     }
-  } catch {
-    // error fetching prices
   }
 
-  for (let i = 0; i < ids.length; i += VAULT_FETCH_CONCURRENCY) {
-    const batch = ids.slice(i, i + VAULT_FETCH_CONCURRENCY);
-    const settled = await Promise.allSettled(
-      batch.map((contractId) =>
-        fetchVaultWithRetry(sdk, contractId, network, priceUsdByAsset)
-      )
+  // Transform vault results now that prices are ready
+  for (let bi = 0; bi < batchResults.length; bi++) {
+    const batchSettled = batchResults[bi] as PromiseSettledResult<{
+      contractId: string;
+      info: VaultInfoResponse;
+    }>[];
+    const batchIds = ids.slice(
+      bi * VAULT_FETCH_CONCURRENCY,
+      (bi + 1) * VAULT_FETCH_CONCURRENCY
     );
-    settled.forEach((result, j) => {
-      const contractId = batch[j]!;
+    batchSettled.forEach((result, j) => {
+      const contractId = batchIds[j]!;
       if (result.status === "fulfilled") {
-        vaults.push(result.value);
+        try {
+          vaults.push(
+            defindexInfoToVaultView(
+              contractId,
+              result.value.info,
+              priceUsdByAsset
+            )
+          );
+        } catch (err) {
+          fetchErrors.push({ contractId, message: formatVaultFetchError(err) });
+        }
       } else {
         fetchErrors.push({
           contractId,
@@ -136,13 +181,13 @@ export async function GET() {
         });
       }
     });
-    if (i + VAULT_FETCH_CONCURRENCY < ids.length) {
-      await delay(BATCH_GAP_MS);
-    }
   }
 
-  return NextResponse.json({
+  const responseData = {
     vaults,
     ...(fetchErrors.length > 0 ? { fetchErrors } : {}),
-  });
+  };
+  serverCache = { data: responseData, ts: Date.now() };
+
+  return NextResponse.json(responseData);
 }

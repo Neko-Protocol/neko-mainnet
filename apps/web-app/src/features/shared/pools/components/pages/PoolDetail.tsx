@@ -386,10 +386,21 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       if (!address) return;
       const n = parseFloat(supplyAmount);
       if (isNaN(n) || n <= 0) return;
+      if (n > parseFloat(token1Balance ?? "0") + 1e-10) {
+        addNotification("Insufficient balance to deposit", "error");
+        return;
+      }
       const amountBigInt = BigInt(toSmallestUnit(supplyAmount, decimals));
       await runPoolAction(lendAction, amountBigInt);
     },
-    [address, decimals, lendAction, runPoolAction]
+    [
+      address,
+      decimals,
+      lendAction,
+      runPoolAction,
+      token1Balance,
+      addNotification,
+    ]
   );
 
   const handleBorrowingSubmit = useCallback(
@@ -600,7 +611,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
     if (isAqua) {
       const usd = safeParseFloat(liquidityUsd);
-      totalLiquidity = formatLiquidity(usd);
+      totalLiquidity = formatLiquidity(usd, 2);
       totalLiquidityRaw = pool.tokens
         .map((t, i) => {
           const r = reserveList[i] ?? "0";
@@ -609,7 +620,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
             reserveStroopsFromApiString(r).toString(),
             dec
           );
-          return `${formatAmount(amt)} ${t.code ?? ""}`.trim();
+          return `${formatAmount(amt, 2)} ${t.code ?? ""}`.trim();
         })
         .filter(Boolean)
         .join(" · ");
@@ -617,9 +628,9 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       const baseSup = (pool.metadata.supplyApy as number | undefined) ?? 0;
       const rewards = (pool.metadata.rewardsApy as number | undefined) ?? 0;
       const totalApy = pool.apy;
-      supplyApyDisplay = `${Number.isFinite(totalApy) ? totalApy.toFixed(4) : "0.0000"}%`;
+      supplyApyDisplay = `${Number.isFinite(totalApy) ? totalApy.toFixed(2) : "0.00"}%`;
       if (rewards > 0.0001) {
-        supplyApySub = `Base ${baseSup.toFixed(4)}% + ${rewards.toFixed(4)}% rewards`;
+        supplyApySub = `Base ${baseSup.toFixed(2)}% + ${rewards.toFixed(2)}% rewards`;
       }
       const aquaPoolType = pool.metadata.aquaPoolType as string | undefined;
       if (aquaPoolType === "stable_swap" || aquaPoolType === "stable") {
@@ -643,20 +654,20 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         primaryTokenPrice > 0
           ? availableLiquidityNum * primaryTokenPrice
           : availableLiquidityNum;
-      totalLiquidity = formatLiquidity(String(liqUsd));
-      totalLiquidityRaw = `${formatAmount(availableLiquidityNum)} ${t1?.code ?? ""}`;
-      supplyApyDisplay = `${supplyApyFromMeta.toFixed(4)}%`;
-      borrowApyLabel = `${borrowApy.toFixed(4)}%`;
+      totalLiquidity = formatLiquidity(String(liqUsd), 2);
+      totalLiquidityRaw = `${formatAmount(availableLiquidityNum, 2)} ${t1?.code ?? ""}`;
+      supplyApyDisplay = `${supplyApyFromMeta.toFixed(2)}%`;
+      borrowApyLabel = `${borrowApy.toFixed(2)}%`;
 
       if (totalLiabilities > 0) {
         const borrowUsd =
           primaryTokenPrice > 0
             ? totalLiabilities * primaryTokenPrice
             : totalLiabilities;
-        totalBorrowedStat = formatLiquidity(String(borrowUsd));
-        totalBorrowedStatRaw = `${formatAmount(totalLiabilities)} ${t1?.code ?? ""}`;
+        totalBorrowedStat = formatLiquidity(String(borrowUsd), 2);
+        totalBorrowedStatRaw = `${formatAmount(totalLiabilities, 2)} ${t1?.code ?? ""}`;
         if (tvlNum > 0) {
-          utilization = `${((totalLiabilities / tvlNum) * 100).toFixed(4)}%`;
+          utilization = `${((totalLiabilities / tvlNum) * 100).toFixed(2)}%`;
         }
       }
       if (primaryTokenPrice > 0 && t1?.code) {
@@ -666,9 +677,9 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         )}`;
       }
     } else {
-      totalLiquidity = formatLiquidity(availableLiquidityNum.toString());
-      totalLiquidityRaw = `${formatAmount(availableLiquidityNum)} ${t1?.code ?? ""}`;
-      supplyApyDisplay = pool.apy > 0 ? `${pool.apy.toFixed(4)}%` : "0.0000%";
+      totalLiquidity = formatLiquidity(availableLiquidityNum.toString(), 2);
+      totalLiquidityRaw = `${formatAmount(availableLiquidityNum, 2)} ${t1?.code ?? ""}`;
+      supplyApyDisplay = pool.apy > 0 ? `${pool.apy.toFixed(2)}%` : "0.00%";
     }
 
     return {

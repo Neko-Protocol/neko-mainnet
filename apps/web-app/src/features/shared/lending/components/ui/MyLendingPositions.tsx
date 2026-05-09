@@ -21,7 +21,7 @@ import MyBorrowPositions from "@/features/shared/borrowing/components/ui/MyBorro
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
-import { formatAmount, safeParseFloat } from "@/lib/helpers/formatUtils";
+import { safeParseFloat } from "@/lib/helpers/formatUtils";
 
 const PROTOCOL_ICONS: Record<string, string> = {
   neko: "/neko-logo.png",
@@ -133,7 +133,7 @@ const MyPositions: React.FC<MyPositionsProps> = ({
       protocolId: "neko",
       assetCode: pos.assetCode,
       poolName: `${pos.assetCode} Pool`,
-      depositedFormatted: `${pos.depositedFormatted} ${pos.assetCode}`,
+      depositedFormatted: `${safeParseFloat(pos.depositedFormatted).toFixed(2)} ${pos.assetCode}`,
       depositedRaw: String(safeParseFloat(pos.depositedFormatted)),
       apy: `${pos.interestRate.toFixed(2)}%`,
       orchestratorId: undefined,
@@ -143,7 +143,7 @@ const MyPositions: React.FC<MyPositionsProps> = ({
       protocolId: pos.pool.type,
       assetCode: pos.pool.tokens[0]?.code ?? "?",
       poolName: pos.pool.name,
-      depositedFormatted: `${formatAmount(safeParseFloat(pos.position.depositedFormatted))} ${pos.pool.tokens[0]?.code ?? ""}`,
+      depositedFormatted: `${safeParseFloat(pos.position.depositedFormatted).toFixed(2)} ${pos.pool.tokens[0]?.code ?? ""}`,
       depositedRaw: String(safeParseFloat(pos.position.depositedFormatted)),
       apy: `${pos.pool.apy.toFixed(2)}%`,
       orchestratorId: pos.pool.id,

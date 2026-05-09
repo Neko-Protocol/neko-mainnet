@@ -62,18 +62,18 @@ const TokenSelectorBtn: React.FC<TokenSelectorBtnProps> = ({
       disabled={disabled}
       className="flex items-center gap-2.5 bg-[#2A2A2A] hover:bg-[#333] rounded-xl px-3.5 py-2.5 w-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
-      <div className="relative h-[22px] w-[22px] shrink-0 overflow-hidden rounded-full">
+      <div className="relative h-[28px] w-[28px] shrink-0 overflow-hidden rounded-full">
         {iconUrl ? (
           <Image
             src={iconUrl}
             alt={tokenId}
-            width={22}
-            height={22}
+            width={28}
+            height={28}
             unoptimized
             className={getTokenIconFitClass(tokenId)}
           />
         ) : (
-          <div className="w-[22px] h-[22px] rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold text-white">
+          <div className="w-[28px] h-[28px] rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold text-white">
             {tokenId[0] || "?"}
           </div>
         )}

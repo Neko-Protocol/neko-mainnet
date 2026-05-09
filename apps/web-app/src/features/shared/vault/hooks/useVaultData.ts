@@ -81,9 +81,9 @@ export function useVaultData(contractId: string | null | undefined) {
         tvlFormatted: formatTvl(tvl),
       };
     },
-    staleTime: 2 * 60_000,
-    gcTime: 10 * 60_000,
-    refetchInterval: 2 * 60_000,
+    staleTime: 5 * 60_000,
+    gcTime: 15 * 60_000,
+    refetchInterval: 5 * 60_000,
     refetchOnWindowFocus: false,
     retry: false,
     throwOnError: false,

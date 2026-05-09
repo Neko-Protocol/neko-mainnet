@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { useVaultBalance } from "../../hooks/useVaultBalance";
 import { useVaultAction } from "../../hooks/useVaultAction";
@@ -81,7 +81,13 @@ export function VaultActionModal({
     handleClose();
   };
 
-  const isDisabled = isLoading || !amount || parseFloat(amount) <= 0;
+  const depositExceedsBalance =
+    mode === "deposit" &&
+    !!amount &&
+    parseFloat(amount) > parseFloat(supplyBalance) + 1e-10;
+
+  const isDisabled =
+    isLoading || !amount || parseFloat(amount) <= 0 || depositExceedsBalance;
 
   const supplyLabel = supplyAssetSymbol ?? "Token";
 
@@ -199,15 +205,37 @@ export function VaultActionModal({
             <button
               onClick={handleConfirm}
               disabled={isDisabled}
-              className="w-full py-3 rounded-xl text-sm font-bold text-white transition-colors duration-200 bg-[#229EDF] hover:bg-[#1a8bc7] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full py-3 rounded-xl text-sm font-bold text-white transition-colors duration-200 bg-[#229EDF] hover:bg-[#1a8bc7] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              {isLoading
-                ? "Processing..."
-                : mode === "deposit"
-                  ? `Deposit ${supplyLabel}`
-                  : "Withdraw"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {mode === "deposit"
+                    ? `Depositing ${supplyLabel}…`
+                    : "Withdrawing…"}
+                </>
+              ) : mode === "deposit" ? (
+                `Deposit ${supplyLabel}`
+              ) : (
+                "Withdraw"
+              )}
             </button>
           </div>
+
+          {/* Loading overlay — covers the modal content while tx is in flight */}
+          {isLoading && (
+            <div className="absolute inset-0 rounded-2xl bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 z-20">
+              <Loader2 className="h-8 w-8 animate-spin text-[#229EDF]" />
+              <p className="text-white/70 text-sm font-medium">
+                {mode === "deposit"
+                  ? "Processing deposit…"
+                  : "Processing withdrawal…"}
+              </p>
+              <p className="text-white/35 text-xs">
+                Please confirm in your wallet
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </ModalPortal>

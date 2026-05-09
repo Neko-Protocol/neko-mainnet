@@ -143,12 +143,22 @@ export class Orchestrator {
       blendAdapters.map((a) => a.getAllUserPositions(userAddress))
     );
 
-    return settled
-      .filter(
-        (r): r is PromiseFulfilledResult<PoolPosition[]> =>
-          r.status === "fulfilled"
-      )
-      .flatMap((r) => r.value);
+    const fulfilled = settled.filter(
+      (r): r is PromiseFulfilledResult<PoolPosition[]> =>
+        r.status === "fulfilled"
+    );
+
+    // If every adapter failed (RPC errors etc.), propagate so React Query retries
+    if (fulfilled.length === 0 && blendAdapters.length > 0) {
+      const firstRejected = settled.find((r) => r.status === "rejected") as
+        | PromiseRejectedResult
+        | undefined;
+      throw (
+        firstRejected?.reason ?? new Error("Failed to load blend positions")
+      );
+    }
+
+    return fulfilled.flatMap((r) => r.value);
   }
 
   async getAllPools(): Promise<PoolInfo[]> {
