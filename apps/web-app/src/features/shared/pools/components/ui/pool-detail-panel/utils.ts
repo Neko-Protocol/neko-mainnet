@@ -3,7 +3,7 @@ import { formatAmount } from "@/lib/helpers/formatUtils";
 export function trimBalance(value: string): string {
   const n = parseFloat(value);
   if (isNaN(n)) return value;
-  return formatAmount(n);
+  return formatAmount(n, 2);
 }
 
 export const PAGE_SIZE = 10;
