@@ -1,92 +1,95 @@
 "use client";
 
 import React from "react";
-import { BarChart3, Compass } from "lucide-react";
+import { Check } from "lucide-react";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { useUIModeStore, type UIMode } from "@/stores/ui-mode.store";
 
-const MODES: {
-  id: UIMode;
-  label: string;
-  description: string;
-  Icon: React.ElementType;
-  activeRing: string;
-  activeIcon: string;
-  activeBg: string;
-}[] = [
+const MODES: { id: UIMode; label: string; description: string }[] = [
   {
     id: "expert",
     label: "Expert App",
     description: "Full data, advanced metrics, and all protocol features.",
-    Icon: BarChart3,
-    activeRing: "border-violet-500/40",
-    activeIcon: "text-violet-400",
-    activeBg: "bg-violet-500/15",
   },
   {
     id: "basic",
     label: "Basic App",
     description: "Simple language, guided experience, and hidden complexity.",
-    Icon: Compass,
-    activeRing: "border-emerald-500/40",
-    activeIcon: "text-emerald-400",
-    activeBg: "bg-emerald-500/15",
   },
 ];
 
-export function SettingsUIModeSection() {
+export interface SettingsUIModeSectionProps {
+  open?: boolean;
+  onToggle?: () => void;
+  icon?: React.ElementType;
+}
+
+export function SettingsUIModeSection({
+  open,
+  onToggle,
+  icon,
+}: SettingsUIModeSectionProps) {
   const mode = useUIModeStore((s) => s.mode);
   const setMode = useUIModeStore((s) => s.setMode);
 
   return (
-    <SectionCard title="App Mode">
-      <div className="space-y-2">
-        {MODES.map(
-          ({
-            id,
-            label,
-            description,
-            Icon,
-            activeRing,
-            activeIcon,
-            activeBg,
-          }) => {
-            const isActive = mode === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setMode(id)}
-                className={`flex w-full items-start gap-3 rounded-xl border px-4 py-3 text-left transition-colors duration-150 ${
+    <SectionCard
+      title="App Mode"
+      collapsible
+      open={open}
+      onToggle={onToggle}
+      icon={icon}
+    >
+      <div
+        role="radiogroup"
+        aria-label="App mode"
+        className="flex flex-col gap-2 pt-1"
+      >
+        {MODES.map(({ id, label, description }) => {
+          const isActive = mode === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={isActive}
+              onClick={() => setMode(id)}
+              className={`group flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-colors duration-150 ${
+                isActive
+                  ? "border-blue-500"
+                  : "border-white/[0.06] bg-white/[0.015] hover:bg-white/[0.03]"
+              }`}
+            >
+              <span
+                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
                   isActive
-                    ? `${activeRing} bg-white/5`
-                    : "border-white/5 bg-[#2A2A2A] hover:bg-[#333]"
+                    ? "border-blue-400 text-blue-400"
+                    : "border-white/25 bg-transparent"
                 }`}
               >
-                <div
-                  className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${isActive ? activeBg : "bg-white/5"}`}
-                >
-                  <Icon
-                    className={`h-4 w-4 ${isActive ? activeIcon : "text-white/30"}`}
+                {isActive ? (
+                  <Check
+                    className="h-2.5 w-2.5 text-blue-400"
+                    strokeWidth={3.5}
                   />
-                </div>
-                <div className="flex-1">
-                  <p
-                    className={`text-sm font-semibold ${isActive ? "text-white" : "text-white/50"}`}
-                  >
-                    {label}
-                  </p>
-                  <p className="mt-0.5 text-xs text-white/30">{description}</p>
-                </div>
-                {isActive && (
-                  <span className="mt-1 shrink-0 text-[10px] font-semibold uppercase tracking-widest text-white/30">
-                    Active
-                  </span>
-                )}
-              </button>
-            );
-          }
-        )}
+                ) : null}
+              </span>
+
+              <span className="flex flex-1 flex-col gap-0.5">
+                <span
+                  className={`text-sm font-semibold tracking-tight ${
+                    isActive ? "text-white" : "text-white/85"
+                  }`}
+                >
+                  {label}
+                </span>
+                <span className="text-xs leading-relaxed text-white/45">
+                  {description}
+                </span>
+              </span>
+            </button>
+          );
+        })}
       </div>
     </SectionCard>
   );

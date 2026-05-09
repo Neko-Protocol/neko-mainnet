@@ -10,7 +10,17 @@ import type { UserPublic } from "@/lib/types/user.types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export function SettingsEmailSection() {
+export interface SettingsEmailSectionProps {
+  open?: boolean;
+  onToggle?: () => void;
+  icon?: React.ElementType;
+}
+
+export function SettingsEmailSection({
+  open,
+  onToggle,
+  icon,
+}: SettingsEmailSectionProps) {
   const { address, isConnected } = useStellarWallet();
   const { addNotification } = useToast();
 
@@ -100,7 +110,13 @@ export function SettingsEmailSection() {
 
   if (!isConnected || !address) {
     return (
-      <SectionCard title="Email (optional)">
+      <SectionCard
+        title="Email (optional)"
+        collapsible
+        open={open}
+        onToggle={onToggle}
+        icon={icon}
+      >
         <div className="rounded-xl bg-[#2A2A2A] px-4 py-5 text-center">
           <p className="text-sm text-white/40">
             Connect a wallet to add an email.
@@ -112,7 +128,13 @@ export function SettingsEmailSection() {
 
   return (
     <div id="email" className="scroll-mt-24">
-      <SectionCard title="Email (optional)">
+      <SectionCard
+        title="Email (optional)"
+        collapsible
+        open={open}
+        onToggle={onToggle}
+        icon={icon}
+      >
         <p className="text-xs leading-relaxed text-white/50">
           Optional. We&apos;ll only use it to reach you about your activity.
           You&apos;ll get a magic link to verify ownership.
