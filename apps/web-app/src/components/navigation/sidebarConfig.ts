@@ -3,6 +3,7 @@ import {
   ArrowLeftRight,
   Landmark,
   BarChart2,
+  Layers,
   Settings,
   Shield,
   Banknote,
@@ -23,6 +24,7 @@ export function getNavItems(
       ? [{ label: "Swap", href: "/swap", icon: ArrowLeftRight }]
       : [{ label: "Cart", href: "/cart", icon: ShoppingCart }]),
     { label: "Vault", href: "/vaults", icon: Vault },
+    { label: "Strategies", href: "/strategies", icon: Layers },
     { label: "Ramps", href: "/ramps", icon: Banknote },
     { label: "Settings", href: "/settings", icon: Settings },
     ...(isAdmin

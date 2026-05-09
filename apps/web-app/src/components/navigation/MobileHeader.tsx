@@ -20,6 +20,14 @@ export function MobileHeader() {
   const [isOpen, setIsOpen] = useState(false);
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
   const pathname = usePathname();
+  const [openAtPathname, setOpenAtPathname] = useState(pathname);
+  const effectiveIsOpen = isOpen && openAtPathname === pathname;
+
+  const handleSetIsOpen = (updater: boolean | ((prev: boolean) => boolean)) => {
+    const next = typeof updater === "function" ? updater(isOpen) : updater;
+    setIsOpen(next);
+    if (next) setOpenAtPathname(pathname);
+  };
   const { isStellarConnected, stellarAddress } = useWalletType();
   const { connect, disconnect } = useStellarWallet();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -52,15 +60,11 @@ export function MobileHeader() {
   }, [isOpen, walletDropdownOpen]);
 
   useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
+    document.body.style.overflow = effectiveIsOpen ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [isOpen]);
+  }, [effectiveIsOpen]);
 
   return (
     <>
@@ -138,11 +142,11 @@ export function MobileHeader() {
           <div className="min-w-0 justify-end">
             <button
               type="button"
-              onClick={() => setIsOpen((v) => !v)}
+              onClick={() => handleSetIsOpen((v) => !v)}
               aria-label="Toggle menu"
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white transition-colors hover:bg-white/10 sm:h-12 sm:w-12"
             >
-              {isOpen ? (
+              {effectiveIsOpen ? (
                 <X className="h-6 w-6 sm:h-7 sm:w-7" />
               ) : (
                 <Menu className="h-6 w-6 sm:h-7 sm:w-7" />
@@ -155,7 +159,7 @@ export function MobileHeader() {
       <div
         className={cn(
           "lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ease-out",
-          isOpen
+          effectiveIsOpen
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"
         )}
@@ -167,7 +171,7 @@ export function MobileHeader() {
         className={cn(
           "lg:hidden fixed left-0 right-0 top-20 z-50 bg-[#121212] border-b border-white/5 overflow-hidden",
           "transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
-          isOpen
+          effectiveIsOpen
             ? "translate-y-0 opacity-100"
             : "-translate-y-2 opacity-0 pointer-events-none"
         )}

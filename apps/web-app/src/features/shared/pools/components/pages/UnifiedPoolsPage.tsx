@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { stellarNetwork } from "@/lib/constants/network";
@@ -51,21 +51,18 @@ function LendingPanel() {
     setSearchQuery,
   } = useLend();
 
-  useEffect(() => {
-    if (!showBackstop && activeTab === "backstop") {
-      setActiveTab("pools");
-    }
-  }, [showBackstop, activeTab]);
+  const effectiveTab =
+    !showBackstop && activeTab === "backstop" ? "pools" : activeTab;
 
   return (
     <>
       <SubTabs
         tabs={[...lendTabs]}
-        active={activeTab}
+        active={effectiveTab}
         onChange={setActiveTab}
       />
 
-      {activeTab === "pools" && (
+      {effectiveTab === "pools" && (
         <LendTable
           pools={pools}
           isLoading={isLoadingPools}
@@ -93,8 +90,8 @@ function LendingPanel() {
         />
       )}
 
-      {showBackstop && activeTab === "backstop" && <BackstopPanel />}
-      {activeTab === "positions" && (
+      {showBackstop && effectiveTab === "backstop" && <BackstopPanel />}
+      {effectiveTab === "positions" && (
         <MyLendingPositions
           onWithdraw={(assetCode, protocolId, depositedRaw, orchestratorId) => {
             const pool = pools.find((p) =>
@@ -156,7 +153,9 @@ export default function UnifiedPoolsPage() {
         className="mb-8"
       />
 
-      <LendingPanel />
+      <Suspense>
+        <LendingPanel />
+      </Suspense>
     </PageContainer>
   );
 }

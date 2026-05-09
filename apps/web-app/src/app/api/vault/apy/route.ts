@@ -18,7 +18,7 @@ import { getBlendNetwork } from "@/lib/orchestrator/adapters/blend-config";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-// CETES vault — the only vault with custom per-strategy APY getters.
+// CETES vault - the only vault with custom per-strategy APY getters.
 const CETES_VAULT_ID =
   "CCFWKCD52JNSQLN5OS4F7EG6BPDT4IRJV6KODIEIZLWPM35IKHOKT6S2";
 
@@ -152,13 +152,30 @@ async function getSoroswapApy(): Promise<number | null> {
 
 // ─── Vault allocations ────────────────────────────────────────────────────────
 
+type SdkResult = {
+  tag?: string;
+  value?: unknown;
+  unwrap?: () => unknown;
+};
+
+function unwrapSdkResult(raw: unknown): unknown {
+  const r = raw as SdkResult;
+  if (r?.tag === "ok") return r.value;
+  if (typeof r?.unwrap === "function") return r.unwrap();
+  return raw;
+}
+
 async function getAllocations(
   client: DefindexVaultClient
 ): Promise<Record<string, number>> {
   const fundsTx = await client.fetch_total_managed_funds({ simulate: true });
-  let funds = fundsTx.result as any;
-  if (funds?.tag === "ok") funds = funds.value;
-  else if (typeof funds?.unwrap === "function") funds = funds.unwrap();
+  const funds = unwrapSdkResult(fundsTx.result) as Array<{
+    total_amount: { toString(): string };
+    strategy_allocations: Array<{
+      strategy_address: string;
+      amount: { toString(): string };
+    }>;
+  }>;
 
   const total = Number(BigInt(funds[0].total_amount.toString()));
   if (total === 0) return {};
@@ -335,7 +352,7 @@ export async function GET(request: NextRequest) {
         })),
         note:
           soroswapApy === null
-            ? "Soroswap APY not available — trading fee yield requires volume data"
+            ? "Soroswap APY not available - trading fee yield requires volume data"
             : undefined,
       });
     }
@@ -352,7 +369,7 @@ export async function GET(request: NextRequest) {
         );
         blndPrice = await getBlndPriceUsd(firstPool.metadata.backstop);
       } catch {
-        // BLND price unavailable — emissions will be skipped
+        // BLND price unavailable - emissions will be skipped
       }
       const poolApys = await Promise.all(
         blendPools.map((p) =>

@@ -30,7 +30,7 @@ export function useSwapQuote(
 ): SwapQuoteState & SwapQuoteActions {
   const [amountOut, setAmountOut] = useState<string>("0.0");
   const [isLoadingQuote, setIsLoadingQuote] = useState<boolean>(false);
-  const [apiKeyConfigured, setApiKeyConfigured] = useState<boolean>(false);
+  const [apiKeyConfigured] = useState<boolean>(() => hasApiKey());
   const [quoteError, setQuoteError] = useState<string | null>(null);
   const [platformFee, setPlatformFee] = useState<PlatformFee | undefined>(
     undefined
@@ -46,10 +46,6 @@ export function useSwapQuote(
     tokenOut,
     apiKeyConfigured
   );
-
-  useEffect(() => {
-    setApiKeyConfigured(hasApiKey());
-  }, []);
 
   const fetchLiveQuote = useCallback(async () => {
     const trimmedAmount = amountIn?.trim() || "";
@@ -96,7 +92,7 @@ export function useSwapQuote(
       failureCountRef.current += 1;
       if (failureCountRef.current >= MAX_CONSECUTIVE_FAILURES) {
         setIsLoadingQuote(false);
-        setQuoteError("Failed to get quote — try again");
+        setQuoteError("Failed to get quote - try again");
         if (quoteIntervalRef.current) {
           clearInterval(quoteIntervalRef.current);
           quoteIntervalRef.current = null;
@@ -125,24 +121,25 @@ export function useSwapQuote(
       !isNaN(parsedAmount) &&
       parsedAmount > 0;
 
-    if (!isValid || !address) {
+    const shouldFetch = isValid && !!address && apiKeyConfigured;
+
+    const resetQuote = () => {
       setAmountOut("0.0");
       setPlatformFee(undefined);
       setQuoteError(null);
+    };
+
+    const startLoading = () => {
+      resetQuote();
+      setIsLoadingQuote(true);
+    };
+
+    if (!shouldFetch) {
+      resetQuote();
       return;
     }
 
-    if (!apiKeyConfigured) {
-      setAmountOut("0.0");
-      setPlatformFee(undefined);
-      setQuoteError(null);
-      return;
-    }
-
-    setAmountOut("0.0");
-    setPlatformFee(undefined);
-    setIsLoadingQuote(true);
-    setQuoteError(null);
+    startLoading();
     failureCountRef.current = 0;
 
     quoteTimeoutRef.current = setTimeout(() => {

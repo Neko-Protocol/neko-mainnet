@@ -17,19 +17,26 @@ function formatTvl(stroops: bigint): string {
   return formatLiquidity(value);
 }
 
+type SdkResultLike = {
+  unwrap?: () => unknown;
+  tag?: string;
+  value?: unknown;
+};
+
 /** Safely extracts the value from a stellar SDK Result<T> or a raw value. */
 function unwrapResult<T>(result: unknown, fallback: T): T {
   if (result === null || result === undefined) return fallback;
+  const r = result as SdkResultLike;
   // Ok/Err objects from @stellar/stellar-sdk/contract
-  if (typeof (result as any).unwrap === "function") {
+  if (typeof r.unwrap === "function") {
     try {
-      return (result as any).unwrap() as T;
+      return r.unwrap() as T;
     } catch {
       return fallback;
     }
   }
   // Some SDK versions expose .value directly on Ok
-  if ((result as any).tag === "ok") return (result as any).value as T;
+  if (r.tag === "ok") return r.value as T;
   // Already a raw value (e.g. i128 methods)
   return result as T;
 }
