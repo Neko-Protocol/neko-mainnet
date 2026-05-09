@@ -1,6 +1,6 @@
 import type { PoolInfo, PoolType } from "@/lib/orchestrator/types/pool.types";
 import type { VaultView, VaultCategory } from "@/features/vault/types/vault";
-import type { VaultApyStrategy } from "@/features/vault/hooks/useVaultApy";
+import type { VaultApyStrategy } from "@/features/shared/vault/hooks/useVaultApy";
 
 const POOL_PROTOCOL_LABEL: Record<PoolType, string> = {
   blend: "Blend",
@@ -62,23 +62,23 @@ export function getPoolStrategyLabels(pool: PoolInfo): string[] {
 
 const YIELD_TOKEN_STRATEGY_LABELS: Record<string, string> = {
   CETES:
-    "Yield-bearing Mexican Treasury exposure — accrues in MXN while you hold",
-  USTRY: "Yield-bearing US Treasury exposure — accrues in USD while you hold",
+    "Yield-bearing Mexican Treasury exposure - accrues in MXN while you hold",
+  USTRY: "Yield-bearing US Treasury exposure - accrues in USD while you hold",
   TESOURO:
-    "Yield-bearing Brazilian sovereign exposure — accrues in BRL while you hold",
-  KTB: "Yield-bearing Korean Treasury exposure — accrues in KRW while you hold",
+    "Yield-bearing Brazilian sovereign exposure - accrues in BRL while you hold",
+  KTB: "Yield-bearing Korean Treasury exposure - accrues in KRW while you hold",
 };
 
 export function getYieldTokenStrategyLabel(symbol: string): string {
   const upper = symbol.toUpperCase();
   return (
     YIELD_TOKEN_STRATEGY_LABELS[upper] ??
-    "Yield-bearing bond token — accrues while you hold it"
+    "Yield-bearing bond token - accrues while you hold it"
   );
 }
 
 export function getYieldTokenHoldExplanation(symbol: string): string {
-  return `No pool or vault needed: ${symbol} already yields while held—the token reflects accrual on the underlying sovereign bond.`;
+  return `No pool or vault needed: ${symbol} already yields while held-the token reflects accrual on the underlying sovereign bond.`;
 }
 
 export function getVaultStrategyLabels(

@@ -6,16 +6,11 @@ import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import { rpcUrl } from "@/lib/constants/network";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
+import { auditService } from "@/lib/services/audit.service";
 import { orchestrator } from "../core/Orchestrator";
+import { buildPoolAuditPayload } from "../utils/buildPoolAuditPayload";
 import { POOLS_QUERY_KEY } from "./usePools";
-import type { PoolAction, TransactionResult } from "../types/pool.types";
-
-interface PoolActionParams {
-  poolId: string;
-  action: PoolAction;
-  amount: bigint;
-  tokenIndex?: number;
-}
+import type { PoolActionParams, TransactionResult } from "../types/pool.types";
 
 export function usePoolAction() {
   const { address, signTransaction } = useWallet();
@@ -100,6 +95,14 @@ export function usePoolAction() {
             : "Transaction confirmation timeout"
         );
       }
+
+      if (address && params.audit) {
+        const payload = buildPoolAuditPayload(params, txResult.hash, address);
+        if (payload) {
+          void auditService.log(payload);
+        }
+      }
+
       return txResult.hash;
     },
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PoolDetail from "@/features/pools/components/pages/PoolDetail";
+import PoolDetail from "@/features/shared/pools/components/pages/PoolDetail";
 
 export const metadata: Metadata = {
   title: "Pool Details | Neko Protocol",

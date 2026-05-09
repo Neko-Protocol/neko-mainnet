@@ -4,17 +4,18 @@ import type {
   VaultConfig,
   VaultView,
   VaultStrategyAllocation,
-} from "@/features/vault/types/vault";
+} from "@/features/shared/vault/types/vault";
 import {
   vaultArtForSymbol,
   vaultDedicatedArtKey,
-} from "@/features/vault/utils/vaultAssetArt";
+} from "@/features/shared/vault/utils/vaultAssetArt";
+import { formatAmount } from "@/lib/helpers/formatUtils";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 
 // Per-vault static overrides: contractId → fields that differ from the defaults.
 // Merge order: defaults → STATIC_OVERRIDES[contractId] → derived fields.
 const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
-  // CETES vault — Neko-managed, keep DeFindex as platform
+  // CETES vault - Neko-managed, keep DeFindex as platform
   CCFWKCD52JNSQLN5OS4F7EG6BPDT4IRJV6KODIEIZLWPM35IKHOKT6S2: {
     createdBy: "DeFindex",
     creatorIconSrc: "/defindex-logo.svg",
@@ -73,6 +74,16 @@ const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
     creatorIconSrc: "/assets/vault-creators/meru.jpg",
     issuerIconSrc: "/assets/vault-assets/meru.svg",
   },
+  // EURC Neko
+  CB3FUMFGCF6DHSFK6N2TOKHRMYXS34HFKQR45UKVORCRUM35AF3ES7WQ: {
+    createdBy: "Neko",
+    creatorIconSrc: "/neko-logo.png",
+  },
+  // USDC Neko
+  CCPKQH3K5XUGP5GXCT6WTABS7TGXRR745BJ4MEFSGNATB7AOBRL4VEOT: {
+    createdBy: "Neko",
+    creatorIconSrc: "/neko-logo.png",
+  },
 };
 
 function toVaultAsset(
@@ -110,12 +121,12 @@ function shortAddr(addr: string): string {
 
 function formatManagedAmount(amountStr: string): string {
   const n = Number(amountStr) / 1e7;
-  if (Number.isNaN(n)) return "—";
-  if (n <= 0) return "0";
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(2)}k`;
-  if (n < 0.0001) return n.toExponential(2);
-  return n.toLocaleString(undefined, { maximumFractionDigits: 6 });
+  if (Number.isNaN(n)) return "-";
+  if (n <= 0) return formatAmount(0);
+  if (n >= 1_000_000) return `${formatAmount(n / 1_000_000)}M`;
+  if (n >= 1_000) return `${formatAmount(n / 1_000)}k`;
+  if (n !== 0 && Math.abs(n) < 0.0001) return n.toExponential(4);
+  return formatAmount(n);
 }
 
 function buildStrategyAllocations(
@@ -151,18 +162,23 @@ function buildStrategyAllocations(
   return rows.length ? rows : undefined;
 }
 
-function formatTvl(info: VaultInfoResponse): string {
+function formatTvl(
+  info: VaultInfoResponse,
+  priceUsdByAsset: Record<string, number> = {}
+): string {
   const funds = info.totalManagedFunds ?? [];
-  if (funds.length === 0) return "—";
+  if (funds.length === 0) return "-";
   let sum = 0;
   for (const a of funds) {
-    const n = Number(a.total_amount ?? 0);
-    if (!Number.isNaN(n)) sum += n / 1e7;
+    const tokens = Number(a.total_amount ?? 0) / 1e7;
+    if (Number.isNaN(tokens)) continue;
+    const price = priceUsdByAsset[a.asset] ?? 1;
+    sum += tokens * price;
   }
-  if (sum <= 0) return "—";
-  if (sum >= 1_000_000) return `$${(sum / 1_000_000).toFixed(2)}M`;
-  if (sum >= 1_000) return `$${(sum / 1_000).toFixed(2)}k`;
-  return `$${sum.toFixed(2)}`;
+  if (sum <= 0) return "-";
+  if (sum >= 1_000_000) return `$${formatAmount(sum / 1_000_000)}M`;
+  if (sum >= 1_000) return `$${formatAmount(sum / 1_000)}k`;
+  return `$${formatAmount(sum)}`;
 }
 
 /**
@@ -170,7 +186,8 @@ function formatTvl(info: VaultInfoResponse): string {
  */
 export function defindexInfoToVaultView(
   contractId: string,
-  info: VaultInfoResponse
+  info: VaultInfoResponse,
+  priceUsdByAsset: Record<string, number> = {}
 ): VaultView {
   const assets = info.assets ?? [];
   const primary = assets[0];
@@ -203,10 +220,11 @@ export function defindexInfoToVaultView(
 
   const strategyAllocations = buildStrategyAllocations(info);
 
+  const apyNum = info.apy != null ? Number(info.apy) : null;
   const apyStr =
-    info.apy != null && !Number.isNaN(Number(info.apy))
-      ? `${Number(info.apy).toFixed(2)}%`
-      : "—";
+    apyNum != null && !Number.isNaN(apyNum) && apyNum > 0
+      ? `${apyNum.toFixed(2)}%`
+      : "-";
 
   const overrides = STATIC_OVERRIDES[contractId] ?? {};
 
@@ -239,9 +257,9 @@ export function defindexInfoToVaultView(
 
   return {
     ...config,
-    tvl: formatTvl(info),
+    tvl: formatTvl(info, priceUsdByAsset),
     apy7d: apyStr,
-    utilization: "—",
-    totalSupply: "—",
+    utilization: "-",
+    totalSupply: "-",
   };
 }

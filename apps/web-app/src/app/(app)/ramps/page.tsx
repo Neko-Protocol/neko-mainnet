@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import OnOffRamps from "@/features/on-off-ramps/components/pages/OnOffRamps";
+import OnOffRamps from "@/features/shared/on-off-ramps/components/pages/OnOffRamps";
 
 export const metadata: Metadata = {
   title: "On/Off Ramps | Neko Protocol",

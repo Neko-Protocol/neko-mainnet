@@ -1,17 +1,13 @@
 import { Horizon } from "@stellar/stellar-sdk";
 import { stellarNetwork, horizonUrl } from "@/lib/constants/network";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap/tokens";
-import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
-import { parseBalance } from "@/lib/helpers/formatUtils";
+import { getBatchedTokenBalances } from "@/lib/helpers/stellar/sorobanBalance";
+import { formatAmount, parseBalance } from "@/lib/helpers/formatUtils";
 import { horizonNativeBalanceToStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
 
 const getHorizon = (): Horizon.Server | null => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  if (!horizonUrl) {
-    return null;
-  }
+  if (typeof window === "undefined") return null;
+  if (!horizonUrl) return null;
   try {
     return new Horizon.Server(horizonUrl, {
       allowHttp: stellarNetwork === "LOCAL",
@@ -20,8 +16,6 @@ const getHorizon = (): Horizon.Server | null => {
     return null;
   }
 };
-
-const formatter = new Intl.NumberFormat();
 
 type HorizonBalance = Horizon.HorizonApi.BalanceLine & { balance: string };
 
@@ -56,21 +50,21 @@ export const fetchBalances = async (
   const mapped: MappedBalances = {};
   let subentryCount = 0;
   let nativeBalanceStroops = 0n;
-  /** Raw Horizon balance lines (for deduping Soroban SAC reads below). */
   let horizonBalanceLines: Horizon.HorizonApi.BalanceLine[] = [];
+  // Account sequence reused for all Soroban simulate calls (no extra Horizon round-trips)
+  let accountSequence = "0";
 
   try {
-    const { balances, subentry_count } = await horizonInstance
-      .accounts()
-      .accountId(address)
-      .call();
-    horizonBalanceLines = balances;
-    subentryCount = subentry_count ?? 0;
-    for (const b of balances) {
+    // loadAccount gives us balances + sequence in one request
+    const accountData = await horizonInstance.loadAccount(address);
+    horizonBalanceLines = accountData.balances;
+    subentryCount = accountData.subentry_count ?? 0;
+    accountSequence = accountData.sequence;
+    for (const b of accountData.balances) {
       if (b.asset_type === "native") {
         nativeBalanceStroops = horizonNativeBalanceToStroops(b.balance);
       }
-      const formattedBalance = formatter.format(Number(b.balance));
+      const formattedBalance = formatAmount(Number(b.balance));
       const balanceEntry = { ...b, balance: formattedBalance };
       const key =
         b.asset_type === "native"
@@ -87,9 +81,8 @@ export const fetchBalances = async (
 
   const classicAssetCodesWithNonZero = new Set<string>();
   for (const b of horizonBalanceLines) {
-    if (b.asset_type === "native" || b.asset_type === "liquidity_pool_shares") {
+    if (b.asset_type === "native" || b.asset_type === "liquidity_pool_shares")
       continue;
-    }
     if (
       (b.asset_type === "credit_alphanum4" ||
         b.asset_type === "credit_alphanum12") &&
@@ -102,37 +95,32 @@ export const fetchBalances = async (
 
   try {
     const availableTokens = getAvailableTokens();
-    const sorobanResults = await Promise.allSettled(
-      Object.entries(availableTokens).map(
-        async ([code, info]): Promise<{ code: string; balance: string }> => {
-          if (!info.contract || code === "XLM") return { code, balance: "0" };
-          const balance = await getTokenBalanceFromContract(
-            info.contract,
-            address,
-            info.decimals ?? 7
-          );
-          return { code, balance };
-        }
-      )
+    const tokens = Object.entries(availableTokens)
+      .filter(([code]) => code !== "XLM")
+      .map(([code, info]) => ({
+        code,
+        contract: info.contract ?? "",
+        decimals: info.decimals ?? 7,
+      }));
+
+    // Single batch call — reuses the already-loaded account sequence
+    const sorobanBalances = await getBatchedTokenBalances(
+      tokens,
+      address,
+      accountSequence
     );
 
-    for (const result of sorobanResults) {
+    for (const [code, balance] of Object.entries(sorobanBalances)) {
       if (
-        result.status === "fulfilled" &&
-        parseBalance(result.value.balance) > 0
+        parseBalance(balance) > 0 &&
+        !classicAssetCodesWithNonZero.has(code)
       ) {
-        const { code, balance } = result.value;
-        if (classicAssetCodesWithNonZero.has(code)) {
-          continue;
-        }
-        const key = `soroban:${code}`;
-        const sorobanEntry: SorobanBalanceEntry = {
+        mapped[`soroban:${code}`] = {
           asset_type: "credit_alphanum4",
           asset_code: code,
           asset_issuer: "soroban",
-          balance: formatter.format(parseBalance(balance)),
+          balance: formatAmount(parseBalance(balance)),
         };
-        mapped[key] = sorobanEntry;
       }
     }
   } catch (err) {

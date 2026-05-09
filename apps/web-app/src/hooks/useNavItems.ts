@@ -1,0 +1,16 @@
+"use client";
+
+import { useMemo } from "react";
+import { getNavItems } from "@/components/navigation/sidebarConfig";
+import { useUIModeStore } from "@/stores/ui-mode.store";
+import { useWalletType } from "@/hooks/useWalletType";
+
+const ADMIN_ADDRESS = process.env.NEXT_PUBLIC_LENDING_ADMIN_ADDRESS ?? "";
+
+export function useNavItems() {
+  const mode = useUIModeStore((s) => s.mode);
+  const { stellarAddress } = useWalletType();
+  const isAdmin = Boolean(ADMIN_ADDRESS && stellarAddress === ADMIN_ADDRESS);
+
+  return useMemo(() => getNavItems(mode, isAdmin), [mode, isAdmin]);
+}

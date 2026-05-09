@@ -80,7 +80,7 @@ export async function GET(
       type: topics[0] ?? "event",
       user,
       asset,
-      amount: amount !== null ? parseFloat(amount.toFixed(6)) : null,
+      amount: amount !== null ? parseFloat(amount.toFixed(4)) : null,
       ts: r.ts,
     };
   });

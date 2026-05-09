@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useMemo } from "react";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
-import { useVaultApy } from "@/features/vault/hooks/useVaultApy";
+import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
 import { useWallet } from "@/hooks/useWallet";
 import { cn } from "@/lib/utils";
 import { formatAmount, safeParseFloat } from "@/lib/helpers/formatUtils";
@@ -61,11 +61,11 @@ interface ReturnSimulatorStepProps {
   simulation: SimulationResolved;
   amount: string;
   onAmountChange: (next: string) => void;
-  /** Vault modal opener — wizard resolves VaultView from raw */
+  /** Vault modal opener - wizard resolves VaultView from raw */
   onStartDepositVault?: (vault: VaultView) => void;
-  /** Lending supply deposit — wizard builds tx */
+  /** Lending supply deposit - wizard builds tx */
   onStartDepositLending?: () => void;
-  /** Orchestrator pool deposit — wizard builds tx */
+  /** Orchestrator pool deposit - wizard builds tx */
   onStartDepositOrchestrator?: () => void;
   /**
    * Stablecoin → bond swap then open deposit (same session).

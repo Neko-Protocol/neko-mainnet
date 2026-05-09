@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { useVaultApy } from "@/features/vault/hooks/useVaultApy";
+import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
 import { getVaultStrategyLabels } from "../../utils/strategyLabels";
 import type { SimulatorDestination } from "../../types/simulator.types";
 import type { VaultView } from "@/features/vault/types/vault";
@@ -68,7 +68,7 @@ export function DestinationCard({
             </span>
           </div>
           <p className="mt-1 text-xs text-white/50">
-            Total deposited: {destination.tvlLabel || "—"}
+            Total deposited: {destination.tvlLabel || "-"}
           </p>
         </div>
         <div className="shrink-0 text-right">
