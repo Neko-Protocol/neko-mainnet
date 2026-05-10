@@ -118,7 +118,9 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
         )}
       </div>
       <div className="flex items-center justify-between mt-1 gap-2">
-        <span className="text-white/40 text-xs shrink-0">Your balance</span>
+        <span className="text-white/40 text-xs min-w-0 truncate">
+          Your balance {isLoadingBalance ? "..." : formatAmount(maxAmt || "0")}
+        </span>
         <button
           onClick={isReadOnly ? undefined : onMaxClick}
           disabled={
@@ -130,7 +132,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
               : "text-white/40 hover:text-white/70 disabled:cursor-not-allowed"
           }`}
         >
-          {isLoadingBalance ? "..." : `${formatAmount(maxAmt || "0")} Max`}
+          Max
         </button>
       </div>
     </div>

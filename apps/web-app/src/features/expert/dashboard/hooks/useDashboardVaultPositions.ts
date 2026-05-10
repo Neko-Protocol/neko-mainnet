@@ -1,0 +1,64 @@
+"use client";
+
+import { useQueries } from "@tanstack/react-query";
+import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import {
+  rpcUrl,
+  networkPassphrase,
+  allowHttpForSoroban,
+} from "@/lib/constants/network";
+import { useWallet } from "@/hooks/useWallet";
+import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
+import type { VaultView } from "@/features/shared/vault/types/vault";
+
+export interface VaultPositionEntry {
+  vault: VaultView;
+  userShares: bigint;
+}
+
+export function useDashboardVaultPositions() {
+  const { address } = useWallet();
+  const { data: vaultsPayload, isLoading: vaultsLoading } = useDefindexVaults();
+  const vaults = vaultsPayload?.vaults ?? [];
+
+  const balanceQueries = useQueries({
+    queries: vaults.map((vault) => ({
+      queryKey: ["vaultBalance", vault.id, address],
+      queryFn: async (): Promise<bigint> => {
+        if (!address) return 0n;
+        const client = new DefindexVaultClient({
+          contractId: vault.id,
+          rpcUrl,
+          networkPassphrase,
+          ...(allowHttpForSoroban && { allowHttp: true }),
+        });
+        const tx = await client.balance({ id: address }, { simulate: true });
+        return BigInt(tx.result?.toString() ?? "0");
+      },
+      enabled: Boolean(address) && vaults.length > 0,
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: false,
+      throwOnError: false,
+    })),
+  });
+
+  const positions: VaultPositionEntry[] = [];
+  balanceQueries.forEach((q, i) => {
+    const shares = q.data ?? 0n;
+    if (shares > 0n && vaults[i]) {
+      positions.push({ vault: vaults[i], userShares: shares });
+    }
+  });
+
+  const isLoading =
+    vaultsLoading ||
+    (vaults.length > 0 && balanceQueries.some((q) => q.isLoading));
+
+  return {
+    positions,
+    isLoading,
+    hasWallet: Boolean(address),
+  };
+}
