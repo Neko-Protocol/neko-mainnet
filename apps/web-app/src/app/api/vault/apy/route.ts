@@ -276,17 +276,17 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const secretKey = process.env.VAULT_MANAGER_SECRET_KEY;
-    if (!secretKey) {
-      return NextResponse.json({ error: "Not configured" }, { status: 503 });
-    }
-
     // For all vaults, try the DeFindex SDK APY first.
     const defindexApy = await getDefindexVaultApy(vaultId);
 
     // For the CETES vault only, also compute manual weighted APY from on-chain
     // strategy data as a fallback when the SDK does not return a value.
+    // This branch requires VAULT_MANAGER_SECRET_KEY to simulate on-chain calls.
     if (vaultId === CETES_VAULT_ID) {
+      const secretKey = process.env.VAULT_MANAGER_SECRET_KEY;
+      if (!secretKey) {
+        return NextResponse.json({ error: "Not configured" }, { status: 503 });
+      }
       const { rpcUrl, networkPassphrase } = getRpcConfig();
       const keypair = Keypair.fromSecret(secretKey);
       const server = new rpc.Server(rpcUrl);
