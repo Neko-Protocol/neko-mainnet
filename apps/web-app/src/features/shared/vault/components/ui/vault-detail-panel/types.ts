@@ -1,4 +1,5 @@
 import type { VaultView } from "@/features/shared/vault/types/vault";
+import type { SupportedCurrency } from "@/stores/currency.store";
 
 export type VaultActionTab = "deposit" | "withdraw";
 
@@ -14,7 +15,8 @@ export interface VaultActionPanelProps {
   sharesBalance: string;
   isWalletConnected: boolean;
   apy?: string;
-  tokenPriceUsd?: number;
+  tokenPriceInCurrency?: number;
+  selectedCurrency?: SupportedCurrency;
 }
 
 export interface VaultDetailLayoutProps {

@@ -13,7 +13,7 @@ import { VaultTabs, type VaultTabKey } from "../ui/VaultTabs";
 import MyVaultPositions from "../ui/MyVaultPositions";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useDefindexVaults } from "../../hooks/useDefindexVaults";
-import { useVaultData } from "../../hooks/useVaultData";
+import { fetchVaultApy } from "../../hooks/useVaultApy";
 import {
   rpcUrl,
   networkPassphrase,
@@ -24,7 +24,6 @@ import type { VaultView } from "../../types/vault";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdDisplayToSelectedCurrency } from "@/lib/helpers/currency";
-import { formatAmount } from "@/lib/helpers/formatUtils";
 
 function vaultAssetFilterIconSrc(v: VaultView): string {
   const addr = v.supplyAsset.contractAddress?.trim();
@@ -90,11 +89,6 @@ const Vault: React.FC = () => {
     return "Try adjusting your filters";
   }, [defindexPayload, vaultsFromApi.length]);
 
-  const activeContractId = useMemo(() => {
-    return vaultsFromApi[0]?.detail?.contracts?.vault ?? null;
-  }, [vaultsFromApi]);
-
-  const { data: liveVaultData } = useVaultData(activeContractId);
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
 
@@ -103,12 +97,7 @@ const Vault: React.FC = () => {
   const apyQueries = useQueries({
     queries: vaultsFromApi.map((v) => ({
       queryKey: ["vault-apy", v.id],
-      queryFn: async (): Promise<number | null> => {
-        const res = await fetch(`/api/vault/apy?vault=${v.id}`);
-        if (!res.ok) return null;
-        const data = await res.json();
-        return typeof data.vaultApy === "number" ? data.vaultApy : null;
-      },
+      queryFn: () => fetchVaultApy(v.id),
       staleTime: 10 * 60_000,
       gcTime: 15 * 60_000,
       refetchOnWindowFocus: false,
@@ -153,44 +142,15 @@ const Vault: React.FC = () => {
   const vaults = useMemo<VaultView[]>(() => {
     if (vaultsFromApi.length === 0) return [];
     return vaultsFromApi.map((v, idx) => {
-      const baseTvl = convertUsdDisplayToSelectedCurrency(
-        v.tvl,
-        fxRate,
-        selectedCurrency
-      );
-
-      const liveApyNum = apyQueries[idx]?.data;
+      const tvl = convertUsdDisplayToSelectedCurrency(v.tvl, fxRate, selectedCurrency);
+      const liveApyNum = apyQueries[idx]?.data?.vaultApy;
       const apy7d =
         liveApyNum != null && liveApyNum > 0
           ? `${liveApyNum.toFixed(2)}%`
           : v.apy7d;
-
-      if (!liveVaultData || !activeContractId) {
-        return { ...v, tvl: baseTvl, apy7d };
-      }
-
-      if (v.detail?.contracts?.vault !== activeContractId) {
-        return { ...v, tvl: baseTvl, apy7d };
-      }
-
-      return {
-        ...v,
-        apy7d,
-        tvl: liveVaultData.tvl > 0n ? liveVaultData.tvlFormatted : baseTvl,
-        totalSupply:
-          liveVaultData.totalShares > 0n
-            ? `${formatAmount(Number(liveVaultData.totalShares) / 1e7)} shares`
-            : v.totalSupply,
-      };
+      return { ...v, tvl, apy7d };
     });
-  }, [
-    vaultsFromApi,
-    liveVaultData,
-    activeContractId,
-    fxRate,
-    selectedCurrency,
-    apyQueries,
-  ]);
+  }, [vaultsFromApi, fxRate, selectedCurrency, apyQueries]);
 
   const assetOptions = useMemo(() => {
     const map = new Map<string, string>();

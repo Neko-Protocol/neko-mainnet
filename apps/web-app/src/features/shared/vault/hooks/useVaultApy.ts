@@ -14,7 +14,7 @@ export interface VaultApyResponse {
   note?: string;
 }
 
-async function fetchVaultApy(vaultId: string): Promise<VaultApyResponse> {
+export async function fetchVaultApy(vaultId: string): Promise<VaultApyResponse> {
   const res = await fetch(
     `/api/vault/apy?vault=${encodeURIComponent(vaultId)}`
   );

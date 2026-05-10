@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { unstable_cache } from "next/cache";
 import {
   Keypair,
   TransactionBuilder,
@@ -263,41 +262,37 @@ async function getBlendSupplyApy(
   }
 }
 
-// ─── Cached Blend vault APY (persists across Vercel serverless invocations) ───
+// ─── Blend vault APY ──────────────────────────────────────────────────────────
 
-const getBlendVaultApy = unstable_cache(
-  async (vaultId: string, defindexApy: number | null) => {
-    const blendPools = NEKO_VAULT_BLEND_ASSETS[vaultId];
-    if (!blendPools) return { vaultApy: defindexApy, strategies: [] };
+async function getBlendVaultApy(vaultId: string, defindexApy: number | null) {
+  const blendPools = NEKO_VAULT_BLEND_ASSETS[vaultId];
+  if (!blendPools) return { vaultApy: defindexApy, strategies: [] };
 
-    let blndPrice = 0;
-    try {
-      const firstPool = await PoolV2.load(getBlendNetwork(), blendPools[0].poolId);
-      blndPrice = await getBlndPriceUsd(firstPool.metadata.backstop);
-    } catch {
-      // BLND price unavailable — emissions skipped
-    }
+  let blndPrice = 0;
+  try {
+    const firstPool = await PoolV2.load(getBlendNetwork(), blendPools[0].poolId);
+    blndPrice = await getBlndPriceUsd(firstPool.metadata.backstop);
+  } catch {
+    // BLND price unavailable — emissions skipped
+  }
 
-    const poolApys = await Promise.all(
-      blendPools.map((p) => getBlendSupplyApy(p.poolId, p.assetAddress, blndPrice))
-    );
-    const validApys = poolApys.filter((a): a is number => a !== null);
-    const blendApy =
-      validApys.length > 0
-        ? validApys.reduce((s, a) => s + a, 0) / validApys.length
-        : null;
-    const vaultApy = defindexApy ?? blendApy;
-    return {
-      vaultApy: vaultApy !== null ? parseFloat(vaultApy.toFixed(2)) : null,
-      strategies:
-        blendApy !== null
-          ? [{ name: "Blend", apy: parseFloat(blendApy.toFixed(2)), weight: 100 }]
-          : [],
-    };
-  },
-  ["vault-blend-apy"],
-  { revalidate: 300 } // cache 5 min across all Vercel instances
-);
+  const poolApys = await Promise.all(
+    blendPools.map((p) => getBlendSupplyApy(p.poolId, p.assetAddress, blndPrice))
+  );
+  const validApys = poolApys.filter((a): a is number => a !== null);
+  const blendApy =
+    validApys.length > 0
+      ? validApys.reduce((s, a) => s + a, 0) / validApys.length
+      : null;
+  const vaultApy = defindexApy ?? blendApy;
+  return {
+    vaultApy: vaultApy !== null ? parseFloat(vaultApy.toFixed(2)) : null,
+    strategies:
+      blendApy !== null
+        ? [{ name: "Blend", apy: parseFloat(blendApy.toFixed(2)), weight: 100 }]
+        : [],
+  };
+}
 
 // ─── GET /api/vault/apy ───────────────────────────────────────────────────────
 

@@ -4,53 +4,79 @@ import React, { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
+import { formatCurrency } from "@/lib/helpers/currency";
+import type { SupportedCurrency } from "@/stores/currency.store";
 import type { VaultActionPanelProps } from "./types";
-
-function formatProjection(value: number): string {
-  if (value <= 0) return "0";
-  if (value < 0.01) return "< 0.01";
-  return value.toFixed(2).replace(/\.?0+$/, "");
-}
 
 function formatBalance(n: number): string {
   if (n === 0) return "0";
   return parseFloat(n.toFixed(4)).toString();
 }
 
-function ArrowRow({
-  label,
-  icon,
-  from,
-  to,
-  hasAmount,
+export function AnimatedValue({
+  value,
+  className,
 }: {
-  label: string;
-  icon?: React.ReactNode;
-  from: string;
-  to?: string;
-  hasAmount: boolean;
+  value: string;
+  className?: string;
+}) {
+  const [displayed, setDisplayed] = useState(value);
+  const [exiting, setExiting] = useState<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (value === displayed) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setExiting(displayed);
+    setDisplayed(value);
+    timerRef.current = setTimeout(() => setExiting(null), 2600);
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <span
+      className="relative inline-block overflow-hidden leading-none"
+      style={{ verticalAlign: "middle" }}
+    >
+      {exiting !== null && (
+        <span className={`animate-value-exit ${className ?? ""}`}>
+          {exiting}
+        </span>
+      )}
+      <span
+        key={displayed}
+        className={`inline-block animate-value-enter ${className ?? ""}`}
+      >
+        {displayed}
+      </span>
+    </span>
+  );
+}
+
+function TokenIcon({
+  src,
+  alt,
+  size = 16,
+}: {
+  src: string;
+  alt: string;
+  size?: number;
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-1.5">
-        {icon}
-        <span className="text-white/50 text-sm">{label}</span>
-      </div>
-      <div className="flex items-center gap-1 text-sm tabular-nums">
-        {hasAmount && to !== undefined ? (
-          <>
-            {from !== "0" && from !== "$0" && (
-              <>
-                <span className="text-white/40">{from}</span>
-                <span className="text-white/30 mx-0.5">→</span>
-              </>
-            )}
-            <AnimatedValue value={to} className="text-white font-semibold" />
-          </>
-        ) : (
-          <span className="text-white/40">{from}</span>
-        )}
-      </div>
+    <div
+      className="rounded-full bg-white/5 border border-white/10 overflow-hidden shrink-0"
+      style={{ width: size, height: size }}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        width={size}
+        height={size}
+        unoptimized
+        className="h-full w-full object-contain"
+      />
     </div>
   );
 }
@@ -79,39 +105,215 @@ function ModeTabs({
   );
 }
 
-function AnimatedValue({ value, className }: { value: string; className?: string }) {
-  const [displayed, setDisplayed] = useState(value);
-  const [exiting, setExiting] = useState<string | null>(null);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (value === displayed) return;
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setExiting(displayed);
-    setDisplayed(value);
-    timerRef.current = setTimeout(() => setExiting(null), 2600);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
-  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
-
+function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <span className="relative inline-block overflow-hidden leading-none" style={{ verticalAlign: "middle" }}>
-      {exiting !== null && (
-        <span className={`animate-value-exit ${className ?? ""}`}>{exiting}</span>
-      )}
-      <span key={displayed} className={`inline-block animate-value-enter ${className ?? ""}`}>
-        {displayed}
-      </span>
-    </span>
+    <div className="flex items-center justify-between">
+      <span className="text-white/50 text-sm">{label}</span>
+      <div className="text-sm tabular-nums">{value}</div>
+    </div>
   );
 }
 
-function TokenIcon({ src, alt, size = 16 }: { src: string; alt: string; size?: number }) {
+function ArrowRow({
+  label,
+  icon,
+  from,
+  to,
+  hasAmount,
+}: {
+  label: string;
+  icon?: React.ReactNode;
+  from: string;
+  to: string;
+  hasAmount: boolean;
+}) {
+  const fromIsZero = parseFloat(from.replace(/[^0-9.]/g, "") || "0") === 0;
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-1.5">
+        {icon}
+        <span className="text-white/50 text-sm">{label}</span>
+      </div>
+      <div className="flex items-center gap-1 text-sm tabular-nums">
+        {hasAmount ? (
+          <>
+            {!fromIsZero && (
+              <>
+                <span className="text-white/40">{from}</span>
+                <span className="text-white/30 mx-0.5">→</span>
+              </>
+            )}
+            <AnimatedValue value={to} className="text-white font-semibold" />
+          </>
+        ) : (
+          <span className="text-white/40">{from}</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AmountInputCard({
+  tab,
+  supplyLabel,
+  supplyIconSrc,
+  amount,
+  onAmountChange,
+  currencyValue,
+  selectedCurrency,
+  balanceForDisplay,
+  maxAmount,
+  hasAmount,
+}: {
+  tab: "deposit" | "withdraw";
+  supplyLabel: string;
+  supplyIconSrc: string;
+  amount: string;
+  onAmountChange: (v: string) => void;
+  currencyValue: number | null;
+  selectedCurrency: SupportedCurrency;
+  balanceForDisplay: string;
+  maxAmount: string;
+  hasAmount: boolean;
+}) {
   return (
     <div
-      className="rounded-full bg-white/5 border border-white/10 overflow-hidden shrink-0"
-      style={{ width: size, height: size }}
+      className={`rounded-2xl border p-4 transition-colors ${
+        hasAmount ? "border-[#229EDF]/70" : "border-white/10"
+      }`}
+      style={{ background: "#1a1a1a" }}
     >
-      <Image src={src} alt={alt} width={size} height={size} unoptimized className="h-full w-full object-contain" />
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-white/60 text-sm font-medium">
+          {tab === "deposit" ? "Deposit" : "Withdraw"} {supplyLabel}
+        </span>
+        <TokenIcon src={supplyIconSrc} alt={supplyLabel} size={28} />
+      </div>
+
+      <input
+        type="text"
+        inputMode="decimal"
+        placeholder="0"
+        value={amount}
+        onChange={(e) => onAmountChange(sanitizeAmountInput(e.target.value))}
+        className="w-full bg-transparent text-white font-medium outline-none placeholder:text-white/20 mb-3"
+        style={{
+          fontSize: 33,
+          fontFamily: '"FK Grotesk", "Inter", sans-serif',
+        }}
+      />
+
+      <div className="flex items-center justify-between">
+        <AnimatedValue
+          value={formatCurrency(currencyValue ?? 0, selectedCurrency)}
+          className={`text-sm tabular-nums ${currencyValue != null ? "text-white/50" : "text-white/20"}`}
+        />
+        <div className="flex items-center gap-2">
+          <span className="text-white/35 text-sm tabular-nums">
+            {balanceForDisplay}
+          </span>
+          <button
+            type="button"
+            onClick={() => onAmountChange(maxAmount)}
+            className="px-2.5 py-1 rounded-lg bg-white/10 text-white/60 text-xs font-semibold hover:bg-white/15 transition-colors"
+          >
+            MAX
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DepositSummary({
+  supplyLabel,
+  supplyIconSrc,
+  currentDeposited,
+  newDepositedTotal,
+  hasAmount,
+  hasInsufficientBalance,
+  apyNum,
+  apy,
+  projectedMonthly,
+  projectedYearly,
+  selectedCurrency,
+}: {
+  supplyLabel: string;
+  supplyIconSrc: string;
+  currentDeposited: number;
+  newDepositedTotal: number;
+  hasAmount: boolean;
+  hasInsufficientBalance: boolean;
+  apyNum: number | null;
+  apy?: string;
+  projectedMonthly: number;
+  projectedYearly: number;
+  selectedCurrency: SupportedCurrency;
+}) {
+  return (
+    <div
+      className="rounded-2xl border border-white/5 px-4 py-3.5 space-y-3.5"
+      style={{ background: "#1a1a1a" }}
+    >
+      <InfoRow
+        label="Network"
+        value={
+          <div className="flex items-center gap-1.5">
+            <Image
+              src="/assets/xlm-negro-logo.png"
+              alt="Stellar"
+              width={14}
+              height={14}
+              unoptimized
+              className="w-3.5 h-3.5 rounded-sm invert"
+            />
+            <span className="text-white/80 font-medium">Stellar</span>
+          </div>
+        }
+      />
+
+      <ArrowRow
+        label={`Deposit (${supplyLabel})`}
+        icon={<TokenIcon src={supplyIconSrc} alt={supplyLabel} size={16} />}
+        from={formatBalance(currentDeposited)}
+        to={formatBalance(newDepositedTotal)}
+        hasAmount={hasAmount}
+      />
+
+      {hasInsufficientBalance && (
+        <p className="text-red-400 text-xs">Insufficient balance</p>
+      )}
+
+      {apyNum != null && (
+        <InfoRow
+          label="APY"
+          value={<span className="text-white font-semibold">{apy}</span>}
+        />
+      )}
+
+      {apyNum != null && (
+        <InfoRow
+          label="Projected monthly earnings"
+          value={
+            <AnimatedValue
+              value={formatCurrency(projectedMonthly, selectedCurrency)}
+              className="text-white font-semibold"
+            />
+          }
+        />
+      )}
+
+      {apyNum != null && (
+        <InfoRow
+          label="Projected yearly earnings"
+          value={
+            <AnimatedValue
+              value={formatCurrency(projectedYearly, selectedCurrency)}
+              className="text-white font-semibold"
+            />
+          }
+        />
+      )}
     </div>
   );
 }
@@ -128,7 +330,8 @@ export function VaultActionPanel({
   sharesBalance,
   isWalletConnected,
   apy,
-  tokenPriceUsd,
+  tokenPriceInCurrency,
+  selectedCurrency = "USD",
 }: VaultActionPanelProps) {
   const supplyLabel = vault.supplyAsset.symbol;
   const hasAmount = !!amount && parseFloat(amount) > 0;
@@ -136,29 +339,24 @@ export function VaultActionPanel({
   const currentDeposited = parseFloat(sharesBalance) || 0;
 
   const apyNum =
-    apy && apy !== "-" && apy !== ""
-      ? parseFloat(apy.replace("%", ""))
-      : null;
+    apy && apy !== "-" && apy !== "" ? parseFloat(apy.replace("%", "")) : null;
 
-  const usdValue =
-    tokenPriceUsd && depositAmt > 0 ? depositAmt * tokenPriceUsd : null;
+  const tokenPrice = tokenPriceInCurrency ?? 1;
+  const currencyValue = depositAmt > 0 ? depositAmt * tokenPrice : null;
 
-  const currentMonthly =
-    apyNum && currentDeposited > 0
-      ? currentDeposited * (apyNum / 100 / 12)
-      : 0;
-  const currentYearly =
-    apyNum && currentDeposited > 0 ? currentDeposited * (apyNum / 100) : 0;
-
+  // newDepositedTotal naturally equals currentDeposited when no amount is entered
   const newDepositedTotal = currentDeposited + depositAmt;
-  const newMonthly = apyNum ? newDepositedTotal * (apyNum / 100 / 12) : 0;
-  const newYearly = apyNum ? newDepositedTotal * (apyNum / 100) : 0;
+  const projectedMonthly = apyNum
+    ? newDepositedTotal * (apyNum / 100 / 12) * tokenPrice
+    : 0;
+  const projectedYearly = apyNum
+    ? newDepositedTotal * (apyNum / 100) * tokenPrice
+    : 0;
 
   const depositExceedsBalance =
     tab === "deposit" &&
     hasAmount &&
     parseFloat(amount) > parseFloat(supplyBalance) + 1e-10;
-
   const withdrawExceedsBalance =
     tab === "withdraw" &&
     hasAmount &&
@@ -181,122 +379,39 @@ export function VaultActionPanel({
     <div className="flex flex-col gap-3">
       <ModeTabs tab={tab} onTabChange={onTabChange} />
 
-      {/* Input card */}
-      <div
-        className={`rounded-2xl border p-4 transition-colors ${
-          hasAmount ? "border-[#229EDF]/70" : "border-white/10"
-        }`}
-        style={{ background: "#1a1a1a" }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-white/60 text-sm font-medium">
-            {tab === "deposit" ? "Deposit" : "Withdraw"} {supplyLabel}
-          </span>
-          <TokenIcon src={vault.supplyAsset.iconSrc} alt={supplyLabel} size={28} />
-        </div>
-
-        <input
-          type="text"
-          inputMode="decimal"
-          placeholder="0"
-          value={amount}
-          onChange={(e) => onAmountChange(sanitizeAmountInput(e.target.value))}
-          className="w-full bg-transparent text-white font-medium outline-none placeholder:text-white/20 mb-3"
-          style={{ fontSize: 33, fontFamily: '"FK Grotesk", "Inter", sans-serif' }}
-        />
-
-        <div className="flex items-center justify-between">
-          <AnimatedValue
-            value={usdValue != null ? `$${usdValue.toFixed(2)}` : "$0.00"}
-            className={`text-sm tabular-nums ${usdValue != null ? "text-white/50" : "text-white/20"}`}
-          />
-          <div className="flex items-center gap-2">
-            <span className="text-white/35 text-sm tabular-nums">
-              {balanceForDisplay}
-            </span>
-            <button
-              type="button"
-              onClick={() => onAmountChange(maxAmount)}
-              className="px-2.5 py-1 rounded-lg bg-white/10 text-white/60 text-xs font-semibold hover:bg-white/15 transition-colors"
-            >
-              MAX
-            </button>
-          </div>
-        </div>
-      </div>
+      <AmountInputCard
+        tab={tab}
+        supplyLabel={supplyLabel}
+        supplyIconSrc={vault.supplyAsset.iconSrc}
+        amount={amount}
+        onAmountChange={onAmountChange}
+        currencyValue={currencyValue}
+        selectedCurrency={selectedCurrency}
+        balanceForDisplay={balanceForDisplay}
+        maxAmount={maxAmount}
+        hasAmount={hasAmount}
+      />
 
       {(depositExceedsBalance || withdrawExceedsBalance) && (
         <p className="text-red-400 text-xs px-1">Insufficient balance</p>
       )}
 
-      {/* Summary card — deposit only */}
-      {tab === "deposit" && <div
-        className="rounded-2xl border border-white/5 px-4 py-3.5 space-y-3.5"
-        style={{ background: "#1a1a1a" }}
-      >
-        {/* Network */}
-        <div className="flex items-center justify-between">
-          <span className="text-white/50 text-sm">Network</span>
-          <div className="flex items-center gap-1.5">
-            <Image
-              src="/assets/xlm-negro-logo.png"
-              alt="Stellar"
-              width={14}
-              height={14}
-              unoptimized
-              className="w-3.5 h-3.5 rounded-sm invert"
-            />
-            <span className="text-white/80 text-sm font-medium">Stellar</span>
-          </div>
-        </div>
-
-        {/* Deposit / Withdraw amount */}
-        <ArrowRow
-          label={`${tab === "deposit" ? "Deposit" : "Withdraw"} (${supplyLabel})`}
-          icon={
-            <TokenIcon src={vault.supplyAsset.iconSrc} alt={supplyLabel} size={16} />
-          }
-          from={formatBalance(currentDeposited)}
-          to={
-            tab === "deposit"
-              ? formatBalance(newDepositedTotal)
-              : formatBalance(Math.max(0, currentDeposited - depositAmt))
-          }
+      {tab === "deposit" && (
+        <DepositSummary
+          supplyLabel={supplyLabel}
+          supplyIconSrc={vault.supplyAsset.iconSrc}
+          currentDeposited={currentDeposited}
+          newDepositedTotal={newDepositedTotal}
           hasAmount={hasAmount}
+          hasInsufficientBalance={depositExceedsBalance}
+          apyNum={apyNum}
+          apy={apy}
+          projectedMonthly={projectedMonthly}
+          projectedYearly={projectedYearly}
+          selectedCurrency={selectedCurrency}
         />
+      )}
 
-        {/* Deposit-only rows */}
-        {tab === "deposit" && (
-          <>
-            {apyNum != null && (
-              <div className="flex items-center justify-between">
-                <span className="text-white/50 text-sm">APY</span>
-                <span className="text-white font-semibold text-sm">{apy}</span>
-              </div>
-            )}
-
-            {apyNum != null && (
-              <ArrowRow
-                label="Projected monthly earnings"
-                from={`$${formatProjection(currentMonthly)}`}
-                to={`$${formatProjection(newMonthly)}`}
-                hasAmount={hasAmount}
-              />
-            )}
-
-            {apyNum != null && (
-              <ArrowRow
-                label="Projected yearly earnings"
-                from={`$${formatProjection(currentYearly)}`}
-                to={`$${formatProjection(newYearly)}`}
-                hasAmount={hasAmount}
-              />
-            )}
-          </>
-        )}
-      </div>}
-
-      {/* Submit button */}
       <button
         type="button"
         onClick={() => void onSubmit()}
