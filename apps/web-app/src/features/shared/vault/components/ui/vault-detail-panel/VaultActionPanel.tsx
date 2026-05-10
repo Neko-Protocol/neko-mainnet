@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Loader2 } from "lucide-react";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
 import { formatCurrency } from "@/lib/helpers/currency";
+import type { SupportedCurrency } from "@/stores/currency.store";
 import type { VaultActionPanelProps } from "./types";
 
 function formatBalance(n: number): string {
@@ -12,7 +13,13 @@ function formatBalance(n: number): string {
   return parseFloat(n.toFixed(4)).toString();
 }
 
-export function AnimatedValue({ value, className }: { value: string; className?: string }) {
+export function AnimatedValue({
+  value,
+  className,
+}: {
+  value: string;
+  className?: string;
+}) {
   const [displayed, setDisplayed] = useState(value);
   const [exiting, setExiting] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -23,33 +30,61 @@ export function AnimatedValue({ value, className }: { value: string; className?:
     setExiting(displayed);
     setDisplayed(value);
     timerRef.current = setTimeout(() => setExiting(null), 2600);
-    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <span className="relative inline-block overflow-hidden leading-none" style={{ verticalAlign: "middle" }}>
+    <span
+      className="relative inline-block overflow-hidden leading-none"
+      style={{ verticalAlign: "middle" }}
+    >
       {exiting !== null && (
-        <span className={`animate-value-exit ${className ?? ""}`}>{exiting}</span>
+        <span className={`animate-value-exit ${className ?? ""}`}>
+          {exiting}
+        </span>
       )}
-      <span key={displayed} className={`inline-block animate-value-enter ${className ?? ""}`}>
+      <span
+        key={displayed}
+        className={`inline-block animate-value-enter ${className ?? ""}`}
+      >
         {displayed}
       </span>
     </span>
   );
 }
 
-function TokenIcon({ src, alt, size = 16 }: { src: string; alt: string; size?: number }) {
+function TokenIcon({
+  src,
+  alt,
+  size = 16,
+}: {
+  src: string;
+  alt: string;
+  size?: number;
+}) {
   return (
     <div
       className="rounded-full bg-white/5 border border-white/10 overflow-hidden shrink-0"
       style={{ width: size, height: size }}
     >
-      <Image src={src} alt={alt} width={size} height={size} unoptimized className="h-full w-full object-contain" />
+      <Image
+        src={src}
+        alt={alt}
+        width={size}
+        height={size}
+        unoptimized
+        className="h-full w-full object-contain"
+      />
     </div>
   );
 }
 
-function ModeTabs({ tab, onTabChange }: Pick<VaultActionPanelProps, "tab" | "onTabChange">) {
+function ModeTabs({
+  tab,
+  onTabChange,
+}: Pick<VaultActionPanelProps, "tab" | "onTabChange">) {
   return (
     <div className="flex bg-white/6 rounded-xl p-1 gap-1 mb-4">
       {(["deposit", "withdraw"] as const).map((t) => (
@@ -58,7 +93,9 @@ function ModeTabs({ tab, onTabChange }: Pick<VaultActionPanelProps, "tab" | "onT
           type="button"
           onClick={() => onTabChange(t)}
           className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors capitalize ${
-            tab === t ? "bg-[#229EDF] text-white" : "text-white/50 hover:text-white/80"
+            tab === t
+              ? "bg-[#229EDF] text-white"
+              : "text-white/50 hover:text-white/80"
           }`}
         >
           {t}
@@ -134,7 +171,7 @@ function AmountInputCard({
   amount: string;
   onAmountChange: (v: string) => void;
   currencyValue: number | null;
-  selectedCurrency: string;
+  selectedCurrency: SupportedCurrency;
   balanceForDisplay: string;
   maxAmount: string;
   hasAmount: boolean;
@@ -160,7 +197,10 @@ function AmountInputCard({
         value={amount}
         onChange={(e) => onAmountChange(sanitizeAmountInput(e.target.value))}
         className="w-full bg-transparent text-white font-medium outline-none placeholder:text-white/20 mb-3"
-        style={{ fontSize: 33, fontFamily: '"FK Grotesk", "Inter", sans-serif' }}
+        style={{
+          fontSize: 33,
+          fontFamily: '"FK Grotesk", "Inter", sans-serif',
+        }}
       />
 
       <div className="flex items-center justify-between">
@@ -169,7 +209,9 @@ function AmountInputCard({
           className={`text-sm tabular-nums ${currencyValue != null ? "text-white/50" : "text-white/20"}`}
         />
         <div className="flex items-center gap-2">
-          <span className="text-white/35 text-sm tabular-nums">{balanceForDisplay}</span>
+          <span className="text-white/35 text-sm tabular-nums">
+            {balanceForDisplay}
+          </span>
           <button
             type="button"
             onClick={() => onAmountChange(maxAmount)}
@@ -206,7 +248,7 @@ function DepositSummary({
   apy?: string;
   projectedMonthly: number;
   projectedYearly: number;
-  selectedCurrency: string;
+  selectedCurrency: SupportedCurrency;
 }) {
   return (
     <div
@@ -304,16 +346,28 @@ export function VaultActionPanel({
 
   // newDepositedTotal naturally equals currentDeposited when no amount is entered
   const newDepositedTotal = currentDeposited + depositAmt;
-  const projectedMonthly = apyNum ? newDepositedTotal * (apyNum / 100 / 12) * tokenPrice : 0;
-  const projectedYearly = apyNum ? newDepositedTotal * (apyNum / 100) * tokenPrice : 0;
+  const projectedMonthly = apyNum
+    ? newDepositedTotal * (apyNum / 100 / 12) * tokenPrice
+    : 0;
+  const projectedYearly = apyNum
+    ? newDepositedTotal * (apyNum / 100) * tokenPrice
+    : 0;
 
   const depositExceedsBalance =
-    tab === "deposit" && hasAmount && parseFloat(amount) > parseFloat(supplyBalance) + 1e-10;
+    tab === "deposit" &&
+    hasAmount &&
+    parseFloat(amount) > parseFloat(supplyBalance) + 1e-10;
   const withdrawExceedsBalance =
-    tab === "withdraw" && hasAmount && parseFloat(amount) > currentDeposited + 1e-10;
+    tab === "withdraw" &&
+    hasAmount &&
+    parseFloat(amount) > currentDeposited + 1e-10;
 
   const isDisabled =
-    !isWalletConnected || isLoading || !hasAmount || depositExceedsBalance || withdrawExceedsBalance;
+    !isWalletConnected ||
+    isLoading ||
+    !hasAmount ||
+    depositExceedsBalance ||
+    withdrawExceedsBalance;
 
   const maxAmount = tab === "deposit" ? supplyBalance : sharesBalance;
   const balanceForDisplay =
