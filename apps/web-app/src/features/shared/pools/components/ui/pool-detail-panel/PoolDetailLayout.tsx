@@ -39,7 +39,7 @@ export function PoolDetailLayout({
     >
       {/* lg: viewport-fixed panel; reserve space so main column does not sit underneath */}
       <aside
-        className="z-30 w-full min-w-0 shrink-0 lg:fixed lg:right-8 lg:top-28 lg:z-40 lg:w-[min(24rem,calc(100vw-4rem))] lg:max-w-[calc(100vw-4rem)] lg:p-0"
+        className="order-last lg:order-none z-30 w-full min-w-0 shrink-0 lg:fixed lg:right-8 lg:top-28 lg:z-40 lg:w-[min(24rem,calc(100vw-4rem))] lg:max-w-[calc(100vw-4rem)] lg:p-0"
         aria-label="Pool actions"
       >
         <div className={panelInnerScroll}>
