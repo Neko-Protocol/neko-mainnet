@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import {
   Keypair,
   TransactionBuilder,
@@ -17,6 +18,7 @@ import { getBlendNetwork } from "@/lib/orchestrator/adapters/blend-config";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
+
 
 // CETES vault - the only vault with custom per-strategy APY getters.
 const CETES_VAULT_ID =
@@ -261,6 +263,42 @@ async function getBlendSupplyApy(
   }
 }
 
+// ─── Cached Blend vault APY (persists across Vercel serverless invocations) ───
+
+const getBlendVaultApy = unstable_cache(
+  async (vaultId: string, defindexApy: number | null) => {
+    const blendPools = NEKO_VAULT_BLEND_ASSETS[vaultId];
+    if (!blendPools) return { vaultApy: defindexApy, strategies: [] };
+
+    let blndPrice = 0;
+    try {
+      const firstPool = await PoolV2.load(getBlendNetwork(), blendPools[0].poolId);
+      blndPrice = await getBlndPriceUsd(firstPool.metadata.backstop);
+    } catch {
+      // BLND price unavailable — emissions skipped
+    }
+
+    const poolApys = await Promise.all(
+      blendPools.map((p) => getBlendSupplyApy(p.poolId, p.assetAddress, blndPrice))
+    );
+    const validApys = poolApys.filter((a): a is number => a !== null);
+    const blendApy =
+      validApys.length > 0
+        ? validApys.reduce((s, a) => s + a, 0) / validApys.length
+        : null;
+    const vaultApy = defindexApy ?? blendApy;
+    return {
+      vaultApy: vaultApy !== null ? parseFloat(vaultApy.toFixed(2)) : null,
+      strategies:
+        blendApy !== null
+          ? [{ name: "Blend", apy: parseFloat(blendApy.toFixed(2)), weight: 100 }]
+          : [],
+    };
+  },
+  ["vault-blend-apy"],
+  { revalidate: 300 } // cache 5 min across all Vercel instances
+);
+
 // ─── GET /api/vault/apy ───────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
@@ -360,47 +398,13 @@ export async function GET(request: NextRequest) {
     // Neko Blend-backed vaults: fall back to Blend supply APY when DeFindex has no history yet.
     const blendPools = NEKO_VAULT_BLEND_ASSETS[vaultId];
     if (blendPools) {
-      // Load first pool to get backstop ID, then fetch BLND price once for all pools
-      let blndPrice = 0;
-      try {
-        const firstPool = await PoolV2.load(
-          getBlendNetwork(),
-          blendPools[0].poolId
-        );
-        blndPrice = await getBlndPriceUsd(firstPool.metadata.backstop);
-      } catch {
-        // BLND price unavailable - emissions will be skipped
-      }
-      const poolApys = await Promise.all(
-        blendPools.map((p) =>
-          getBlendSupplyApy(p.poolId, p.assetAddress, blndPrice)
-        )
-      );
-      const validApys = poolApys.filter((a): a is number => a !== null);
-      const blendApy =
-        validApys.length > 0
-          ? validApys.reduce((s, a) => s + a, 0) / validApys.length
-          : null;
-      const vaultApy = defindexApy ?? blendApy;
-      return NextResponse.json({
-        vaultApy: vaultApy !== null ? parseFloat(vaultApy.toFixed(2)) : null,
-        strategies:
-          blendApy !== null
-            ? [
-                {
-                  name: "Blend",
-                  apy: parseFloat(blendApy.toFixed(2)),
-                  weight: 100,
-                },
-              ]
-            : [],
-      });
+      const blendPayload = await getBlendVaultApy(vaultId, defindexApy);
+      return NextResponse.json(blendPayload);
     }
 
     // All other vaults: SDK APY only.
     return NextResponse.json({
-      vaultApy:
-        defindexApy !== null ? parseFloat(defindexApy.toFixed(4)) : null,
+      vaultApy: defindexApy !== null ? parseFloat(defindexApy.toFixed(4)) : null,
       strategies: [],
     });
   } catch (err) {

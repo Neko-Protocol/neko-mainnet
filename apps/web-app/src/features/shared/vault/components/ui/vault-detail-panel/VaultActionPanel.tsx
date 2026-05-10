@@ -14,8 +14,7 @@ function formatProjection(value: number): string {
 
 function formatBalance(n: number): string {
   if (n === 0) return "0";
-  const s = n.toFixed(7);
-  return parseFloat(s).toString();
+  return parseFloat(n.toFixed(4)).toString();
 }
 
 function ArrowRow({
@@ -230,8 +229,8 @@ export function VaultActionPanel({
         <p className="text-red-400 text-xs px-1">Insufficient balance</p>
       )}
 
-      {/* Summary card */}
-      <div
+      {/* Summary card — deposit only */}
+      {tab === "deposit" && <div
         className="rounded-2xl border border-white/5 px-4 py-3.5 space-y-3.5"
         style={{ background: "#1a1a1a" }}
       >
@@ -295,7 +294,7 @@ export function VaultActionPanel({
             )}
           </>
         )}
-      </div>
+      </div>}
 
       {/* Submit button */}
       <button

@@ -1,2 +1,3 @@
 export { VaultDetailLayout } from "./VaultDetailLayout";
-export type { VaultDetailLayoutProps, VaultActionTab } from "./types";
+export { VaultActionPanel } from "./VaultActionPanel";
+export type { VaultDetailLayoutProps, VaultActionPanelProps, VaultActionTab } from "./types";
