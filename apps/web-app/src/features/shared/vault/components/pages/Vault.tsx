@@ -9,7 +9,6 @@ import { useWallet } from "@/hooks/useWallet";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { VaultGrid } from "../ui/VaultGrid";
-import { VaultDetailModal } from "../ui/VaultDetailModal";
 import { VaultTabs, type VaultTabKey } from "../ui/VaultTabs";
 import MyVaultPositions from "../ui/MyVaultPositions";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
@@ -40,7 +39,6 @@ function vaultAssetFilterIconSrc(v: VaultView): string {
 
 const Vault: React.FC = () => {
   const router = useRouter();
-  const [selectedVault, setSelectedVault] = useState<VaultView | null>(null);
   const [activeTab, setActiveTab] = useState<VaultTabKey>("vaults");
   const [assetFilter, setAssetFilter] = useState<string | null>(null);
   const [assetDropdownOpen, setAssetDropdownOpen] = useState(false);
@@ -93,12 +91,8 @@ const Vault: React.FC = () => {
   }, [defindexPayload, vaultsFromApi.length]);
 
   const activeContractId = useMemo(() => {
-    return (
-      selectedVault?.detail?.contracts?.vault ??
-      vaultsFromApi[0]?.detail?.contracts?.vault ??
-      null
-    );
-  }, [selectedVault, vaultsFromApi]);
+    return vaultsFromApi[0]?.detail?.contracts?.vault ?? null;
+  }, [vaultsFromApi]);
 
   const { data: liveVaultData } = useVaultData(activeContractId);
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
@@ -348,7 +342,7 @@ const Vault: React.FC = () => {
           balancePendingByVaultId={balancePendingByVaultId}
           fetchingFooterMessage={vaultFetchingFooterMessage}
           userBalances={userBalances}
-          onDetailsClick={setSelectedVault}
+          onDetailsClick={(v) => navigateToVault(v, "deposit")}
           onDepositClick={(v) => navigateToVault(v, "deposit")}
           onWithdrawClick={(v) => navigateToVault(v, "withdraw")}
           emptySubtitle={emptyVaultSubtitle}
@@ -362,17 +356,6 @@ const Vault: React.FC = () => {
         />
       )}
 
-      {selectedVault && (
-        <VaultDetailModal
-          vault={selectedVault}
-          onClose={() => setSelectedVault(null)}
-          onDeposit={() => {
-            const v = selectedVault;
-            setSelectedVault(null);
-            navigateToVault(v, "deposit");
-          }}
-        />
-      )}
     </PageContainer>
   );
 };
