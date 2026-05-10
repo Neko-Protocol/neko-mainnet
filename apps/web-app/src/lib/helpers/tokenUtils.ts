@@ -35,8 +35,24 @@ export const fromSmallestUnit = (
   return `${whole}.${trimmedFractional}`;
 };
 
-export const getExplorerUrl = (txHash: string): string => {
-  return `https://stellar.expert/explorer/public/tx/${txHash}`;
+export const getExplorerUrl = (
+  txHash: string,
+  network?: string
+): string | null => {
+  switch (network?.toUpperCase()) {
+    case "PUBLIC":
+    case "MAINNET":
+      return `https://stellar.expert/explorer/public/tx/${txHash}`;
+    case "TESTNET":
+      return `https://stellar.expert/explorer/testnet/tx/${txHash}`;
+    case "FUTURENET":
+      return `https://stellar.expert/explorer/futurenet/tx/${txHash}`;
+    case "LOCAL":
+    case "STANDALONE":
+      return null;
+    default:
+      return `https://stellar.expert/explorer/public/tx/${txHash}`;
+  }
 };
 
 export const sanitizeAmountInput = (value: string): string => {

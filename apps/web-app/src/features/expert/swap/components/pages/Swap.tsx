@@ -19,6 +19,7 @@ import {
   sanitizeAmountInput,
   fromSmallestUnit,
   getTokenIconFitClass,
+  getExplorerUrl,
 } from "@/lib/helpers/tokenUtils";
 import { DEFAULT_SLIPPAGE_BPS } from "@/features/expert/swap/constants/swapConfig";
 import { useToast } from "@/hooks/useToast";
@@ -34,7 +35,6 @@ import { useSwapExecution } from "../../hooks/useSwapExecution";
 import { useSwapPrices } from "../../hooks/useSwapPrices";
 
 import { SwapButton } from "../ui/SwapButton";
-import { TransactionResult } from "../ui/TransactionResult";
 import { SwapValueWarning } from "../ui/SwapValueWarning";
 import { OrderTypeTabs } from "../ui/OrderTypeTabs";
 
@@ -241,9 +241,42 @@ const Swap: React.FC = () => {
 
       if (result.orderId) {
         setTxHash(result.orderId);
-        addNotification("Success", "success", {
+        const explorerUrl = getExplorerUrl(result.orderId, network);
+        addNotification("Transaction successful", "success", {
           ...TOAST_CONFIG.defaultOpts,
-          description: "Swap completed successfully",
+          description: (
+            <div className="flex min-w-0 flex-col gap-3">
+              <span>Swap completed successfully.</span>
+              {explorerUrl && (
+                <a
+                  href={explorerUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    alignItems: "center",
+                    backgroundColor: "#229EDF",
+                    borderRadius: "9999px",
+                    boxSizing: "border-box",
+                    color: "#ffffff",
+                    display: "flex",
+                    fontSize: "0.875rem",
+                    fontWeight: 600,
+                    justifyContent: "center",
+                    lineHeight: "1.25rem",
+                    minWidth: 0,
+                    margin: "0 auto 0 calc(50% - 175px)",
+                    maxWidth: "220px",
+                    padding: "0.375rem 1rem",
+                    textAlign: "center",
+                    textDecoration: "none",
+                    width: "min(100%, 220px)",
+                  }}
+                >
+                  View on Stellar Expert
+                </a>
+              )}
+            </div>
+          ),
         });
 
         const tokenOutAddress = getTokenAddress(
@@ -473,15 +506,6 @@ const Swap: React.FC = () => {
           onClick={handleSwap}
         />
       </div>
-
-      {}
-      {txHash && (
-        <TransactionResult
-          txHash={txHash}
-          network={network}
-          orderType={orderType}
-        />
-      )}
 
       <TokenSelectorModal
         isOpen={tokenSelectorOpen}
