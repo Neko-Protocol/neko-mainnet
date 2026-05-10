@@ -3,6 +3,8 @@
 import React from "react";
 import Image from "next/image";
 import type { VaultView } from "@/features/shared/vault/types/vault";
+import type { SupportedCurrency } from "@/stores/currency.store";
+import { convertUsdDisplayToSelectedCurrency } from "@/lib/helpers/currency";
 
 function MetricBlock({
   label,
@@ -44,16 +46,21 @@ function MetricValue({ value, green }: { value: string; green?: boolean }) {
 export function VaultDetailMetrics({
   vault,
   liveApy,
+  fxRate = 1,
+  selectedCurrency = "USD",
 }: {
   vault: VaultView;
   liveApy?: string;
+  fxRate?: number;
+  selectedCurrency?: SupportedCurrency;
 }) {
   const apyDisplay = liveApy ?? vault.apy7d;
+  const tvlDisplay = convertUsdDisplayToSelectedCurrency(vault.tvl, fxRate, selectedCurrency);
 
   return (
     <div className="flex flex-wrap justify-between gap-y-7 mb-10">
       <MetricBlock label="TVL">
-        <MetricValue value={vault.tvl} />
+        <MetricValue value={tvlDisplay} />
       </MetricBlock>
 
       <MetricBlock label="APY">

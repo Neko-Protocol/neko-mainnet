@@ -7,6 +7,9 @@ import { useVaultBalance } from "@/features/shared/vault/hooks/useVaultBalance";
 import { useVaultAction } from "@/features/shared/vault/hooks/useVaultAction";
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { useFxRate } from "@/hooks/useFxRate";
+import { useCurrencyStore } from "@/stores/currency.store";
+import { convertUsdToSelected } from "@/lib/helpers/currency";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 import { VaultDetailHero } from "./VaultDetailHero";
 import { VaultDetailMetrics } from "./VaultDetailMetrics";
@@ -32,6 +35,10 @@ export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps)
       : vault.apy7d;
 
   const { price: tokenPriceUsd } = useTokenPrice(vault.supplyAsset.symbol);
+  const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
+  const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
+  const tokenPriceInCurrency =
+    tokenPriceUsd > 0 ? convertUsdToSelected(tokenPriceUsd, fxRate) : undefined;
 
   const { sharesFormatted } = useVaultBalance(vaultContractId);
   const { isLoading, handleDeposit, handleWithdraw } = useVaultAction(
@@ -91,7 +98,8 @@ export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps)
             sharesBalance={sharesFormatted}
             isWalletConnected={!!address}
             apy={liveApy7d}
-            tokenPriceUsd={tokenPriceUsd > 0 ? tokenPriceUsd : undefined}
+            tokenPriceInCurrency={tokenPriceInCurrency}
+            selectedCurrency={selectedCurrency}
           />
         </div>
       </aside>
@@ -101,7 +109,7 @@ export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps)
         <div className="pt-8">
           <VaultDetailHero vault={vault} />
           <div className="border-t border-white/5 mb-8" />
-          <VaultDetailMetrics vault={vault} liveApy={liveApy7d} />
+          <VaultDetailMetrics vault={vault} liveApy={liveApy7d} fxRate={fxRate} selectedCurrency={selectedCurrency} />
           <div className="border-t border-white/5 mb-8" />
           <VaultDetailInfo vault={vault} />
         </div>
