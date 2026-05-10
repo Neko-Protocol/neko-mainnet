@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
@@ -10,7 +11,6 @@ import { PageContainer } from "@/components/ui/PageContainer";
 import { VaultGrid } from "../ui/VaultGrid";
 import { VaultDetailModal } from "../ui/VaultDetailModal";
 import { VaultTabs, type VaultTabKey } from "../ui/VaultTabs";
-import { VaultActionModal } from "../ui/VaultActionModal";
 import MyVaultPositions from "../ui/MyVaultPositions";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useDefindexVaults } from "../../hooks/useDefindexVaults";
@@ -39,10 +39,8 @@ function vaultAssetFilterIconSrc(v: VaultView): string {
 }
 
 const Vault: React.FC = () => {
+  const router = useRouter();
   const [selectedVault, setSelectedVault] = useState<VaultView | null>(null);
-  /** Keeps the vault for deposit/withdraw after closing the detail modal */
-  const [pendingActionVault, setPendingActionVault] =
-    useState<VaultView | null>(null);
   const [activeTab, setActiveTab] = useState<VaultTabKey>("vaults");
   const [assetFilter, setAssetFilter] = useState<string | null>(null);
   const [assetDropdownOpen, setAssetDropdownOpen] = useState(false);
@@ -60,10 +58,6 @@ const Vault: React.FC = () => {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-  const [actionModal, setActionModal] = useState<{
-    open: boolean;
-    isDeposit: boolean;
-  }>({ open: false, isDeposit: true });
 
   const { data: defindexPayload, isPending, isFetching } = useDefindexVaults();
   const vaultsFromApi = defindexPayload?.vaults ?? [];
@@ -100,12 +94,11 @@ const Vault: React.FC = () => {
 
   const activeContractId = useMemo(() => {
     return (
-      pendingActionVault?.detail?.contracts?.vault ??
       selectedVault?.detail?.contracts?.vault ??
       vaultsFromApi[0]?.detail?.contracts?.vault ??
       null
     );
-  }, [pendingActionVault, selectedVault, vaultsFromApi]);
+  }, [selectedVault, vaultsFromApi]);
 
   const { data: liveVaultData } = useVaultData(activeContractId);
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
@@ -114,7 +107,7 @@ const Vault: React.FC = () => {
   const { address } = useWallet();
 
   const apyQueries = useQueries({
-    queries: (vaultsFromApi || []).map((v) => ({
+    queries: vaultsFromApi.map((v) => ({
       queryKey: ["vault-apy", v.id],
       queryFn: async (): Promise<number | null> => {
         const res = await fetch(`/api/vault/apy?vault=${v.id}`);
@@ -126,13 +119,13 @@ const Vault: React.FC = () => {
       gcTime: 15 * 60_000,
       refetchOnWindowFocus: false,
       retry: false,
-      enabled: !!v.id && v.detail?.contracts?.vault === activeContractId,
+      enabled: !!v.id,
     })),
   });
 
   // Fetch all vault balances in parallel
   const balanceQueries = useQueries({
-    queries: (vaultsFromApi || []).map((v) => ({
+    queries: vaultsFromApi.map((v) => ({
       queryKey: ["vaultBalance", v.detail?.contracts?.vault, address],
       queryFn: async () => {
         if (!address || !v.detail?.contracts?.vault) return 0n;
@@ -222,8 +215,6 @@ const Vault: React.FC = () => {
     return vaults.filter((v) => v.supplyAsset?.symbol === assetFilter);
   }, [vaults, assetFilter]);
 
-  const displayVault =
-    pendingActionVault ?? selectedVault ?? vaultsFromApi[0] ?? null;
 
   const balancePendingByVaultId = useMemo(() => {
     const map: Record<string, boolean> = {};
@@ -245,13 +236,10 @@ const Vault: React.FC = () => {
   const vaultFetchingFooterMessage = useMemo(() => {
     const anyBalanceStillLoading =
       Boolean(address) &&
-      filteredVaults.some((vault) => {
-        const idx = vaultsFromApi.findIndex((v) => v.id === vault.id);
-        if (idx === -1) return false;
-        const q = balanceQueries[idx];
-        if (!vault.detail?.contracts?.vault || !q) return false;
-        return !q.isFetched;
-      });
+      filteredVaults.some(
+        (vault) =>
+          !!vault.detail?.contracts?.vault && balancePendingByVaultId[vault.id]
+      );
 
     const listStillRefreshing =
       isFetching && vaultsFromApi.length > 0 && !isPending;
@@ -263,18 +251,14 @@ const Vault: React.FC = () => {
   }, [
     address,
     filteredVaults,
-    vaultsFromApi,
-    balanceQueries,
+    balancePendingByVaultId,
     isFetching,
+    vaultsFromApi.length,
     isPending,
   ]);
 
-  const openDepositModal = (isDeposit = true) =>
-    setActionModal({ open: true, isDeposit });
-
-  const closeActionModal = () => {
-    setPendingActionVault(null);
-    setActionModal({ open: false, isDeposit: true });
+  const navigateToVault = (v: VaultView, tab: "deposit" | "withdraw") => {
+    router.push(`/vaults/${encodeURIComponent(v.id)}?tab=${tab}`);
   };
 
   return (
@@ -365,30 +349,16 @@ const Vault: React.FC = () => {
           fetchingFooterMessage={vaultFetchingFooterMessage}
           userBalances={userBalances}
           onDetailsClick={setSelectedVault}
-          onDepositClick={(v) => {
-            setSelectedVault(null);
-            setPendingActionVault(v);
-            openDepositModal(true);
-          }}
-          onWithdrawClick={(v) => {
-            setSelectedVault(null);
-            setPendingActionVault(v);
-            openDepositModal(false);
-          }}
+          onDepositClick={(v) => navigateToVault(v, "deposit")}
+          onWithdrawClick={(v) => navigateToVault(v, "withdraw")}
           emptySubtitle={emptyVaultSubtitle}
         />
       ) : (
         <MyVaultPositions
           vaults={vaults}
           userBalances={userBalances}
-          onDeposit={(v) => {
-            setPendingActionVault(v);
-            openDepositModal(true);
-          }}
-          onWithdraw={(v) => {
-            setPendingActionVault(v);
-            openDepositModal(false);
-          }}
+          onDeposit={(v) => navigateToVault(v, "deposit")}
+          onWithdraw={(v) => navigateToVault(v, "withdraw")}
         />
       )}
 
@@ -397,22 +367,10 @@ const Vault: React.FC = () => {
           vault={selectedVault}
           onClose={() => setSelectedVault(null)}
           onDeposit={() => {
-            setPendingActionVault(selectedVault);
+            const v = selectedVault;
             setSelectedVault(null);
-            openDepositModal();
+            navigateToVault(v, "deposit");
           }}
-        />
-      )}
-
-      {actionModal.open && activeContractId && (
-        <VaultActionModal
-          key={`${activeContractId}-${actionModal.isDeposit}`}
-          vaultContractId={activeContractId}
-          isDeposit={actionModal.isDeposit}
-          onClose={closeActionModal}
-          supplyAssetContractAddress={displayVault?.supplyAsset.contractAddress}
-          supplyAssetSymbol={displayVault?.supplyAsset.symbol}
-          vaultShareSymbol={displayVault?.name}
         />
       )}
     </PageContainer>
