@@ -244,39 +244,21 @@ const Swap: React.FC = () => {
         const explorerUrl = getExplorerUrl(result.orderId, network);
         addNotification("Transaction successful", "success", {
           ...TOAST_CONFIG.defaultOpts,
-          description: (
-            <div className="flex min-w-0 flex-col gap-3">
-              <span>Swap completed successfully.</span>
-              {explorerUrl && (
-                <a
-                  href={explorerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    alignItems: "center",
-                    backgroundColor: "#229EDF",
-                    borderRadius: "9999px",
-                    boxSizing: "border-box",
-                    color: "#ffffff",
-                    display: "flex",
-                    fontSize: "0.875rem",
-                    fontWeight: 600,
-                    justifyContent: "center",
-                    lineHeight: "1.25rem",
-                    minWidth: 0,
-                    margin: "0 auto 0 calc(50% - 175px)",
-                    maxWidth: "220px",
-                    padding: "0.375rem 1rem",
-                    textAlign: "center",
-                    textDecoration: "none",
-                    width: "min(100%, 220px)",
-                  }}
-                >
-                  View on Stellar Expert
-                </a>
-              )}
-            </div>
-          ),
+          description: "Swap completed successfully.",
+          ...(explorerUrl
+            ? {
+                styles: {
+                  button:
+                    "!mx-auto !mt-3 !box-border !flex !h-9 !w-[220px] !max-w-full !-translate-x-16 !items-center !justify-center !rounded-full !bg-[#229EDF] !px-4 !text-sm !font-semibold !leading-5 !text-white !no-underline hover:!bg-[#1a8bc7]",
+                },
+                button: {
+                  title: "View on Stellar Expert",
+                  onClick: () => {
+                    window.open(explorerUrl, "_blank", "noopener,noreferrer");
+                  },
+                },
+              }
+            : {}),
         });
 
         const tokenOutAddress = getTokenAddress(
