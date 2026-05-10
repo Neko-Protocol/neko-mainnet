@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import type { UserPositionWithPool } from "@/features/expert/dashboard/hooks/useUserPositions";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
@@ -90,6 +91,18 @@ export function YourPositionsTable({
 
   return (
     <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
+        <span className="text-white/30 text-xs font-semibold uppercase tracking-wide">
+          Pools
+        </span>
+        <Link
+          href="/pools"
+          className="flex items-center gap-1 text-xs text-white/30 hover:text-white transition-colors"
+        >
+          Manage
+          <ArrowRight className="h-3 w-3" />
+        </Link>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -121,6 +134,11 @@ export function YourPositionsTable({
                   </p>
                   <p className="text-white/40 text-xs mt-0.5 truncate">
                     {pool.tokens.map((t) => t.code).join(" / ")}
+                    {pool.apy > 0 && (
+                      <span className="ml-1.5 text-[#76C464]">
+                        {pool.apy.toFixed(2)}% APY
+                      </span>
+                    )}
                   </p>
                 </td>
                 <td className="px-4 py-3.5 align-middle text-right">
