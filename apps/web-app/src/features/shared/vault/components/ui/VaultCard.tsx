@@ -208,20 +208,6 @@ export const VaultCard: React.FC<VaultCardProps> = ({
         style={{ background: isLight ? "#141414" : "#181818" }}
       >
         <button
-          aria-label={
-            hasPosition
-              ? `Withdraw from ${vault.name}`
-              : `View details for ${vault.name}`
-          }
-          onClick={(e) => {
-            e.stopPropagation();
-            hasPosition ? onWithdrawClick?.(vault) : onDetailsClick?.(vault);
-          }}
-          className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-white/15 hover:border-white/35 text-white/60 hover:text-white bg-transparent"
-        >
-          {hasPosition ? "Withdraw" : "Details"}
-        </button>
-        <button
           aria-label={`Deposit into ${vault.name}`}
           onClick={(e) => {
             e.stopPropagation();
@@ -230,6 +216,16 @@ export const VaultCard: React.FC<VaultCardProps> = ({
           className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-[#229EDF]/50 hover:border-[#229EDF] text-[#229EDF] hover:text-white hover:bg-[#229EDF]/10 bg-transparent"
         >
           Deposit
+        </button>
+        <button
+          aria-label={`Withdraw from ${vault.name}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onWithdrawClick?.(vault);
+          }}
+          className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-white/15 hover:border-white/35 text-white/60 hover:text-white bg-transparent"
+        >
+          Withdraw
         </button>
       </div>
     </div>

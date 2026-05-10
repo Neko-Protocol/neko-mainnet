@@ -21,8 +21,6 @@ import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors
 import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { resolveDecimalsForAuditAssetKey } from "@/lib/helpers/auditAssetAmounts";
 import { auditService } from "@/lib/services/audit.service";
-import { useVaultBalance } from "./useVaultBalance";
-import { useVaultData } from "./useVaultData";
 
 const SLIPPAGE = 0.01;
 
@@ -137,15 +135,15 @@ export function useVaultAction(
     networkPassphrase: walletPassphrase,
   } = useWallet();
   const { addNotification } = useToast();
-  const { refetch: refetchBalance } = useVaultBalance(vaultContractId);
-  const { refetch: refetchVaultData } = useVaultData(vaultContractId);
   const queryClient = useQueryClient();
 
-  const refetchSupplyBalance = useCallback(
+  const invalidateAfterTx = useCallback(
     () =>
-      queryClient.invalidateQueries({
-        queryKey: ["vaultSupplyBalance"],
-      }),
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["vaultBalance"] }),
+        queryClient.invalidateQueries({ queryKey: ["vaultSupplyBalance"] }),
+        queryClient.invalidateQueries({ queryKey: ["vaultData"] }),
+      ]),
     [queryClient]
   );
 
@@ -255,22 +253,14 @@ export function useVaultAction(
                 "error"
               );
             }
-            void Promise.all([
-              refetchBalance(),
-              refetchVaultData(),
-              refetchSupplyBalance(),
-            ]);
+            void invalidateAfterTx();
           })
           .catch(() => {
             addNotification(
               "Could not confirm transaction. Please refresh.",
               "error"
             );
-            void Promise.all([
-              refetchBalance(),
-              refetchVaultData(),
-              refetchSupplyBalance(),
-            ]);
+            void invalidateAfterTx();
           });
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
@@ -285,9 +275,7 @@ export function useVaultAction(
       address,
       walletPassphrase,
       signTransaction,
-      refetchBalance,
-      refetchVaultData,
-      refetchSupplyBalance,
+      invalidateAfterTx,
       addNotification,
       showError,
       showSuccess,
@@ -382,22 +370,14 @@ export function useVaultAction(
                 "error"
               );
             }
-            void Promise.all([
-              refetchBalance(),
-              refetchVaultData(),
-              refetchSupplyBalance(),
-            ]);
+            void invalidateAfterTx();
           })
           .catch(() => {
             addNotification(
               "Could not confirm transaction. Please refresh.",
               "error"
             );
-            void Promise.all([
-              refetchBalance(),
-              refetchVaultData(),
-              refetchSupplyBalance(),
-            ]);
+            void invalidateAfterTx();
           });
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
@@ -412,9 +392,7 @@ export function useVaultAction(
       address,
       walletPassphrase,
       signTransaction,
-      refetchBalance,
-      refetchVaultData,
-      refetchSupplyBalance,
+      invalidateAfterTx,
       addNotification,
       showError,
       showSuccess,

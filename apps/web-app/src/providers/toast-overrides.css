@@ -21,6 +21,7 @@
 }
 
 [data-sileo-description] {
+  box-sizing: border-box;
   word-wrap: break-word;
   overflow-wrap: break-word;
   white-space: normal;

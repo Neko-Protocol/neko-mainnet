@@ -56,20 +56,20 @@ export function SettingsUIModeSection({
               onClick={() => setMode(id)}
               className={`group flex w-full items-center gap-3.5 rounded-xl border px-4 py-3 text-left transition-colors duration-150 ${
                 isActive
-                  ? "border-blue-500"
+                  ? "border-[#229EDF]"
                   : "border-white/[0.06] bg-white/[0.015] hover:bg-white/[0.03]"
               }`}
             >
               <span
                 className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
                   isActive
-                    ? "border-blue-400 text-blue-400"
+                    ? "border-[#229EDF] text-[#229EDF]"
                     : "border-white/25 bg-transparent"
                 }`}
               >
                 {isActive ? (
                   <Check
-                    className="h-2.5 w-2.5 text-blue-400"
+                    className="h-2.5 w-2.5 text-[#229EDF]"
                     strokeWidth={3.5}
                   />
                 ) : null}

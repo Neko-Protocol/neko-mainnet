@@ -9,13 +9,14 @@ export default function DashboardTemplate({
   children: ReactNode;
 }) {
   const pathname = usePathname();
-  const poolDetail = pathname ? /^\/pools\/[^/]+/.test(pathname) : false;
-  const discoverDetail = pathname ? /^\/discover\/[^/]+/.test(pathname) : false;
+  const poolDetail = /^\/pools\/[^/]+/.test(pathname);
+  const vaultDetail = /^\/vaults\/[^/]+/.test(pathname);
+  const discoverDetail = /^\/discover\/[^/]+/.test(pathname);
 
   return (
     <div
       className={
-        poolDetail
+        poolDetail || vaultDetail
           ? "flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden pt-6 sm:pt-8 pb-2"
           : discoverDetail
             ? "w-full min-w-0 max-w-full flex flex-col items-stretch py-6 sm:py-8"

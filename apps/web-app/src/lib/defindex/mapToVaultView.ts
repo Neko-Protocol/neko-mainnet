@@ -78,11 +78,13 @@ const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
   CB3FUMFGCF6DHSFK6N2TOKHRMYXS34HFKQR45UKVORCRUM35AF3ES7WQ: {
     createdBy: "Neko",
     creatorIconSrc: "/neko-logo.png",
+    issuerIconSrc: "/assets/vault-assets/neko.svg",
   },
   // USDC Neko
   CCPKQH3K5XUGP5GXCT6WTABS7TGXRR745BJ4MEFSGNATB7AOBRL4VEOT: {
     createdBy: "Neko",
     creatorIconSrc: "/neko-logo.png",
+    issuerIconSrc: "/assets/vault-assets/neko.svg",
   },
 };
 

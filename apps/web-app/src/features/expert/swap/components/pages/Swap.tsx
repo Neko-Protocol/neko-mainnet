@@ -19,6 +19,7 @@ import {
   sanitizeAmountInput,
   fromSmallestUnit,
   getTokenIconFitClass,
+  getExplorerUrl,
 } from "@/lib/helpers/tokenUtils";
 import { DEFAULT_SLIPPAGE_BPS } from "@/features/expert/swap/constants/swapConfig";
 import { useToast } from "@/hooks/useToast";
@@ -34,7 +35,6 @@ import { useSwapExecution } from "../../hooks/useSwapExecution";
 import { useSwapPrices } from "../../hooks/useSwapPrices";
 
 import { SwapButton } from "../ui/SwapButton";
-import { TransactionResult } from "../ui/TransactionResult";
 import { SwapValueWarning } from "../ui/SwapValueWarning";
 import { OrderTypeTabs } from "../ui/OrderTypeTabs";
 
@@ -241,9 +241,24 @@ const Swap: React.FC = () => {
 
       if (result.orderId) {
         setTxHash(result.orderId);
-        addNotification("Success", "success", {
+        const explorerUrl = getExplorerUrl(result.orderId, network);
+        addNotification("Transaction successful", "success", {
           ...TOAST_CONFIG.defaultOpts,
-          description: "Swap completed successfully",
+          description: "Swap completed successfully.",
+          ...(explorerUrl
+            ? {
+                styles: {
+                  button:
+                    "!mx-auto !mt-3 !box-border !flex !h-9 !w-[220px] !max-w-full !-translate-x-16 !items-center !justify-center !rounded-full !bg-[#229EDF] !px-4 !text-sm !font-semibold !leading-5 !text-white !no-underline hover:!bg-[#1a8bc7]",
+                },
+                button: {
+                  title: "View on Stellar Expert",
+                  onClick: () => {
+                    window.open(explorerUrl, "_blank", "noopener,noreferrer");
+                  },
+                },
+              }
+            : {}),
         });
 
         const tokenOutAddress = getTokenAddress(
@@ -473,15 +488,6 @@ const Swap: React.FC = () => {
           onClick={handleSwap}
         />
       </div>
-
-      {}
-      {txHash && (
-        <TransactionResult
-          txHash={txHash}
-          network={network}
-          orderType={orderType}
-        />
-      )}
 
       <TokenSelectorModal
         isOpen={tokenSelectorOpen}
