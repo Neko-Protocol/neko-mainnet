@@ -345,11 +345,7 @@ export function SimulatorWizard() {
             amount: state.amount,
             snapshotApy: state.destination.apy ?? state.stackVenue?.apy ?? null,
           }}
-          suggestedName={
-            state.stackVenue
-              ? `${state.token.code} → ${state.destination.name} + ${state.stackVenue.name}`
-              : `${state.token.code} → ${state.destination.name}`
-          }
+          suggestedName=""
           onClose={() => setSaveDialogOpen(false)}
         />
       )}
