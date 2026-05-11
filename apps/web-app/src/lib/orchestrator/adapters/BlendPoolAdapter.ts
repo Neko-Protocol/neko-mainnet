@@ -134,7 +134,9 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           totalLiabilities: reserve.totalLiabilities().toString(),
           utilization: reserve.getUtilizationFloat(),
           poolName: pool.metadata.name,
-          hasEmissions: !!(reserve.supplyEmissions || reserve.borrowEmissions),
+          hasEmissions:
+            !BLEND_POOL_VAULTS[`${poolContractId}:${assetAddress}`] &&
+            !!(reserve.supplyEmissions || reserve.borrowEmissions),
         },
       };
     } catch (error) {
@@ -193,9 +195,9 @@ export class BlendPoolAdapter implements BasePoolAdapter {
             totalLiabilities: reserve.totalLiabilities().toString(),
             utilization: reserve.getUtilizationFloat(),
             poolName: pool.metadata.name,
-            hasEmissions: !!(
-              reserve.supplyEmissions || reserve.borrowEmissions
-            ),
+            hasEmissions:
+              !BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`] &&
+              !!(reserve.supplyEmissions || reserve.borrowEmissions),
           },
         });
       }
