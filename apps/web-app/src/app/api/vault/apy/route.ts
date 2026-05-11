@@ -8,12 +8,16 @@ import {
   scValToNative,
   rpc,
 } from "@stellar/stellar-sdk";
-import { PoolV2, Backstop } from "@blend-capital/blend-sdk";
+import { PoolV2 } from "@blend-capital/blend-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { resolveVaultIdForApi } from "@/lib/defindex/vaultContract";
 import { createDefindexServerSdk } from "@/lib/defindex/createServerSdk";
 import { defindexNetworkFromEnv } from "@/lib/defindex/network";
 import { getBlendNetwork } from "@/lib/orchestrator/adapters/blend-config";
+import {
+  computeBlendEmissionsApy,
+  getBlndPriceUsd,
+} from "@/lib/orchestrator/adapters/blend-emissions";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -205,22 +209,6 @@ async function getDefindexVaultApy(vaultId: string): Promise<number | null> {
 
 // ─── Blend supply APY (base + BLND emissions) ─────────────────────────────────
 
-async function getBlndPriceUsd(backstopId: string): Promise<number> {
-  try {
-    const network = getBlendNetwork();
-    const backstop = await Backstop.load(network, backstopId);
-    const bt = backstop.backstopToken;
-    // Comet LP is 80/20 BLND/USDC → total LP value = usdc * 5
-    // BLND value = 80% of LP → blnd_price = (usdc * 4) / blnd (both 7-decimal, cancel out)
-    const blnd = Number(bt.blnd);
-    const usdc = Number(bt.usdc);
-    if (blnd === 0) return 0;
-    return (usdc * 4) / blnd;
-  } catch {
-    return 0;
-  }
-}
-
 async function getBlendSupplyApy(
   poolId: string,
   assetAddress: string,
@@ -234,28 +222,14 @@ async function getBlendSupplyApy(
 
     const baseApy = reserve.estSupplyApy * 100;
 
-    // Add BLND emissions APY if emissions are active and BLND price is known
-    if (reserve.supplyEmissions && blndPriceUsd > 0) {
-      let assetPriceUsd = 1;
-      try {
-        const oracle = await pool.loadOracle();
-        assetPriceUsd = oracle.getPriceFloat(assetAddress) ?? 1;
-      } catch {
-        // fall back to 1.0 (stablecoin assumption)
-      }
-      const blndPerYearPerToken =
-        reserve.supplyEmissions.emissionsPerYearPerToken(
-          reserve.data.bSupply,
-          reserve.config.decimals
-        );
-      if (blndPerYearPerToken > 0 && assetPriceUsd > 0) {
-        const emissionsApy =
-          ((blndPerYearPerToken * blndPriceUsd) / assetPriceUsd) * 100;
-        return baseApy + emissionsApy;
-      }
-    }
+    const emissionsApy = await computeBlendEmissionsApy(
+      reserve,
+      pool,
+      assetAddress,
+      blndPriceUsd
+    );
 
-    return baseApy;
+    return emissionsApy !== null ? baseApy + emissionsApy : baseApy;
   } catch {
     return null;
   }
@@ -273,7 +247,10 @@ async function getBlendVaultApy(vaultId: string, defindexApy: number | null) {
       getBlendNetwork(),
       blendPools[0].poolId
     );
-    blndPrice = await getBlndPriceUsd(firstPool.metadata.backstop);
+    blndPrice = await getBlndPriceUsd(
+      firstPool.metadata.backstop,
+      getBlendNetwork()
+    );
   } catch {
     // BLND price unavailable  emissions skipped
   }
