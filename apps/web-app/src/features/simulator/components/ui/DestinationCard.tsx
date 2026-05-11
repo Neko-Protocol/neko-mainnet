@@ -12,6 +12,20 @@ interface DestinationCardProps {
   onSelect: (next: SimulatorDestination) => void;
 }
 
+function kindBadgeClass(kind: SimulatorDestination["kind"]) {
+  if (kind === "vault")
+    return "bg-violet-500/15 text-violet-300 border border-violet-500/20";
+  if (kind === "pool")
+    return "bg-amber-500/15 text-amber-300 border border-amber-500/20";
+  return "bg-white/8 text-white/50";
+}
+
+function kindBadgeLabel(kind: SimulatorDestination["kind"]) {
+  if (kind === "vault") return "Managed";
+  if (kind === "pool") return "Active";
+  return "Variable";
+}
+
 export function DestinationCard({
   destination,
   isSelected,
@@ -29,12 +43,9 @@ export function DestinationCard({
     ? getVaultStrategyLabels(destination.raw as VaultView, strategies)
     : destination.strategyLabels;
 
-  const apyLabel = (() => {
-    if (apyLoading && isVault) return "Calculating earnings...";
-    if (apy === null) return "Earnings rate not available";
-    if (apy <= 0) return "Earn 0% per year (variable)";
-    return `Earn ${apy.toFixed(2)}% per year`;
-  })();
+  const showApySkeleton = apyLoading && isVault;
+  const showPositiveApy =
+    !showApySkeleton && apy !== null && apy !== undefined && apy > 0;
 
   const handleClick = () => {
     onSelect({
@@ -44,16 +55,17 @@ export function DestinationCard({
     });
   };
 
+  const badgeLabel = kindBadgeLabel(destination.kind);
+  const badgeClass = kindBadgeClass(destination.kind);
+
   return (
     <button
       type="button"
       onClick={handleClick}
       className={cn(
-        "flex w-full flex-col gap-3 rounded-2xl border bg-[#2A2A2A] p-4 text-left transition-all",
-        "hover:border-white/20 hover:bg-[#2F2F2F]",
-        isSelected
-          ? "border-[#229EDF] ring-1 ring-[#229EDF]/40"
-          : "border-white/10"
+        "flex w-full flex-col gap-3 rounded-2xl border border-white/8 bg-[#1C1C1C] p-4 text-left transition-all",
+        "hover:bg-[#222222]",
+        isSelected && "border-[#229EDF] ring-1 ring-[#229EDF]/40"
       )}
       aria-pressed={isSelected}
     >
@@ -67,30 +79,51 @@ export function DestinationCard({
               {destination.protocol}
             </span>
           </div>
-          <p className="mt-1 text-xs text-white/50">
-            Total deposited: {destination.tvlLabel || "-"}
-          </p>
+          {destination.tvlLabel ? (
+            <p className="mt-1 flex flex-wrap items-baseline gap-1.5">
+              <span className="text-[10px] text-white/30">Pool size</span>
+              <span className="text-sm font-medium text-white/80">
+                <span className="text-white/50" aria-hidden>
+                  $
+                </span>
+                {destination.tvlLabel}
+              </span>
+            </p>
+          ) : null}
         </div>
-        <div className="shrink-0 text-right">
-          <p
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <div className="text-right">
+            {showApySkeleton ? (
+              <div
+                className="h-8 w-[4.5rem] animate-pulse rounded-md bg-white/[0.08]"
+                aria-hidden
+              />
+            ) : showPositiveApy ? (
+              <>
+                <p className="text-2xl font-bold leading-tight text-[#229EDF]">
+                  {apy!.toFixed(2)}%
+                </p>
+                <p className="mt-0.5 text-xs text-white/40">/ year</p>
+              </>
+            ) : (
+              <p className="text-2xl leading-tight text-white/30"></p>
+            )}
+          </div>
+          <span
             className={cn(
-              "text-base font-semibold",
-              apyLoading && isVault
-                ? "text-white/50"
-                : apy && apy > 0
-                  ? "text-[#229EDF]"
-                  : "text-white/70"
+              "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+              badgeClass
             )}
           >
-            {apyLabel}
-          </p>
+            {badgeLabel}
+          </span>
         </div>
       </div>
 
-      <ul className="flex flex-col gap-1 text-xs text-white/70">
+      <ul className="flex flex-col gap-1 text-xs text-white/50">
         {labels.map((label) => (
           <li key={label} className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#229EDF]" />
+            <span className="h-px w-3 shrink-0 bg-white/20" aria-hidden />
             {label}
           </li>
         ))}
