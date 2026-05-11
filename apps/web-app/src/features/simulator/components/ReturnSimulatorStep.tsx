@@ -199,80 +199,6 @@ export function ReturnSimulatorStep({
 
   const apy = effectiveApy;
 
-  const stackedYieldNote = useMemo(() => {
-    if (!bondQuote || isYieldOnlyHold) return null;
-
-    if (bondHold && depositVenue) {
-      if (depositVenue.kind === "vault") {
-        if (apyLoading && vaultApy === null) return null;
-        const v =
-          vaultApy !== null && vaultApy !== undefined
-            ? vaultApy.toFixed(2)
-            : "0.00";
-        const sum = (bondQuote.apy + (vaultApy ?? 0)).toFixed(2);
-        return `Approximate combined yield: ${bondQuote.apy.toFixed(2)}% bond + ${v}% vault = ${sum}% yearly (percentages added; actual compounding may differ).`;
-      }
-      const p = depositVenue.apy;
-      const poolPct = p !== null && p !== undefined ? p.toFixed(2) : "0.00";
-      const sum = (bondQuote.apy + (depositVenue.apy ?? 0)).toFixed(2);
-      return `Approximate combined yield: ${bondQuote.apy.toFixed(2)}% bond + ${poolPct}% pool = ${sum}% yearly (percentages added; actual compounding may differ).`;
-    }
-
-    if (
-      !bondHold &&
-      isBondToken &&
-      (venue.kind === "pool" || venue.kind === "vault")
-    ) {
-      if (venue.kind === "vault") {
-        if (apyLoading && vaultApy === null) return null;
-        const v =
-          vaultApy !== null && vaultApy !== undefined
-            ? vaultApy.toFixed(2)
-            : "0.00";
-        const sum = (bondQuote.apy + (vaultApy ?? 0)).toFixed(2);
-        return `Approximate combined yield: ${bondQuote.apy.toFixed(2)}% bond + ${v}% vault = ${sum}% yearly (percentages added; actual compounding may differ).`;
-      }
-      const p = venue.apy;
-      const poolPct = p !== null && p !== undefined ? p.toFixed(2) : "0.00";
-      const sum = (bondQuote.apy + (venue.apy ?? 0)).toFixed(2);
-      return `Approximate combined yield: ${bondQuote.apy.toFixed(2)}% bond + ${poolPct}% pool = ${sum}% yearly (percentages added; actual compounding may differ).`;
-    }
-
-    return null;
-  }, [
-    bondQuote,
-    isYieldOnlyHold,
-    bondHold,
-    depositVenue,
-    isBondToken,
-    venue.kind,
-    venue.apy,
-    apyLoading,
-    vaultApy,
-  ]);
-
-  const projectionFooterExtra = useMemo(() => {
-    if (!bondQuote || isYieldOnlyHold) return null;
-    if (bondHold && depositVenue) {
-      return "Combined rate sums sovereign bond APR and this venue's APR as a simple additive estimate.";
-    }
-    if (
-      !bondHold &&
-      isBondToken &&
-      (venue.kind === "pool" || venue.kind === "vault")
-    ) {
-      return "Combined rate sums sovereign bond APR and this venue's APR as a simple additive estimate.";
-    }
-    return null;
-  }, [
-    bondQuote,
-    isYieldOnlyHold,
-    bondHold,
-    depositVenue,
-    isBondToken,
-    venue.kind,
-  ]);
-
   const stableAmountNum = useMemo(() => safeParseFloat(amount), [amount]);
 
   const principalBondTokens = useMemo(() => {
@@ -359,12 +285,6 @@ export function ReturnSimulatorStep({
 
   const earningsTokenLabel = bondHold?.bondSymbol ?? amountAssetCode;
 
-  const showBondEtherfuseNote =
-    bondHold &&
-    depositVenue &&
-    bondQuote &&
-    projectionDestination.kind !== "yield-token";
-
   return (
     <section className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
@@ -374,21 +294,13 @@ export function ReturnSimulatorStep({
             : "See what you could earn"}
         </h2>
         <p className="text-sm text-white/60">
-          {stableFundsBondPurchase && depositVenue
-            ? `Enter how much ${token.code} you want to use. We'll swap it into ${bondSymbolResolved} and deposit it  one confirmation.`
-            : stableFundsBondPurchase
-              ? `Enter how much ${token.code} you'd like to swap. We'll show you how much ${bondSymbolResolved} you'd receive and what it could earn.`
-              : isYieldOnlyHold
-                ? "Enter an amount to see how your balance could grow while you hold this token."
-                : bondHold && depositVenue
-                  ? "Enter an amount to see your combined earnings  bond yield plus this strategy, stacked."
-                  : isBondToken
-                    ? "Enter an amount to see your projected growth. This includes the bond's built-in yield plus what the pool or vault earns on top."
-                    : "Enter an amount to see your projected earnings over time."}
+          {stableFundsBondPurchase
+            ? `Enter how much ${token.code} to use. We'll swap it to ${bondSymbolResolved} and deposit it for you.`
+            : "Enter an amount to see your projected earnings."}
         </p>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="flex flex-col gap-4">
           <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-4">
             <label
@@ -436,7 +348,7 @@ export function ReturnSimulatorStep({
                 {stableFundsBondPurchase ? token.code : amountAssetCode}
               </span>
             </div>
-            <div className="mt-3 flex items-center justify-between text-xs text-white/50">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-1 text-xs text-white/50">
               <span>
                 {token.hasWallet
                   ? `Balance: ${formatAmount(walletBalanceForAmount)} ${stableFundsBondPurchase ? token.code : amountAssetCode}`
@@ -494,10 +406,6 @@ export function ReturnSimulatorStep({
             apy={apy}
             oneYearProjection={oneYear}
             hasPrice={hasPrice}
-            isYieldBearingBond={
-              isYieldOnlyHold || isBondToken || Boolean(bondHold)
-            }
-            stackedYieldNote={stackedYieldNote}
           />
         </div>
 
@@ -512,38 +420,7 @@ export function ReturnSimulatorStep({
                 swapQuote.isFetching &&
                 stableAmountNum > 0)
             }
-            isYieldBearingBond={
-              isYieldOnlyHold || isBondToken || Boolean(bondHold)
-            }
-            extraFooterNote={projectionFooterExtra}
           />
-          {isYieldOnlyHold && projectionDestination.bondCurrency && (
-            <p className="text-xs text-white/50">
-              These are {projectionDestination.bondCurrency}-denominated
-              returns. What you see as &ldquo;earned&rdquo; includes both more{" "}
-              {earningsTokenLabel} and each token tending to be worth more over
-              time. You can redeem {earningsTokenLabel} for{" "}
-              {projectionDestination.bondCurrency} when you like via Etherfuse.
-            </p>
-          )}
-          {showBondEtherfuseNote && bondQuote && (
-            <p className="text-xs text-white/50">
-              Combined rate: ~{bondQuote.apy.toFixed(2)}% bond yield + this{" "}
-              {depositVenue!.kind === "vault" ? "vault" : "pool"}. Actual
-              results may vary.
-            </p>
-          )}
-          {!bondHold &&
-            isBondToken &&
-            bondQuote &&
-            venue.kind !== "yield-token" && (
-              <p className="text-xs text-white/50">
-                Bond leg ~{bondQuote.apy.toFixed(2)}% APR (
-                {bondQuote.bondCurrency} oriented, Etherfuse) plus this{" "}
-                {venue.kind === "vault" ? "vault" : "pool"}
-                &apos;s APR feeds the combined rate above.
-              </p>
-            )}
         </div>
       </div>
 
