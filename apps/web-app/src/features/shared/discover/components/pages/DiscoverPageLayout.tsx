@@ -15,9 +15,14 @@ interface DiscoverPageLayoutProps {
   renderCard: (tokenCode: string) => ReactNode;
 }
 
+const HIDDEN_FROM_DISCOVER = new Set(["KTB"]);
+
 export function DiscoverPageLayout({ renderCard }: DiscoverPageLayoutProps) {
   const tokenCodes = useMemo(
-    () => Object.keys(getAvailableTokens()).map((c) => c.toUpperCase()),
+    () =>
+      Object.keys(getAvailableTokens())
+        .map((c) => c.toUpperCase())
+        .filter((c) => !HIDDEN_FROM_DISCOVER.has(c)),
     []
   );
 
