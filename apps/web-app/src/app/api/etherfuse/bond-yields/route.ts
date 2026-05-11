@@ -18,7 +18,7 @@ interface EtherfuseYieldEntry {
   isFallback?: boolean;
 }
 
-const TARGET_SYMBOLS = ["CETES", "USTRY", "TESOURO", "KTB"] as const;
+const TARGET_SYMBOLS = ["CETES", "USTRY", "TESOURO"] as const;
 
 type TargetSymbol = (typeof TARGET_SYMBOLS)[number];
 
@@ -26,14 +26,12 @@ const FALLBACK_YIELDS: Record<TargetSymbol, number> = {
   CETES: 9.5,
   USTRY: 4.8,
   TESOURO: 13.5,
-  KTB: 3.5,
 };
 
 const FALLBACK_CURRENCY: Record<TargetSymbol, string> = {
   CETES: "MXN",
   USTRY: "USD",
   TESOURO: "BRL",
-  KTB: "KRW",
 };
 
 interface BondCostRow {
@@ -159,7 +157,6 @@ export async function GET() {
       CETES: grouped.CETES?.length ?? 0,
       USTRY: grouped.USTRY?.length ?? 0,
       TESOURO: grouped.TESOURO?.length ?? 0,
-      KTB: grouped.KTB?.length ?? 0,
     });
 
     debugLog(

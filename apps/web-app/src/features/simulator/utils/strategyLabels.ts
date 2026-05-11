@@ -69,7 +69,6 @@ const YIELD_TOKEN_STRATEGY_LABELS: Record<string, string> = {
   USTRY: "Yield-bearing US Treasury exposure - accrues in USD while you hold",
   TESOURO:
     "Yield-bearing Brazilian sovereign exposure - accrues in BRL while you hold",
-  KTB: "Yield-bearing Korean Treasury exposure - accrues in KRW while you hold",
 };
 
 export function getYieldTokenStrategyLabel(symbol: string): string {

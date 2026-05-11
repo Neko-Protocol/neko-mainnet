@@ -84,7 +84,7 @@ export function useSimulatorTokens() {
     }
 
     const assets = getAssetsConfig();
-    for (const sym of ["CETES", "USTRY", "TESOURO", "KTB"] as const) {
+    for (const sym of ["CETES", "USTRY", "TESOURO"] as const) {
       const cfg = assets[sym];
       if (!cfg || acc.has(sym)) continue;
       acc.set(sym, {

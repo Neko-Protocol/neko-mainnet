@@ -24,12 +24,7 @@ import {
   type EtherfuseYieldEntry,
 } from "./useEtherfuseYields";
 
-export const ETHERFUSE_BOND_SYMBOLS = [
-  "CETES",
-  "USTRY",
-  "TESOURO",
-  "KTB",
-] as const;
+export const ETHERFUSE_BOND_SYMBOLS = ["CETES", "USTRY", "TESOURO"] as const;
 
 type EtherfuseBondSymbol = (typeof ETHERFUSE_BOND_SYMBOLS)[number];
 
@@ -37,14 +32,12 @@ const FALLBACK_APY: Record<EtherfuseBondSymbol, number> = {
   CETES: 9.5,
   USTRY: 4.8,
   TESOURO: 13.5,
-  KTB: 3.5,
 };
 
 const FALLBACK_CURRENCY: Record<EtherfuseBondSymbol, string> = {
   CETES: "MXN",
   USTRY: "USD",
   TESOURO: "BRL",
-  KTB: "KRW",
 };
 
 function safeNumber(value: number | string | undefined | null): number {

@@ -24,14 +24,7 @@ const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw"];
 /** Assets that belong to Pool 1 (RWA collateral → borrow USDC/XLM) */
 const POOL1_ASSETS = new Set(["USDC", "XLM"]);
 /** Assets that belong to Pool 2 (USDC/XLM collateral → borrow RWA) */
-const POOL2_ASSETS = new Set([
-  "USTRY",
-  "TESOURO",
-  "CETES",
-  "USDY",
-  "PYUSD",
-  "KTB",
-]);
+const POOL2_ASSETS = new Set(["USTRY", "TESOURO", "CETES", "USDY", "PYUSD"]);
 
 function getPoolContractId(assetCode: string): string {
   const { pool1ContractId, pool2ContractId } = getLendingContracts();
@@ -160,14 +153,9 @@ export class NekoLendingAdapter implements BasePoolAdapter {
     const tokens = getAvailableTokens();
     // Pool 1 debt assets; Pool 2 debt assets
     const pool1Assets = ["USDC", "XLM"].filter((c) => tokens[c]?.contract);
-    const pool2Assets = [
-      "USTRY",
-      "TESOURO",
-      "CETES",
-      "USDY",
-      "PYUSD",
-      "KTB",
-    ].filter((c) => tokens[c]?.contract);
+    const pool2Assets = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD"].filter(
+      (c) => tokens[c]?.contract
+    );
     const allAssets = [...pool1Assets, ...pool2Assets];
 
     const pools: PoolInfo[] = [];
