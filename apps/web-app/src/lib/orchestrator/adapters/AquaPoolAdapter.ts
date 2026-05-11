@@ -64,6 +64,8 @@ interface AquaApiResponse {
 const AQUA_ROUTER = "CBQDHNBFBZYE4MKPWBSJOPIYLW4SFSXAXUTSXJN76GNKYVYPCKWC6QUK";
 const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw", "claimRewards"];
 
+const BLOCKED_TOKEN_CODES = new Set(["AQUA", "USDGLO"]);
+
 // Parse a token string like "native" or "CODE:ISSUER" into a TokenInfo
 function parseTokenStr(tokenStr: string, contractAddress: string): TokenInfo {
   if (tokenStr === "native") {
@@ -176,7 +178,11 @@ export class AquaPoolAdapter implements BasePoolAdapter {
   async listPools(limit?: number): Promise<PoolInfo[]> {
     try {
       const raw = await fetchAquaPools(getAquaPoolAddresses());
-      const mapped = raw.map(mapApiPool);
+      const mapped = raw
+        .map(mapApiPool)
+        .filter((p) =>
+          p.tokens.every((t) => !BLOCKED_TOKEN_CODES.has(t.code.toUpperCase()))
+        );
       return limit !== undefined ? mapped.slice(0, limit) : mapped;
     } catch (error) {
       throw new AdapterError("aqua", "listPools", error);
