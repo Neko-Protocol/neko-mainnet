@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useMemo } from "react";
+import { useHaptics } from "@/hooks/useHaptics";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
 import { useWallet } from "@/hooks/useWallet";
@@ -91,6 +92,7 @@ export function ReturnSimulatorStep({
   isSwapDepositPending = false,
 }: ReturnSimulatorStepProps) {
   const { balances, address } = useWallet();
+  const { light, success } = useHaptics();
   const walletConnected = Boolean(address);
 
   const { bondHold, depositVenue, projectionDestination, amountAssetCode } =
@@ -243,6 +245,7 @@ export function ReturnSimulatorStep({
       : (depositVenue ?? projectionDestination);
 
   const handleMax = () => {
+    light();
     if (!token.hasWallet) return;
     if (walletBalanceForAmount <= 0) return;
     onAmountChange(walletBalanceForAmount.toString());
@@ -262,6 +265,7 @@ export function ReturnSimulatorStep({
         return;
       }
       onStartDepositOrchestrator?.();
+      success();
     }
   };
 
@@ -277,10 +281,15 @@ export function ReturnSimulatorStep({
     }
     const outStr = bondOutToDepositString(swapQuote.data.bondOutHuman);
     if (!outStr) return;
-    await onSwapAndDeposit({
-      stableAmount: amount,
-      expectedBondOutHuman: outStr,
-    });
+    try {
+      await onSwapAndDeposit({
+        stableAmount: amount,
+        expectedBondOutHuman: outStr,
+      });
+      success();
+    } catch (e) {
+      throw e;
+    }
   };
 
   const earningsTokenLabel = bondHold?.bondSymbol ?? amountAssetCode;

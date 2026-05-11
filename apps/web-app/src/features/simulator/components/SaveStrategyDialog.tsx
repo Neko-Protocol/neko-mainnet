@@ -6,6 +6,7 @@ import {
   useStrategiesStore,
   type SavedStrategy,
 } from "@/stores/strategies.store";
+import { useHaptics } from "@/hooks/useHaptics";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
@@ -22,6 +23,7 @@ export function SaveStrategyDialog({
 }: SaveStrategyDialogProps) {
   const [name, setName] = useState(suggestedName);
   const { save } = useStrategiesStore();
+  const { success } = useHaptics();
   const { addNotification } = useToast();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -30,6 +32,7 @@ export function SaveStrategyDialog({
     const trimmed = name.trim();
     if (!trimmed) return;
     save({ ...strategy, name: trimmed });
+    success();
     addNotification("Strategy saved", "success", TOAST_CONFIG.defaultOpts);
     onClose();
     router.push("/strategies");
