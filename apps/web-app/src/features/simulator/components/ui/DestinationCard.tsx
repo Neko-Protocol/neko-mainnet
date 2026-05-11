@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
@@ -37,62 +38,76 @@ export function DestinationCard({
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
+    <div
       className={cn(
-        "flex w-full flex-col rounded-2xl border border-white/8 bg-[#1C1C1C] p-4 text-left transition-all",
-        "hover:bg-[#222222]",
+        "flex w-full flex-col rounded-2xl border border-white/8 bg-[#1C1C1C] transition-all",
         isSelected && "border-[#229EDF] ring-1 ring-[#229EDF]/40"
       )}
-      aria-pressed={isSelected}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate text-base font-semibold text-white">
-              {destination.name}
-            </h3>
-            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/70">
-              {destination.protocol}
-            </span>
-          </div>
-          {destination.tvlLabel ? (
-            <p className="mt-1 flex flex-wrap items-baseline gap-1.5">
-              <span className="text-[10px] text-white/30">Pool size</span>
-              <span className="text-sm font-medium text-white/80">
-                <span className="text-white/50" aria-hidden>
-                  $
-                </span>
-                {destination.tvlLabel}
+      <button
+        type="button"
+        onClick={handleClick}
+        className="flex w-full flex-col p-4 text-left hover:bg-[#222222] rounded-2xl transition-all"
+        aria-pressed={isSelected}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate text-base font-semibold text-white">
+                {destination.name}
+              </h3>
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/70">
+                {destination.protocol}
               </span>
-            </p>
-          ) : null}
-        </div>
-        <div className="flex shrink-0 flex-col items-end text-right">
-          {showApySkeleton ? (
-            <div
-              className="h-8 w-[4.5rem] animate-pulse rounded-md bg-white/[0.08]"
-              aria-hidden
-            />
-          ) : showPositiveApy ? (
-            <>
-              <p className="text-2xl font-bold leading-tight text-[#229EDF]">
-                {apy!.toFixed(2)}%
+            </div>
+            {destination.tvlLabel ? (
+              <p className="mt-1 flex flex-wrap items-baseline gap-1.5">
+                <span className="text-[10px] text-white/30">Pool size</span>
+                <span className="text-sm font-medium text-white/80">
+                  <span className="text-white/50" aria-hidden>
+                    $
+                  </span>
+                  {destination.tvlLabel}
+                </span>
               </p>
-              <p className="mt-0.5 text-xs text-white/40">/ year</p>
-              {destination.blndEmissionsApy &&
-              destination.blndEmissionsApy > 0 ? (
-                <p className="mt-1 text-xs font-medium text-emerald-400">
-                  +{destination.blndEmissionsApy.toFixed(2)}% BLND
+            ) : null}
+          </div>
+          <div className="flex shrink-0 flex-col items-end text-right">
+            {showApySkeleton ? (
+              <div
+                className="h-8 w-[4.5rem] animate-pulse rounded-md bg-white/[0.08]"
+                aria-hidden
+              />
+            ) : showPositiveApy ? (
+              <>
+                <p className="text-2xl font-bold leading-tight text-[#229EDF]">
+                  {apy!.toFixed(2)}%
                 </p>
-              ) : null}
-            </>
-          ) : (
-            <p className="text-2xl leading-tight text-white/30"></p>
-          )}
+                <p className="mt-0.5 text-xs text-white/40">/ year</p>
+              </>
+            ) : (
+              <p className="text-2xl leading-tight text-white/30"></p>
+            )}
+          </div>
         </div>
-      </div>
-    </button>
+      </button>
+
+      {destination.blndEmissionsApy && destination.blndEmissionsApy > 0 ? (
+        <div className="px-4 pb-3 text-right">
+          <p className="text-xs font-medium text-emerald-400">
+            +{destination.blndEmissionsApy.toFixed(2)}% BLND
+          </p>
+          <p className="text-[10px] text-white/40 leading-tight">
+            Paid in BLND · volatile ·{" "}
+            <Link
+              href="/swap"
+              className="text-emerald-400/70 underline underline-offset-2 hover:text-emerald-400"
+            >
+              swap with Neko
+            </Link>
+          </p>
+        </div>
+      ) : null}
+    </div>
   );
 }
