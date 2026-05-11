@@ -22,8 +22,6 @@ import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { resolveDecimalsForAuditAssetKey } from "@/lib/helpers/auditAssetAmounts";
 import { auditService } from "@/lib/services/audit.service";
 
-const SLIPPAGE = 0.01;
-
 const VAULT_SHARE_DECIMALS = 7;
 
 function unwrapAssembledContractResult<T>(result: unknown): T | undefined {
@@ -128,6 +126,7 @@ export function useVaultAction(
   vaultShareSymbol?: string
 ) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const {
     address,
@@ -165,9 +164,9 @@ export function useVaultAction(
   );
 
   const handleDeposit = useCallback(
-    async (amount: string) => {
-      if (!address || !amount || parseFloat(amount) <= 0) return;
-      if (!vaultContractId) return;
+    async (amount: string): Promise<boolean> => {
+      if (!address || !amount || parseFloat(amount) <= 0) return false;
+      if (!vaultContractId) return false;
       setIsLoading(true);
 
       try {
@@ -176,7 +175,6 @@ export function useVaultAction(
         }
         const passphrase = walletPassphrase;
 
-        // Client needs publicKey so simulation uses the real user account
         const client = new DefindexVaultClient({
           contractId: vaultContractId,
           rpcUrl,
@@ -186,27 +184,20 @@ export function useVaultAction(
         });
 
         const amountBigInt = BigInt(toSmallestUnit(amount, 7));
-        const minAmount =
-          amountBigInt -
-          (amountBigInt * BigInt(Math.floor(SLIPPAGE * 100))) / 100n;
 
-        // Simulate — the resulting XDR already includes Soroban auth entries
         const depositTx = await client.deposit({
           amounts_desired: [amountBigInt],
-          amounts_min: [minAmount],
+          amounts_min: [0n],
           from: address,
           invest: false,
         });
 
-        // Sign + submit the simulated XDR directly (Freighter handles auth entries)
         const sendResult = await signAndSubmit(
           depositTx.toXDR(),
           passphrase,
           signTransaction,
           address
         );
-
-        console.log("[vault:deposit] sent:", sendResult.hash, sendResult);
 
         if (sendResult.status === "ERROR") {
           throw new Error(
@@ -216,7 +207,15 @@ export function useVaultAction(
           );
         }
 
+        if (sendResult.status === "TRY_AGAIN_LATER") {
+          throw new Error(
+            "Network is congested. Please try again in a moment."
+          );
+        }
+
+        setIsConfirming(true);
         const finalResult = await waitForTx(sendResult.hash);
+
         if (finalResult.status !== "SUCCESS") {
           throw new Error(
             "Transaction failed on-chain. Please refresh your balance."
@@ -246,13 +245,21 @@ export function useVaultAction(
 
         showSuccess(`Successfully deposited ${amount} ${supplyAssetSymbol}`);
         void invalidateAfterTx();
+        return true;
       } catch (err) {
-        const msg = extractContractErrorOrNull(err);
+        if (err instanceof Error && err.message === "USER_REJECTED") return false;
+        const contractMsg = extractContractErrorOrNull(err);
         showError(
-          typeof msg === "string" ? msg : "An unexpected error occurred."
+          typeof contractMsg === "string"
+            ? contractMsg
+            : err instanceof Error
+              ? err.message
+              : "An unexpected error occurred."
         );
+        return false;
       } finally {
         setIsLoading(false);
+        setIsConfirming(false);
       }
     },
     [
@@ -260,7 +267,6 @@ export function useVaultAction(
       walletPassphrase,
       signTransaction,
       invalidateAfterTx,
-      addNotification,
       showError,
       showSuccess,
       supplyAssetSymbol,
@@ -270,9 +276,9 @@ export function useVaultAction(
   );
 
   const handleWithdraw = useCallback(
-    async (shares: string) => {
-      if (!address || !shares || parseFloat(shares) <= 0) return;
-      if (!vaultContractId) return;
+    async (shares: string): Promise<boolean> => {
+      if (!address || !shares || parseFloat(shares) <= 0) return false;
+      if (!vaultContractId) return false;
       setIsLoading(true);
 
       try {
@@ -304,8 +310,6 @@ export function useVaultAction(
           address
         );
 
-        console.log("[vault:withdraw] sent:", sendResult.hash, sendResult);
-
         if (sendResult.status === "ERROR") {
           throw new Error(
             `Transaction rejected by network: ${
@@ -314,7 +318,15 @@ export function useVaultAction(
           );
         }
 
+        if (sendResult.status === "TRY_AGAIN_LATER") {
+          throw new Error(
+            "Network is congested. Please try again in a moment."
+          );
+        }
+
+        setIsConfirming(true);
         const finalResult = await waitForTx(sendResult.hash);
+
         if (finalResult.status !== "SUCCESS") {
           throw new Error(
             "Transaction failed on-chain. Please refresh your balance."
@@ -347,13 +359,21 @@ export function useVaultAction(
           `Successfully withdrew ${shares} ${vaultShareSymbol ?? "shares"}`
         );
         void invalidateAfterTx();
+        return true;
       } catch (err) {
-        const msg = extractContractErrorOrNull(err);
+        if (err instanceof Error && err.message === "USER_REJECTED") return false;
+        const contractMsg = extractContractErrorOrNull(err);
         showError(
-          typeof msg === "string" ? msg : "An unexpected error occurred."
+          typeof contractMsg === "string"
+            ? contractMsg
+            : err instanceof Error
+              ? err.message
+              : "An unexpected error occurred."
         );
+        return false;
       } finally {
         setIsLoading(false);
+        setIsConfirming(false);
       }
     },
     [
@@ -361,7 +381,6 @@ export function useVaultAction(
       walletPassphrase,
       signTransaction,
       invalidateAfterTx,
-      addNotification,
       showError,
       showSuccess,
       supplyAssetSymbol,
@@ -372,6 +391,7 @@ export function useVaultAction(
 
   return {
     isLoading,
+    isConfirming,
     hasWallet: !!address,
     handleDeposit,
     handleWithdraw,
