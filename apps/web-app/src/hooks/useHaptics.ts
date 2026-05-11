@@ -13,7 +13,7 @@ function runTrigger(
       void result.catch(() => {});
     }
   } catch {
-    // Missing or unsupported Vibration API, or web-haptics errors — never surface to callers.
+    // Missing or unsupported Vibration API, or web-haptics errors - never surface to callers.
   }
 }
 
@@ -22,7 +22,9 @@ export function useHaptics(): {
   success: () => void;
   error: () => void;
 } {
-  const { trigger } = useWebHaptics();
+  // On desktop (no Vibration API) use audio click simulation; on mobile use pure vibration.
+  const debug = typeof window !== "undefined" && !("vibrate" in navigator);
+  const { trigger } = useWebHaptics({ debug });
 
   const light = useCallback(() => {
     runTrigger(trigger, 40);
