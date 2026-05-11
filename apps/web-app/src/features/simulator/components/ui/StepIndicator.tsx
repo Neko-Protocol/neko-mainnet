@@ -40,53 +40,63 @@ export function StepIndicator({ steps, currentPhase }: StepIndicatorProps) {
   );
 
   return (
-    <ol className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
-      {steps.map((step, idx) => {
-        const isActive = step.phase === currentPhase;
-        const isDone = idx < activeIdx;
-        const displayNum = idx + 1;
-        const isConnectorCompleted = idx + 1 < activeIdx;
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-between sm:hidden">
+        <span className="text-xs font-semibold text-white/60">
+          Step {activeIdx + 1} of {steps.length}
+        </span>
+        <span className="text-xs font-medium text-white">
+          {steps[activeIdx]?.label}
+        </span>
+      </div>
+      <ol className="hidden sm:flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+        {steps.map((step, idx) => {
+          const isActive = step.phase === currentPhase;
+          const isDone = idx < activeIdx;
+          const displayNum = idx + 1;
+          const isConnectorCompleted = idx + 1 < activeIdx;
 
-        return (
-          <li key={step.phase} className="flex items-center gap-2">
-            <span
-              className={cn(
-                "flex items-center gap-2 transition-colors",
-                isActive && "rounded-full bg-[#229EDF] px-3 py-1.5 text-white"
+          return (
+            <li key={step.phase} className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "flex items-center gap-2 transition-colors",
+                  isActive && "rounded-full bg-[#229EDF] px-3 py-1.5 text-white"
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
+                    isActive && "bg-white/20 text-white",
+                    isDone && "bg-[#229EDF] text-white",
+                    !isActive && !isDone && "bg-white/8 text-white/25"
+                  )}
+                >
+                  {isDone ? <CheckIcon className="h-2.5 w-2.5" /> : displayNum}
+                </span>
+                <span
+                  className={cn(
+                    "font-medium",
+                    isActive && "text-white",
+                    isDone && "text-[#229EDF]",
+                    !isActive && !isDone && "text-white/30"
+                  )}
+                >
+                  {step.label}
+                </span>
+              </span>
+              {idx < steps.length - 1 && (
+                <span
+                  className={cn(
+                    "h-px w-4 sm:w-8",
+                    isConnectorCompleted ? "bg-[#229EDF]/50" : "bg-white/10"
+                  )}
+                />
               )}
-            >
-              <span
-                className={cn(
-                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
-                  isActive && "bg-white/20 text-white",
-                  isDone && "bg-[#229EDF] text-white",
-                  !isActive && !isDone && "bg-white/8 text-white/25"
-                )}
-              >
-                {isDone ? <CheckIcon className="h-2.5 w-2.5" /> : displayNum}
-              </span>
-              <span
-                className={cn(
-                  "font-medium",
-                  isActive && "text-white",
-                  isDone && "text-[#229EDF]",
-                  !isActive && !isDone && "text-white/30"
-                )}
-              >
-                {step.label}
-              </span>
-            </span>
-            {idx < steps.length - 1 && (
-              <span
-                className={cn(
-                  "h-px w-4 sm:w-8",
-                  isConnectorCompleted ? "bg-[#229EDF]/50" : "bg-white/10"
-                )}
-              />
-            )}
-          </li>
-        );
-      })}
-    </ol>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
