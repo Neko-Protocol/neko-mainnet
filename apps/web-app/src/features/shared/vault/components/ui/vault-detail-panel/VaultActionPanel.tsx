@@ -326,6 +326,7 @@ export function VaultActionPanel({
   onAmountChange,
   onSubmit,
   isLoading,
+  isConfirming = false,
   supplyBalance,
   sharesBalance,
   isWalletConnected,
@@ -434,7 +435,9 @@ export function VaultActionPanel({
 
       {isLoading && (
         <p className="text-white/40 text-xs text-center mt-1">
-          Please confirm in your wallet
+          {isConfirming
+            ? "Confirming on network…"
+            : "Please confirm in your wallet"}
         </p>
       )}
     </div>
