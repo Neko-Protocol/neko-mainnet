@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { TransactionBuilder } from "@stellar/stellar-sdk";
-import { rpc } from "@stellar/stellar-sdk";
+import { TransactionBuilder, rpc, Operation } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
@@ -64,6 +63,11 @@ function vaultWithdrawUnderlyingOut(
   }
 }
 
+type SignFn = (
+  xdr: string,
+  opts: { networkPassphrase: string; address?: string }
+) => Promise<{ signedTxXdr: string }>;
+
 /**
  * Signs and submits a simulated AssembledTransaction by:
  * 1. Getting the XDR (already includes simulation auth entries)
@@ -75,10 +79,7 @@ function vaultWithdrawUnderlyingOut(
 async function signAndSubmit(
   xdr: string,
   passphrase: string,
-  signFn: (
-    xdr: string,
-    opts: { networkPassphrase: string; address?: string }
-  ) => Promise<{ signedTxXdr: string }>,
+  signFn: SignFn,
   address: string
 ) {
   const server = new rpc.Server(configRpcUrl, {
@@ -118,6 +119,71 @@ async function waitForTx(
   throw new Error(
     `Timed out waiting for transaction ${hash} to be included in a ledger`
   );
+}
+
+/**
+ * If the simulation indicates that archived ledger entries need to be restored
+ * (TTL expired), submits a restoreFootprint transaction and waits for it to
+ * land. Returns true if a restore was performed (caller should re-simulate),
+ * false if no restore was needed.
+ */
+async function restoreIfNeeded(
+  simulation: rpc.Api.SimulateTransactionResponse,
+  passphrase: string,
+  signFn: SignFn,
+  address: string
+): Promise<boolean> {
+  if (!rpc.Api.isSimulationRestore(simulation)) return false;
+
+  const { restorePreamble } = simulation;
+  const server = new rpc.Server(configRpcUrl, {
+    allowHttp: stellarNetwork === "LOCAL",
+  });
+  const account = await server.getAccount(address);
+
+  const restoreTx = new TransactionBuilder(account, {
+    fee: restorePreamble.minResourceFee,
+    networkPassphrase: passphrase,
+  })
+    .setSorobanData(restorePreamble.transactionData.build())
+    .addOperation(Operation.restoreFootprint({}))
+    .setTimeout(30)
+    .build();
+
+  const restoreSim = await server.simulateTransaction(restoreTx);
+  if (rpc.Api.isSimulationError(restoreSim)) {
+    throw new Error("Failed to simulate contract state restoration");
+  }
+
+  const preparedRestoreTx = rpc
+    .assembleTransaction(restoreTx, restoreSim)
+    .build();
+  const restoreSend = await signAndSubmit(
+    preparedRestoreTx.toXDR(),
+    passphrase,
+    signFn,
+    address
+  );
+
+  if (restoreSend.status === "ERROR") {
+    throw new Error(
+      `Restore transaction rejected: ${
+        restoreSend.errorResult?.result().switch().name ?? "unknown"
+      }`
+    );
+  }
+  if (restoreSend.status === "TRY_AGAIN_LATER") {
+    throw new Error(
+      "Network congested during state restoration. Please try again."
+    );
+  }
+
+  const restoreResult = await waitForTx(restoreSend.hash);
+  if (restoreResult.status !== "SUCCESS") {
+    throw new Error("Contract state restoration failed. Please try again.");
+  }
+
+  return true;
 }
 
 export function useVaultAction(
@@ -185,12 +251,30 @@ export function useVaultAction(
 
         const amountBigInt = BigInt(toSmallestUnit(amount, 7));
 
-        const depositTx = await client.deposit({
+        let depositTx = await client.deposit({
           amounts_desired: [amountBigInt],
           amounts_min: [0n],
           from: address,
           invest: false,
         });
+
+        // If vault ledger entries have expired TTLs, restore them first then re-simulate
+        if (
+          depositTx.simulation &&
+          (await restoreIfNeeded(
+            depositTx.simulation,
+            passphrase,
+            signTransaction,
+            address
+          ))
+        ) {
+          depositTx = await client.deposit({
+            amounts_desired: [amountBigInt],
+            amounts_min: [0n],
+            from: address,
+            invest: false,
+          });
+        }
 
         const sendResult = await signAndSubmit(
           depositTx.toXDR(),
@@ -217,9 +301,7 @@ export function useVaultAction(
         const finalResult = await waitForTx(sendResult.hash);
 
         if (finalResult.status !== "SUCCESS") {
-          throw new Error(
-            "Transaction failed on-chain. Please refresh your balance."
-          );
+          throw new Error("Transaction failed on-chain. Please try again.");
         }
 
         const minted = vaultDepositMintedShares(depositTx.result);
@@ -247,7 +329,8 @@ export function useVaultAction(
         void invalidateAfterTx();
         return true;
       } catch (err) {
-        if (err instanceof Error && err.message === "USER_REJECTED") return false;
+        if (err instanceof Error && err.message === "USER_REJECTED")
+          return false;
         const contractMsg = extractContractErrorOrNull(err);
         showError(
           typeof contractMsg === "string"
@@ -297,11 +380,28 @@ export function useVaultAction(
 
         const sharesBigInt = BigInt(toSmallestUnit(shares, 7));
 
-        const withdrawTx = await client.withdraw({
+        let withdrawTx = await client.withdraw({
           withdraw_shares: sharesBigInt,
           min_amounts_out: [0n],
           from: address,
         });
+
+        // If vault ledger entries have expired TTLs, restore them first then re-simulate
+        if (
+          withdrawTx.simulation &&
+          (await restoreIfNeeded(
+            withdrawTx.simulation,
+            passphrase,
+            signTransaction,
+            address
+          ))
+        ) {
+          withdrawTx = await client.withdraw({
+            withdraw_shares: sharesBigInt,
+            min_amounts_out: [0n],
+            from: address,
+          });
+        }
 
         const sendResult = await signAndSubmit(
           withdrawTx.toXDR(),
@@ -328,9 +428,7 @@ export function useVaultAction(
         const finalResult = await waitForTx(sendResult.hash);
 
         if (finalResult.status !== "SUCCESS") {
-          throw new Error(
-            "Transaction failed on-chain. Please refresh your balance."
-          );
+          throw new Error("Transaction failed on-chain. Please try again.");
         }
 
         const underlyingBi = vaultWithdrawUnderlyingOut(withdrawTx.result);
@@ -361,7 +459,8 @@ export function useVaultAction(
         void invalidateAfterTx();
         return true;
       } catch (err) {
-        if (err instanceof Error && err.message === "USER_REJECTED") return false;
+        if (err instanceof Error && err.message === "USER_REJECTED")
+          return false;
         const contractMsg = extractContractErrorOrNull(err);
         showError(
           typeof contractMsg === "string"
