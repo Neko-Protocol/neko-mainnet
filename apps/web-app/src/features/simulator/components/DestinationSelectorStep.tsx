@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { CLASS_ACCENT } from "@/features/shared/discover/utils/assetClass";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useHaptics } from "@/hooks/useHaptics";
 import { useFilteredDestinations } from "../hooks/useFilteredDestinations";
 import { DestinationCard } from "./ui/DestinationCard";
 import type {
@@ -30,6 +31,7 @@ function EtherfuseBondCard({
   isSelected: boolean;
   onSelect: () => void;
 }) {
+  const { light } = useHaptics();
   const accent = CLASS_ACCENT["sovereign-bond"];
   const symbol =
     destination.bondSymbol ?? destination.acceptedTokenCodes[0] ?? "";
@@ -39,7 +41,10 @@ function EtherfuseBondCard({
   return (
     <button
       type="button"
-      onClick={onSelect}
+      onClick={() => {
+        light();
+        onSelect();
+      }}
       className={cn(
         "flex w-full flex-col gap-3 rounded-2xl border border-transparent p-4 text-left ring-1 transition-all",
         accent.bg,

@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { useHaptics } from "@/hooks/useHaptics";
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
 import type { SimulatorDestination } from "../../types/simulator.types";
 
@@ -15,6 +16,7 @@ export function DestinationCard({
   isSelected,
   onSelect,
 }: DestinationCardProps) {
+  const { light } = useHaptics();
   const isVault = destination.kind === "vault";
   const { vaultApy, isLoading: apyLoading } = useVaultApy(
     isVault ? destination.id : null
@@ -27,6 +29,7 @@ export function DestinationCard({
     !showApySkeleton && apy !== null && apy !== undefined && apy > 0;
 
   const handleClick = () => {
+    light();
     onSelect({
       ...destination,
       apy: apy ?? destination.apy,

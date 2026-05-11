@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { useHaptics } from "@/hooks/useHaptics";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
@@ -38,6 +39,7 @@ const TOKEN_DESCRIPTIONS: Record<string, string> = {
 };
 
 export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
+  const { light } = useHaptics();
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
   const { price, isLoading: priceLoading } = useTokenPrice(token.code);
@@ -82,7 +84,10 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
   return (
     <button
       type="button"
-      onClick={onSelect}
+      onClick={() => {
+        light();
+        onSelect();
+      }}
       className={cn(
         "group flex flex-col gap-3 rounded-2xl border bg-[#2A2A2A] p-4 text-left transition-all",
         "hover:border-white/20 hover:bg-[#2F2F2F]",
