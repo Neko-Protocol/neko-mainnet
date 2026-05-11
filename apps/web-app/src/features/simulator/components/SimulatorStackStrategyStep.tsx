@@ -71,7 +71,7 @@ export function SimulatorStackStrategyStep({
         <p className="text-sm text-white/60">
           Your <span className="text-white/80">{bondSymbol}</span> is already
           earning bond yield. Add it to a pool or vault to stack an extra layer
-          of returns on top or keep it simple.
+          of returns on top, or keep it simple.
         </p>
       </header>
 
@@ -85,7 +85,7 @@ export function SimulatorStackStrategyStep({
             : "border-white/10 bg-[#2A2A2A] text-white/75 hover:border-white/20"
         )}
       >
-        Just the bond keep it simple
+        Just the bond. Keep it simple.
       </button>
 
       <div className="flex shrink-0 flex-wrap items-center gap-2 self-start rounded-full bg-[#2A2A2A] p-1">

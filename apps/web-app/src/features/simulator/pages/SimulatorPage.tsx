@@ -8,7 +8,7 @@ import { SimulatorWizard } from "../components/SimulatorWizard";
 export default function SimulatorPage() {
   return (
     <PageContainer maxWidth="5xl" className="flex min-h-0 w-full flex-col py-6">
-      <div className="flex h-[calc(100dvh-9rem)] flex-col gap-6 lg:h-[calc(100dvh-4rem)]">
+      <div className="flex h-[calc(100dvh-9rem)] flex-col gap-6 md:h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-4rem)]">
         <header className="flex shrink-0 flex-col gap-2">
           <Link
             href="/strategies"
@@ -22,7 +22,7 @@ export default function SimulatorPage() {
               Strategy Builder
             </h1>
             <p className="text-sm text-white/40">
-              Pick a token to see how it can earn then put it to work.
+              Pick a token to see how it can earn, then put it to work.
             </p>
           </div>
         </header>
