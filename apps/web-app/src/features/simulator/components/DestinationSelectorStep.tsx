@@ -21,15 +21,6 @@ interface DestinationSelectorStepProps {
 
 type Tab = "pools" | "vaults" | "hold-bond";
 
-const tabDescriptions: Record<Tab, string> = {
-  pools:
-    "Supply your tokens alongside other liquidity providers and earn a share of every trade that goes through.",
-  vaults:
-    "Let an automated strategy manage your tokens and continuously optimize for the best returns.",
-  "hold-bond":
-    "Hold government-backed tokens that grow in value over time. Low risk, predictable yield.",
-};
-
 function EtherfuseBondCard({
   destination,
   isSelected,
@@ -43,7 +34,6 @@ function EtherfuseBondCard({
   const symbol =
     destination.bondSymbol ?? destination.acceptedTokenCodes[0] ?? "";
   const apy = destination.apy ?? 0;
-  const currency = destination.bondCurrency ?? "";
   const icon = destination.bondIcon;
 
   return (
@@ -92,9 +82,6 @@ function EtherfuseBondCard({
             </span>
             <span className="text-xs font-normal text-white/50">/ year</span>
           </div>
-          <p className="mt-1 text-sm text-white/70">
-            ~{apy.toFixed(2)}% yearly · {currency}-denominated returns
-          </p>
         </div>
       </div>
 
@@ -161,9 +148,7 @@ export function DestinationSelectorStep({
           How do you want your {token.code} to earn?
         </h2>
         <p className="text-sm text-white/60">
-          {yieldTokens.length > 0 && tab === "hold-bond"
-            ? tabDescriptions["hold-bond"]
-            : tabDescriptions[tab]}
+          Pick the strategy that fits you best.
         </p>
       </header>
 
