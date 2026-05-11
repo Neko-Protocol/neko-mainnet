@@ -62,7 +62,7 @@ interface AquaApiResponse {
 }
 
 const AQUA_ROUTER = "CBQDHNBFBZYE4MKPWBSJOPIYLW4SFSXAXUTSXJN76GNKYVYPCKWC6QUK";
-const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw"];
+const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw", "claimRewards"];
 
 // Parse a token string like "native" or "CODE:ISSUER" into a TokenInfo
 function parseTokenStr(tokenStr: string, contractAddress: string): TokenInfo {
@@ -150,6 +150,7 @@ function mapApiPool(raw: AquaApiPool): PoolInfo {
       supplyApy: baseSupplyApy,
       /** Additional rewards APY % */
       rewardsApy,
+      hasEmissions: rewardsApy > 0,
     },
   };
 }
@@ -354,12 +355,41 @@ export class AquaPoolAdapter implements BasePoolAdapter {
     }
   }
 
-  async claimRewards(): Promise<TransactionResult> {
-    throw new UnsupportedActionError("aqua", "claimRewards");
+  async claimRewards(
+    poolId: string,
+    userAddress: string
+  ): Promise<TransactionResult> {
+    try {
+      const poolAddress = poolId.replace("aqua:", "");
+
+      const sorobanServer = new rpc.Server(rpcUrl, {
+        allowHttp: stellarNetwork === "LOCAL",
+      });
+      const horizonServer = new Horizon.Server(horizonUrl);
+      const account = await horizonServer.loadAccount(userAddress);
+
+      const poolContract = new Contract(poolAddress);
+      const operation = poolContract.call(
+        "claim",
+        new Address(userAddress).toScVal()
+      );
+
+      const tx = new TransactionBuilder(account, {
+        fee: "1000000",
+        networkPassphrase,
+      })
+        .addOperation(operation)
+        .setTimeout(300)
+        .build();
+
+      const preparedTx = await sorobanServer.prepareTransaction(tx);
+      return { xdr: preparedTx.toXDR(), networkPassphrase };
+    } catch (error) {
+      throw new AdapterError("aqua", "claimRewards", error);
+    }
   }
 
   supportsAction(action: PoolAction): boolean {
-    if (action === "withdraw") return false;
     return SUPPORTED_ACTIONS.includes(action);
   }
 }

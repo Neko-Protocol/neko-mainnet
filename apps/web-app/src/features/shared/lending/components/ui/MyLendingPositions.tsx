@@ -302,7 +302,11 @@ const MyPositions: React.FC<MyPositionsProps> = ({
                                 amount: 0n,
                                 audit: {
                                   tokens: [auditToken],
-                                  poolType: "blend",
+                                  poolType: pos.protocolId as
+                                    | "blend"
+                                    | "aqua"
+                                    | "soroswap"
+                                    | "neko",
                                   metadata: {},
                                 },
                               },
