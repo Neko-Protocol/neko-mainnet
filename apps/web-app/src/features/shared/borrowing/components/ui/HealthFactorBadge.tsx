@@ -18,7 +18,7 @@ export function HealthFactorBadge({
     return (
       <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5">
         <div className="h-2 w-2 rounded-full bg-white/20" />
-        <span className="text-white/40 text-sm font-bold">—</span>
+        <span className="text-white/40 text-sm font-bold"></span>
       </div>
     );
   }
@@ -48,7 +48,7 @@ export function HealthFactorBadge({
     >
       <div className={`h-2 w-2 rounded-full ${dotColor}`} />
       <span className={`font-bold text-sm ${color}`}>
-        {healthFactor !== null ? healthFactor.toFixed(4) : "—"}
+        {healthFactor !== null ? healthFactor.toFixed(4) : ""}
       </span>
       <span className={`text-xs opacity-70 ${color}`}>{label}</span>
     </div>

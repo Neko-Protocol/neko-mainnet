@@ -85,9 +85,7 @@ export function StrategySummaryCard({
             you&apos;d have approximately{" "}
           </>
         )}
-        <span className="font-semibold text-[#229EDF]">
-          {totalLabel ?? "—"}
-        </span>
+        <span className="font-semibold text-[#229EDF]">{totalLabel ?? ""}</span>
         {earningsLabel ? (
           <>
             {" "}

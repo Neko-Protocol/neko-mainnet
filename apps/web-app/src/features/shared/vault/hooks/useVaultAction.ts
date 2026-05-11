@@ -190,7 +190,7 @@ export function useVaultAction(
           amountBigInt -
           (amountBigInt * BigInt(Math.floor(SLIPPAGE * 100))) / 100n;
 
-        // Simulate — the resulting XDR already includes Soroban auth entries
+        // Simulate  the resulting XDR already includes Soroban auth entries
         const depositTx = await client.deposit({
           amounts_desired: [amountBigInt],
           amounts_min: [minAmount],

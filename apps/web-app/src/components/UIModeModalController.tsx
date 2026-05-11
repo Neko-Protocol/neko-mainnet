@@ -5,7 +5,7 @@ import { useUIModeStore } from "@/stores/ui-mode.store";
 import { UIModeModal } from "@/components/ui/UIModeModal";
 
 /**
- * Renders the UI-mode selection modal exactly once — after the user connects
+ * Renders the UI-mode selection modal exactly once  after the user connects
  * their wallet for the first time and before they have picked a mode.
  *
  * This is the single source of truth for the "should the modal appear?" decision.

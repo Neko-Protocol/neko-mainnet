@@ -260,7 +260,7 @@ export async function registerFiatAccount(
   });
 }
 
-// Assets (Etherfuse — trustline check)
+// Assets (Etherfuse  trustline check)
 export async function getEtherfuseAssets(
   provider: AnchorProvider,
   wallet: string

@@ -79,7 +79,7 @@ export type DataKey =
   | { tag: "BackstopQueuedTotal"; values: void };
 
 /**
- * Mirror of the pool's PoolState — variant order must stay identical so the
+ * Mirror of the pool's PoolState  variant order must stay identical so the
  * u32 ordinal pushed via pool.update_pool_state_from_backstop stays consistent.
  */
 export type PoolState =

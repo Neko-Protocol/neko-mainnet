@@ -82,7 +82,7 @@ export function squeezeSummaryDecimals(
   label: string,
   fractionDigits: number = SUMMARY_DISPLAY_DECIMALS
 ): string {
-  if (!label || label === "—") return label;
+  if (!label || label === "") return label;
   return label.replace(/(\d[\d,]*\.\d+)/g, (chunk) => {
     const n = parseFloat(chunk.replace(/,/g, ""));
     return Number.isFinite(n) ? n.toFixed(fractionDigits) : chunk;

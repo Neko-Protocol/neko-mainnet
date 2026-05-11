@@ -49,7 +49,7 @@ export function useCartExecution() {
         const tokenIn = tokens[item.paymentToken] ?? item.paymentToken;
         const tokenOut = tokens[item.symbol] ?? item.symbol;
 
-        // executeSwap always fetches a fresh quote internally before signing —
+        // executeSwap always fetches a fresh quote internally before signing
         // this satisfies the "re-fetch if stale" requirement.
         const result = await executeSwap({
           amountIn: item.paymentAmount,

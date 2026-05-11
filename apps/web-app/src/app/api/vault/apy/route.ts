@@ -18,7 +18,6 @@ import { getBlendNetwork } from "@/lib/orchestrator/adapters/blend-config";
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-
 // CETES vault - the only vault with custom per-strategy APY getters.
 const CETES_VAULT_ID =
   "CCFWKCD52JNSQLN5OS4F7EG6BPDT4IRJV6KODIEIZLWPM35IKHOKT6S2";
@@ -270,14 +269,19 @@ async function getBlendVaultApy(vaultId: string, defindexApy: number | null) {
 
   let blndPrice = 0;
   try {
-    const firstPool = await PoolV2.load(getBlendNetwork(), blendPools[0].poolId);
+    const firstPool = await PoolV2.load(
+      getBlendNetwork(),
+      blendPools[0].poolId
+    );
     blndPrice = await getBlndPriceUsd(firstPool.metadata.backstop);
   } catch {
-    // BLND price unavailable — emissions skipped
+    // BLND price unavailable  emissions skipped
   }
 
   const poolApys = await Promise.all(
-    blendPools.map((p) => getBlendSupplyApy(p.poolId, p.assetAddress, blndPrice))
+    blendPools.map((p) =>
+      getBlendSupplyApy(p.poolId, p.assetAddress, blndPrice)
+    )
   );
   const validApys = poolApys.filter((a): a is number => a !== null);
   const blendApy =
@@ -399,7 +403,8 @@ export async function GET(request: NextRequest) {
 
     // All other vaults: SDK APY only.
     return NextResponse.json({
-      vaultApy: defindexApy !== null ? parseFloat(defindexApy.toFixed(4)) : null,
+      vaultApy:
+        defindexApy !== null ? parseFloat(defindexApy.toFixed(4)) : null,
       strategies: [],
     });
   } catch (err) {

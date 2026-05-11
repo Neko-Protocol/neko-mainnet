@@ -148,7 +148,7 @@ function UserTokenRow({
   const balanceNum = getHoldingsAmount(balances, code);
   const fiatValue =
     isLoading || price <= 0
-      ? "—"
+      ? ""
       : formatCurrency(
           convertUsdToSelected(balanceNum * price, fxRate),
           selectedCurrency
@@ -185,7 +185,7 @@ function PopularTokenRow({
   const { price, isLoading } = useTokenPrice(code);
   const fiatValue =
     isLoading || price <= 0
-      ? "—"
+      ? ""
       : formatCurrency(convertUsdToSelected(price, fxRate), selectedCurrency);
 
   return (

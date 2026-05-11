@@ -83,7 +83,7 @@ export function ActivityFeed({ poolId }: { poolId: string }) {
           EVENT_TYPE_COLORS[event.type.toLowerCase()] ?? "text-white/60";
         const userShort = event.user
           ? `${event.user.slice(0, 4)}...${event.user.slice(-4)}`
-          : "—";
+          : "";
         const explorerUrl = event.user
           ? `https://stellar.expert/explorer/public/account/${event.user}`
           : null;

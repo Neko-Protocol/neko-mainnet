@@ -30,7 +30,7 @@ export function useUserPositions() {
 
   // ── Priority 2: Horizon activity scan ─────────────────────────────────────
   // Decodes Horizon tx envelopes to find which Soroban contracts the user has
-  // ever called. Cached 10 min — runs once per session in practice.
+  // ever called. Cached 10 min  runs once per session in practice.
   const horizonScanQuery = useQuery<Set<string>>({
     queryKey: ["horizon-scan", address],
     queryFn: () => scanUserContractInteractions(address!),

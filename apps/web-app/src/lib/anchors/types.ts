@@ -32,11 +32,11 @@ export interface Customer {
   email?: string;
   /** Current KYC verification status. */
   kycStatus: KycStatus;
-  /** Bank account ID — generated at registration time for providers that require it (e.g. Etherfuse). */
+  /** Bank account ID  generated at registration time for providers that require it (e.g. Etherfuse). */
   bankAccountId?: string;
-  /** Blockchain wallet ID — generated at registration time for providers that require it (e.g. BlindPay). */
+  /** Blockchain wallet ID  generated at registration time for providers that require it (e.g. BlindPay). */
   blockchainWalletId?: string;
-  /** Presigned onboarding URL — returned at customer creation time (e.g. Etherfuse). Must be stored client-side because re-calling the API for existing users returns 409. */
+  /** Presigned onboarding URL  returned at customer creation time (e.g. Etherfuse). Must be stored client-side because re-calling the API for existing users returns 409. */
   onboardingUrl?: string;
   /** ISO 8601 creation timestamp. */
   createdAt: string;
@@ -67,7 +67,7 @@ export interface Quote {
 }
 
 // =============================================================================
-// Payment Instructions — discriminated union by rail type
+// Payment Instructions  discriminated union by rail type
 // =============================================================================
 
 /** Base fields shared by all payment instruction types. */
@@ -96,7 +96,7 @@ export interface SpeiPaymentInstructions extends PaymentInstructionsBase {
 export type PaymentInstructions = SpeiPaymentInstructions;
 
 // =============================================================================
-// Fiat Account types — discriminated union by rail type
+// Fiat Account types  discriminated union by rail type
 // =============================================================================
 
 /** Input for registering a new SPEI fiat account. */
@@ -120,7 +120,7 @@ export interface RegisterFiatAccountInput {
   customerId: string;
   /** Bank account details. */
   account: FiatAccountInput;
-  /** Stellar public key — required by providers that use presigned-URL auth (e.g. Etherfuse). */
+  /** Stellar public key  required by providers that use presigned-URL auth (e.g. Etherfuse). */
   publicKey?: string;
 }
 
@@ -264,7 +264,7 @@ export interface CreateCustomerInput {
   email?: string;
   /** ISO 3166-1 alpha-2 country code (e.g. `"MX"`). */
   country?: string;
-  /** Stellar public key — required by providers that use wallet-based identity (e.g. Etherfuse). */
+  /** Stellar public key  required by providers that use wallet-based identity (e.g. Etherfuse). */
   publicKey?: string;
 }
 
@@ -274,7 +274,7 @@ export interface GetCustomerInput {
   customerId?: string;
   /** Email for email-based lookup (providers with `emailLookup` capability). */
   email?: string;
-  /** ISO 3166-1 alpha-2 country code — narrows email lookup scope. */
+  /** ISO 3166-1 alpha-2 country code  narrows email lookup scope. */
   country?: string;
 }
 
@@ -288,11 +288,11 @@ export interface GetQuoteInput {
   fromAmount?: string;
   /** Amount in the destination currency. Provide either this or `fromAmount`. */
   toAmount?: string;
-  /** Customer ID — required by some providers for quote generation. */
+  /** Customer ID  required by some providers for quote generation. */
   customerId?: string;
-  /** Wallet address — used by some providers to resolve asset identifiers. */
+  /** Wallet address  used by some providers to resolve asset identifiers. */
   stellarAddress?: string;
-  /** Resource ID — bank account or blockchain wallet ID needed by some providers for quotes. */
+  /** Resource ID  bank account or blockchain wallet ID needed by some providers for quotes. */
   resourceId?: string;
 }
 
@@ -312,7 +312,7 @@ export interface CreateOnRampInput {
   amount: string;
   /** Optional memo for the Stellar transaction. */
   memo?: string;
-  /** Bank account ID — required by some providers (e.g. Etherfuse). */
+  /** Bank account ID  required by some providers (e.g. Etherfuse). */
   bankAccountId?: string;
 }
 
@@ -353,7 +353,7 @@ export interface TokenInfo {
 }
 
 // =============================================================================
-// KYC field/document requirements — anchors declare what they need
+// KYC field/document requirements  anchors declare what they need
 // =============================================================================
 
 /** A single form field required for KYC verification. */

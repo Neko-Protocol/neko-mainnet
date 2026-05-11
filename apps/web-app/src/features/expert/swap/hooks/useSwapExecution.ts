@@ -68,7 +68,7 @@ export function useSwapExecution() {
 
       if (!newQuote) {
         throw new Error(
-          "No liquidity found for this pair — try a different token combination"
+          "No liquidity found for this pair  try a different token combination"
         );
       }
 

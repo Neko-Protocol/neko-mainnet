@@ -10,7 +10,7 @@ let _client: ReflectorClient | null = null;
 
 /**
  * Returns a singleton Reflector oracle client bound to the pubnet contract.
- * Returns null on testnet/standalone — Reflector only exists on mainnet.
+ * Returns null on testnet/standalone  Reflector only exists on mainnet.
  */
 export function getReflectorClient(): ReflectorClient | null {
   const net = stellarNetwork?.toUpperCase();

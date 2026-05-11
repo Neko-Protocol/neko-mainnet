@@ -50,7 +50,7 @@ function toPoolData(pool: PoolInfo): PoolData {
 }
 
 export function useDashboardPools(): UseDashboardPoolsResult {
-  // Separate limited queries per protocol — distinct keys so they don't
+  // Separate limited queries per protocol  distinct keys so they don't
   // conflict with the full-list queries used on Discover/Vaults pages.
   const blendQuery = useQuery<PoolInfo[]>({
     queryKey: ["orchestrator", "pools", "blend", DASHBOARD_LIMITS.blend],

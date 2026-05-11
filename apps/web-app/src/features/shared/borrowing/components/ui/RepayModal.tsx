@@ -180,7 +180,7 @@ export function RepayModal({
             )}
             {exceedsDebt && !exceedsBalance && (
               <p className="text-amber-400 text-xs mt-1">
-                Exceeds current debt — will repay in full
+                Exceeds current debt will repay in full
               </p>
             )}
           </div>

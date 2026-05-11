@@ -6,7 +6,7 @@ import { formatAmount } from "@/lib/helpers/formatUtils";
  */
 export function formatMxn(amount: string | number): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(num)) return "—";
+  if (isNaN(num)) return "";
   return new Intl.NumberFormat("es-MX", {
     style: "currency",
     currency: "MXN",
@@ -20,7 +20,7 @@ export function formatMxn(amount: string | number): string {
  */
 export function formatCrypto(amount: string | number, symbol: string): string {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(num)) return `— ${symbol}`;
+  if (isNaN(num)) return ` ${symbol}`;
   return `${formatAmount(num)} ${symbol}`;
 }
 
@@ -49,6 +49,6 @@ export function formatCountdown(seconds: number): string {
  */
 export function formatRate(rate: string, from: string, to: string): string {
   const num = parseFloat(rate);
-  if (isNaN(num)) return `1 ${from} = — ${to}`;
+  if (isNaN(num)) return `1 ${from} =  ${to}`;
   return `1 ${from} = ${formatAmount(num)} ${to}`;
 }

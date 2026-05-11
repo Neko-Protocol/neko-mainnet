@@ -173,7 +173,7 @@ export function RepayPositionModal({
             {exceedsDebt && !exceedsBalance && (
               <p className="text-amber-400 text-xs mt-1.5 flex items-center gap-1">
                 <AlertTriangle className="h-3 w-3 shrink-0" />
-                Exceeds current debt — will repay in full
+                Exceeds current debt will repay in full
               </p>
             )}
           </div>

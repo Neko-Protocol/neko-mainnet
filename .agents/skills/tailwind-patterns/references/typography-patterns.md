@@ -190,7 +190,7 @@ Text hierarchy and typography patterns for Tailwind CSS projects.
 ```tsx
 <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground">
   "This is a quote that provides emphasis or attribution to a statement."
-  <footer className="mt-2 text-sm not-italic">— Author Name</footer>
+  <footer className="mt-2 text-sm not-italic"> Author Name</footer>
 </blockquote>
 ```
 

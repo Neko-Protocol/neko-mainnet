@@ -27,7 +27,7 @@ export function usePoolRateHistory(poolId: string) {
   return useQuery({
     queryKey: ["pool-rate-history", poolId],
     queryFn: () => fetchPoolRateHistory(poolId),
-    staleTime: 60 * 60 * 1000, // 1 hour — matches cron frequency
+    staleTime: 60 * 60 * 1000, // 1 hour  matches cron frequency
     retry: false,
   });
 }

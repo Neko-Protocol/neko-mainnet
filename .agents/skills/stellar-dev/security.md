@@ -405,7 +405,7 @@ if (clawbackEnabled) {
 
 ## Bug Bounty Programs
 
-### Immunefi — Stellar Core (up to $250K)
+### Immunefi Stellar Core (up to $250K)
 
 - **URL**: https://immunefi.com/bug-bounty/stellar/
 - **Scope**: stellar-core, rs-soroban-sdk, rs-soroban-env, soroban-tools (CLI + RPC), js-soroban-client, rs-stellar-xdr, wasmi fork
@@ -413,13 +413,13 @@ if (clawbackEnabled) {
 - **Payment**: USD-denominated, paid in XLM. KYC required.
 - **Rules**: PoC required. Test on local forks only (no mainnet/testnet).
 
-### Immunefi — OpenZeppelin on Stellar (up to $25K)
+### Immunefi OpenZeppelin on Stellar (up to $25K)
 
 - **URL**: https://immunefi.com/bug-bounty/openzeppelin-stellar/
 - **Scope**: OpenZeppelin Stellar Contracts library
 - **Max payout**: $25K per bug, $250K total program cap
 
-### HackerOne — Web Applications
+### HackerOne Web Applications
 
 - **URL**: https://stellar.org/grants-and-funding/bug-bounty
 - **Scope**: SDF web applications, production servers, domains
@@ -478,15 +478,15 @@ Framework for building custom security detectors for Soroban.
 
 #### Certora Sunbeam Prover
 
-Purpose-built formal verification for Soroban — first WASM platform supported by Certora.
+Purpose-built formal verification for Soroban first WASM platform supported by Certora.
 
 - **Docs**: https://docs.certora.com/en/latest/docs/sunbeam/index.html
-- **Spec language**: CVLR (Certora Verification Language for Rust) — Rust macros (`cvlr_assert!`, `cvlr_assume!`, `cvlr_satisfy!`)
+- **Spec language**: CVLR (Certora Verification Language for Rust) Rust macros (`cvlr_assert!`, `cvlr_assume!`, `cvlr_satisfy!`)
 - **Operates at**: WASM bytecode level (eliminates compiler trust assumptions)
 - **Reports**: https://github.com/Certora/SecurityReports
 - **Example**: [Blend V1 verification report](https://www.certora.com/reports/blend-smart-contract-verification-report)
 
-#### Runtime Verification — Komet
+#### Runtime Verification Komet
 
 Formal verification and testing tool built specifically for Soroban (SCF-funded).
 

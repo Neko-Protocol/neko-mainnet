@@ -158,7 +158,7 @@ export function useFilteredDestinations(token: SimulatorToken | null) {
           ? `${deposited.toLocaleString("en-US", {
               maximumFractionDigits: 2,
             })} ${lp.assetCode}`
-          : "—";
+          : "";
         const apy = Number.isFinite(lp.interestRate) ? lp.interestRate : null;
         return {
           kind: "pool" as const,
@@ -215,7 +215,7 @@ export function useFilteredDestinations(token: SimulatorToken | null) {
         name: cfg.name,
         apy,
         tvlUsd: null,
-        tvlLabel: "—",
+        tvlLabel: "",
         protocol: "Sovereign Bond",
         strategyLabels: [
           getYieldTokenStrategyLabel(symbol),

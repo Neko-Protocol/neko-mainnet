@@ -318,7 +318,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           });
         }
       } catch {
-        // loadUser failed — skip direct reserves, vault results still returned
+        // loadUser failed  skip direct reserves, vault results still returned
       }
     }
 

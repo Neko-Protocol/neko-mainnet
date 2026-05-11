@@ -64,7 +64,7 @@ export async function getStellarWalletKit(): Promise<Kit> {
             projectId: walletConnectProjectId,
             metadata: {
               name: "Neko",
-              description: "Neko — All-in-one platform for RWAs on Stellar",
+              description: "Neko  All-in-one platform for RWAs on Stellar",
               url: "https://nekoprotocol.xyz",
               icons: ["/Neko.svg"],
             },

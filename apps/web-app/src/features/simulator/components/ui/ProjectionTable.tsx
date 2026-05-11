@@ -30,7 +30,7 @@ export function ProjectionTable({
 
   const fmtFiat = (usd: number) =>
     !hasPrice
-      ? "—"
+      ? ""
       : formatCurrency(convertUsdToSelected(usd, fxRate), selectedCurrency);
 
   return (
@@ -39,7 +39,7 @@ export function ProjectionTable({
         <p className="border-b border-white/5 px-4 py-2.5 text-xs leading-snug text-white/50">
           &ldquo;You earn&rdquo; here means extra {tokenCode}{" "}
           <span className="text-white/65">and</span> a higher total value as
-          each token tends to grow in price over time — not interest paid out
+          each token tends to grow in price over time not interest paid out
           separately.
         </p>
       )}
@@ -67,7 +67,7 @@ export function ProjectionTable({
               <td className="px-4 py-3 font-medium">{row.periodLabel}</td>
               <td className="px-4 py-3 text-right">
                 <div className="font-semibold text-[#229EDF]">
-                  {isLoading ? "—" : `+${fmtFiat(row.earningsUsd)}`}
+                  {isLoading ? "" : `+${fmtFiat(row.earningsUsd)}`}
                 </div>
                 <div className="text-xs text-white/40">
                   {isLoading
@@ -77,7 +77,7 @@ export function ProjectionTable({
               </td>
               <td className="px-4 py-3 text-right">
                 <div className="font-semibold">
-                  {isLoading ? "—" : fmtFiat(row.totalUsd)}
+                  {isLoading ? "" : fmtFiat(row.totalUsd)}
                 </div>
                 <div className="text-xs text-white/40">
                   {isLoading

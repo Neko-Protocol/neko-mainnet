@@ -77,7 +77,7 @@ export function LendModal({
       <div className="bg-[#1C1C1C] border border-white/10 rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl p-4 sm:p-5 animate__animated animate__fadeInUp animate__faster">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-white text-lg font-bold">
-            {isDeposit ? "Deposit" : "Withdraw"} — {pool.name}
+            {isDeposit ? "Deposit" : "Withdraw"} {pool.name}
           </h3>
           <button
             onClick={onClose}

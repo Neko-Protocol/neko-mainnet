@@ -95,7 +95,7 @@ export function useBackstop(contractId: string) {
     await Promise.all([refetchWalletBalance(), refetchDepositInfo()]);
   }, [refetchWalletBalance, refetchDepositInfo]);
 
-  // Deposit to backstop — Soroban auth propagation bundles token transfer
+  // Deposit to backstop  Soroban auth propagation bundles token transfer
   // authorization into the prepared tx, so no separate approve is needed.
   const handleDeposit = useCallback(
     async (amount: string) => {
@@ -244,7 +244,7 @@ export function useBackstop(contractId: string) {
     ]
   );
 
-  // Derive queue expiry info — queuedAt now holds the expiration timestamp
+  // Derive queue expiry info  queuedAt now holds the expiration timestamp
   // directly from the backstop contract's Q4W.exp field.
   const queueExpiresAt: Date | null =
     depositInfo?.inWithdrawalQueue && depositInfo.queuedAt

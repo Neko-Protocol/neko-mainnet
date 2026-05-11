@@ -103,7 +103,7 @@ export const fetchBalances = async (
         decimals: info.decimals ?? 7,
       }));
 
-    // Single batch call — reuses the already-loaded account sequence
+    // Single batch call  reuses the already-loaded account sequence
     const sorobanBalances = await getBatchedTokenBalances(
       tokens,
       address,
