@@ -118,7 +118,9 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
         )}
       </div>
       <div className="flex items-center justify-between mt-1 gap-2">
-        <span className="text-white/40 text-xs shrink-0">Your balance</span>
+        <span className="text-white/40 text-xs min-w-0 truncate">
+          Your balance {isLoadingBalance ? "..." : formatAmount(maxAmt || "0", 2)}
+        </span>
         <button
           onClick={isReadOnly ? undefined : onMaxClick}
           disabled={
@@ -130,7 +132,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
               : "text-white/40 hover:text-white/70 disabled:cursor-not-allowed"
           }`}
         >
-          {isLoadingBalance ? "..." : `${formatAmount(maxAmt || "0")} Max`}
+          Max
         </button>
       </div>
     </div>
@@ -379,9 +381,10 @@ const Swap: React.FC = () => {
                   onChange={(e) =>
                     handleAmountChange(sanitizeAmountInput(e.target.value))
                   }
-                  placeholder="0.0000"
+                  placeholder="0.00"
                   disabled={!address || isLoading}
-                  className="bg-transparent text-white text-3xl font-bold w-full outline-none placeholder:text-white/30 disabled:opacity-50"
+                  className="bg-transparent text-white font-bold w-full outline-none placeholder:text-white/30 disabled:opacity-50 leading-none"
+                  style={{ fontSize: "1.5rem" }}
                 />
               </div>
             </div>
@@ -416,7 +419,10 @@ const Swap: React.FC = () => {
                 {isLoadingQuote ? (
                   <span className="text-white/40 text-sm">Loading…</span>
                 ) : (
-                  <span className="text-white text-3xl font-bold">
+                  <span
+                    className="text-white font-bold leading-none"
+                    style={{ fontSize: "1.5rem" }}
+                  >
                     {amountOut && amountOut !== "0.0"
                       ? formatAmount(amountOut)
                       : "0.00"}

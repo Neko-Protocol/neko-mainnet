@@ -77,7 +77,7 @@ export function VaultDetailModal({
     <ModalPortal>
       {/* backdrop */}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-200"
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 transition-opacity duration-200"
         style={{
           background: "rgba(0,0,0,0.7)",
           backdropFilter: "blur(4px)",
@@ -87,7 +87,7 @@ export function VaultDetailModal({
       >
         {/* panel */}
         <div
-          className="relative w-full max-w-xl max-h-[90vh] flex flex-col rounded-2xl overflow-hidden transition-all duration-200"
+          className="relative w-full sm:max-w-xl max-h-[90dvh] flex flex-col rounded-t-2xl sm:rounded-2xl overflow-hidden transition-all duration-200"
           style={{
             background: "#141414",
             border: "1px solid rgba(255,255,255,0.07)",
@@ -249,7 +249,6 @@ export function VaultDetailModal({
                 </div>
               </section>
             )}
-
           </div>
 
           {/* ── FOOTER ── */}

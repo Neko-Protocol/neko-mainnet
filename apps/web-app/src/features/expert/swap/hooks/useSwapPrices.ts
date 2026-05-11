@@ -41,10 +41,11 @@ export function useSwapPrices(
       const amountUsd = parseFloat(amountIn) * tokenInPrice;
       return formatCurrency(
         convertUsdToSelected(amountUsd, fxRate),
-        selectedCurrency
+        selectedCurrency,
+        2
       );
     }
-    return formatCurrency(0, selectedCurrency);
+    return formatCurrency(0, selectedCurrency, 2);
   }, [amountIn, tokenInPrice, fxRate, selectedCurrency]);
 
   const fiatValueOut = useMemo(() => {
@@ -52,10 +53,11 @@ export function useSwapPrices(
       const amountUsd = parseFloat(amountOut) * tokenOutPrice;
       return formatCurrency(
         convertUsdToSelected(amountUsd, fxRate),
-        selectedCurrency
+        selectedCurrency,
+        2
       );
     }
-    return formatCurrency(0, selectedCurrency);
+    return formatCurrency(0, selectedCurrency, 2);
   }, [amountOut, tokenOutPrice, fxRate, selectedCurrency]);
 
   const swapValueAnalysis = useMemo(() => {
