@@ -216,6 +216,13 @@ export function useVaultAction(
           );
         }
 
+        const finalResult = await waitForTx(sendResult.hash);
+        if (finalResult.status !== "SUCCESS") {
+          throw new Error(
+            "Transaction failed on-chain. Please refresh your balance."
+          );
+        }
+
         const minted = vaultDepositMintedShares(depositTx.result);
         const mintedSharesHuman =
           minted != null
@@ -237,31 +244,8 @@ export function useVaultAction(
           tx_hash: sendResult.hash,
         });
 
-        setIsLoading(false);
         showSuccess(`Successfully deposited ${amount} ${supplyAssetSymbol}`);
-
-        void waitForTx(sendResult.hash)
-          .then((finalResult) => {
-            console.log(
-              "[vault:deposit] final:",
-              finalResult.status,
-              finalResult
-            );
-            if (finalResult.status !== "SUCCESS") {
-              addNotification(
-                "Transaction failed on-chain. Please refresh your balance.",
-                "error"
-              );
-            }
-            void invalidateAfterTx();
-          })
-          .catch(() => {
-            addNotification(
-              "Could not confirm transaction. Please refresh.",
-              "error"
-            );
-            void invalidateAfterTx();
-          });
+        void invalidateAfterTx();
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
         showError(
@@ -330,6 +314,13 @@ export function useVaultAction(
           );
         }
 
+        const finalResult = await waitForTx(sendResult.hash);
+        if (finalResult.status !== "SUCCESS") {
+          throw new Error(
+            "Transaction failed on-chain. Please refresh your balance."
+          );
+        }
+
         const underlyingBi = vaultWithdrawUnderlyingOut(withdrawTx.result);
         const undDec =
           resolveDecimalsForAuditAssetKey(supplyAssetSymbol) ??
@@ -352,33 +343,10 @@ export function useVaultAction(
           tx_hash: sendResult.hash,
         });
 
-        setIsLoading(false);
         showSuccess(
           `Successfully withdrew ${shares} ${vaultShareSymbol ?? "shares"}`
         );
-
-        void waitForTx(sendResult.hash)
-          .then((finalResult) => {
-            console.log(
-              "[vault:withdraw] final:",
-              finalResult.status,
-              finalResult
-            );
-            if (finalResult.status !== "SUCCESS") {
-              addNotification(
-                "Transaction failed on-chain. Please refresh your balance.",
-                "error"
-              );
-            }
-            void invalidateAfterTx();
-          })
-          .catch(() => {
-            addNotification(
-              "Could not confirm transaction. Please refresh.",
-              "error"
-            );
-            void invalidateAfterTx();
-          });
+        void invalidateAfterTx();
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
         showError(

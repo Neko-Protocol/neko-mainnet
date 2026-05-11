@@ -1,4 +1,6 @@
 import { useCallback } from "react";
+import { rpc } from "@stellar/stellar-sdk";
+import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import {
   getQuote,
@@ -160,6 +162,16 @@ export function useSwapExecution() {
       });
 
       if (sendResult.txHash) {
+        const server = new rpc.Server(rpcUrl, {
+          allowHttp: stellarNetwork === "LOCAL",
+        });
+        const confirmed = await server.pollTransaction(sendResult.txHash, {
+          attempts: 30,
+        });
+        if (confirmed.status !== "SUCCESS") {
+          throw new Error(`Swap failed on-chain (status: ${confirmed.status})`);
+        }
+
         auditService.log({
           wallet_address: address,
           action_type: "swap",

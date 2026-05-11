@@ -372,6 +372,8 @@ export function useLend() {
           const sendResult = await sorobanServer.sendTransaction(
             TransactionBuilder.fromXDR(signedDeposit.signedTxXdr, passphrase)
           );
+          if (sendResult.status === "ERROR")
+            throw new Error("Transaction rejected by network");
           txHash = sendResult.hash;
         } else {
           if (!selectedPool.bTokenRate)
@@ -392,10 +394,19 @@ export function useLend() {
           const sendResult = await sorobanServer.sendTransaction(
             TransactionBuilder.fromXDR(signedWithdraw.signedTxXdr, passphrase)
           );
+          if (sendResult.status === "ERROR")
+            throw new Error("Transaction rejected by network");
           txHash = sendResult.hash;
         }
 
-        await new Promise((r) => setTimeout(r, 3000));
+        if (!txHash) throw new Error("Transaction was not submitted");
+        const confirmed = await sorobanServer.pollTransaction(txHash, {
+          attempts: 30,
+        });
+        if (confirmed.status !== "SUCCESS")
+          throw new Error(
+            `Transaction failed on-chain (status: ${confirmed.status})`
+          );
         await loadBTokenBalance();
         await refetchPools();
         showSuccess(
