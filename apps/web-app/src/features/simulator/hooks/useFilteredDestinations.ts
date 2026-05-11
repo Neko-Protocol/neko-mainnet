@@ -143,6 +143,12 @@ export function useFilteredDestinations(token: SimulatorToken | null) {
           protocol: getPoolProtocolLabel(pool),
           strategyLabels: getPoolStrategyLabels(pool),
           acceptedTokenCodes: pool.tokens.map((t) => t.code),
+          blndEmissionsApy:
+            pool.type === "blend" &&
+            typeof pool.metadata.emissionsApy === "number" &&
+            pool.metadata.emissionsApy > 0
+              ? pool.metadata.emissionsApy
+              : null,
           raw: pool,
         };
       });

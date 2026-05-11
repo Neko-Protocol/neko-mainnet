@@ -81,6 +81,12 @@ export function DestinationCard({
                 {apy!.toFixed(2)}%
               </p>
               <p className="mt-0.5 text-xs text-white/40">/ year</p>
+              {destination.blndEmissionsApy &&
+              destination.blndEmissionsApy > 0 ? (
+                <p className="mt-1 text-xs font-medium text-emerald-400">
+                  +{destination.blndEmissionsApy.toFixed(2)}% BLND
+                </p>
+              ) : null}
             </>
           ) : (
             <p className="text-2xl leading-tight text-white/30"></p>
