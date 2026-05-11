@@ -22,8 +22,7 @@ export default function SimulatorPage() {
               Strategy Builder
             </h1>
             <p className="text-sm text-white/40">
-              Choose a token and a yield destination. Project returns, then save
-              or execute.
+              Pick a token to see how it can earn then put it to work.
             </p>
           </div>
         </header>

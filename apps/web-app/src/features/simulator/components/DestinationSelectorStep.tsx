@@ -21,6 +21,15 @@ interface DestinationSelectorStepProps {
 
 type Tab = "pools" | "vaults" | "hold-bond";
 
+const tabDescriptions: Record<Tab, string> = {
+  pools:
+    "Supply your tokens alongside other liquidity providers and earn a share of every trade that goes through.",
+  vaults:
+    "Let an automated strategy manage your tokens and continuously optimize for the best returns.",
+  "hold-bond":
+    "Hold government-backed tokens that grow in value over time. Low risk, predictable yield.",
+};
+
 function EtherfuseBondCard({
   destination,
   isSelected,
@@ -73,30 +82,26 @@ function EtherfuseBondCard({
             <h3 className="truncate text-base font-semibold text-white">
               {destination.name}
             </h3>
-            <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                accent.chip
-              )}
-            >
-              Sovereign Bond
+            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
+              Low Risk
             </span>
           </div>
-          <p className="mt-1 text-sm font-semibold text-blue-200">
-            Yield-bearing · ~{apy.toFixed(2)}% per year in {currency} while held
+          <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
+            <span className="text-2xl font-bold text-emerald-400">
+              ~{apy.toFixed(2)}%
+            </span>
+            <span className="text-xs font-normal text-white/50">/ year</span>
+          </div>
+          <p className="mt-1 text-sm text-white/70">
+            ~{apy.toFixed(2)}% yearly · {currency}-denominated returns
           </p>
-          {destination.isFallbackApy && (
-            <p className="mt-1 text-xs text-white/40">
-              Rate estimated · Updates daily
-            </p>
-          )}
         </div>
       </div>
 
-      <ul className="flex flex-col gap-1 text-xs text-white/80">
+      <ul className="flex flex-col gap-1 text-xs text-white/50">
         {destination.strategyLabels.map((label) => (
           <li key={label} className="flex items-start gap-2">
-            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" />
+            <span className="mt-[0.35rem] inline-block size-1 shrink-0 rounded-full bg-white/50" />
             <span>{label}</span>
           </li>
         ))}
@@ -138,11 +143,11 @@ export function DestinationSelectorStep({
 
   const tabs = useMemo<{ id: Tab; label: string; count: number }[]>(
     () => [
-      { id: "pools", label: "Pools", count: pools.length },
-      { id: "vaults", label: "Vaults", count: vaults.length },
+      { id: "pools", label: "Liquidity Pools", count: pools.length },
+      { id: "vaults", label: "Auto-Invest", count: vaults.length },
       {
         id: "hold-bond",
-        label: "Hold bond",
+        label: "Stable Bonds",
         count: yieldTokens.length,
       },
     ],
@@ -153,12 +158,12 @@ export function DestinationSelectorStep({
     <section className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <header className="shrink-0 flex flex-col gap-1">
         <h2 className="text-xl font-semibold text-white">
-          Where should your {token.code} go?
+          How do you want your {token.code} to earn?
         </h2>
         <p className="text-sm text-white/60">
-          {yieldTokens.length > 0
-            ? "Yield-bearing bonds accrue while you hold them. You can also supply the same asset-or stablecoins from step 1-to Pools (AMM liquidity + Neko lending supply) and Vaults for stacked scenarios."
-            : "Choose a pool or vault to simulate how your tokens might perform."}
+          {yieldTokens.length > 0 && tab === "hold-bond"
+            ? tabDescriptions["hold-bond"]
+            : tabDescriptions[tab]}
         </p>
       </header>
 
@@ -169,14 +174,21 @@ export function DestinationSelectorStep({
             type="button"
             onClick={() => handleTabChange(t.id)}
             className={cn(
-              "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+              "rounded-full px-4 py-1.5 text-sm transition-colors",
               tab === t.id
-                ? "bg-[#229EDF] text-white"
-                : "text-white/60 hover:text-white"
+                ? "bg-[#229EDF] font-semibold text-white"
+                : "font-medium text-white/50 hover:text-white/80"
             )}
           >
             {t.label}
-            <span className="ml-2 text-xs text-white/50">{t.count}</span>
+            <span
+              className={cn(
+                "tabular-nums text-xs font-normal",
+                tab === t.id ? "text-white/70" : "text-white/40"
+              )}
+            >
+              {` · ${t.count}`}
+            </span>
           </button>
         ))}
       </div>
@@ -189,7 +201,7 @@ export function DestinationSelectorStep({
         ) : total === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-[#2A2A2A] p-8 text-center">
             <p className="text-sm text-white/70">
-              No pools, vaults, or bond options match {token.code} yet.
+              Nothing available for {token.code} yet.
             </p>
             {onBackToTokens && (
               <button
@@ -204,8 +216,10 @@ export function DestinationSelectorStep({
         ) : visible.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-6 text-center text-sm text-white/60">
             {tab === "hold-bond"
-              ? `No sovereign bond options are available for ${token.code} in this network's asset list.`
-              : `No ${tab} accept ${token.code} yet. Try another tab.`}
+              ? `No bond options are available for ${token.code}.`
+              : tab === "pools"
+                ? `No liquidity pools accept ${token.code} yet. Try another option.`
+                : `No auto-invest vaults accept ${token.code} yet. Try another option.`}
           </div>
         ) : tab === "hold-bond" ? (
           <div className="flex flex-col gap-3 pb-1">

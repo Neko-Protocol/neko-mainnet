@@ -370,21 +370,21 @@ export function ReturnSimulatorStep({
       <header className="flex flex-col gap-1">
         <h2 className="text-xl font-semibold text-white">
           {isYieldOnlyHold
-            ? "Project yield while you hold"
+            ? `Watch your ${earningsTokenLabel} grow`
             : "See what you could earn"}
         </h2>
         <p className="text-sm text-white/60">
           {stableFundsBondPurchase && depositVenue
-            ? `Enter ${token.code} to swap into ${bondSymbolResolved}. Projections use the estimated ${bondSymbolResolved} you receive, then stacked venue yield. Confirm once to swap and deposit.`
+            ? `Enter how much ${token.code} you want to use. We'll swap it into ${bondSymbolResolved} and deposit it  one confirmation.`
             : stableFundsBondPurchase
-              ? `Enter ${token.code} to see how much ${bondSymbolResolved} you could receive via swap and how it might grow while held (illustrative).`
+              ? `Enter how much ${token.code} you'd like to swap. We'll show you how much ${bondSymbolResolved} you'd receive and what it could earn.`
               : isYieldOnlyHold
-                ? "The token is already yield-bearing. Adjust the amount to see how balance and value might grow over time."
+                ? "Enter an amount to see how your balance could grow while you hold this token."
                 : bondHold && depositVenue
-                  ? "Adjust the amount to see stacked growth: sovereign bond yield plus this venue."
+                  ? "Enter an amount to see your combined earnings  bond yield plus this strategy, stacked."
                   : isBondToken
-                    ? "Adjust the amount to see projected growth. For bond tokens in a pool or vault, bond APR and venue APR are added to approximate total yearly growth."
-                    : "Adjust the amount to see your projected earnings over time."}
+                    ? "Enter an amount to see your projected growth. This includes the bond's built-in yield plus what the pool or vault earns on top."
+                    : "Enter an amount to see your projected earnings over time."}
         </p>
       </header>
 
@@ -479,8 +479,7 @@ export function ReturnSimulatorStep({
               bondHold.bondSymbol &&
               !stableFundsBondPurchase && (
                 <p className="mt-2 text-xs text-white/45">
-                  Amount is in {bondHold.bondSymbol}. You picked {token.code} in
-                  step 1 to explore bond options.
+                  Projections are in {bondHold.bondSymbol}.
                 </p>
               )}
           </div>
@@ -529,11 +528,9 @@ export function ReturnSimulatorStep({
           )}
           {showBondEtherfuseNote && bondQuote && (
             <p className="text-xs text-white/50">
-              Bond leg ~{bondQuote.apy.toFixed(2)}% APR (
-              {bondQuote.bondCurrency} oriented, Etherfuse) plus this{" "}
-              {depositVenue!.kind === "vault" ? "vault" : "pool"}
-              &apos;s APR feeds the combined rate above. Figures are
-              illustrative; markets and compounding paths differ in practice.
+              Combined rate: ~{bondQuote.apy.toFixed(2)}% bond yield + this{" "}
+              {depositVenue!.kind === "vault" ? "vault" : "pool"}. Actual
+              results may vary.
             </p>
           )}
           {!bondHold &&
