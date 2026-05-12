@@ -14,7 +14,8 @@
       "Bash(sed -i '' 's|@/features/swap/hooks/useSwapExecution|@/features/expert/swap/hooks/useSwapExecution|g' /Users/villarley/Documents/GitHub/neko-mainnet/apps/web-app/src/features/simulator/components/SimulatorWizard.tsx)",
       "Bash(npx eslint *)",
       "mcp__cursor-coder__cursor_edit_code",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(npm audit *)"
     ]
   }
 }
