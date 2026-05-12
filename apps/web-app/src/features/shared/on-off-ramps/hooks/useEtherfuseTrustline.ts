@@ -10,7 +10,10 @@ import {
 import { getEtherfuseAssets } from "../utils/rampApi";
 import { networkPassphrase, horizonUrl } from "@/lib/constants/network";
 import type { AnchorProvider } from "@/lib/anchors/types";
-import type { SignTransactionFn } from "@/lib/helpers/stellar/transaction";
+import {
+  extractSignedTxXdr,
+  type SignTransactionFn,
+} from "@/lib/helpers/stellar/transaction";
 
 export function useEtherfuseTrustline(
   provider: AnchorProvider,
@@ -62,7 +65,7 @@ export function useEtherfuseTrustline(
         .setTimeout(30)
         .build();
 
-      const { signedTxXdr } = await signTransaction(tx.toXDR());
+      const signedTxXdr = extractSignedTxXdr(await signTransaction(tx.toXDR()));
 
       // Submit directly to Horizon
       const res = await fetch(`${horizonUrl}/transactions`, {

@@ -4,7 +4,18 @@ import { stellarNetwork } from "@/lib/constants/network";
 export type SignTransactionFn = (
   xdr: string,
   options?: { networkPassphrase?: string; address?: string }
-) => Promise<{ signedTxXdr: string }>;
+) => Promise<string | { signedTxXdr?: string }>;
+
+export function extractSignedTxXdr(
+  signed: string | { signedTxXdr?: string }
+): string {
+  const signedXdr =
+    typeof signed === "string" ? signed : (signed.signedTxXdr ?? "");
+  if (!signedXdr) {
+    throw new Error("Wallet did not return a signed transaction XDR");
+  }
+  return signedXdr;
+}
 
 export async function signAndSendTransaction(
   xdr: string,
@@ -20,10 +31,8 @@ export async function signAndSendTransaction(
     networkPassphrase: options.networkPassphrase,
     address: options.address,
   });
-  const tx = TransactionBuilder.fromXDR(
-    signed.signedTxXdr,
-    options.networkPassphrase
-  );
+  const signedTxXdr = extractSignedTxXdr(signed);
+  const tx = TransactionBuilder.fromXDR(signedTxXdr, options.networkPassphrase);
   const sorobanServer = new rpc.Server(options.rpcUrl, {
     allowHttp: stellarNetwork === "LOCAL",
   });

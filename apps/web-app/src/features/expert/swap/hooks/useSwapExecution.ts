@@ -22,6 +22,7 @@ import {
 } from "@/features/expert/swap/constants/swapConfig";
 import { useWallet } from "@/hooks/useWallet";
 import { auditService } from "@/lib/services/audit.service";
+import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 
 export interface SwapExecutionParams {
   amountIn: string;
@@ -116,11 +117,7 @@ export function useSwapExecution() {
             throw signErr;
           }
 
-          const trustlineSignedXdr =
-            signedTrustline.signedTxXdr ||
-            (typeof signedTrustline === "string"
-              ? signedTrustline
-              : JSON.stringify(signedTrustline));
+          const trustlineSignedXdr = extractSignedTxXdr(signedTrustline);
 
           await submitClassicTrustlineToHorizon(trustlineSignedXdr);
         }
@@ -150,11 +147,7 @@ export function useSwapExecution() {
         throw error;
       }
 
-      const signedXdrString =
-        signedResult.signedTxXdr ||
-        (typeof signedResult === "string"
-          ? signedResult
-          : JSON.stringify(signedResult));
+      const signedXdrString = extractSignedTxXdr(signedResult);
 
       const sendResult = await sendTransaction({
         xdr: signedXdrString,

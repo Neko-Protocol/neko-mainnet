@@ -6,6 +6,10 @@ import {
 } from "@stellar/stellar-sdk";
 import { TokenMetadata } from "@blend-capital/blend-sdk";
 import { horizonUrl, networkPassphrase, rpcUrl } from "@/lib/constants/network";
+import {
+  extractSignedTxXdr,
+  type SignTransactionFn,
+} from "@/lib/helpers/stellar/transaction";
 
 export interface ClassicAssetRef {
   code: string;
@@ -186,10 +190,7 @@ export async function ensureTrustlineForSAC(
   contractId: string,
   assetCode: string,
   walletAddress: string,
-  signTransaction: (
-    xdr: string,
-    opts?: { networkPassphrase?: string; address?: string }
-  ) => Promise<{ signedTxXdr: string }>
+  signTransaction: SignTransactionFn
 ): Promise<void> {
   if (!contractId || assetCode === "XLM") return;
 
@@ -202,6 +203,8 @@ export async function ensureTrustlineForSAC(
   if (missing.length === 0) return;
 
   const xdr = await buildAddClassicTrustlinesTxXdr(walletAddress, missing);
-  const { signedTxXdr } = await signTransaction(xdr, { networkPassphrase });
+  const signedTxXdr = extractSignedTxXdr(
+    await signTransaction(xdr, { networkPassphrase })
+  );
   await submitHorizonTransaction(signedTxXdr);
 }

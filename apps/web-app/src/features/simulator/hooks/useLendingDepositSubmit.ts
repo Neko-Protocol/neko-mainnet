@@ -8,6 +8,7 @@ import { depositToPool } from "@/lib/helpers/stellar/lending";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { POOLS_QUERY_KEY } from "@/lib/orchestrator";
+import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 
 export function useLendingDepositSubmit() {
   const { address, signTransaction, networkPassphrase } = useWallet();
@@ -50,7 +51,7 @@ export function useLendingDepositSubmit() {
         });
         const sendResult = await sorobanServer.sendTransaction(
           TransactionBuilder.fromXDR(
-            signedDeposit.signedTxXdr,
+            extractSignedTxXdr(signedDeposit),
             networkPassphrase
           )
         );
