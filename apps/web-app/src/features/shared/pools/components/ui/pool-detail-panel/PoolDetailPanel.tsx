@@ -142,6 +142,7 @@ export function PoolDetailPanel({
             onMax={maxAmm}
             disabled={!isWalletConnected}
             usdValue={formatUsdValue(Number.parseFloat(ammUsdValue) || 0)}
+            pairStyle={!!isPair && isDepositTab}
           />
           {isPair && isDepositTab && (
             <AmountInput
@@ -153,6 +154,7 @@ export function PoolDetailPanel({
               balanceValue={pool.token2Balance ?? "0.00"}
               readOnly
               disabled={!isWalletConnected}
+              pairStyle
             />
           )}
         </>

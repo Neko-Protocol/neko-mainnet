@@ -19,6 +19,7 @@ export function AmountInput({
   disabled,
   readOnly,
   usdValue,
+  pairStyle,
 }: {
   label: string;
   token: PoolDetailPanelToken;
@@ -32,6 +33,7 @@ export function AmountInput({
   disabled?: boolean;
   readOnly?: boolean;
   usdValue?: string;
+  pairStyle?: boolean;
 }) {
   const resolvedIcon =
     token.icon ?? getPoolTokenIcon({ type: "contract", code: token.symbol });
@@ -59,6 +61,61 @@ export function AmountInput({
       )}
     </div>
   );
+
+  if (pairStyle) {
+    return (
+      <div className="rounded-xl bg-[#1f1f1f] border border-white/5 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1.5">
+            {renderTokenIcon(token, resolvedIcon)}
+            <span className="text-white/70 text-xs font-semibold">
+              {token.symbol}
+            </span>
+          </div>
+          <span className="text-white/30 text-xs tabular-nums">
+            {disabled
+              ? "Connect wallet"
+              : `${trimBalance(balanceValue)} ${token.symbol}`}
+            {!disabled && onMax && (
+              <>
+                {" "}
+                <button
+                  type="button"
+                  onClick={onMax}
+                  className="text-[#229EDF] font-semibold hover:text-[#1a8bc7] transition-colors uppercase tracking-wide"
+                >
+                  {balanceLabel}
+                </button>
+              </>
+            )}
+          </span>
+        </div>
+
+        <input
+          type="text"
+          inputMode="decimal"
+          placeholder="0.00"
+          value={value}
+          onChange={(e) =>
+            readOnly
+              ? undefined
+              : onChange(
+                  e.target.value
+                    .replace(/[^0-9.]/g, "")
+                    .replace(/(\..*)\./g, "$1")
+                )
+          }
+          disabled={disabled}
+          readOnly={readOnly}
+          className="w-full bg-transparent text-white font-medium outline-none placeholder:text-white/20 disabled:cursor-not-allowed read-only:cursor-default"
+          style={{
+            fontSize: 33,
+            fontFamily: '"FK Grotesk", "Inter", sans-serif',
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl p-4">

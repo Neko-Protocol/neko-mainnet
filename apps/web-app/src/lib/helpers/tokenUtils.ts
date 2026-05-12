@@ -124,7 +124,7 @@ export const getTokenIcon = (
  */
 export function getTokenIconFitClass(tokenCode: string): string {
   if (tokenCode.trim().toUpperCase() === "XLM") {
-    return "h-full w-full object-contain p-1 invert";
+    return "h-full w-full object-contain";
   }
   return "h-full w-full object-cover";
 }

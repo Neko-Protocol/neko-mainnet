@@ -538,7 +538,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       return null;
     }
     if (!ammInsufficientFunds) return null;
-    return "Fondos insuficientes";
+    return "Insufficient funds";
   }, [depositWithdrawMode, ammAmount, ammInsufficientFunds]);
 
   const panelPool = useMemo<PoolDetailPanelPool | null>(() => {
@@ -802,7 +802,11 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           ammTab={ammTab}
           onAmmTabChange={handleAmmTabChange}
           ammAmount={ammAmount}
-          ammAmount2={requiredSecondLegFormatted ?? undefined}
+          ammAmount2={
+            requiredSecondLegFormatted != null
+              ? parseFloat(requiredSecondLegFormatted).toFixed(2)
+              : undefined
+          }
           ammMaxAmount={maxAmmDepositAmount}
           onAmmAmountChange={setAmmAmount}
           onAmmSubmit={handleAmmSubmit}
