@@ -38,7 +38,7 @@ const YourPositions: React.FC = () => {
             Couldn&apos;t load positions
           </p>
           <p className="text-white/40 text-xs">
-            Network error — please refresh the page
+            Network error please refresh the page
           </p>
         </div>
       ) : !hasPositions ? (

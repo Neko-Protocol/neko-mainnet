@@ -23,7 +23,7 @@ function useVaultUsdValue(
   const { data } = useVaultData(vaultId);
   const { price } = useTokenPrice(assetSymbol);
 
-  if (!data?.pricePerShare || !price || userShares === 0n) return "—";
+  if (!data?.pricePerShare || !price || userShares === 0n) return "";
 
   const underlyingStroops = (userShares * data.pricePerShare) / ONE_SHARE;
   const underlyingAmount = parseFloat(
@@ -83,12 +83,12 @@ function VaultPositionRow({
       </td>
 
       <td className="px-4 py-4 text-center">
-        {vault.apy7d && vault.apy7d !== "—" ? (
+        {vault.apy7d && vault.apy7d !== "" ? (
           <span className="text-sm font-bold text-green-400">
             {vault.apy7d}
           </span>
         ) : (
-          <span className="text-white/20 text-xs">—</span>
+          <span className="text-white/20 text-xs"></span>
         )}
       </td>
 

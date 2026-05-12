@@ -21,7 +21,7 @@
   font-weight: 800;
 }
 
-/* FK Grotesk — main UI (Light, Regular, Medium). Add woff2 files under /fonts/fk-grotesk/ */
+/* FK Grotesk  main UI (Light, Regular, Medium). Add woff2 files under /fonts/fk-grotesk/ */
 @font-face {
   font-family: "FK Grotesk";
   src: url("/fonts/fk-grotesk/FKGrotesk-Light.woff2") format("woff2");
@@ -46,7 +46,7 @@
   font-display: swap;
 }
 
-/* FK Grotesk SemiMono — labels (Regular, Medium) */
+/* FK Grotesk SemiMono  labels (Regular, Medium) */
 @font-face {
   font-family: "FK Grotesk SemiMono";
   src: url("/fonts/fk-grotesk/FKGroteskSemiMono-Regular.woff2") format("woff2");
@@ -78,7 +78,7 @@ body {
 }
 
 @theme inline {
-  /* Typography — FK Grotesk (requires self-hosted woff2; see /public/fonts/fk-grotesk/README.md) */
+  /* Typography  FK Grotesk (requires self-hosted woff2; see /public/fonts/fk-grotesk/README.md) */
   --font-sans: "FK Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-label:
     "FK Grotesk SemiMono", ui-monospace, SFMono-Regular, Menlo, Monaco,
@@ -226,7 +226,7 @@ body {
   scrollbar-color: rgba(80, 80, 80, 0.5) transparent;
 }
 
-/* Pool detail — thumb/track match panel bg (#111111) so scrollbar does not read as chrome */
+/* Pool detail  thumb/track match panel bg (#111111) so scrollbar does not read as chrome */
 .pool-detail-scroll {
   scrollbar-width: thin;
   scrollbar-color: #111111 #111111;
@@ -251,7 +251,7 @@ body {
 }
 
 /*
- * Pool detail hero title — SDS can reset headings; !important keeps spec stable.
+ * Pool detail hero title  SDS can reset headings; !important keeps spec stable.
  */
 h1.pool-detail-hero-title {
   display: block;
@@ -266,13 +266,13 @@ h1.pool-detail-hero-title {
   color: #ffffff !important;
 }
 
-/* Slash between pair symbols — slightly heavier than title weight (300) */
+/* Slash between pair symbols  slightly heavier than title weight (300) */
 h1.pool-detail-hero-title .pool-detail-hero-slash {
   color: #ffffff80 !important;
   font-weight: 500 !important;
 }
 
-/* Pool detail metrics grid — primary figures (Total Liquidity, APY, etc.) */
+/* Pool detail metrics grid  primary figures (Total Liquidity, APY, etc.) */
 .pool-detail-metric-value {
   margin: 0;
   font-family: "FK Grotesk", sans-serif !important;
@@ -289,13 +289,25 @@ h1.pool-detail-hero-title .pool-detail-hero-slash {
 }
 
 @keyframes valueEnter {
-  from { opacity: 0; transform: translateY(100%); }
-  to   { opacity: 1; transform: translateY(0);    }
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes valueExit {
-  from { opacity: 1; transform: translateY(0);     }
-  to   { opacity: 0; transform: translateY(-100%); }
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
 }
 
 .animate-value-enter {

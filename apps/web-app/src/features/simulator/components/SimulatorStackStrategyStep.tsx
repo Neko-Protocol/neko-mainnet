@@ -66,13 +66,12 @@ export function SimulatorStackStrategyStep({
     <section className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <header className="shrink-0 flex flex-col gap-1">
         <h2 className="text-xl font-semibold text-white">
-          Add a strategy on top?
+          Want to earn even more?
         </h2>
         <p className="text-sm text-white/60">
-          You&apos;re modeling{" "}
-          <span className="text-white/80">{bondSymbol}</span>. Optionally supply
-          it to a pool or vault for stacked yield—or skip and simulate bond-only
-          hold.
+          Your <span className="text-white/80">{bondSymbol}</span> is already
+          earning bond yield. Add it to a pool or vault to stack an extra layer
+          of returns on top, or keep it simple.
         </p>
       </header>
 
@@ -86,14 +85,22 @@ export function SimulatorStackStrategyStep({
             : "border-white/10 bg-[#2A2A2A] text-white/75 hover:border-white/20"
         )}
       >
-        Bond only — skip pool / vault
+        Just the bond. Keep it simple.
       </button>
 
       <div className="flex shrink-0 flex-wrap items-center gap-2 self-start rounded-full bg-[#2A2A2A] p-1">
         {(
           [
-            { id: "pools" as const, label: "Pools", count: pools.length },
-            { id: "vaults" as const, label: "Vaults", count: vaults.length },
+            {
+              id: "pools" as const,
+              label: "Liquidity Pools",
+              count: pools.length,
+            },
+            {
+              id: "vaults" as const,
+              label: "Auto-Invest",
+              count: vaults.length,
+            },
           ] as const
         ).map((t) => (
           <button
@@ -120,8 +127,8 @@ export function SimulatorStackStrategyStep({
           </div>
         ) : visible.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-6 text-center text-sm text-white/60">
-            No {tab} accept {bondSymbol} yet. Use &ldquo;Bond only&rdquo; above
-            or pick another tab.
+            No options accept {bondSymbol} yet. Use the button above or try
+            another tab.
           </div>
         ) : (
           <div className="flex flex-col gap-3 pb-1">

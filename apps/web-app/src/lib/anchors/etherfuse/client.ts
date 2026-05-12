@@ -1,5 +1,5 @@
 /**
- * Etherfuse API Client — server-side only.
+ * Etherfuse API Client  server-side only.
  * Implements the shared Anchor interface for MXN <-> CETES via SPEI on Stellar.
  */
 
@@ -58,7 +58,7 @@ export class EtherfuseClient implements Anchor {
       name: "Etherfuse CETES",
       issuer: "GC3CW7EDYRTWQ635VDIGY6S4ZUF5L6TQ7AA4MWS7LEQDBLUSZXV7UPS4",
       description:
-        "Mexican Federal Treasury Certificates — Mexico's oldest short-term debt securities.",
+        "Mexican Federal Treasury Certificates  Mexico's oldest short-term debt securities.",
     },
   ];
   readonly supportedCurrencies: readonly string[] = ["MXN"];
@@ -228,7 +228,7 @@ export class EtherfuseClient implements Anchor {
     const bankAccountId = crypto.randomUUID();
 
     try {
-      // Do NOT send claimOwnership here — that flag links the wallet to the
+      // Do NOT send claimOwnership here  that flag links the wallet to the
       // org's KYB, skipping individual KYC entirely. Customer wallets must go
       // through the Hosted UI so their KYC status starts as "not_started".
       const onboarding = await this.request<EtherfuseOnboardingResponse>(
@@ -258,14 +258,14 @@ export class EtherfuseClient implements Anchor {
         if (match) {
           const existingCustomerId = match[1];
           // Try to recover the real bankAccountId from Etherfuse.
-          // If no accounts exist yet (not bound), fall back to the one we just generated —
+          // If no accounts exist yet (not bound), fall back to the one we just generated
           // Etherfuse binds it on first use, so any valid UUID works.
           let resolvedBankAccountId: string = bankAccountId;
           try {
             const accounts = await this.getFiatAccounts(existingCustomerId);
             if (accounts.length > 0) resolvedBankAccountId = accounts[0].id;
           } catch {
-            // ignore — keep the generated bankAccountId as fallback
+            // ignore  keep the generated bankAccountId as fallback
           }
 
           // Attempt to get a fresh presigned URL for the existing customer.
@@ -540,7 +540,7 @@ export class EtherfuseClient implements Anchor {
       );
     }
     const resolvedBankAccountId = bankAccountId || crypto.randomUUID();
-    // Do NOT send claimOwnership here — ownership was already claimed during
+    // Do NOT send claimOwnership here  ownership was already claimed during
     // createCustomer. Sending it again for an existing wallet causes a 409.
     const response = await this.request<EtherfuseOnboardingResponse>(
       "POST",

@@ -11,7 +11,7 @@ function tryDecodeAmount(bodyXdrBase64: string): number | null {
   try {
     const val = xdr.ScVal.fromXDR(bodyXdrBase64, "base64");
 
-    // Body may be a vec — take first element
+    // Body may be a vec  take first element
     let target = val;
     if (val.switch().name === "scvVec") {
       const vec = val.vec();

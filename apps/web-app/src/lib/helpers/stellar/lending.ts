@@ -458,7 +458,7 @@ export const getTokenBalance = async (
       .result?.retval;
     if (!retval) return 0n;
 
-    // token.balance returns i128 — extract hi/lo components
+    // token.balance returns i128  extract hi/lo components
     const parts = retval.i128();
     const hi = BigInt(parts.hi().toString());
     const lo = BigInt(parts.lo().toString());
@@ -1059,7 +1059,7 @@ export const buildFillBadDebtAuctionXdr = async (
 };
 
 // ---------------------------------------------------------------------------
-// Bad Debt Auction — event-based queries
+// Bad Debt Auction  event-based queries
 // ---------------------------------------------------------------------------
 
 const BAD_DEBT_AUCTION_DURATION = 400; // blocks, from contract constants

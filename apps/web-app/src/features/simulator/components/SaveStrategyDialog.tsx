@@ -6,6 +6,7 @@ import {
   useStrategiesStore,
   type SavedStrategy,
 } from "@/stores/strategies.store";
+import { useHaptics } from "@/hooks/useHaptics";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
@@ -22,6 +23,7 @@ export function SaveStrategyDialog({
 }: SaveStrategyDialogProps) {
   const [name, setName] = useState(suggestedName);
   const { save } = useStrategiesStore();
+  const { success } = useHaptics();
   const { addNotification } = useToast();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -30,6 +32,7 @@ export function SaveStrategyDialog({
     const trimmed = name.trim();
     if (!trimmed) return;
     save({ ...strategy, name: trimmed });
+    success();
     addNotification("Strategy saved", "success", TOAST_CONFIG.defaultOpts);
     onClose();
     router.push("/strategies");
@@ -47,7 +50,7 @@ export function SaveStrategyDialog({
           Save strategy
         </h2>
         <p className="mb-4 text-sm text-white/40">
-          Give it a name so you can find it later.
+          Name it so you remember it.
         </p>
         <input
           ref={inputRef}
@@ -57,7 +60,7 @@ export function SaveStrategyDialog({
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSave()}
           maxLength={60}
-          placeholder="e.g. USDC → Blend Pool"
+          placeholder="My USDC strategy"
           className="mb-5 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:border-[#229EDF]/50 focus:outline-none"
         />
         <div className="flex justify-end gap-2">

@@ -2,11 +2,11 @@
 
 This guide catalogs the major projects, protocols, and tools in the Stellar ecosystem. Use this as a reference when building on Stellar to find relevant integrations, examples, and community projects.
 
-> **Canonical directories** — For the most up-to-date project lists, check:
+> **Canonical directories** For the most up-to-date project lists, check:
 >
-> - [Stellar Ecosystem](https://stellar.org/ecosystem) — Official directory (searchable by country, asset, category)
-> - [SCF Projects](https://communityfund.stellar.org/projects) — Funded projects with status tracking
-> - [Stellar on DefiLlama](https://defillama.com/chain/stellar) — Live DeFi TVL data
+> - [Stellar Ecosystem](https://stellar.org/ecosystem) Official directory (searchable by country, asset, category)
+> - [SCF Projects](https://communityfund.stellar.org/projects) Funded projects with status tracking
+> - [Stellar on DefiLlama](https://defillama.com/chain/stellar) Live DeFi TVL data
 >
 > Treat project metrics/status as volatile. Validate latest activity and production readiness before taking dependencies.
 
@@ -257,14 +257,14 @@ Framework for building custom security detectors for Soroban.
 
 #### Certora Sunbeam Prover
 
-Formal verification for Soroban — first WASM platform supported by Certora.
+Formal verification for Soroban first WASM platform supported by Certora.
 
 - **Docs**: https://docs.certora.com/en/latest/docs/sunbeam/index.html
-- **Spec Language**: CVLR (Rust macros) — https://github.com/Certora/cvlr
+- **Spec Language**: CVLR (Rust macros) https://github.com/Certora/cvlr
 - **Reports**: [Blend V1 verification](https://www.certora.com/reports/blend-smart-contract-verification-report)
 - **Verifies at**: WASM bytecode level, eliminating compiler trust assumptions
 
-#### Runtime Verification — Komet
+#### Runtime Verification Komet
 
 Formal verification and testing tool designed for Soroban (SCF-funded).
 

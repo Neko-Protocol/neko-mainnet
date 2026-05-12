@@ -20,11 +20,10 @@ export function TokenSelectorStep({
     <section className="flex flex-col gap-4">
       <header className="flex flex-col gap-1">
         <h2 className="text-xl font-semibold text-white">
-          Which token do you want to simulate?
+          What are you starting with?
         </h2>
         <p className="text-sm text-white/60">
-          Pick a token. We&apos;ll show pools, vaults, and yield-bearing bond
-          options when they apply.
+          Choose a token to start exploring how it can earn for you.
         </p>
       </header>
 
@@ -34,7 +33,7 @@ export function TokenSelectorStep({
         </div>
       ) : tokens.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-6 text-center text-sm text-white/60">
-          No tokens available yet. Try again in a moment.
+          No tokens found. Try again in a moment.
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">

@@ -111,7 +111,7 @@ export async function GET() {
   const vaults: VaultView[] = [];
   const fetchErrors: { contractId: string; message: string }[] = [];
 
-  // Build batch promises — vault info fetching does NOT need prices,
+  // Build batch promises  vault info fetching does NOT need prices,
   // so we kick off prices and all vault batches simultaneously.
   const assetsConfig = Object.values(getAssetsConfig());
 

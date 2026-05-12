@@ -185,6 +185,7 @@ export function useVaultAction(
 
         const amountBigInt = BigInt(toSmallestUnit(amount, 7));
 
+        // Simulate  the resulting XDR already includes Soroban auth entries
         const depositTx = await client.deposit({
           amounts_desired: [amountBigInt],
           amounts_min: [0n],

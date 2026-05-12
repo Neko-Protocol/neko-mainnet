@@ -166,7 +166,7 @@ export function VaultDetailModal({
                   </div>
                   <p className="text-white/35 text-[11px] leading-relaxed mb-3">
                     Amounts deployed per strategy contract (from total managed
-                    funds). The API does not list separate AMM pool addresses —
+                    funds). The API does not list separate AMM pool addresses
                     liquidity is routed through these strategies.
                   </p>
                   <div className="rounded-xl bg-white/3 border border-white/5 overflow-hidden divide-y divide-white/5">

@@ -129,7 +129,7 @@ function parseSoroswapPricePayload(
 
 /**
  * Price feeds in priority order (mainnet):
- *  1. Reflector oracle (on-chain, SEP-40) — for supported assets
+ *  1. Reflector oracle (on-chain, SEP-40)  for supported assets
  *  2. Soroswap DEX spot price
  *  3. CoinGecko off-chain fallback
  *
@@ -223,7 +223,7 @@ export class StellarPriceService {
       return { price: 0, source: null };
     }
 
-    // USDC is the Reflector base asset — always 1:1 USD
+    // USDC is the Reflector base asset  always 1:1 USD
     if (tokenCode === "USDC") {
       return { price: 1, source: "reflector" };
     }

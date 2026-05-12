@@ -51,7 +51,7 @@ export const KycBanner: React.FC<KycBannerProps> = ({
           <div>
             <p className="text-white text-sm font-medium">
               {status === "rejected"
-                ? "KYC Rejected — Re-verify required"
+                ? "KYC Rejected  Re-verify required"
                 : status === "update_required"
                   ? "Additional info required"
                   : "Identity verification required"}

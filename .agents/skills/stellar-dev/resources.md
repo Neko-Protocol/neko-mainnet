@@ -328,15 +328,15 @@ Builders and contributors actively shaping the Stellar/Soroban ecosystem:
 | Leigh McCulloch      | [leighmcculloch](https://github.com/leighmcculloch)   | [@**_leigh_**](https://x.com/___leigh___)         | SDF core engineer, Stellar CLI, Soroban SDK                 |
 | James Bachini        | [jamesbachini](https://github.com/jamesbachini)       | [@james_bachini](https://x.com/james_bachini)     | SDF Dev in Residence, Soroban Playground, tutorials         |
 | Elliot Voris         | [ElliotFriend](https://github.com/ElliotFriend)       | [@ElliotFriend](https://x.com/ElliotFriend)       | SDF DevRel, community education                             |
-| Carsten Jacobsen     | [carstenjacobsen](https://github.com/carstenjacobsen) | —                                                 | SDF, weekly dev meetings, Soroban examples                  |
+| Carsten Jacobsen     | [carstenjacobsen](https://github.com/carstenjacobsen) |                                                   | SDF, weekly dev meetings, Soroban examples                  |
 | Esteban Iglesias     | [esteblock](https://github.com/esteblock)             | [@esteblock_dev](https://x.com/esteblock_dev)     | PaltaLabs, Soroswap, DeFindex                               |
 | Markus Paulson-Luna  | [markuspluna](https://github.com/markuspluna)         | [@script3official](https://x.com/script3official) | Script3, Blend Protocol                                     |
-| Alexander Mootz      | [mootz12](https://github.com/mootz12)                 | —                                                 | Script3, Blend contracts                                    |
+| Alexander Mootz      | [mootz12](https://github.com/mootz12)                 |                                                   | Script3, Blend contracts                                    |
 | Tommaso              | [heytdep](https://github.com/heytdep)                 | [@heytdep](https://x.com/heytdep)                 | Xycloo Labs, Mercury indexer, ZephyrVM                      |
 | OrbitLens            | [orbitlens](https://github.com/orbitlens)             | [@orbitlens](https://x.com/orbitlens)             | Reflector oracle, StellarExpert, Albedo                     |
 | Frederic Rezeau      | [FredericRezeau](https://github.com/FredericRezeau)   | [@FredericRezeau](https://x.com/FredericRezeau)   | Litemint, soroban-kit, gaming                               |
 | Jun Luo (Overcat)    | [overcat](https://github.com/overcat)                 | [@overcat_me](https://x.com/overcat_me)           | Lightsail Network, Quasar RPC, Java/Python SDKs, Ledger app |
-| Jay Geng             | [jayz22](https://github.com/jayz22)                   | —                                                 | SDF, Soroban SDK, confidential tokens                       |
+| Jay Geng             | [jayz22](https://github.com/jayz22)                   |                                                   | SDF, Soroban SDK, confidential tokens                       |
 | Chad Ostrowski       | [chadoh](https://github.com/chadoh)                   | [@chadoh](https://x.com/chadoh)                   | Aha Labs CEO, Scaffold Stellar, Soroban CLI                 |
 | Willem Wyndham       | [willemneal](https://github.com/willemneal)           | [@willemneal](https://x.com/willemneal)           | Aha Labs co-founder, Scaffold Stellar, JS contract client   |
 

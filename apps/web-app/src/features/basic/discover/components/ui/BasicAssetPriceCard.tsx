@@ -128,7 +128,7 @@ export function BasicAssetPriceCard({
           )}
         </div>
 
-        {/* Two-button CTA — stopPropagation so clicks don't navigate the card */}
+        {/* Two-button CTA  stopPropagation so clicks don't navigate the card */}
         <div
           className="relative mt-4 grid grid-cols-2 gap-2"
           onClick={(e) => e.stopPropagation()}

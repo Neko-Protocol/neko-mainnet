@@ -111,7 +111,7 @@ export async function GET() {
     });
 
     if (!res.ok) {
-      debugLog("Etherfuse HTTP error — using fallbacks", {
+      debugLog("Etherfuse HTTP error  using fallbacks", {
         status: res.status,
         statusText: res.statusText,
       });
@@ -132,7 +132,7 @@ export async function GET() {
 
     const data = rawBody as Record<string, BondCostRow>;
     if (!data || typeof data !== "object") {
-      debugLog("Parsed body invalid — using fallbacks");
+      debugLog("Parsed body invalid  using fallbacks");
       const entries = TARGET_SYMBOLS.map(fallbackEntry);
       return NextResponse.json(entries, { headers: cacheHeaders });
     }
@@ -201,7 +201,7 @@ export async function GET() {
     );
     return NextResponse.json(entries, { headers: cacheHeaders });
   } catch (err) {
-    debugLog("Fetch or parse threw — using fallbacks", err);
+    debugLog("Fetch or parse threw  using fallbacks", err);
     const entries = TARGET_SYMBOLS.map(fallbackEntry);
     return NextResponse.json(entries, { headers: cacheHeaders });
   }

@@ -267,7 +267,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
       const horizonServer = new Horizon.Server(horizonUrl);
       const account = await horizonServer.loadAccount(userAddress);
 
-      // Get pool metadata — reserves come directly from the API (no RPC call needed)
+      // Get pool metadata  reserves come directly from the API (no RPC call needed)
       const poolInfo = await this.getPoolInfo(poolId);
       const tokenAddresses = poolInfo.metadata.tokenAddresses as string[];
       const poolIndexHex = poolInfo.metadata.poolIndex as string;
@@ -343,7 +343,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
           Array(nTokens)
             .fill(null)
             .map(() => nativeToScVal(BigInt(1), { type: "u128" }))
-        ) // min_amounts = [1, 1, ...] — accept any amounts
+        ) // min_amounts = [1, 1, ...]  accept any amounts
       );
 
       const tx = new TransactionBuilder(account, {

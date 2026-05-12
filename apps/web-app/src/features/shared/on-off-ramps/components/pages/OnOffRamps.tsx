@@ -88,7 +88,7 @@ const OnOffRamps: React.FC = () => {
     startOnRamp,
   } = useOnRamp(state.provider);
 
-  // Trustline check (Etherfuse on-ramp only — after order is created)
+  // Trustline check (Etherfuse on-ramp only  after order is created)
   const { hasTrustline, isAddingTrustline, trustlineError, addTrustline } =
     useEtherfuseTrustline(
       state.provider,
@@ -166,7 +166,7 @@ const OnOffRamps: React.FC = () => {
       const isNewCustomer = !cid;
 
       if (!cid || !bid) {
-        // Reuse stored IDs — never generate new ones per request
+        // Reuse stored IDs  never generate new ones per request
         const result = await ensureCustomer({ publicKey: address });
         cid = result.customerId;
         bid = result.bankAccountId ?? null;
@@ -182,7 +182,7 @@ const OnOffRamps: React.FC = () => {
       }
 
       if (isNewCustomer) {
-        // Customer just created — let the KYC query run before quoting.
+        // Customer just created  let the KYC query run before quoting.
         // On next render the KYC banner will show; user clicks again to get quote.
         return;
       }
@@ -338,7 +338,7 @@ const OnOffRamps: React.FC = () => {
           />
         )}
 
-        {/* Trustline warning — shown after quote, before confirming on-ramp */}
+        {/* Trustline warning  shown after quote, before confirming on-ramp */}
         {isOnRamp && quote && !currentTx && !hasTrustline && (
           <div className="flex items-center justify-between gap-3 bg-orange-400/10 border border-orange-400/20 rounded-xl px-4 py-3">
             <div>
@@ -385,7 +385,7 @@ const OnOffRamps: React.FC = () => {
             />
           )}
 
-        {/* On-ramp: Payment instructions — shown while awaiting payment */}
+        {/* On-ramp: Payment instructions  shown while awaiting payment */}
         {isOnRamp &&
           onRampTx &&
           onRampTx.paymentInstructions &&

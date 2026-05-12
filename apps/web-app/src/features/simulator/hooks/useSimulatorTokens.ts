@@ -38,6 +38,19 @@ interface TokenAccumulator {
   contract?: string;
 }
 
+function cleanTokenName(name: string, code: string): string {
+  if (!name) return code;
+  // Stellar native asset
+  if (name.toLowerCase() === "native") return "Stellar Lumens";
+  // "CETES:GCRYUGD5N..."  strip the contract address part
+  if (name.includes(":")) return name.split(":")[0];
+  // Raw contract address used as name (56-char G... string)
+  if (/^G[A-Z0-9]{55}$/.test(name)) return code;
+  return name;
+}
+
+const HIDDEN_TOKENS = new Set(["AQUA", "BLND", "KTB", "USDGLO"]);
+
 /**
  * Derives the unique set of tokens that the simulator can suggest, drawn from
  * the union of pool-supported tokens and vault supply assets, plus user
@@ -97,9 +110,10 @@ export function useSimulatorTokens() {
     const hasWallet = Boolean(address);
 
     return Array.from(acc.values())
+      .filter((entry) => !HIDDEN_TOKENS.has(entry.code.toUpperCase()))
       .map<SimulatorToken>((entry) => ({
         code: entry.code,
-        name: entry.name,
+        name: cleanTokenName(entry.name, entry.code),
         iconSrc:
           getTokenIcon(entry.code) ??
           (entry.contract ? getTokenIcon(entry.contract) : null),

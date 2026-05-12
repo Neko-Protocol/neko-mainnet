@@ -73,7 +73,7 @@ export function useRepay() {
 
       try {
         // The contract calls token.transfer(borrower, pool, amount) which uses
-        // Soroban auth propagation — the prepared tx carries all necessary auth.
+        // Soroban auth propagation  the prepared tx carries all necessary auth.
         // A separate approve tx is not needed and would cause PoolFrozen (#10).
         const repayXdr = await repayPool(
           assetCode,

@@ -606,7 +606,7 @@ fuzz_target!(|input: (u64, i128)| {
     // Initialize
     client.initialize(&user);
 
-    // Fuzz deposit — should never panic unexpectedly
+    // Fuzz deposit  should never panic unexpectedly
     let _ = client.try_deposit(&user, &amount);
 });
 ```
@@ -666,7 +666,7 @@ mod prop_tests {
 
 ## Differential Testing with Test Snapshots
 
-Soroban automatically writes JSON snapshots at the end of every test to `test_snapshots/`, capturing events and final ledger state. Commit these to source control — diffs reveal unintended behavioral changes.
+Soroban automatically writes JSON snapshots at the end of every test to `test_snapshots/`, capturing events and final ledger state. Commit these to source control diffs reveal unintended behavioral changes.
 
 ### Comparing Against Deployed Contracts
 
@@ -733,7 +733,7 @@ fn test_against_mainnet_state() {
 
 ## Mutation Testing
 
-Use `cargo-mutants` to verify test quality — modifies source code and checks that tests catch the changes.
+Use `cargo-mutants` to verify test quality modifies source code and checks that tests catch the changes.
 
 ```bash
 cargo install --locked cargo-mutants
@@ -743,7 +743,7 @@ cargo mutants
 **Output interpretation**:
 
 - **CAUGHT**: Tests detected the mutation (good coverage)
-- **MISSED**: Tests passed despite mutation (test gap — review `mutants.out/diff/`)
+- **MISSED**: Tests passed despite mutation (test gap review `mutants.out/diff/`)
 
 - **Docs**: [Mutation Testing](https://developers.stellar.org/docs/build/guides/testing/mutation-testing)
 

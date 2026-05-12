@@ -1,5 +1,5 @@
 /**
- * AlfredPay API Client — server-side only.
+ * AlfredPay API Client  server-side only.
  * Implements the shared Anchor interface for MXN <-> USDC via SPEI on Stellar.
  */
 

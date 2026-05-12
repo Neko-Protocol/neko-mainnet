@@ -1,10 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useHaptics } from "@/hooks/useHaptics";
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
-import { getVaultStrategyLabels } from "../../utils/strategyLabels";
 import type { SimulatorDestination } from "../../types/simulator.types";
-import type { VaultView } from "@/features/shared/vault/types/vault";
 
 interface DestinationCardProps {
   destination: SimulatorDestination;
@@ -17,84 +17,97 @@ export function DestinationCard({
   isSelected,
   onSelect,
 }: DestinationCardProps) {
+  const { light } = useHaptics();
   const isVault = destination.kind === "vault";
-  const {
-    vaultApy,
-    strategies,
-    isLoading: apyLoading,
-  } = useVaultApy(isVault ? destination.id : null);
+  const { vaultApy, isLoading: apyLoading } = useVaultApy(
+    isVault ? destination.id : null
+  );
 
   const apy = isVault ? vaultApy : destination.apy;
-  const labels = isVault
-    ? getVaultStrategyLabels(destination.raw as VaultView, strategies)
-    : destination.strategyLabels;
 
-  const apyLabel = (() => {
-    if (apyLoading && isVault) return "Calculating earnings...";
-    if (apy === null) return "Earnings rate not available";
-    if (apy <= 0) return "Earn 0% per year (variable)";
-    return `Earn ${apy.toFixed(2)}% per year`;
-  })();
+  const showApySkeleton = apyLoading && isVault;
+  const showPositiveApy =
+    !showApySkeleton && apy !== null && apy !== undefined && apy > 0;
 
   const handleClick = () => {
+    light();
     onSelect({
       ...destination,
       apy: apy ?? destination.apy,
-      strategyLabels: labels,
     });
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
+    <div
       className={cn(
-        "flex w-full flex-col gap-3 rounded-2xl border bg-[#2A2A2A] p-4 text-left transition-all",
-        "hover:border-white/20 hover:bg-[#2F2F2F]",
-        isSelected
-          ? "border-[#229EDF] ring-1 ring-[#229EDF]/40"
-          : "border-white/10"
+        "flex w-full flex-col rounded-2xl border border-white/8 bg-[#1C1C1C] transition-all",
+        isSelected && "border-[#229EDF] ring-1 ring-[#229EDF]/40"
       )}
-      aria-pressed={isSelected}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate text-base font-semibold text-white">
-              {destination.name}
-            </h3>
-            <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/70">
-              {destination.protocol}
-            </span>
+      <button
+        type="button"
+        onClick={handleClick}
+        className="flex w-full flex-col p-4 text-left hover:bg-[#222222] rounded-2xl transition-all"
+        aria-pressed={isSelected}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="truncate text-base font-semibold text-white">
+                {destination.name}
+              </h3>
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/70">
+                {destination.protocol}
+              </span>
+            </div>
+            {destination.tvlLabel ? (
+              <p className="mt-1 flex flex-wrap items-baseline gap-1.5">
+                <span className="text-[10px] text-white/30">Pool size</span>
+                <span className="text-sm font-medium text-white/80">
+                  <span className="text-white/50" aria-hidden>
+                    $
+                  </span>
+                  {destination.tvlLabel}
+                </span>
+              </p>
+            ) : null}
           </div>
-          <p className="mt-1 text-xs text-white/50">
-            Total deposited: {destination.tvlLabel || "-"}
-          </p>
-        </div>
-        <div className="shrink-0 text-right">
-          <p
-            className={cn(
-              "text-base font-semibold",
-              apyLoading && isVault
-                ? "text-white/50"
-                : apy && apy > 0
-                  ? "text-[#229EDF]"
-                  : "text-white/70"
+          <div className="flex shrink-0 flex-col items-end text-right">
+            {showApySkeleton ? (
+              <div
+                className="h-8 w-[4.5rem] animate-pulse rounded-md bg-white/[0.08]"
+                aria-hidden
+              />
+            ) : showPositiveApy ? (
+              <>
+                <p className="text-2xl font-bold leading-tight text-[#229EDF]">
+                  {apy!.toFixed(2)}%
+                </p>
+                <p className="mt-0.5 text-xs text-white/40">/ year</p>
+              </>
+            ) : (
+              <p className="text-2xl leading-tight text-white/30"></p>
             )}
-          >
-            {apyLabel}
+          </div>
+        </div>
+      </button>
+
+      {destination.blndEmissionsApy && destination.blndEmissionsApy > 0 ? (
+        <div className="px-4 pb-3 text-right">
+          <p className="text-xs font-medium text-emerald-400">
+            +{destination.blndEmissionsApy.toFixed(2)}% BLND
+          </p>
+          <p className="text-[10px] text-white/40 leading-tight">
+            Paid in BLND · volatile ·{" "}
+            <Link
+              href="/swap"
+              className="text-emerald-400/70 underline underline-offset-2 hover:text-emerald-400"
+            >
+              swap with Neko
+            </Link>
           </p>
         </div>
-      </div>
-
-      <ul className="flex flex-col gap-1 text-xs text-white/70">
-        {labels.map((label) => (
-          <li key={label} className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#229EDF]" />
-            {label}
-          </li>
-        ))}
-      </ul>
-    </button>
+      ) : null}
+    </div>
   );
 }

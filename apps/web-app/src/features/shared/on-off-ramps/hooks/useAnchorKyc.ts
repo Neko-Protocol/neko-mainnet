@@ -49,13 +49,13 @@ export function useAnchorKyc(
   const openKycFlow = async () => {
     if (!customerId) return;
 
-    // Path 1: stored URL — open directly, no async needed.
+    // Path 1: stored URL  open directly, no async needed.
     if (storedOnboardingUrl) {
       window.open(storedOnboardingUrl, "_blank", "noopener,noreferrer");
       return;
     }
 
-    // Path 2: no stored URL — claim gesture now, fetch URL, then navigate.
+    // Path 2: no stored URL  claim gesture now, fetch URL, then navigate.
     const win = window.open("about:blank", "_blank");
     if (!win) return;
 
