@@ -123,8 +123,14 @@ export function PoolSummaryRows({
           }
         />
       )}
-      {pool.liquidationLtv > 0 && (
-        <InfoRow label="Liquidation LTV" value={`${pool.liquidationLtv}%`} />
+      {mode !== "borrow" && pool.liquidationLtv > 0 && (
+        <InfoRow label="Collateral Factor" value={`${pool.liquidationLtv}%`} />
+      )}
+      {mode === "borrow" && pool.lFactor != null && (
+        <InfoRow
+          label="Liability Factor"
+          value={`${Math.round(pool.lFactor * 100)}%`}
+        />
       )}
       {mode !== "borrow" && (
         <InfoRow
