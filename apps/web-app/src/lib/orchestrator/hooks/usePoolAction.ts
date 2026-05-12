@@ -93,23 +93,13 @@ export function usePoolAction() {
       }
 
       const hash = txResult.hash;
-      void server
-        .pollTransaction(hash, { attempts: 30 })
-        .then((confirmed) => {
-          if (confirmed.status !== "SUCCESS") {
-            addNotification(
-              `${capitalise(params.action)} failed on-chain`,
-              "error"
-            );
-          }
-          queryClient.invalidateQueries({ queryKey: [...POOLS_QUERY_KEY] });
-        })
-        .catch(() => {
-          addNotification(
-            "Could not confirm transaction. Please refresh.",
-            "error"
-          );
-        });
+      const confirmed = await server.pollTransaction(hash, { attempts: 30 });
+
+      if (confirmed.status !== "SUCCESS") {
+        throw new Error(
+          `Transaction failed on-chain (status: ${confirmed.status})`
+        );
+      }
 
       return hash;
     },

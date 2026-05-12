@@ -155,15 +155,6 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       isStablecoin: true,
       coinGeckoId: "paypal-usd",
     },
-    KTB: {
-      code: "KTB",
-      name: "Korean Treasury Bond",
-      contract: "CBAECV6UVDS6ZKPMC63MUYY4V7Q3KTHR7NLUFGVVGK7K3AQT475QTETP",
-      decimals: 7,
-      icon: "https://stellar.myfilebase.com/ipfs/Qma8QsiniBJHxydHtJZ4QX7X8Cx9kUkwKM9VbbAUEfTgWb",
-      priceSource: "soroswap",
-      isStablecoin: false,
-    },
     GYEN: {
       code: "GYEN",
       name: "GMO JPY",

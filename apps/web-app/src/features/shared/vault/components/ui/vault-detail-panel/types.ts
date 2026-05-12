@@ -11,6 +11,7 @@ export interface VaultActionPanelProps {
   onAmountChange: (value: string) => void;
   onSubmit: () => Promise<void>;
   isLoading: boolean;
+  isConfirming?: boolean;
   supplyBalance: string;
   sharesBalance: string;
   isWalletConnected: boolean;

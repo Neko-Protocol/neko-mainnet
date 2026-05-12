@@ -7,14 +7,52 @@ import { useVaultData } from "./useVaultData";
 interface StrategyAllocation {
   strategy: string;
   amount: number;
+  amountStroops?: string;
+}
+
+interface TargetAllocation {
+  strategy: string;
+  strategyName: string;
+  targetBps: number;
+  currentAmount: string;
+  targetAmount: string;
+  deltaAmount: string;
+  currentAmountHuman: number;
+  targetAmountHuman: number;
+  deltaAmountHuman: number;
 }
 
 interface InvestStatus {
   idle: number;
+  idleStroops?: string;
   total: number;
+  totalStroops?: string;
   canInvest: boolean;
+  canRebalance?: boolean;
   cooldownRemaining: number;
   allocations: StrategyAllocation[];
+  targetAllocations?: TargetAllocation[];
+  instructions?: unknown[];
+  reason?: string;
+  warnings?: string[];
+}
+
+interface KeeperVaultResult {
+  label: string;
+  rebalance: {
+    attempted: boolean;
+    reason?: string;
+    status?: string;
+    instructions?: unknown[];
+  };
+}
+
+interface InvestResponse {
+  error?: string;
+  invested?: boolean;
+  message?: string;
+  results?: { status: string }[];
+  vaults?: KeeperVaultResult[];
 }
 
 async function fetchInvestStatus({
@@ -53,10 +91,32 @@ export function useVaultInvest(vaultContractId: string | null | undefined) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vault: vaultContractId }),
       });
-      const json = await res.json();
+      const json = (await res.json()) as InvestResponse;
 
       if (!res.ok && res.status !== 207) {
         setLastResult(`Error: ${json.error}`);
+        return;
+      }
+
+      const vaultResult = json.vaults?.[0];
+      if (vaultResult?.rebalance) {
+        const { rebalance } = vaultResult;
+        if (!rebalance.attempted) {
+          setLastResult(
+            rebalance.reason
+              ? `Nothing to rebalance (${rebalance.reason.replaceAll("_", " ")})`
+              : "Nothing to rebalance"
+          );
+        } else if (rebalance.status === "SUCCESS") {
+          const count = rebalance.instructions?.length ?? 0;
+          setLastResult(
+            `Rebalance completed (${count} instruction${count === 1 ? "" : "s"})`
+          );
+        } else {
+          setLastResult(`Rebalance returned ${rebalance.status ?? "unknown"}`);
+        }
+
+        await Promise.all([refetchStatus(), refetchVaultData()]);
         return;
       }
 
@@ -65,10 +125,9 @@ export function useVaultInvest(vaultContractId: string | null | undefined) {
         return;
       }
 
-      const succeeded = (json.results as { status: string }[]).filter(
-        (r) => r.status === "SUCCESS"
-      ).length;
-      const total = (json.results as unknown[]).length;
+      const results = json.results ?? [];
+      const succeeded = results.filter((r) => r.status === "SUCCESS").length;
+      const total = results.length;
       setLastResult(`Invested across ${succeeded}/${total} strategies`);
 
       await Promise.all([refetchStatus(), refetchVaultData()]);
@@ -84,6 +143,8 @@ export function useVaultInvest(vaultContractId: string | null | undefined) {
     totalAmount: data?.total ?? 0,
     allocations: data?.allocations ?? [],
     canInvest: data?.canInvest ?? false,
+    canRebalance: data?.canRebalance ?? data?.canInvest ?? false,
+    targetAllocations: data?.targetAllocations ?? [],
     cooldownRemaining: data?.cooldownRemaining ?? 0,
     isInvesting,
     lastResult,

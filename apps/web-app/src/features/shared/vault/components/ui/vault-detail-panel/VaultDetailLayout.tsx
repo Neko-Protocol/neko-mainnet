@@ -41,7 +41,7 @@ export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps)
     tokenPriceUsd > 0 ? convertUsdToSelected(tokenPriceUsd, fxRate) : undefined;
 
   const { sharesFormatted } = useVaultBalance(vaultContractId);
-  const { isLoading, handleDeposit, handleWithdraw } = useVaultAction(
+  const { isLoading, isConfirming, handleDeposit, handleWithdraw } = useVaultAction(
     vaultContractId,
     vault.supplyAsset.symbol,
     vault.name
@@ -67,12 +67,11 @@ export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps)
 
   const handleSubmit = useCallback(async () => {
     if (!amount || parseFloat(amount) <= 0) return;
-    if (tab === "deposit") {
-      await handleDeposit(amount);
-    } else {
-      await handleWithdraw(amount);
-    }
-    setAmount("");
+    const success =
+      tab === "deposit"
+        ? await handleDeposit(amount)
+        : await handleWithdraw(amount);
+    if (success) setAmount("");
   }, [tab, amount, handleDeposit, handleWithdraw]);
 
   return (
@@ -94,6 +93,7 @@ export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps)
             onAmountChange={setAmount}
             onSubmit={handleSubmit}
             isLoading={isLoading}
+            isConfirming={isConfirming}
             supplyBalance={String(supplyBalance)}
             sharesBalance={sharesFormatted}
             isWalletConnected={!!address}

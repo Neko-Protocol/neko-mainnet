@@ -17,7 +17,7 @@ const POOLS = [
   {
     label: "RWA Pool",
     contractId: backstopNetworks.testnet.pool2ContractId,
-    assets: "USTRY · CETES · USDY · PYUSD · KTB",
+    assets: "USTRY · CETES · USDY · PYUSD",
   },
 ];
 

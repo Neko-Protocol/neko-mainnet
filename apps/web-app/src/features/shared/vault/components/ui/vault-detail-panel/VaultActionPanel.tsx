@@ -205,7 +205,7 @@ function AmountInputCard({
 
       <div className="flex items-center justify-between">
         <AnimatedValue
-          value={formatCurrency(currencyValue ?? 0, selectedCurrency)}
+          value={formatCurrency(currencyValue ?? 0, selectedCurrency, 2)}
           className={`text-sm tabular-nums ${currencyValue != null ? "text-white/50" : "text-white/20"}`}
         />
         <div className="flex items-center gap-2">
@@ -296,7 +296,7 @@ function DepositSummary({
           label="Projected monthly earnings"
           value={
             <AnimatedValue
-              value={formatCurrency(projectedMonthly, selectedCurrency)}
+              value={formatCurrency(projectedMonthly, selectedCurrency, 2)}
               className="text-white font-semibold"
             />
           }
@@ -308,7 +308,7 @@ function DepositSummary({
           label="Projected yearly earnings"
           value={
             <AnimatedValue
-              value={formatCurrency(projectedYearly, selectedCurrency)}
+              value={formatCurrency(projectedYearly, selectedCurrency, 2)}
               className="text-white font-semibold"
             />
           }
@@ -326,6 +326,7 @@ export function VaultActionPanel({
   onAmountChange,
   onSubmit,
   isLoading,
+  isConfirming = false,
   supplyBalance,
   sharesBalance,
   isWalletConnected,
@@ -434,7 +435,9 @@ export function VaultActionPanel({
 
       {isLoading && (
         <p className="text-white/40 text-xs text-center mt-1">
-          Please confirm in your wallet
+          {isConfirming
+            ? "Confirming on network…"
+            : "Please confirm in your wallet"}
         </p>
       )}
     </div>

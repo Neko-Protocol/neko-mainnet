@@ -155,26 +155,6 @@ const RAW: Record<string, AssetInfo> = {
         "CETES on Stellar: buy at app.etherfuse.com or test at devnet.etherfuse.com.",
     },
   },
-  KTB: {
-    logo: "https://stellar.myfilebase.com/ipfs/Qma8QsiniBJHxydHtJZ4QX7X8Cx9kUkwKM9VbbAUEfTgWb",
-    name: "Korean Treasury Bond",
-    description:
-      "Tokenized Korean government bonds issued via Etherfuse and Shinhan Securities",
-    summary:
-      "KTB is an Etherfuse Stablebond backed by short-term Korean Treasury Bonds, sovereign debt instruments issued by the South Korean government and denominated in KRW. Launched in partnership with Shinhan Securities, KTB brings exposure to one of Asia's largest and most stable government bond markets on-chain.",
-    highlights: [
-      "Backed by Korean Treasury Bonds, sovereign debt of the Republic of Korea",
-      "Distributed in partnership with Shinhan Securities, a top-tier Korean broker",
-      "Provides on-chain exposure to KRW-denominated rates, historically AA-rated",
-      "One of the few Asian sovereign instruments accessible on public blockchains",
-    ],
-    buyInfo: {
-      platform: "Etherfuse",
-      url: "https://app.etherfuse.com/bonds/KTB",
-      description:
-        "KTB on Stellar: buy at app.etherfuse.com or test at devnet.etherfuse.com.",
-    },
-  },
 };
 
 export const ASSET_INFO: Record<string, AssetInfo> = Object.fromEntries(

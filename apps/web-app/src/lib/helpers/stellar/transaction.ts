@@ -29,5 +29,19 @@ export async function signAndSendTransaction(
   });
   const result = await sorobanServer.sendTransaction(tx);
 
-  return { hash: result.hash, status: result.status };
+  if (result.status === "ERROR") {
+    throw new Error("Transaction rejected by network");
+  }
+
+  const confirmed = await sorobanServer.pollTransaction(result.hash, {
+    attempts: 30,
+  });
+
+  if (confirmed.status !== "SUCCESS") {
+    throw new Error(
+      `Transaction failed on-chain (status: ${confirmed.status})`
+    );
+  }
+
+  return { hash: result.hash, status: confirmed.status };
 }

@@ -70,9 +70,9 @@ const TokenItem: React.FC<TokenItemProps> = ({
 }) => {
   const formatBalance = (b: string): string => {
     const num = parseFloat(b);
-    if (!Number.isFinite(num)) return formatAmount(0);
-    if (num !== 0 && Math.abs(num) < 0.0001) return num.toExponential(4);
-    return formatAmount(num);
+    if (!Number.isFinite(num)) return formatAmount(0, 2);
+    if (num !== 0 && Math.abs(num) < 0.0001) return num.toExponential(2);
+    return formatAmount(num, 2);
   };
 
   return (
@@ -151,7 +151,8 @@ function UserTokenRow({
       ? ""
       : formatCurrency(
           convertUsdToSelected(balanceNum * price, fxRate),
-          selectedCurrency
+          selectedCurrency,
+          2
         );
 
   return (
@@ -185,8 +186,8 @@ function PopularTokenRow({
   const { price, isLoading } = useTokenPrice(code);
   const fiatValue =
     isLoading || price <= 0
-      ? ""
-      : formatCurrency(convertUsdToSelected(price, fxRate), selectedCurrency);
+      ? "—"
+      : formatCurrency(convertUsdToSelected(price, fxRate), selectedCurrency, 2);
 
   return (
     <TokenItem

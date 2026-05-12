@@ -24,7 +24,7 @@ export interface LendingPool {
 
 /** Deposit assets for each pool */
 const POOL1_ASSETS = ["USDC", "XLM"];
-const POOL2_ASSETS = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD", "KTB"];
+const POOL2_ASSETS = ["USTRY", "TESOURO", "CETES", "USDY", "PYUSD"];
 
 async function fetchLendingPools(
   client: RwaLendingClient,

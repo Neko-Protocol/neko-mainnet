@@ -58,13 +58,6 @@ export const ASSET_TAXONOMY: Record<string, AssetTaxonomy> = {
     region: "MX",
     yieldBearing: true,
   },
-  KTB: {
-    class: "sovereign-bond",
-    classLabel: "Sovereign Bond",
-    issuer: "Etherfuse / Shinhan",
-    region: "KR",
-    yieldBearing: true,
-  },
 };
 
 export function getAssetTaxonomy(code: string): AssetTaxonomy | undefined {

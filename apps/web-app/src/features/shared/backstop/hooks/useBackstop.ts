@@ -114,11 +114,20 @@ export function useBackstop(contractId: string) {
           networkPassphrase: passphrase,
           address,
         });
-        await sorobanServer.sendTransaction(
+        const depositResult = await sorobanServer.sendTransaction(
           TransactionBuilder.fromXDR(signedDeposit.signedTxXdr, passphrase)
         );
+        if (depositResult.status === "ERROR")
+          throw new Error("Transaction rejected by network");
+        const depositConfirmed = await sorobanServer.pollTransaction(
+          depositResult.hash,
+          { attempts: 30 }
+        );
+        if (depositConfirmed.status !== "SUCCESS")
+          throw new Error(
+            `Transaction failed on-chain (status: ${depositConfirmed.status})`
+          );
 
-        await new Promise((r) => setTimeout(r, 3000));
         await refetchAll();
         showSuccess(`Successfully deposited ${amount} tokens to backstop`);
       } catch (err) {
@@ -162,11 +171,20 @@ export function useBackstop(contractId: string) {
           networkPassphrase: passphrase,
           address,
         });
-        await sorobanServer.sendTransaction(
+        const queueResult = await sorobanServer.sendTransaction(
           TransactionBuilder.fromXDR(signed.signedTxXdr, passphrase)
         );
+        if (queueResult.status === "ERROR")
+          throw new Error("Transaction rejected by network");
+        const queueConfirmed = await sorobanServer.pollTransaction(
+          queueResult.hash,
+          { attempts: 30 }
+        );
+        if (queueConfirmed.status !== "SUCCESS")
+          throw new Error(
+            `Transaction failed on-chain (status: ${queueConfirmed.status})`
+          );
 
-        await new Promise((r) => setTimeout(r, 3000));
         await refetchAll();
         showSuccess(
           `Withdrawal queued. You can withdraw after ${WITHDRAWAL_QUEUE_DAYS} days.`
@@ -208,11 +226,20 @@ export function useBackstop(contractId: string) {
           networkPassphrase: passphrase,
           address,
         });
-        await sorobanServer.sendTransaction(
+        const withdrawResult = await sorobanServer.sendTransaction(
           TransactionBuilder.fromXDR(signed.signedTxXdr, passphrase)
         );
+        if (withdrawResult.status === "ERROR")
+          throw new Error("Transaction rejected by network");
+        const withdrawConfirmed = await sorobanServer.pollTransaction(
+          withdrawResult.hash,
+          { attempts: 30 }
+        );
+        if (withdrawConfirmed.status !== "SUCCESS")
+          throw new Error(
+            `Transaction failed on-chain (status: ${withdrawConfirmed.status})`
+          );
 
-        await new Promise((r) => setTimeout(r, 3000));
         await refetchAll();
         showSuccess(`Successfully withdrew ${amount} tokens from backstop`);
       } catch (err) {

@@ -36,7 +36,9 @@ function MetricValue({ value, green }: { value: string; green?: boolean }) {
   return (
     <p
       className="pool-detail-metric-value"
-      style={green && isReal ? { ...METRIC_STYLE, color: "#4ADE80" } : METRIC_STYLE}
+      style={
+        green && isReal ? { ...METRIC_STYLE, color: "#4ADE80" } : METRIC_STYLE
+      }
     >
       {value}
     </p>
@@ -55,7 +57,12 @@ export function VaultDetailMetrics({
   selectedCurrency?: SupportedCurrency;
 }) {
   const apyDisplay = liveApy ?? vault.apy7d;
-  const tvlDisplay = convertUsdDisplayToSelectedCurrency(vault.tvl, fxRate, selectedCurrency);
+  const tvlDisplay = convertUsdDisplayToSelectedCurrency(
+    vault.tvl,
+    fxRate,
+    selectedCurrency,
+    2
+  );
 
   return (
     <div className="flex flex-wrap justify-between gap-y-7 mb-10">
@@ -79,7 +86,9 @@ export function VaultDetailMetrics({
               className="h-full w-full object-contain"
             />
           </div>
-          <p className="pool-detail-metric-value" style={METRIC_STYLE}>{vault.supplyAsset.symbol}</p>
+          <p className="pool-detail-metric-value" style={METRIC_STYLE}>
+            {vault.supplyAsset.symbol}
+          </p>
         </div>
       </MetricBlock>
 
@@ -96,7 +105,9 @@ export function VaultDetailMetrics({
                 className="h-full w-full object-cover"
               />
             </div>
-            <p className="pool-detail-metric-value" style={METRIC_STYLE}>{vault.createdBy}</p>
+            <p className="pool-detail-metric-value" style={METRIC_STYLE}>
+              {vault.createdBy}
+            </p>
           </div>
         </MetricBlock>
       )}
