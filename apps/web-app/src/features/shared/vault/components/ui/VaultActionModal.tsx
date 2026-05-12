@@ -5,8 +5,14 @@ import { X, Loader2 } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { useVaultBalance } from "../../hooks/useVaultBalance";
 import { useVaultAction } from "../../hooks/useVaultAction";
+import { useVaultData } from "../../hooks/useVaultData";
 import { useWallet } from "@/hooks/useWallet";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
+import {
+  atomicToDecimal,
+  decimalToAtomic,
+  mulDivFloor,
+} from "@/lib/helpers/amount";
 import { useQuery } from "@tanstack/react-query";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 
@@ -37,7 +43,8 @@ export function VaultActionModal({
   );
 
   const { address } = useWallet();
-  const { sharesFormatted } = useVaultBalance(vaultContractId);
+  const { userShares } = useVaultBalance(vaultContractId);
+  const { data: vaultData } = useVaultData(vaultContractId);
   const { isLoading, handleDeposit, handleWithdraw } = useVaultAction(
     vaultContractId,
     supplyAssetSymbol,
@@ -63,8 +70,13 @@ export function VaultActionModal({
     setTimeout(onClose, 220);
   }, [onClose]);
 
+  const withdrawUnderlying =
+    vaultData?.totalShares && vaultData.totalShares > 0n
+      ? mulDivFloor(userShares, vaultData.tvl, vaultData.totalShares)
+      : 0n;
+  const withdrawBalance = atomicToDecimal(withdrawUnderlying, 7);
   const maxAmount =
-    mode === "deposit" ? String(supplyBalance) : sharesFormatted;
+    mode === "deposit" ? String(supplyBalance) : withdrawBalance;
 
   const handleMax = () => {
     setAmount(maxAmount);
@@ -79,7 +91,11 @@ export function VaultActionModal({
     if (mode === "deposit") {
       await handleDeposit(amount);
     } else {
-      await handleWithdraw(amount);
+      const withdrawRaw = decimalToAtomic(amount, 7);
+      await handleWithdraw(amount, {
+        withdrawAll:
+          withdrawUnderlying > 0n && withdrawRaw >= withdrawUnderlying,
+      });
     }
     handleClose();
   };
@@ -88,9 +104,17 @@ export function VaultActionModal({
     mode === "deposit" &&
     !!amount &&
     parseFloat(amount) > parseFloat(supplyBalance) + 1e-10;
+  const withdrawExceedsBalance =
+    mode === "withdraw" &&
+    !!amount &&
+    parseFloat(amount) > parseFloat(withdrawBalance) + 1e-10;
 
   const isDisabled =
-    isLoading || !amount || parseFloat(amount) <= 0 || depositExceedsBalance;
+    isLoading ||
+    !amount ||
+    parseFloat(amount) <= 0 ||
+    depositExceedsBalance ||
+    withdrawExceedsBalance;
 
   const supplyLabel = supplyAssetSymbol ?? "Token";
 
@@ -162,10 +186,10 @@ export function VaultActionModal({
               <span className="text-white/40">
                 {mode === "deposit"
                   ? `${supplyLabel} Balance`
-                  : `${vaultShareSymbol ?? "Shares"} Balance`}
+                  : `${supplyLabel} Balance`}
               </span>
               <span className="text-white/60 font-mono">
-                {mode === "deposit" ? supplyBalance : sharesFormatted}
+                {mode === "deposit" ? supplyBalance : withdrawBalance}
               </span>
             </div>
 
