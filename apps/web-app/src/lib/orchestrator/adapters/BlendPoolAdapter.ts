@@ -106,8 +106,10 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         tokenMeta = await TokenMetadata.load(network, assetAddress);
       } catch {}
 
+      const isVaultPool =
+        !!BLEND_POOL_VAULTS[`${poolContractId}:${assetAddress}`];
       let emissionsApy: number | null = null;
-      if (reserve.supplyEmissions) {
+      if (reserve.supplyEmissions && !isVaultPool) {
         emissionsApy = await computeBlendEmissionsApy(
           reserve,
           pool,
@@ -151,7 +153,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           utilization: reserve.getUtilizationFloat(),
           poolName: pool.metadata.name,
           hasEmissions:
-            !BLEND_POOL_VAULTS[`${poolContractId}:${assetAddress}`] &&
+            !isVaultPool &&
             !!(reserve.supplyEmissions || reserve.borrowEmissions),
           emissionsApy: emissionsApy ?? 0,
         },
@@ -183,8 +185,10 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           tokenMeta = await TokenMetadata.load(network, assetAddress);
         } catch {}
 
+        const isVaultPool =
+          !!BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`];
         let emissionsApy: number | null = null;
-        if (reserve.supplyEmissions) {
+        if (reserve.supplyEmissions && !isVaultPool) {
           emissionsApy = await computeBlendEmissionsApy(
             reserve,
             pool,
@@ -228,7 +232,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
             utilization: reserve.getUtilizationFloat(),
             poolName: pool.metadata.name,
             hasEmissions:
-              !BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`] &&
+              !isVaultPool &&
               !!(reserve.supplyEmissions || reserve.borrowEmissions),
             emissionsApy: emissionsApy ?? 0,
           },
