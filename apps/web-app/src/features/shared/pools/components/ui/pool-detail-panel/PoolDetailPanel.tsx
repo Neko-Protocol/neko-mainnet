@@ -22,18 +22,22 @@ export function PoolDetailPanel({
   ammAmount = "",
   ammAmount2,
   ammMaxAmount,
+  ammMaxAmount2,
   onAmmAmountChange,
+  onAmmAmount2Change,
   onAmmSubmit,
   isAmmSubmitting = false,
   ammSubmitDisabled = true,
   ammInsufficientFundsMessage,
   canLend = false,
+  canWithdraw = false,
   canBorrow = false,
   onLendSubmit,
+  onWithdrawSubmit,
   onBorrowSubmit,
   isLendingActionPending = false,
 }: PoolDetailPanelProps) {
-  const [mode, setMode] = useState<"lend" | "borrow">(initialType);
+  const [mode, setMode] = useState<"lend" | "withdraw" | "borrow">(initialType);
   const [collateralAmount, setCollateralAmount] = useState("");
   const [borrowAmount, setBorrowAmount] = useState("");
 
@@ -74,7 +78,11 @@ export function PoolDetailPanel({
     parseFloat(borrowAmount) > dynamicBorrowMax + 1e-7;
 
   const lendingTabs = supportsBorrow
-    ? (["lend", "borrow"] as const)
+    ? ([
+        "lend",
+        ...(canWithdraw ? (["withdraw"] as const) : []),
+        "borrow",
+      ] as const)
     : (["lend"] as const);
 
   const isDepositTab = ammTab === "deposit";
@@ -86,6 +94,10 @@ export function PoolDetailPanel({
     if (isDepositTab)
       onAmmAmountChange?.(ammMaxAmount ?? pool.token1Balance ?? "0");
     else onAmmAmountChange?.(pool.lpBalance ?? "0");
+  };
+
+  const maxAmm2 = () => {
+    onAmmAmount2Change?.(ammMaxAmount2 ?? pool.token2Balance ?? "0");
   };
 
   const ammUsdValue = useMemo(() => {
@@ -118,6 +130,7 @@ export function PoolDetailPanel({
         depositWithdrawMode={depositWithdrawMode}
         ammTab={ammTab}
         onAmmTabChange={onAmmTabChange}
+        canWithdraw={canWithdraw}
         supportsBorrow={supportsBorrow}
         lendingTabs={lendingTabs}
         mode={mode}
@@ -149,10 +162,10 @@ export function PoolDetailPanel({
               label="Supply"
               token={pool.token2}
               value={ammAmount2 ?? ""}
-              onChange={() => {}}
-              balanceLabel=""
+              onChange={(v) => onAmmAmount2Change?.(v)}
+              balanceLabel="MAX"
               balanceValue={pool.token2Balance ?? "0.00"}
-              readOnly
+              onMax={onAmmAmount2Change ? maxAmm2 : undefined}
               disabled={!isWalletConnected}
               pairStyle
             />
@@ -173,6 +186,19 @@ export function PoolDetailPanel({
                 isPair ? (pool.token2Balance ?? "0.00") : undefined
               }
               onMax={() => setCollateralAmount(pool.token1Balance ?? "0")}
+              disabled={!isWalletConnected}
+              usdValue={collateralUsdDisplay}
+            />
+          )}
+          {mode === "withdraw" && (
+            <AmountInput
+              label="Withdraw"
+              token={pool.token1}
+              value={collateralAmount}
+              onChange={setCollateralAmount}
+              balanceLabel="MAX"
+              balanceValue={pool.lpBalance ?? "0.00"}
+              onMax={() => setCollateralAmount(pool.lpBalance ?? "0")}
               disabled={!isWalletConnected}
               usdValue={collateralUsdDisplay}
             />
@@ -228,11 +254,15 @@ export function PoolDetailPanel({
 
       <PoolSummaryRows
         pool={pool}
-        mode={mode}
+        mode={depositWithdrawMode ? (isDepositTab ? "lend" : "withdraw") : mode}
         isPair={!!isPair}
         pairLabel={pairLabel}
-        collateralAmount={collateralAmount}
-        collateralUsdDisplay={collateralUsdDisplay}
+        collateralAmount={depositWithdrawMode ? ammAmount : collateralAmount}
+        collateralUsdDisplay={
+          depositWithdrawMode
+            ? formatUsdValue(Number.parseFloat(ammUsdValue) || 0)
+            : collateralUsdDisplay
+        }
         borrowAmount={borrowAmount}
         borrowUsdDisplay={borrowUsdDisplay}
         selectedCollateral={selectedCollateral}
@@ -247,9 +277,11 @@ export function PoolDetailPanel({
         isDepositTab={isDepositTab}
         supportsBorrow={supportsBorrow}
         canLend={canLend}
+        canWithdraw={canWithdraw}
         canBorrow={canBorrow}
         mode={mode}
         onLendSubmit={onLendSubmit}
+        onWithdrawSubmit={onWithdrawSubmit}
         collateralAmount={collateralAmount}
         isLendingActionPending={isLendingActionPending}
         onBorrowSubmit={onBorrowSubmit}

@@ -1,5 +1,6 @@
 import type {
   PoolAction,
+  PoolActionOptions,
   PoolInfo,
   PoolPosition,
   PoolType,
@@ -26,7 +27,8 @@ export interface BasePoolAdapter {
     poolId: string,
     userAddress: string,
     amount: bigint,
-    tokenIndex?: number
+    tokenIndex?: number,
+    options?: PoolActionOptions
   ): Promise<TransactionResult>;
 
   claimRewards(poolId: string, userAddress: string): Promise<TransactionResult>;
@@ -52,7 +54,8 @@ export interface BasePoolAdapter {
   withdrawCollateral?(
     poolId: string,
     userAddress: string,
-    amount: bigint
+    amount: bigint,
+    options?: PoolActionOptions
   ): Promise<TransactionResult>;
 
   supportsAction(action: PoolAction): boolean;

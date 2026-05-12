@@ -27,6 +27,7 @@ function buildBalanceLedgerKey(
 interface LpCandidate {
   poolId: string;
   lpTokenAddress: string;
+  type: PoolInfo["type"];
 }
 
 /**
@@ -38,10 +39,22 @@ function extractLpCandidates(pools: PoolInfo[]): LpCandidate[] {
   for (const pool of pools) {
     if (pool.type === "aqua") {
       const addr = pool.metadata?.shareTokenAddress as string | undefined;
-      if (addr) candidates.push({ poolId: pool.id, lpTokenAddress: addr });
+      if (addr) {
+        candidates.push({
+          poolId: pool.id,
+          lpTokenAddress: addr,
+          type: pool.type,
+        });
+      }
     } else if (pool.type === "soroswap") {
       const addr = pool.metadata?.poolAddress as string | undefined;
-      if (addr) candidates.push({ poolId: pool.id, lpTokenAddress: addr });
+      if (addr) {
+        candidates.push({
+          poolId: pool.id,
+          lpTokenAddress: addr,
+          type: pool.type,
+        });
+      }
     }
     // Blend positions are handled separately via getAllBlendUserPositions
   }
@@ -62,7 +75,17 @@ export async function batchCheckLpBalances(
   const candidates = extractLpCandidates(pools);
   if (!candidates.length) return new Set();
 
-  const keys = candidates.map((c) =>
+  // Aqua share tokens can be queried reliably through their `balance` method in
+  // the adapter. Do not let this storage-key shortcut hide a freshly deposited
+  // Aqua position if the LP token storage layout differs from the SEP-41 key.
+  const alwaysCheck = candidates.filter((c) => c.type === "aqua");
+  const ledgerCandidates = candidates.filter((c) => c.type !== "aqua");
+
+  if (!ledgerCandidates.length) {
+    return new Set(alwaysCheck.map((c) => c.poolId));
+  }
+
+  const keys = ledgerCandidates.map((c) =>
     buildBalanceLedgerKey(c.lpTokenAddress, walletAddress)
   );
 
@@ -81,11 +104,14 @@ export async function batchCheckLpBalances(
       }
     }
 
-    return new Set(
-      candidates
+    const poolIds = [
+      ...alwaysCheck.map((c) => c.poolId),
+      ...ledgerCandidates
         .filter((c) => foundContracts.has(c.lpTokenAddress))
-        .map((c) => c.poolId)
-    );
+        .map((c) => c.poolId),
+    ];
+
+    return new Set(poolIds);
   } catch {
     // RPC failed — assume all candidates may have balances so nothing is skipped
     return new Set(candidates.map((c) => c.poolId));

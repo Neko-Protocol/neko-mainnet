@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { X, RefreshCw } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { formatAmount } from "@/lib/helpers/formatUtils";
+import { decimalToAtomic } from "@/lib/helpers/amount";
 import type { PoolData } from "../../types/lending";
 
 interface LendModalProps {
@@ -32,6 +33,51 @@ export function LendModal({
   const [amount, setAmount] = useState("");
 
   const isAggregated = !!pool.isAggregated;
+  const isPairPool =
+    !!pool.token2 && pool.token2 !== "Lending" && pool.token2 !== pool.token1;
+  const isPairWithdraw =
+    !isDeposit &&
+    (pool.protocolId === "aqua" || pool.protocolId === "soroswap") &&
+    isPairPool;
+  const pairLabel = isPairPool
+    ? `${pool.token1} / ${pool.token2}`
+    : pool.token1;
+  const withdrawLabel =
+    pool.withdrawAction === "withdrawCollateral"
+      ? "Remove Collateral"
+      : "Withdraw";
+  const withdrawUnitLabel =
+    isPairWithdraw && pool.withdrawUnit === "lp_shares"
+      ? "LP shares"
+      : pool.token1;
+  const positionDisplay = `${pool.depositedAmount} ${withdrawUnitLabel}`;
+  const inputLabel = isDeposit
+    ? `Amount to Deposit (${pool.token1})`
+    : isPairWithdraw
+      ? `Amount to Withdraw (${pairLabel})`
+      : `Amount to ${withdrawLabel} (${pool.token1})`;
+  const estimatedSecondaryOut = useMemo(() => {
+    if (
+      !isPairWithdraw ||
+      pool.withdrawUnit === "lp_shares" ||
+      !amount ||
+      !pool.depositedAmount ||
+      !pool.secondaryDepositedAmount
+    ) {
+      return null;
+    }
+    const input = parseFloat(amount);
+    const primary = parseFloat(pool.depositedAmount);
+    const secondary = parseFloat(pool.secondaryDepositedAmount);
+    if (!input || !primary || !secondary) return null;
+    return formatAmount((input / primary) * secondary);
+  }, [
+    amount,
+    isPairWithdraw,
+    pool.depositedAmount,
+    pool.secondaryDepositedAmount,
+    pool.withdrawUnit,
+  ]);
 
   const bTokensToBurn = useMemo(() => {
     if (isAggregated) return null;
@@ -45,12 +91,26 @@ export function LendModal({
     return (parseFloat(amount) / parseFloat(pool.bTokenRate)).toFixed(4);
   }, [amount, pool.bTokenRate, isAggregated]);
 
+  const exceedsAggregatedPosition = useMemo(() => {
+    if (isDeposit || !isAggregated || !pool.depositedRaw || !amount) {
+      return false;
+    }
+    try {
+      return (
+        decimalToAtomic(amount, pool.assetDecimals ?? 7) >
+        BigInt(pool.depositedRaw)
+      );
+    } catch {
+      return true;
+    }
+  }, [amount, isAggregated, isDeposit, pool.assetDecimals, pool.depositedRaw]);
+
   const canSubmit =
     hasWallet &&
     !!amount &&
     parseFloat(amount) > 0 &&
     (isDeposit ||
-      isAggregated ||
+      (isAggregated && !exceedsAggregatedPosition) ||
       (!!bTokensToBurn &&
         parseFloat(bTokensToBurn) > 0 &&
         (bTokenBalance === null ||
@@ -77,7 +137,7 @@ export function LendModal({
       <div className="bg-[#1C1C1C] border border-white/10 rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl p-4 sm:p-5 animate__animated animate__fadeInUp animate__faster">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-white text-lg font-bold">
-            {isDeposit ? "Deposit" : "Withdraw"} — {pool.name}
+            {isDeposit ? "Deposit" : withdrawLabel} — {pool.name}
           </h3>
           <button
             onClick={onClose}
@@ -106,8 +166,15 @@ export function LendModal({
           <div className="mb-3 rounded-xl bg-[#229EDF]/10 border border-[#229EDF]/20 p-3">
             <p className="text-[#229EDF]/70 text-xs mb-0.5">Your Position</p>
             <p className="text-[#229EDF] font-bold text-base">
-              {pool.depositedAmount} {pool.token1}
+              {positionDisplay}
             </p>
+            {isPairWithdraw &&
+              pool.secondaryDepositedAmount &&
+              pool.secondaryAssetCode && (
+                <p className="text-[#229EDF] font-bold text-base mt-1">
+                  {pool.secondaryDepositedAmount} {pool.secondaryAssetCode}
+                </p>
+              )}
           </div>
         )}
 
@@ -134,8 +201,7 @@ export function LendModal({
 
         <div className="mb-3">
           <label className="text-white/60 text-xs font-medium block mb-1">
-            {isDeposit ? "Amount to Deposit" : "Amount to Withdraw"} (
-            {pool.token1})
+            {inputLabel}
           </label>
           <div className="relative">
             <input
@@ -161,6 +227,19 @@ export function LendModal({
               You will burn ~{formatAmount(bTokensToBurn)} bTokens
             </p>
           )}
+          {isPairWithdraw &&
+            estimatedSecondaryOut &&
+            pool.secondaryAssetCode && (
+              <p className="text-white/40 text-xs mt-1">
+                Estimated output: {amount} {pool.token1} +{" "}
+                {estimatedSecondaryOut} {pool.secondaryAssetCode}
+              </p>
+            )}
+          {!isDeposit && exceedsAggregatedPosition && (
+            <p className="text-red-400/90 text-xs mt-1">
+              Amount exceeds your withdrawable position
+            </p>
+          )}
         </div>
 
         <div className="flex gap-2">
@@ -182,7 +261,7 @@ export function LendModal({
                 ? "Connect Wallet"
                 : isDeposit
                   ? "Confirm Deposit"
-                  : "Confirm Withdraw"}
+                  : `Confirm ${withdrawLabel}`}
           </button>
         </div>
       </div>

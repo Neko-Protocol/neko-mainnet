@@ -4,15 +4,19 @@ import { getBTokenBalanceRaw } from "@/lib/helpers/stellar/lending";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import { useLendingPools } from "./useLendingPools";
 import { STELLAR_DECIMALS } from "@/lib/constants/network";
+import { mulDivFloor } from "@/lib/helpers/amount";
 
 export interface LendingPosition {
   assetCode: string;
   bTokens: bigint;
   bTokensFormatted: string;
   bTokenRate: string;
+  depositedRaw: bigint;
   depositedFormatted: string;
   interestRate: number;
 }
+
+const RATE_SCALAR = 1_000_000_000_000n;
 
 export function useUserLendingPositions() {
   const { address } = useWallet();
@@ -47,14 +51,17 @@ export function useUserLendingPositions() {
 
     const pool = pools[i];
     const bTokenRate = pool.bTokenRate ?? "1";
+    const bTokenRateRaw = BigInt(pool.bTokenRateRaw ?? RATE_SCALAR.toString());
+    const depositedRaw = mulDivFloor(bTokens, bTokenRateRaw, RATE_SCALAR);
     const bTokensHuman = Number(bTokens) / 10 ** STELLAR_DECIMALS;
-    const deposited = bTokensHuman * parseFloat(bTokenRate);
+    const deposited = Number(depositedRaw) / 10 ** STELLAR_DECIMALS;
 
     positions.push({
       assetCode: pool.assetCode,
       bTokens,
       bTokensFormatted: formatAmount(bTokensHuman),
       bTokenRate,
+      depositedRaw,
       depositedFormatted: formatAmount(deposited),
       interestRate: pool.interestRate,
     });

@@ -12,6 +12,7 @@ import {
   usePools,
 } from "@/lib/orchestrator";
 import { fromSmallestUnit, toSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { atomicToDecimal, decimalToAtomic } from "@/lib/helpers/amount";
 import type { PoolAction, PoolInfo } from "@/lib/orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
@@ -29,11 +30,9 @@ import {
   safeParseFloat,
 } from "@/lib/helpers/formatUtils";
 import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
-import {
-  reserveStroopsFromApiString,
-  aquaProportionalAmountB,
-} from "@/lib/helpers/stellar/aquaDeposit";
+import { reserveStroopsFromApiString } from "@/lib/helpers/stellar/aquaDeposit";
 import { ensureTrustlineForSAC } from "@/lib/helpers/stellar/trustline";
+import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
 import { calculateBorrowLimit } from "@/features/shared/borrowing/utils/borrowUtils";
 import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
@@ -203,18 +202,33 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     }, [pool, supportedActions]);
 
   /** AMM / Neko-style: deposit + withdraw, no protocol borrow */
+  const isAmmPairPool = pool?.type === "aqua" || pool?.type === "soroswap";
   const depositWithdrawMode =
-    !!pool && canLend && canRemoveOrWithdraw && !canBorrow;
+    !!pool && canLend && !canBorrow && (canRemoveOrWithdraw || isAmmPairPool);
 
   const [ammTab, setAmmTab] = useState<"deposit" | "withdraw">("deposit");
   const [ammAmount, setAmmAmount] = useState("");
+  const [ammAmount2, setAmmAmount2] = useState("");
+  const [ammInputTokenIndex, setAmmInputTokenIndex] = useState<0 | 1>(0);
 
   const handleAmmTabChange = useCallback((t: "deposit" | "withdraw") => {
     setAmmTab(t);
     setAmmAmount("");
+    setAmmAmount2("");
+    setAmmInputTokenIndex(0);
   }, []);
 
-  const isAquaDeposit = pool?.type === "aqua" && ammTab === "deposit";
+  const handleAmmAmountChange = useCallback((value: string) => {
+    setAmmInputTokenIndex(0);
+    setAmmAmount(value);
+  }, []);
+
+  const handleAmmAmount2Change = useCallback((value: string) => {
+    setAmmInputTokenIndex(1);
+    setAmmAmount2(value);
+  }, []);
+
+  const isAmmPairDeposit = !!pool && isAmmPairPool && ammTab === "deposit";
 
   const decimals = pool?.tokens[0]?.decimals ?? 7;
 
@@ -223,25 +237,71 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     [nativeBalanceStroops, subentryCount]
   );
 
+  const pairReserves = useMemo(() => {
+    if (!pool || !isAmmPairPool || pool.tokens.length < 2) return null;
+    const reserveA =
+      pool.type === "aqua"
+        ? reserveStroopsFromApiString(
+            ((pool.metadata.reserves as string[] | undefined) ?? [])[0] ?? "0"
+          )
+        : reserveStroopsFromApiString(String(pool.metadata.reserveA ?? "0"));
+    const reserveB =
+      pool.type === "aqua"
+        ? reserveStroopsFromApiString(
+            ((pool.metadata.reserves as string[] | undefined) ?? [])[1] ?? "0"
+          )
+        : reserveStroopsFromApiString(String(pool.metadata.reserveB ?? "0"));
+    if (reserveA <= 0n || reserveB <= 0n) return null;
+    return { reserveA, reserveB };
+  }, [pool, isAmmPairPool]);
+
   const requiredSecondLegFormatted = useMemo(() => {
-    if (!pool || pool.type !== "aqua" || ammTab !== "deposit" || !ammAmount) {
+    if (
+      !pool ||
+      !isAmmPairPool ||
+      ammTab !== "deposit" ||
+      !ammAmount ||
+      !pairReserves
+    ) {
       return null;
     }
     const n = parseFloat(ammAmount);
     if (isNaN(n) || n <= 0) return null;
-    const reserves = pool.metadata.reserves as string[] | undefined;
-    if (!reserves?.length || pool.tokens.length < 2) return null;
-    const amountA = BigInt(toSmallestUnit(ammAmount, decimals));
-    const amtB = aquaProportionalAmountB(amountA, reserves);
+    const amountA = decimalToAtomic(ammAmount, decimals);
+    const amtB =
+      pool.type === "aqua"
+        ? (amountA * pairReserves.reserveB * 101n) /
+          (pairReserves.reserveA * 100n)
+        : (amountA * pairReserves.reserveB) / pairReserves.reserveA;
     const d2 = pool.tokens[1]?.decimals ?? 7;
     return fromSmallestUnit(amtB.toString(), d2);
-  }, [pool, ammTab, ammAmount, decimals]);
+  }, [pool, isAmmPairPool, ammTab, ammAmount, decimals, pairReserves]);
+
+  const requiredFirstLegFormatted = useMemo(() => {
+    if (
+      !pool ||
+      !isAmmPairPool ||
+      ammTab !== "deposit" ||
+      !ammAmount2 ||
+      !pairReserves
+    ) {
+      return null;
+    }
+    const n = parseFloat(ammAmount2);
+    if (isNaN(n) || n <= 0) return null;
+    const d2 = pool.tokens[1]?.decimals ?? 7;
+    const amountB = decimalToAtomic(ammAmount2, d2);
+    const amtA =
+      pool.type === "aqua"
+        ? (amountB * pairReserves.reserveA * 100n) /
+          (pairReserves.reserveB * 101n)
+        : (amountB * pairReserves.reserveA) / pairReserves.reserveB;
+    return fromSmallestUnit(amtA.toString(), decimals);
+  }, [pool, isAmmPairPool, ammTab, ammAmount2, decimals, pairReserves]);
 
   const maxAmmDepositAmount = useMemo(() => {
-    if (!pool || pool.type !== "aqua") return token1Balance ?? "0";
-    const reserves = pool.metadata.reserves as string[] | undefined;
-    if (!reserves?.length || pool.tokens.length < 2)
-      return token1Balance ?? "0";
+    if (!pool || !isAmmPairPool) return token1Balance ?? "0";
+    if (!pairReserves || pool.tokens.length < 2) return token1Balance ?? "0";
 
     const d1 = pool.tokens[0]?.decimals ?? 7;
     const d2 = pool.tokens[1]?.decimals ?? 7;
@@ -249,40 +309,105 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     const t1MaxStroops =
       pool.tokens[0]?.code === "XLM"
         ? spendableXlmStroops
-        : BigInt(toSmallestUnit(token1Balance ?? "0", d1));
+        : decimalToAtomic(token1Balance ?? "0", d1);
 
-    const t2BalStroops = BigInt(toSmallestUnit(token2Balance ?? "0", d2));
-    const reserveA = reserveStroopsFromApiString(reserves[0]);
-    const reserveB = reserveStroopsFromApiString(reserves[1]);
-
-    if (reserveA <= 0n || reserveB <= 0n) {
-      return fromSmallestUnit(t1MaxStroops.toString(), d1);
-    }
+    const t2BalStroops =
+      pool.tokens[1]?.code === "XLM"
+        ? spendableXlmStroops
+        : decimalToAtomic(token2Balance ?? "0", d2);
 
     const maxT1FromT2Stroops =
-      (t2BalStroops * reserveA * 100n) / (reserveB * 101n);
+      pool.type === "aqua"
+        ? (t2BalStroops * pairReserves.reserveA * 100n) /
+          (pairReserves.reserveB * 101n)
+        : (t2BalStroops * pairReserves.reserveA) / pairReserves.reserveB;
     const limitingStroops =
       t1MaxStroops < maxT1FromT2Stroops ? t1MaxStroops : maxT1FromT2Stroops;
 
     return fromSmallestUnit(limitingStroops.toString(), d1);
-  }, [pool, token1Balance, token2Balance, spendableXlmStroops]);
+  }, [
+    pool,
+    isAmmPairPool,
+    pairReserves,
+    token1Balance,
+    token2Balance,
+    spendableXlmStroops,
+  ]);
 
-  const amountExceedsSpendableXlm =
-    depositWithdrawMode &&
-    ammTab === "deposit" &&
-    pool?.tokens[0]?.code === "XLM" &&
-    ammAmount !== "" &&
-    !isNaN(parseFloat(ammAmount)) &&
-    parseFloat(ammAmount) > 0 &&
-    BigInt(toSmallestUnit(ammAmount, decimals)) > spendableXlmStroops;
+  const maxAmmDepositAmount2 = useMemo(() => {
+    if (!pool || !isAmmPairPool || !pairReserves || pool.tokens.length < 2) {
+      return token2Balance ?? "0";
+    }
+
+    const d1 = pool.tokens[0]?.decimals ?? 7;
+    const d2 = pool.tokens[1]?.decimals ?? 7;
+    const t1BalStroops =
+      pool.tokens[0]?.code === "XLM"
+        ? spendableXlmStroops
+        : decimalToAtomic(token1Balance ?? "0", d1);
+    const t2MaxStroops =
+      pool.tokens[1]?.code === "XLM"
+        ? spendableXlmStroops
+        : decimalToAtomic(token2Balance ?? "0", d2);
+
+    const maxT2FromT1Stroops =
+      pool.type === "aqua"
+        ? (t1BalStroops * pairReserves.reserveB * 101n) /
+          (pairReserves.reserveA * 100n)
+        : (t1BalStroops * pairReserves.reserveB) / pairReserves.reserveA;
+    const limitingStroops =
+      t2MaxStroops < maxT2FromT1Stroops ? t2MaxStroops : maxT2FromT1Stroops;
+
+    return fromSmallestUnit(limitingStroops.toString(), d2);
+  }, [
+    pool,
+    isAmmPairPool,
+    pairReserves,
+    token1Balance,
+    token2Balance,
+    spendableXlmStroops,
+  ]);
+
+  const displayedAmmAmount =
+    ammInputTokenIndex === 0 ? ammAmount : (requiredFirstLegFormatted ?? "");
+  const displayedAmmAmount2 =
+    ammInputTokenIndex === 1 ? ammAmount2 : (requiredSecondLegFormatted ?? "");
+
+  const firstLegDepositAmount =
+    ammInputTokenIndex === 0 ? ammAmount : (requiredFirstLegFormatted ?? "");
+  const secondLegDepositAmount =
+    ammInputTokenIndex === 1 ? ammAmount2 : (requiredSecondLegFormatted ?? "");
+
+  const firstLegDepositRaw = useMemo(() => {
+    if (!firstLegDepositAmount) return null;
+    try {
+      return decimalToAtomic(firstLegDepositAmount, decimals);
+    } catch {
+      return null;
+    }
+  }, [firstLegDepositAmount, decimals]);
+
+  const secondLegDepositRaw = useMemo(() => {
+    if (!pool || !secondLegDepositAmount || pool.tokens.length < 2) return null;
+    try {
+      return decimalToAtomic(
+        secondLegDepositAmount,
+        pool.tokens[1]?.decimals ?? 7
+      );
+    } catch {
+      return null;
+    }
+  }, [pool, secondLegDepositAmount]);
 
   const secondTokenInsufficient =
-    isAquaDeposit &&
+    isAmmPairDeposit &&
     pool &&
     pool.tokens.length >= 2 &&
-    requiredSecondLegFormatted != null &&
-    parseFloat(token2Balance ?? "0") <
-      parseFloat(requiredSecondLegFormatted) - 1e-10;
+    secondLegDepositRaw != null &&
+    secondLegDepositRaw >
+      (pool.tokens[1]?.code === "XLM"
+        ? spendableXlmStroops
+        : decimalToAtomic(token2Balance ?? "0", pool.tokens[1]?.decimals ?? 7));
 
   const refetchAfterTx = useCallback(async () => {
     await Promise.all([
@@ -324,22 +449,40 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   );
 
   const ammFirstLegDepositInsufficient = useMemo(() => {
-    if (ammTab !== "deposit" || !depositWithdrawMode || !ammAmount)
+    if (
+      ammTab !== "deposit" ||
+      !depositWithdrawMode ||
+      firstLegDepositRaw == null ||
+      firstLegDepositRaw <= 0n
+    ) {
       return false;
-    const n = parseFloat(ammAmount);
-    if (isNaN(n) || n <= 0) return false;
-    if (pool?.tokens[0]?.code === "XLM") {
-      return amountExceedsSpendableXlm;
     }
-    return n > parseFloat(token1Balance ?? "0") + 1e-10;
+    const maxToken0 =
+      pool?.tokens[0]?.code === "XLM"
+        ? spendableXlmStroops
+        : decimalToAtomic(token1Balance ?? "0", pool?.tokens[0]?.decimals ?? 7);
+    return firstLegDepositRaw > maxToken0;
   }, [
     ammTab,
     depositWithdrawMode,
-    ammAmount,
+    firstLegDepositRaw,
     pool?.tokens,
-    amountExceedsSpendableXlm,
+    spendableXlmStroops,
     token1Balance,
   ]);
+
+  const withdrawableRaw = useMemo(() => {
+    if (!position) return 0n;
+    if (pool?.type === "blend") {
+      return BigInt(String(position.metadata?.supplied ?? "0"));
+    }
+    return position.deposited;
+  }, [pool?.type, position]);
+
+  const withdrawableFormatted = useMemo(
+    () => atomicToDecimal(withdrawableRaw, decimals),
+    [withdrawableRaw, decimals]
+  );
 
   const ammWithdrawInsufficient = useMemo(() => {
     if (ammTab !== "withdraw" || !depositWithdrawMode || !ammAmount) {
@@ -347,9 +490,9 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     }
     const n = parseFloat(ammAmount);
     if (isNaN(n) || n <= 0) return false;
-    const max = parseFloat(position?.depositedFormatted ?? "0");
+    const max = parseFloat(withdrawableFormatted);
     return n > max + 1e-10;
-  }, [ammTab, depositWithdrawMode, ammAmount, position?.depositedFormatted]);
+  }, [ammTab, depositWithdrawMode, ammAmount, withdrawableFormatted]);
 
   const ammInsufficientFunds = useMemo(() => {
     if (ammTab === "withdraw") return ammWithdrawInsufficient;
@@ -363,22 +506,63 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
   const handleAmmSubmit = useCallback(async () => {
     if (!pool || !address) return;
-    const num = parseFloat(ammAmount);
+    const submitAmount =
+      ammTab === "deposit" ? firstLegDepositAmount : ammAmount;
+    const num = parseFloat(submitAmount);
     if (isNaN(num) || num <= 0) return;
     if (ammInsufficientFunds) return;
 
-    const amountBigInt = BigInt(toSmallestUnit(ammAmount, decimals));
+    const amountBigInt =
+      ammTab === "deposit" && firstLegDepositRaw != null
+        ? firstLegDepositRaw
+        : decimalToAtomic(submitAmount, decimals);
+    if (amountBigInt <= 0n) return;
+
     const action: PoolAction = ammTab === "deposit" ? "deposit" : "withdraw";
-    await runPoolAction(action, amountBigInt);
+    const withdrawUnit =
+      action === "withdraw" &&
+      (pool.type === "aqua" || pool.type === "soroswap")
+        ? (position?.metadata?.withdrawUnit as
+            | "underlying"
+            | "lp_shares"
+            | undefined)
+        : undefined;
+    await executePoolAction({
+      poolId: contractid,
+      action,
+      amount: amountBigInt,
+      tokenIndex: 0,
+      withdrawAll:
+        action === "withdraw" &&
+        withdrawableRaw > 0n &&
+        amountBigInt >= withdrawableRaw,
+      withdrawUnit,
+      audit: pool
+        ? {
+            tokens: pool.tokens,
+            poolType: pool.type,
+            metadata: pool.metadata,
+          }
+        : undefined,
+    });
+    await refetchAfterTx();
     setAmmAmount("");
+    setAmmAmount2("");
+    setAmmInputTokenIndex(0);
   }, [
     pool,
     address,
     ammAmount,
+    firstLegDepositAmount,
+    firstLegDepositRaw,
     decimals,
     ammTab,
     ammInsufficientFunds,
-    runPoolAction,
+    contractid,
+    executePoolAction,
+    refetchAfterTx,
+    withdrawableRaw,
+    position?.metadata,
   ]);
 
   const handleLendOnlySubmit = useCallback(
@@ -390,7 +574,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         addNotification("Insufficient balance to deposit", "error");
         return;
       }
-      const amountBigInt = BigInt(toSmallestUnit(supplyAmount, decimals));
+      const amountBigInt = decimalToAtomic(supplyAmount, decimals);
       await runPoolAction(lendAction, amountBigInt);
     },
     [
@@ -399,6 +583,45 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       lendAction,
       runPoolAction,
       token1Balance,
+      addNotification,
+    ]
+  );
+
+  const handleWithdrawOnlySubmit = useCallback(
+    async (withdrawAmount: string) => {
+      if (!address || !pool) return;
+      const n = parseFloat(withdrawAmount);
+      if (isNaN(n) || n <= 0) return;
+      const amountBigInt = decimalToAtomic(withdrawAmount, decimals);
+      if (withdrawableRaw <= 0n) {
+        addNotification("No supplied balance to withdraw", "error");
+        return;
+      }
+      if (amountBigInt > withdrawableRaw) {
+        addNotification("Insufficient supplied balance", "error");
+        return;
+      }
+      await executePoolAction({
+        poolId: contractid,
+        action: "withdraw",
+        amount: amountBigInt,
+        withdrawAll: amountBigInt >= withdrawableRaw,
+        audit: {
+          tokens: pool.tokens,
+          poolType: pool.type,
+          metadata: pool.metadata,
+        },
+      });
+      await refetchAfterTx();
+    },
+    [
+      address,
+      pool,
+      decimals,
+      withdrawableRaw,
+      executePoolAction,
+      contractid,
+      refetchAfterTx,
       addNotification,
     ]
   );
@@ -458,10 +681,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           const signed = await signTransaction(result.xdr, {
             networkPassphrase: result.networkPassphrase,
           });
-          const signedXdr =
-            typeof signed === "string"
-              ? signed
-              : ((signed as { signedTxXdr?: string }).signedTxXdr ?? "");
+          const signedXdr = extractSignedTxXdr(signed);
 
           const server = new rpc.Server(rpcUrl, { allowHttp: true });
           const tx = TransactionBuilder.fromXDR(
@@ -526,20 +746,29 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     ]
   );
 
+  const activeAmmInputAmount =
+    ammInputTokenIndex === 0 ? ammAmount : ammAmount2;
+
   const ammSubmitDisabled =
     isActionPending ||
     !address ||
-    !ammAmount ||
-    parseFloat(ammAmount) <= 0 ||
+    !activeAmmInputAmount ||
+    parseFloat(activeAmmInputAmount) <= 0 ||
+    (ammTab === "deposit" &&
+      (firstLegDepositRaw == null || firstLegDepositRaw <= 0n)) ||
     ammInsufficientFunds;
 
   const ammInsufficientFundsMessage = useMemo(() => {
-    if (!depositWithdrawMode || !ammAmount || parseFloat(ammAmount) <= 0) {
+    if (
+      !depositWithdrawMode ||
+      !activeAmmInputAmount ||
+      parseFloat(activeAmmInputAmount) <= 0
+    ) {
       return null;
     }
     if (!ammInsufficientFunds) return null;
     return "Insufficient funds";
-  }, [depositWithdrawMode, ammAmount, ammInsufficientFunds]);
+  }, [depositWithdrawMode, activeAmmInputAmount, ammInsufficientFunds]);
 
   const panelPool = useMemo<PoolDetailPanelPool | null>(() => {
     if (!pool) return null;
@@ -592,10 +821,19 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     const borrowApy = (pool.metadata.borrowApy as number | undefined) ?? 0;
 
     const isAqua = pool.type === "aqua";
+    const isSoroswap = pool.type === "soroswap";
+    const isPairAmm = isAqua || isSoroswap;
     const liquidityUsd = String(
       (pool.metadata.liquidityUsd as string | undefined) ?? "0"
     );
-    const reserveList = (pool.metadata.reserves as string[] | undefined) ?? [];
+    const reserveList = isAqua
+      ? ((pool.metadata.reserves as string[] | undefined) ?? [])
+      : isSoroswap
+        ? [
+            String(pool.metadata.reserveA ?? "0"),
+            String(pool.metadata.reserveB ?? "0"),
+          ]
+        : [];
 
     let totalLiquidity: string;
     let totalLiquidityRaw: string | undefined;
@@ -609,9 +847,12 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     let oraclePrice: string | undefined;
     let utilization: string | undefined;
 
-    if (isAqua) {
+    if (isPairAmm) {
       const usd = safeParseFloat(liquidityUsd);
-      totalLiquidity = formatLiquidity(usd, 2);
+      totalLiquidity =
+        isAqua && usd > 0
+          ? formatLiquidity(usd, 2)
+          : formatLiquidity(availableLiquidityNum.toString(), 2);
       totalLiquidityRaw = pool.tokens
         .map((t, i) => {
           const r = reserveList[i] ?? "0";
@@ -632,16 +873,20 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       if (rewards > 0.0001) {
         supplyApySub = `Base ${baseSup.toFixed(2)}% + ${rewards.toFixed(2)}% rewards`;
       }
-      const aquaPoolType = pool.metadata.aquaPoolType as string | undefined;
-      if (aquaPoolType === "stable_swap" || aquaPoolType === "stable") {
-        poolTypeLabel = "Stable Swap";
-        const amp = pool.metadata.amplificationFactor as
-          | number
-          | null
-          | undefined;
-        if (amp != null) poolTypeDetail = `A: ${amp}`;
-      } else if (aquaPoolType === "constant_product") {
+      if (isSoroswap) {
         poolTypeLabel = "Constant Product";
+      } else {
+        const aquaPoolType = pool.metadata.aquaPoolType as string | undefined;
+        if (aquaPoolType === "stable_swap" || aquaPoolType === "stable") {
+          poolTypeLabel = "Stable Swap";
+          const amp = pool.metadata.amplificationFactor as
+            | number
+            | null
+            | undefined;
+          if (amp != null) poolTypeDetail = `A: ${amp}`;
+        } else if (aquaPoolType === "constant_product") {
+          poolTypeLabel = "Constant Product";
+        }
       }
       if (primaryTokenPrice > 0 && t1?.code) {
         oraclePrice = `${t1.code} = ${formatCurrency(
@@ -716,7 +961,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       token1Balance: token1Balance ?? "0",
       token2Balance: token2Balance ?? "0",
       /** LP / supplied position in human units (withdraw max) */
-      lpBalance: position?.depositedFormatted ?? "0",
+      lpBalance: withdrawableFormatted,
       collateralBalance: collateralRaw,
       loanBalance: loanRaw,
       borrowLimit,
@@ -733,11 +978,13 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     pool,
     position,
     token1Balance,
+    token2Balance,
     isLendingPool,
     collateralOptionsWithBalances,
     primaryTokenPrice,
     fxRate,
     selectedCurrency,
+    withdrawableFormatted,
   ]);
 
   if (isLoading) {
@@ -801,21 +1048,21 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           depositWithdrawMode={depositWithdrawMode}
           ammTab={ammTab}
           onAmmTabChange={handleAmmTabChange}
-          ammAmount={ammAmount}
-          ammAmount2={
-            requiredSecondLegFormatted != null
-              ? parseFloat(requiredSecondLegFormatted).toFixed(2)
-              : undefined
-          }
+          ammAmount={displayedAmmAmount}
+          ammAmount2={displayedAmmAmount2}
           ammMaxAmount={maxAmmDepositAmount}
-          onAmmAmountChange={setAmmAmount}
+          ammMaxAmount2={maxAmmDepositAmount2}
+          onAmmAmountChange={handleAmmAmountChange}
+          onAmmAmount2Change={handleAmmAmount2Change}
           onAmmSubmit={handleAmmSubmit}
           isAmmSubmitting={isActionPending}
           ammSubmitDisabled={ammSubmitDisabled}
           ammInsufficientFundsMessage={ammInsufficientFundsMessage}
           canLend={canLend}
+          canWithdraw={canRemoveOrWithdraw && withdrawableRaw > 0n}
           canBorrow={canBorrow}
           onLendSubmit={handleLendOnlySubmit}
+          onWithdrawSubmit={handleWithdrawOnlySubmit}
           onBorrowSubmit={handleBorrowingSubmit}
           isLendingActionPending={
             isActionPending || isBorrowWithCollateralPending

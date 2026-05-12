@@ -48,7 +48,7 @@ export interface PoolDetailPanelPool {
 
 export interface PoolDetailPanelProps {
   pool: PoolDetailPanelPool;
-  type: "lend" | "borrow";
+  type: "lend" | "borrow" | "withdraw";
   isWalletConnected?: boolean;
   supportsBorrow?: boolean;
   depositWithdrawMode?: boolean;
@@ -57,14 +57,18 @@ export interface PoolDetailPanelProps {
   ammAmount?: string;
   ammAmount2?: string;
   ammMaxAmount?: string;
+  ammMaxAmount2?: string;
   onAmmAmountChange?: (v: string) => void;
+  onAmmAmount2Change?: (v: string) => void;
   onAmmSubmit?: () => void | Promise<void>;
   isAmmSubmitting?: boolean;
   ammSubmitDisabled?: boolean;
   ammInsufficientFundsMessage?: string | null;
   canLend?: boolean;
+  canWithdraw?: boolean;
   canBorrow?: boolean;
   onLendSubmit?: (supplyAmount: string) => void | Promise<void>;
+  onWithdrawSubmit?: (withdrawAmount: string) => void | Promise<void>;
   onBorrowSubmit?: (
     borrowAmount: string,
     collateralAssetAddress: string,

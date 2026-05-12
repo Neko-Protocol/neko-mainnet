@@ -18,6 +18,7 @@ export interface LendingPool {
   poolBalanceUSD: string;
   interestRate: number;
   bTokenRate: string;
+  bTokenRateRaw: string;
   isActive: boolean;
   contractId: string;
 }
@@ -80,6 +81,7 @@ async function fetchLendingPools(
       }
 
       let bTokenRate = "1.0";
+      let bTokenRateRaw = "1000000000000";
       try {
         const bRateTx = await client.get_b_token_rate(
           { asset: assetCode },
@@ -87,10 +89,8 @@ async function fetchLendingPools(
         );
         const bRateValue = bRateTx.result;
         if (bRateValue) {
-          bTokenRate = fromSmallestUnit(
-            BigInt(bRateValue.toString()).toString(),
-            12
-          );
+          bTokenRateRaw = BigInt(bRateValue.toString()).toString();
+          bTokenRate = fromSmallestUnit(bTokenRateRaw, 12);
         }
       } catch {
         // use 1.0
@@ -103,6 +103,7 @@ async function fetchLendingPools(
         poolBalanceUSD: "Calculating...",
         interestRate,
         bTokenRate,
+        bTokenRateRaw,
         isActive: true,
         contractId,
       });

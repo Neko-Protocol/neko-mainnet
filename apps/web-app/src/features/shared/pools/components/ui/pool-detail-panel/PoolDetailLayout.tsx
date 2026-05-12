@@ -21,14 +21,18 @@ export function PoolDetailLayout({
   ammAmount,
   ammAmount2,
   ammMaxAmount,
+  ammMaxAmount2,
   onAmmAmountChange,
+  onAmmAmount2Change,
   onAmmSubmit,
   isAmmSubmitting,
   ammSubmitDisabled,
   ammInsufficientFundsMessage,
   canLend,
+  canWithdraw,
   canBorrow,
   onLendSubmit,
+  onWithdrawSubmit,
   onBorrowSubmit,
   isLendingActionPending,
 }: PoolDetailLayoutProps) {
@@ -54,14 +58,18 @@ export function PoolDetailLayout({
             ammAmount={ammAmount}
             ammAmount2={ammAmount2}
             ammMaxAmount={ammMaxAmount}
+            ammMaxAmount2={ammMaxAmount2}
             onAmmAmountChange={onAmmAmountChange}
+            onAmmAmount2Change={onAmmAmount2Change}
             onAmmSubmit={onAmmSubmit}
             isAmmSubmitting={isAmmSubmitting}
             ammSubmitDisabled={ammSubmitDisabled}
             ammInsufficientFundsMessage={ammInsufficientFundsMessage}
             canLend={canLend}
+            canWithdraw={canWithdraw}
             canBorrow={canBorrow}
             onLendSubmit={onLendSubmit}
+            onWithdrawSubmit={onWithdrawSubmit}
             onBorrowSubmit={onBorrowSubmit}
             isLendingActionPending={isLendingActionPending}
           />

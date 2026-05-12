@@ -4,6 +4,7 @@ export function PoolPanelModeTabs({
   depositWithdrawMode,
   ammTab,
   onAmmTabChange,
+  canWithdraw,
   supportsBorrow,
   lendingTabs,
   mode,
@@ -12,16 +13,21 @@ export function PoolPanelModeTabs({
   depositWithdrawMode: boolean;
   ammTab: "deposit" | "withdraw";
   onAmmTabChange?: (t: "deposit" | "withdraw") => void;
+  canWithdraw: boolean;
   supportsBorrow: boolean;
-  lendingTabs: readonly ("lend" | "borrow")[];
-  mode: "lend" | "borrow";
-  setMode: (m: "lend" | "borrow") => void;
+  lendingTabs: readonly ("lend" | "withdraw" | "borrow")[];
+  mode: "lend" | "withdraw" | "borrow";
+  setMode: (m: "lend" | "withdraw" | "borrow") => void;
 }) {
+  const ammTabs = canWithdraw
+    ? (["deposit", "withdraw"] as const)
+    : (["deposit"] as const);
+
   return (
     <>
       {depositWithdrawMode && (
         <div className="flex rounded-xl p-1 gap-1">
-          {(["deposit", "withdraw"] as const).map((t) => (
+          {ammTabs.map((t) => (
             <button
               key={t}
               type="button"
@@ -51,7 +57,7 @@ export function PoolPanelModeTabs({
                   : "text-white/40 hover:text-white/70"
               }`}
             >
-              {m === "lend" ? "Lend" : "Borrow"}
+              {m === "lend" ? "Lend" : m === "withdraw" ? "Withdraw" : "Borrow"}
             </button>
           ))}
         </div>

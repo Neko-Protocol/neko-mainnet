@@ -10,6 +10,7 @@ import { LendTable } from "@/features/shared/lending/components/ui/LendTable";
 import { LendModal } from "@/features/shared/lending/components/ui/LendModal";
 import MyLendingPositions from "@/features/shared/lending/components/ui/MyLendingPositions";
 import { BackstopPanel } from "@/features/shared/lending/components/ui/BackstopPanel";
+import { atomicToDecimal } from "@/lib/helpers/amount";
 
 type LendTab = "pools" | "backstop" | "positions";
 
@@ -93,14 +94,36 @@ function LendingPanel() {
       {showBackstop && effectiveTab === "backstop" && <BackstopPanel />}
       {effectiveTab === "positions" && (
         <MyLendingPositions
-          onWithdraw={(assetCode, protocolId, depositedRaw, orchestratorId) => {
+          onWithdraw={(
+            assetCode,
+            protocolId,
+            depositedRaw,
+            orchestratorId,
+            action,
+            decimals = 7,
+            withdrawUnit,
+            secondaryDepositedAmount,
+            secondaryAssetCode
+          ) => {
             const pool = pools.find((p) =>
               orchestratorId
                 ? p.orchestratorId === orchestratorId
                 : p.protocolId === protocolId && p.assetCode === assetCode
             );
             if (pool)
-              openModal({ ...pool, depositedAmount: depositedRaw }, false);
+              openModal(
+                {
+                  ...pool,
+                  depositedAmount: atomicToDecimal(depositedRaw, decimals),
+                  depositedRaw,
+                  assetDecimals: decimals,
+                  withdrawAction: action,
+                  withdrawUnit,
+                  secondaryDepositedAmount,
+                  secondaryAssetCode,
+                },
+                false
+              );
           }}
         />
       )}

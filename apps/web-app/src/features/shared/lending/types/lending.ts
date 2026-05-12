@@ -12,7 +12,9 @@ export interface PoolData {
   isActive: boolean;
   assetCode: string;
   asset: string;
+  assetDecimals?: number;
   bTokenRate?: string;
+  bTokenRateRaw?: string;
   /** Formatted total borrowed from this pool; undefined for non-lending pools */
   totalBorrowed?: string;
   /** Raw token amount for liquidity (human-readable, e.g. "3046.55") — used for USD conversion */
@@ -29,4 +31,10 @@ export interface PoolData {
   hideRowActions?: boolean;
   /** User's deposited amount (formatted, no symbol) — used in withdraw modal */
   depositedAmount?: string;
+  secondaryDepositedAmount?: string;
+  secondaryAssetCode?: string;
+  /** User's withdrawable amount in raw atomic units. */
+  depositedRaw?: string;
+  withdrawAction?: "withdraw" | "withdrawCollateral";
+  withdrawUnit?: "underlying" | "lp_shares";
 }

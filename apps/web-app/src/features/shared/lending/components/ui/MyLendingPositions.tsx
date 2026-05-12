@@ -22,6 +22,7 @@ import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { safeParseFloat } from "@/lib/helpers/formatUtils";
+import { atomicToDecimal } from "@/lib/helpers/amount";
 
 const PROTOCOL_ICONS: Record<string, string> = {
   neko: "/neko-logo.png",
@@ -36,8 +37,13 @@ interface UnifiedPosition {
   assetCode: string;
   poolName: string;
   depositedFormatted: string;
-  /** Raw numeric deposited amount (no symbol) for the MAX button */
+  /** Raw atomic withdrawable supply amount for the MAX button */
   depositedRaw: string;
+  collateralRaw?: string;
+  decimals: number;
+  withdrawUnit?: "underlying" | "lp_shares";
+  secondaryDepositedAmount?: string;
+  secondaryAssetCode?: string;
   apy: string;
   /** orchestratorId for aggregated pools, undefined for Neko */
   orchestratorId?: string;
@@ -50,33 +56,68 @@ interface MyPositionsProps {
     assetCode: string,
     protocolId: string,
     depositedRaw: string,
-    orchestratorId?: string
+    orchestratorId?: string,
+    action?: "withdraw" | "withdrawCollateral",
+    decimals?: number,
+    withdrawUnit?: "underlying" | "lp_shares",
+    secondaryDepositedAmount?: string,
+    secondaryAssetCode?: string
   ) => void;
 }
 
-function PoolCell({ assetCode }: { assetCode: string }) {
+function PoolIcon({ assetCode }: { assetCode: string }) {
   const icon = getPoolTokenIcon({ type: "contract", code: assetCode });
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="w-6 h-6 rounded-full bg-[#1a2a4a] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-        {icon ? (
-          <Image
-            src={icon}
-            alt={assetCode}
-            width={24}
-            height={24}
-            unoptimized
-            className={getTokenIconFitClass(assetCode)}
-          />
-        ) : (
-          <span className="text-white text-[9px] font-bold">
-            {assetCode[0]}
-          </span>
-        )}
-      </div>
-      <span className="text-white font-medium text-sm">{assetCode}</span>
+    <div className="w-6 h-6 rounded-full bg-[#1a2a4a] border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+      {icon ? (
+        <Image
+          src={icon}
+          alt={assetCode}
+          width={24}
+          height={24}
+          unoptimized
+          className={getTokenIconFitClass(assetCode)}
+        />
+      ) : (
+        <span className="text-white text-[9px] font-bold">{assetCode[0]}</span>
+      )}
     </div>
   );
+}
+
+function PoolCell({
+  assetCode,
+  secondaryAssetCode,
+}: {
+  assetCode: string;
+  secondaryAssetCode?: string;
+}) {
+  return (
+    <div className="flex items-center gap-2.5">
+      {secondaryAssetCode ? (
+        <div className="relative h-6 w-10 shrink-0">
+          <div className="absolute left-0 top-0">
+            <PoolIcon assetCode={assetCode} />
+          </div>
+          <div className="absolute left-4 top-0">
+            <PoolIcon assetCode={secondaryAssetCode} />
+          </div>
+        </div>
+      ) : (
+        <PoolIcon assetCode={assetCode} />
+      )}
+      <span className="text-white font-medium text-sm">
+        {assetCode}
+        {secondaryAssetCode ? (
+          <span className="text-white/50"> / {secondaryAssetCode}</span>
+        ) : null}
+      </span>
+    </div>
+  );
+}
+
+function formatPositionAmount(amount: string, assetCode: string): string {
+  return `${safeParseFloat(amount).toFixed(2)} ${assetCode}`;
 }
 
 function PositionTypeFilter({
@@ -133,22 +174,66 @@ const MyPositions: React.FC<MyPositionsProps> = ({
       protocolId: "neko",
       assetCode: pos.assetCode,
       poolName: `${pos.assetCode} Pool`,
-      depositedFormatted: `${safeParseFloat(pos.depositedFormatted).toFixed(2)} ${pos.assetCode}`,
-      depositedRaw: String(safeParseFloat(pos.depositedFormatted)),
+      depositedFormatted: formatPositionAmount(
+        pos.depositedFormatted,
+        pos.assetCode
+      ),
+      depositedRaw: pos.depositedRaw.toString(),
+      decimals: 7,
       apy: `${pos.interestRate.toFixed(2)}%`,
-      orchestratorId: undefined,
+      orchestratorId: `neko:${pos.assetCode}`,
     })),
-    ...aggregatedPositions.map((pos) => ({
-      key: `agg-${pos.pool.id}`,
-      protocolId: pos.pool.type,
-      assetCode: pos.pool.tokens[0]?.code ?? "?",
-      poolName: pos.pool.name,
-      depositedFormatted: `${safeParseFloat(pos.position.depositedFormatted).toFixed(2)} ${pos.pool.tokens[0]?.code ?? ""}`,
-      depositedRaw: String(safeParseFloat(pos.position.depositedFormatted)),
-      apy: `${pos.pool.apy.toFixed(2)}%`,
-      orchestratorId: pos.pool.id,
-      hasEmissions: !!pos.pool.metadata?.hasEmissions,
-    })),
+    ...aggregatedPositions.map((pos) => {
+      const decimals = pos.pool.tokens[0]?.decimals ?? 7;
+      const suppliedRaw = String(
+        pos.position.metadata?.supplied ?? pos.position.deposited.toString()
+      );
+      const collateralRaw = String(pos.position.metadata?.collateral ?? "0");
+      const withdrawRaw =
+        pos.pool.type === "blend"
+          ? suppliedRaw
+          : pos.position.deposited.toString();
+      const withdrawUnit =
+        pos.pool.type === "aqua" || pos.pool.type === "soroswap"
+          ? (pos.position.metadata?.withdrawUnit as
+              | "underlying"
+              | "lp_shares"
+              | undefined)
+          : undefined;
+      const underlyingAmountsRaw = pos.position.metadata
+        ?.underlyingAmountsRaw as string[] | undefined;
+      const secondaryRaw =
+        (pos.pool.type === "aqua" || pos.pool.type === "soroswap") &&
+        withdrawUnit === "underlying"
+          ? underlyingAmountsRaw?.[1]
+          : undefined;
+      const secondaryDecimals = pos.pool.tokens[1]?.decimals ?? 7;
+      const secondaryDepositedAmount =
+        secondaryRaw != null
+          ? atomicToDecimal(BigInt(secondaryRaw), secondaryDecimals)
+          : undefined;
+      const secondaryAssetCode =
+        secondaryDepositedAmount != null ? pos.pool.tokens[1]?.code : undefined;
+      return {
+        key: `agg-${pos.pool.id}`,
+        protocolId: pos.pool.type,
+        assetCode: pos.pool.tokens[0]?.code ?? "?",
+        poolName: pos.pool.name,
+        depositedFormatted: formatPositionAmount(
+          pos.position.depositedFormatted,
+          pos.pool.tokens[0]?.code ?? ""
+        ),
+        depositedRaw: withdrawRaw,
+        collateralRaw,
+        decimals,
+        withdrawUnit,
+        secondaryDepositedAmount,
+        secondaryAssetCode,
+        apy: `${pos.pool.apy.toFixed(2)}%`,
+        orchestratorId: pos.pool.id,
+        hasEmissions: !!pos.pool.metadata?.hasEmissions,
+      };
+    }),
   ];
 
   const colSpan = 5;
@@ -247,24 +332,42 @@ const MyPositions: React.FC<MyPositionsProps> = ({
                     )}
                   </td>
                   <td className="px-4 py-4">
-                    <PoolCell assetCode={pos.assetCode} />
+                    <PoolCell
+                      assetCode={pos.assetCode}
+                      secondaryAssetCode={pos.secondaryAssetCode}
+                    />
                   </td>
-                  <td className="px-4 py-4 text-center text-white font-bold text-sm tabular-nums">
-                    {pos.depositedFormatted}
+                  <td className="px-4 py-4 text-center text-sm tabular-nums">
+                    <div className="font-bold text-white">
+                      {pos.depositedFormatted}
+                    </div>
+                    {pos.secondaryDepositedAmount && pos.secondaryAssetCode && (
+                      <div className="mt-1 font-semibold text-white/65">
+                        {formatPositionAmount(
+                          pos.secondaryDepositedAmount,
+                          pos.secondaryAssetCode
+                        )}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-4 text-center text-white text-sm">
                     {pos.apy}
                   </td>
                   <td className="px-4 py-4 text-center">
                     <div className="inline-flex items-center gap-2">
-                      {onWithdraw && (
+                      {onWithdraw && BigInt(pos.depositedRaw || "0") > 0n && (
                         <button
                           onClick={() =>
                             onWithdraw(
                               pos.assetCode,
                               pos.protocolId,
                               pos.depositedRaw,
-                              pos.orchestratorId
+                              pos.orchestratorId,
+                              "withdraw",
+                              pos.decimals,
+                              pos.withdrawUnit,
+                              pos.secondaryDepositedAmount,
+                              pos.secondaryAssetCode
                             )
                           }
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] text-white text-xs font-semibold transition-colors"
@@ -273,6 +376,27 @@ const MyPositions: React.FC<MyPositionsProps> = ({
                           Withdraw
                         </button>
                       )}
+                      {onWithdraw &&
+                        pos.protocolId === "blend" &&
+                        pos.orchestratorId &&
+                        BigInt(pos.collateralRaw || "0") > 0n && (
+                          <button
+                            onClick={() =>
+                              onWithdraw(
+                                pos.assetCode,
+                                pos.protocolId,
+                                pos.collateralRaw!,
+                                pos.orchestratorId,
+                                "withdrawCollateral",
+                                pos.decimals
+                              )
+                            }
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors"
+                          >
+                            <ArrowUpFromLine className="h-3.5 w-3.5" />
+                            Remove Collateral
+                          </button>
+                        )}
                       {pos.hasEmissions && pos.orchestratorId && (
                         <button
                           disabled={

@@ -17,7 +17,7 @@ export function PoolSummaryRows({
   selectedCollateral,
 }: {
   pool: PoolDetailPanelPool;
-  mode: "lend" | "borrow";
+  mode: "lend" | "withdraw" | "borrow";
   isPair: boolean;
   pairLabel: string;
   collateralAmount: string;
@@ -39,7 +39,7 @@ export function PoolSummaryRows({
           </div>
         }
       />
-      {mode === "lend" && (
+      {(mode === "lend" || mode === "withdraw") && (
         <InfoRow
           labelEl={
             <div className="flex items-center gap-1.5">
@@ -67,7 +67,7 @@ export function PoolSummaryRows({
                   size={20}
                 />
               )}
-              <span className="text-white/40 text-xs">{`Supplied (${pairLabel})`}</span>
+              <span className="text-white/40 text-xs">{`${mode === "withdraw" ? "Withdraw" : "Supplied"} (${pairLabel})`}</span>
             </div>
           }
           valueEl={
