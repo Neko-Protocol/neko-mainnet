@@ -249,7 +249,7 @@ export function VaultActionModal({
             </button>
           </div>
 
-          {/* Loading overlay — covers the modal content while tx is in flight */}
+          {/* Loading overlay  covers the modal content while tx is in flight */}
           {isLoading && (
             <div className="absolute inset-0 rounded-2xl bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 z-20">
               <Loader2 className="h-8 w-8 animate-spin text-[#229EDF]" />

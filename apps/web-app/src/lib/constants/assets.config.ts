@@ -15,7 +15,7 @@ export interface AssetConfig {
   isStablecoin?: boolean;
   /**
    * CoinGecko `/simple/price` id (e.g. `stellar`, `usd-coin`).
-   * Used only when Soroswap returns no price — not a substitute for on-chain parity.
+   * Used only when Soroswap returns no price  not a substitute for on-chain parity.
    */
   coinGeckoId?: string;
   /**

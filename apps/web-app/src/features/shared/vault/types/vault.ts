@@ -46,7 +46,7 @@ export interface VaultDetail {
   strategyAllocations?: VaultStrategyAllocation[];
 }
 
-/** Static metadata — defined by the protocol, never changes at runtime. */
+/** Static metadata  defined by the protocol, never changes at runtime. */
 export interface VaultConfig {
   id: string;
   name: string;
@@ -63,7 +63,7 @@ export interface VaultConfig {
   detail?: VaultDetail;
 }
 
-/** Dynamic data — fetched from contracts at runtime. */
+/** Dynamic data  fetched from contracts at runtime. */
 export interface VaultStats {
   tvl: string;
   apy7d: string;

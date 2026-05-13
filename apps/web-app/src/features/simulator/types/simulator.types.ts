@@ -33,6 +33,7 @@ export interface SimulatorDestination {
   bondIcon?: string;
   bondSymbol?: string;
   isFallbackApy?: boolean;
+  blndEmissionsApy?: number | null;
 }
 
 /** Yield-token row shape for typing builders (same fields as `SimulatorDestination` with bond fields set). */

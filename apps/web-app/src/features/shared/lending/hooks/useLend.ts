@@ -147,7 +147,7 @@ export function useLend() {
                   fromSmallestUnit(p.tvl.toString(), decimals),
                   SUMMARY_DISPLAY_DECIMALS
                 )
-              : "—";
+              : "";
         const contractId = p.id.split(":")[1] ?? p.id;
         const canInteract = p.supportedActions.includes("deposit");
 

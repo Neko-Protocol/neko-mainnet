@@ -1117,7 +1117,7 @@ export function LendTable({
                           fallback={pool.totalBorrowed}
                         />
                       ) : (
-                        <span className="text-white/30">—</span>
+                        <span className="text-white/30"></span>
                       )}
                     </td>
                   )}
@@ -1126,7 +1126,7 @@ export function LendTable({
                       {pool.borrowApy ? (
                         <span className="text-white">{pool.borrowApy}</span>
                       ) : (
-                        <span className="text-white/30">—</span>
+                        <span className="text-white/30"></span>
                       )}
                     </td>
                   )}
@@ -1185,7 +1185,7 @@ export function LendTable({
                     />
                     <StatCell
                       label="Borrowed"
-                      value={pool.totalBorrowed ?? "—"}
+                      value={pool.totalBorrowed ?? ""}
                       icon={ArrowDownUp}
                     />
                   </div>

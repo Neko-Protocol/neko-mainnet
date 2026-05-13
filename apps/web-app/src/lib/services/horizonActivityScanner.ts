@@ -16,7 +16,7 @@ function extractInvokedContracts(envelopeXdr: string): string[] {
   const contracts: string[] = [];
   try {
     const tx = TransactionBuilder.fromXDR(envelopeXdr, networkPassphrase);
-    if (!("operations" in tx)) return contracts; // FeeBumpTransaction — skip
+    if (!("operations" in tx)) return contracts; // FeeBumpTransaction  skip
     for (const op of tx.operations) {
       if (op.type !== "invokeHostFunction") continue;
       try {
@@ -32,7 +32,7 @@ function extractInvokedContracts(envelopeXdr: string): string[] {
       }
     }
   } catch {
-    // XDR decode failure — skip this tx
+    // XDR decode failure  skip this tx
   }
   return contracts;
 }
@@ -63,7 +63,7 @@ export async function scanUserContractInteractions(
       }
     }
   } catch {
-    // Horizon unavailable — return empty set, callers fall back to full check
+    // Horizon unavailable  return empty set, callers fall back to full check
   }
   return known;
 }

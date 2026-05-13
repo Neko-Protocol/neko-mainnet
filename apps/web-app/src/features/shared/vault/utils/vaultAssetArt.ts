@@ -24,7 +24,7 @@ const VAULT_ASSET_ART: Record<
   },
 };
 
-/** Stellar / Soroban symbols are often padded with NUL bytes — strip for lookups. */
+/** Stellar / Soroban symbols are often padded with NUL bytes  strip for lookups. */
 export function normalizeVaultSymbol(raw: string): string {
   return raw.replace(/\0/g, "").trim().toUpperCase();
 }
@@ -79,7 +79,7 @@ export function toVaultAssetFromSymbol(
 
 /**
  * Assets shown in the vault card header (tilted squares). DeFindex often
- * returns a single share/leg while the product is USDC + CETES — always show
+ * returns a single share/leg while the product is USDC + CETES  always show
  * both when we can infer USDC or CETES from the collateral or supply symbol.
  */
 export function vaultHeaderIllustrationAssets(vault: VaultView): VaultAsset[] {

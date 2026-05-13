@@ -112,7 +112,7 @@ type HorizonAssetsResponse = {
 /**
  * Resolves the classic Stellar asset (code + issuer) for a SAC contract.
  *
- * Strategy 0: Use the Blend SDK's TokenMetadata — reads the contract instance
+ * Strategy 0: Use the Blend SDK's TokenMetadata  reads the contract instance
  *   data directly from Soroban RPC, returning the underlying Asset for SAC tokens.
  * Strategy 1: Direct Horizon lookup via `?contract_id=` (Horizon v2.29+).
  * Strategy 2: Fetch by asset code and verify by computing the SAC contract ID.
@@ -123,7 +123,7 @@ async function resolveClassicAssetForSAC(
   contractId: string,
   assetCode: string
 ): Promise<ClassicAssetRef | null> {
-  // Strategy 0: Blend SDK TokenMetadata (most reliable — reads on-chain data)
+  // Strategy 0: Blend SDK TokenMetadata (most reliable  reads on-chain data)
   try {
     const network = { rpc: rpcUrl, passphrase: networkPassphrase };
     const meta = await TokenMetadata.load(network, contractId);
@@ -183,7 +183,7 @@ async function resolveClassicAssetForSAC(
  * the given SAC contract. If the trustline is missing, builds a `changeTrust`
  * transaction, signs it, and submits it to Horizon.
  *
- * Safe to call unconditionally — silently no-ops for XLM and for contracts
+ * Safe to call unconditionally  silently no-ops for XLM and for contracts
  * that cannot be resolved to a classic asset.
  */
 export async function ensureTrustlineForSAC(

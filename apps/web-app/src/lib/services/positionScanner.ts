@@ -100,7 +100,7 @@ export async function batchCheckLpBalances(
         const addr = Address.fromScAddress(data.contract()).toString();
         foundContracts.add(addr);
       } catch {
-        // Entry decoding failed — ignore this entry
+        // Entry decoding failed  ignore this entry
       }
     }
 
@@ -113,7 +113,7 @@ export async function batchCheckLpBalances(
 
     return new Set(poolIds);
   } catch {
-    // RPC failed — assume all candidates may have balances so nothing is skipped
+    // RPC failed  assume all candidates may have balances so nothing is skipped
     return new Set(candidates.map((c) => c.poolId));
   }
 }

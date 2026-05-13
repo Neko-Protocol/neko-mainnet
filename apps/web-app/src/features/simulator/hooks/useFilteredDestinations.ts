@@ -136,6 +136,12 @@ export function useFilteredDestinations(token: SimulatorToken | null) {
           protocol: getPoolProtocolLabel(pool),
           strategyLabels: getPoolStrategyLabels(pool),
           acceptedTokenCodes: pool.tokens.map((t) => t.code),
+          blndEmissionsApy:
+            pool.type === "blend" &&
+            typeof pool.metadata.emissionsApy === "number" &&
+            pool.metadata.emissionsApy > 0
+              ? pool.metadata.emissionsApy
+              : null,
           raw: pool,
         };
       });
@@ -151,7 +157,7 @@ export function useFilteredDestinations(token: SimulatorToken | null) {
           ? `${deposited.toLocaleString("en-US", {
               maximumFractionDigits: 2,
             })} ${lp.assetCode}`
-          : "—";
+          : "";
         const apy = Number.isFinite(lp.interestRate) ? lp.interestRate : null;
         return {
           kind: "pool" as const,
@@ -208,7 +214,7 @@ export function useFilteredDestinations(token: SimulatorToken | null) {
         name: cfg.name,
         apy,
         tvlUsd: null,
-        tvlLabel: "—",
+        tvlLabel: "",
         protocol: "Sovereign Bond",
         strategyLabels: [
           getYieldTokenStrategyLabel(symbol),

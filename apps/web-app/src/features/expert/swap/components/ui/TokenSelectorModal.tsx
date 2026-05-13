@@ -148,7 +148,7 @@ function UserTokenRow({
   const balanceNum = getHoldingsAmount(balances, code);
   const fiatValue =
     isLoading || price <= 0
-      ? "—"
+      ? ""
       : formatCurrency(
           convertUsdToSelected(balanceNum * price, fxRate),
           selectedCurrency,

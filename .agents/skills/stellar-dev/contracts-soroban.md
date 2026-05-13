@@ -22,8 +22,8 @@ Use Soroban when you need:
 
 Rust is the primary and recommended language for Soroban contracts. Community-maintained alternatives exist but are not recommended for production:
 
-- **AssemblyScript**: [`as-soroban-sdk`](https://github.com/Soneso/as-soroban-sdk) by Soneso — allows TypeScript-like syntax, officially listed on Stellar docs, but may lag behind the latest protocol version
-- **Solidity**: [Hyperledger Solang](https://github.com/hyperledger-solang/solang) — SDF-funded, compiles Solidity to Soroban WASM, currently **pre-alpha** ([docs](https://developers.stellar.org/docs/learn/migrate/evm/solidity-support-via-solang))
+- **AssemblyScript**: [`as-soroban-sdk`](https://github.com/Soneso/as-soroban-sdk) by Soneso allows TypeScript-like syntax, officially listed on Stellar docs, but may lag behind the latest protocol version
+- **Solidity**: [Hyperledger Solang](https://github.com/hyperledger-solang/solang) SDF-funded, compiles Solidity to Soroban WASM, currently **pre-alpha** ([docs](https://developers.stellar.org/docs/learn/migrate/evm/solidity-support-via-solang))
 
 ## Architecture Overview
 

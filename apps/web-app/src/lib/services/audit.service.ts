@@ -11,7 +11,7 @@ class AuditService {
         body: JSON.stringify(event),
       });
     } catch {
-      // fire-and-forget — never propagate errors
+      // fire-and-forget  never propagate errors
     }
   }
 

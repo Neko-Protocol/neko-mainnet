@@ -10,7 +10,7 @@ export function useStellarWallet() {
   const connect = async () => {
     const Kit = await getStellarWalletKit();
 
-    // v2 authModal returns { address } directly — no callback needed.
+    // v2 authModal returns { address } directly  no callback needed.
     const { address: walletAddress } = await Kit.authModal();
     setWallet({ address: walletAddress, walletName: "Stellar Wallet" });
   };

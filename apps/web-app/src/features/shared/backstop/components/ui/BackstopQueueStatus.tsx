@@ -48,7 +48,7 @@ export function BackstopQueueStatus({
           }`}
         >
           {queueExpired
-            ? "Queue period expired — ready to withdraw"
+            ? "Queue period expired  ready to withdraw"
             : `Queue expires ${formatDate(queueExpiresAt)}`}
         </p>
         {!queueExpired && (

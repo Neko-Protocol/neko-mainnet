@@ -312,7 +312,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
       });
       const account = await sorobanServer.getAccount(userAddress);
 
-      // Get pool metadata — reserves come directly from the API (no RPC call needed)
+      // Get pool metadata  reserves come directly from the API (no RPC call needed)
       const poolInfo = await this.getPoolInfo(poolId);
       const tokenAddresses = poolInfo.metadata.tokenAddresses as string[];
       const poolIndexHex = poolInfo.metadata.poolIndex as string;

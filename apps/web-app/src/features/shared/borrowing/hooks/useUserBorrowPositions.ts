@@ -65,7 +65,7 @@ export function useUserBorrowPositions() {
   const { address } = useWallet();
   const { data: pools = [], isLoading: poolsLoading } = useBorrowPools();
 
-  // Deduplicate by assetCode — debt is per-asset, not per-pool
+  // Deduplicate by assetCode  debt is per-asset, not per-pool
   const uniqueAssets = pools.reduce<
     Record<
       string,

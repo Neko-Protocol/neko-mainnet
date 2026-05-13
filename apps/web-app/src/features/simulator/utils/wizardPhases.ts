@@ -34,16 +34,16 @@ export function wizardStepsMeta(
   destination: SimulatorDestination | null
 ): { phase: WizardPhaseId; label: string }[] {
   const steps: { phase: WizardPhaseId; label: string }[] = [
-    { phase: "select_token", label: "Pick a token" },
-    { phase: "select_destination", label: "Pick a destination" },
+    { phase: "select_token", label: "Your Token" },
+    { phase: "select_destination", label: "Where It Goes" },
   ];
   if (shouldOfferOptionalStack(token, destination)) {
     steps.push({
       phase: "optional_stack",
-      label: "Optional strategy",
+      label: "Boost Returns",
     });
   }
-  steps.push({ phase: "simulate", label: "See projections" });
+  steps.push({ phase: "simulate", label: "Your Earnings" });
   return steps;
 }
 

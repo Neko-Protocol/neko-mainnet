@@ -99,7 +99,7 @@ export function useAnchorCustomer(provider: AnchorProvider) {
       if (customer.bankAccountId) {
         storeId(BANK_ACCOUNT_ID_STORAGE_KEY, provider, customer.bankAccountId);
       }
-      // Store the onboarding URL from initial registration — it cannot
+      // Store the onboarding URL from initial registration  it cannot
       // be re-fetched later (Etherfuse returns 409 for existing users).
       if (customer.onboardingUrl) {
         storeId(ONBOARDING_URL_STORAGE_KEY, provider, customer.onboardingUrl);

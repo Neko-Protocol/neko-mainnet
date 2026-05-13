@@ -17,10 +17,6 @@ interface StrategySummaryCardProps {
   apy: number | null;
   oneYearProjection?: Projection;
   hasPrice: boolean;
-  /** Sovereign bond tokens: mention value growth alongside balance growth. */
-  isYieldBearingBond?: boolean;
-  /** Bond + pool/vault: additive APR breakdown. */
-  stackedYieldNote?: string | null;
 }
 
 export function StrategySummaryCard({
@@ -30,8 +26,6 @@ export function StrategySummaryCard({
   apy,
   oneYearProjection,
   hasPrice,
-  isYieldBearingBond = false,
-  stackedYieldNote = null,
 }: StrategySummaryCardProps) {
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
@@ -85,9 +79,7 @@ export function StrategySummaryCard({
             you&apos;d have approximately{" "}
           </>
         )}
-        <span className="font-semibold text-[#229EDF]">
-          {totalLabel ?? "—"}
-        </span>
+        <span className="font-semibold text-[#229EDF]">{totalLabel ?? ""}</span>
         {earningsLabel ? (
           <>
             {" "}
@@ -100,18 +92,7 @@ export function StrategySummaryCard({
         ) : (
           "."
         )}
-        {isYieldBearingBond ? (
-          <span className="mt-2 block text-white/55">
-            That figure includes the token itself becoming worth more over time,
-            not only a bigger balance.
-          </span>
-        ) : null}
       </p>
-      {stackedYieldNote ? (
-        <p className="mt-2 text-xs leading-relaxed text-white/55">
-          {stackedYieldNote}
-        </p>
-      ) : null}
     </div>
   );
 }

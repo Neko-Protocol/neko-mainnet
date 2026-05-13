@@ -131,7 +131,7 @@ const getDirectPoolQuote = async (
 
   const reservesSim = await server.simulateTransaction(reservesTx);
   if (!("result" in reservesSim) || !reservesSim.result?.retval) {
-    throw new Error("Failed to read pool reserves — simulation error");
+    throw new Error("Failed to read pool reserves  simulation error");
   }
 
   const reservesRaw = scValToNative(reservesSim.result.retval) as bigint[];
@@ -154,7 +154,7 @@ const getDirectPoolQuote = async (
     (amountInWithFee * reserveOut) / (reserveIn * 1000n + amountInWithFee);
 
   if (amountOut <= BigInt(0)) {
-    throw new Error("Swap would produce zero output — try a larger amount");
+    throw new Error("Swap would produce zero output  try a larger amount");
   }
 
   const threshold = (amountOut * BigInt(10000 - slippageBps)) / BigInt(10000);

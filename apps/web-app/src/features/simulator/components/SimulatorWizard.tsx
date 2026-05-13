@@ -7,6 +7,7 @@ import type { PoolInfo } from "@/lib/orchestrator";
 import { VaultActionModal } from "@/features/shared/vault/components/ui/VaultActionModal";
 import type { VaultView } from "@/features/shared/vault/types/vault";
 import { useSwapExecution } from "@/features/expert/swap/hooks/useSwapExecution";
+import { useHaptics } from "@/hooks/useHaptics";
 import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
@@ -62,6 +63,7 @@ export function SimulatorWizard() {
   const { executeSwap } = useSwapExecution();
   const { address, networkPassphrase } = useWallet();
   const { addNotification } = useToast();
+  const { success } = useHaptics();
 
   const { strategies, pendingExecuteId, setPendingExecuteId } =
     useStrategiesStore();
@@ -189,6 +191,7 @@ export function SimulatorWizard() {
         });
 
         addNotification("Swap confirmed", "success", TOAST_CONFIG.defaultOpts);
+        success();
 
         await queryClient.invalidateQueries({
           queryKey: ["stellar-balances", address],
@@ -246,6 +249,7 @@ export function SimulatorWizard() {
       executeSwap,
       queryClient,
       addNotification,
+      success,
     ]
   );
 
@@ -345,11 +349,7 @@ export function SimulatorWizard() {
             amount: state.amount,
             snapshotApy: state.destination.apy ?? state.stackVenue?.apy ?? null,
           }}
-          suggestedName={
-            state.stackVenue
-              ? `${state.token.code} → ${state.destination.name} + ${state.stackVenue.name}`
-              : `${state.token.code} → ${state.destination.name}`
-          }
+          suggestedName=""
           onClose={() => setSaveDialogOpen(false)}
         />
       )}
@@ -385,6 +385,7 @@ export function SimulatorWizard() {
               amount: depositIntent.depositAmountHuman ?? state.amount,
               contractId: depositIntent.contractId,
             });
+            success();
           }}
         />
       )}
@@ -401,6 +402,7 @@ export function SimulatorWizard() {
               depositIntent.poolInfo,
               depositIntent.depositAmountHuman ?? state.amount
             );
+            success();
           }}
         />
       )}

@@ -17,7 +17,7 @@ import { POOL_DETAIL_MAIN_SCROLL_ID } from "./scrollIds";
 
 type InfoTab = "overview" | "advanced" | "activity";
 
-/** DOM / URL anchors — use `#pool-detail-overview` etc. */
+/** DOM / URL anchors  use `#pool-detail-overview` etc. */
 export const POOL_DETAIL_SECTION_IDS = {
   overview: "pool-detail-overview",
   advanced: "pool-detail-advanced",
@@ -139,7 +139,7 @@ export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
       scrollRoot.addEventListener(
         "scrollend",
         syncScrollUi as EventListener,
-        opts,
+        opts
       );
     }
 
@@ -148,7 +148,7 @@ export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
       if ("onscrollend" in scrollRoot) {
         scrollRoot.removeEventListener(
           "scrollend",
-          syncScrollUi as EventListener,
+          syncScrollUi as EventListener
         );
       }
     };
@@ -214,7 +214,7 @@ export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
           "isolate bg-[#111111]/55 backdrop-blur-2xl backdrop-saturate-150",
           "supports-backdrop-filter:bg-[#111111]/32",
           "motion-safe:transition-[backdrop-filter,background-color] motion-safe:duration-300 motion-safe:ease-out",
-          showFixed ? "fixed z-30" : "relative z-20",
+          showFixed ? "fixed z-30" : "relative z-20"
         )}
         style={
           showFixed
@@ -245,7 +245,7 @@ export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
                 "motion-safe:transition-colors motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]",
                 activeTab === t.id
                   ? "text-white"
-                  : "text-white/40 hover:text-white/70",
+                  : "text-white/40 hover:text-white/70"
               )}
             >
               {t.label}
@@ -256,7 +256,7 @@ export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
                   "motion-safe:transition-[opacity,transform] motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
                   activeTab === t.id
                     ? "opacity-100 scale-x-100"
-                    : "scale-x-60 opacity-0",
+                    : "scale-x-60 opacity-0"
                 )}
               />
             </button>

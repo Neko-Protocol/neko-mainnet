@@ -25,6 +25,7 @@ import type {
 } from "../types/pool.types";
 import { AdapterError, UnsupportedActionError } from "../types/errors";
 import { getBlendNetwork, BLEND_POOL_VAULTS } from "./blend-config";
+import { getBlndPriceUsd, computeBlendEmissionsApy } from "./blend-emissions";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 
 type SdkResultLike = {
@@ -111,6 +112,10 @@ export class BlendPoolAdapter implements BasePoolAdapter {
 
     try {
       const pool = await PoolV2.load(network, poolContractId);
+      let blndPrice = 0;
+      try {
+        blndPrice = await getBlndPriceUsd(pool.metadata.backstop, network);
+      } catch {}
       const reserve = pool.reserves.get(assetAddress);
 
       if (!reserve) {
@@ -125,6 +130,19 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       try {
         tokenMeta = await TokenMetadata.load(network, assetAddress);
       } catch {}
+
+      const isVaultPool =
+        !!BLEND_POOL_VAULTS[`${poolContractId}:${assetAddress}`];
+      let emissionsApy: number | null = null;
+      if (reserve.supplyEmissions && !isVaultPool) {
+        emissionsApy = await computeBlendEmissionsApy(
+          reserve,
+          pool,
+          assetAddress,
+          blndPrice
+        );
+      }
+      const totalApy = reserve.estSupplyApy * 100 + (emissionsApy ?? 0);
 
       const statusMap: Record<number, "active" | "frozen" | "on_ice"> = {
         0: "active",
@@ -145,7 +163,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           },
         ],
         tvl: reserve.totalSupply(),
-        apy: reserve.estSupplyApy * 100,
+        apy: totalApy,
         state: statusMap[pool.metadata.status] ?? "unknown",
         supportedActions: SUPPORTED_ACTIONS,
         metadata: {
@@ -160,8 +178,9 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           utilization: reserve.getUtilizationFloat(),
           poolName: pool.metadata.name,
           hasEmissions:
-            !BLEND_POOL_VAULTS[`${poolContractId}:${assetAddress}`] &&
+            !isVaultPool &&
             !!(reserve.supplyEmissions || reserve.borrowEmissions),
+          emissionsApy: emissionsApy ?? 0,
         },
       };
     } catch (error) {
@@ -175,6 +194,10 @@ export class BlendPoolAdapter implements BasePoolAdapter {
 
     try {
       const pool = await PoolV2.load(network, this.poolContractId);
+      let blndPrice = 0;
+      try {
+        blndPrice = await getBlndPriceUsd(pool.metadata.backstop, network);
+      } catch {}
       const pools: PoolInfo[] = [];
 
       const reserveEntries = [...pool.reserves.entries()];
@@ -186,6 +209,19 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         try {
           tokenMeta = await TokenMetadata.load(network, assetAddress);
         } catch {}
+
+        const isVaultPool =
+          !!BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`];
+        let emissionsApy: number | null = null;
+        if (reserve.supplyEmissions && !isVaultPool) {
+          emissionsApy = await computeBlendEmissionsApy(
+            reserve,
+            pool,
+            assetAddress,
+            blndPrice
+          );
+        }
+        const totalApy = reserve.estSupplyApy * 100 + (emissionsApy ?? 0);
 
         const statusMap: Record<number, "active" | "frozen" | "on_ice"> = {
           0: "active",
@@ -206,7 +242,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
             },
           ],
           tvl: reserve.totalSupply(),
-          apy: reserve.estSupplyApy * 100,
+          apy: totalApy,
           state: statusMap[pool.metadata.status] ?? "unknown",
           supportedActions: SUPPORTED_ACTIONS,
           metadata: {
@@ -221,8 +257,9 @@ export class BlendPoolAdapter implements BasePoolAdapter {
             utilization: reserve.getUtilizationFloat(),
             poolName: pool.metadata.name,
             hasEmissions:
-              !BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`] &&
+              !isVaultPool &&
               !!(reserve.supplyEmissions || reserve.borrowEmissions),
+            emissionsApy: emissionsApy ?? 0,
           },
         });
       }
@@ -337,7 +374,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           });
         }
       } catch {
-        // loadUser failed — skip direct reserves, vault results still returned
+        // loadUser failed  skip direct reserves, vault results still returned
       }
     }
 

@@ -1,7 +1,7 @@
 /**
  * Returns the payment token for a given buy target.
  *
- * Rules (add new exceptions here — nowhere else):
+ * Rules (add new exceptions here  nowhere else):
  *  - Buying USDC  → pay with XLM   (can't pay for USDC with itself)
  *  - Everything else → pay with USDC
  */
