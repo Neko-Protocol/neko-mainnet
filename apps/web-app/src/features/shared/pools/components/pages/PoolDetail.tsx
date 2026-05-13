@@ -237,6 +237,22 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     [nativeBalanceStroops, subentryCount]
   );
 
+  const token1AvailableBalance = useMemo(() => {
+    if (!pool) return token1Balance ?? "0";
+    const d1 = pool.tokens[0]?.decimals ?? 7;
+    return pool.tokens[0]?.code === "XLM"
+      ? atomicToDecimal(spendableXlmStroops, d1)
+      : (token1Balance ?? "0");
+  }, [pool, spendableXlmStroops, token1Balance]);
+
+  const token2AvailableBalance = useMemo(() => {
+    if (!pool) return token2Balance ?? "0";
+    const d2 = pool.tokens[1]?.decimals ?? 7;
+    return pool.tokens[1]?.code === "XLM"
+      ? atomicToDecimal(spendableXlmStroops, d2)
+      : (token2Balance ?? "0");
+  }, [pool, spendableXlmStroops, token2Balance]);
+
   const pairReserves = useMemo(() => {
     if (!pool || !isAmmPairPool || pool.tokens.length < 2) return null;
     const reserveA =
@@ -300,21 +316,15 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   }, [pool, isAmmPairPool, ammTab, ammAmount2, decimals, pairReserves]);
 
   const maxAmmDepositAmount = useMemo(() => {
-    if (!pool || !isAmmPairPool) return token1Balance ?? "0";
-    if (!pairReserves || pool.tokens.length < 2) return token1Balance ?? "0";
+    if (!pool || !isAmmPairPool) return token1AvailableBalance;
+    if (!pairReserves || pool.tokens.length < 2) return token1AvailableBalance;
 
     const d1 = pool.tokens[0]?.decimals ?? 7;
     const d2 = pool.tokens[1]?.decimals ?? 7;
 
-    const t1MaxStroops =
-      pool.tokens[0]?.code === "XLM"
-        ? spendableXlmStroops
-        : decimalToAtomic(token1Balance ?? "0", d1);
+    const t1MaxStroops = decimalToAtomic(token1AvailableBalance, d1);
 
-    const t2BalStroops =
-      pool.tokens[1]?.code === "XLM"
-        ? spendableXlmStroops
-        : decimalToAtomic(token2Balance ?? "0", d2);
+    const t2BalStroops = decimalToAtomic(token2AvailableBalance, d2);
 
     const maxT1FromT2Stroops =
       pool.type === "aqua"
@@ -329,26 +339,19 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     pool,
     isAmmPairPool,
     pairReserves,
-    token1Balance,
-    token2Balance,
-    spendableXlmStroops,
+    token1AvailableBalance,
+    token2AvailableBalance,
   ]);
 
   const maxAmmDepositAmount2 = useMemo(() => {
     if (!pool || !isAmmPairPool || !pairReserves || pool.tokens.length < 2) {
-      return token2Balance ?? "0";
+      return token2AvailableBalance;
     }
 
     const d1 = pool.tokens[0]?.decimals ?? 7;
     const d2 = pool.tokens[1]?.decimals ?? 7;
-    const t1BalStroops =
-      pool.tokens[0]?.code === "XLM"
-        ? spendableXlmStroops
-        : decimalToAtomic(token1Balance ?? "0", d1);
-    const t2MaxStroops =
-      pool.tokens[1]?.code === "XLM"
-        ? spendableXlmStroops
-        : decimalToAtomic(token2Balance ?? "0", d2);
+    const t1BalStroops = decimalToAtomic(token1AvailableBalance, d1);
+    const t2MaxStroops = decimalToAtomic(token2AvailableBalance, d2);
 
     const maxT2FromT1Stroops =
       pool.type === "aqua"
@@ -363,9 +366,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     pool,
     isAmmPairPool,
     pairReserves,
-    token1Balance,
-    token2Balance,
-    spendableXlmStroops,
+    token1AvailableBalance,
+    token2AvailableBalance,
   ]);
 
   const displayedAmmAmount =
@@ -405,9 +407,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     pool.tokens.length >= 2 &&
     secondLegDepositRaw != null &&
     secondLegDepositRaw >
-      (pool.tokens[1]?.code === "XLM"
-        ? spendableXlmStroops
-        : decimalToAtomic(token2Balance ?? "0", pool.tokens[1]?.decimals ?? 7));
+      decimalToAtomic(token2AvailableBalance, pool.tokens[1]?.decimals ?? 7);
 
   const refetchAfterTx = useCallback(async () => {
     await Promise.all([
@@ -457,18 +457,17 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     ) {
       return false;
     }
-    const maxToken0 =
-      pool?.tokens[0]?.code === "XLM"
-        ? spendableXlmStroops
-        : decimalToAtomic(token1Balance ?? "0", pool?.tokens[0]?.decimals ?? 7);
+    const maxToken0 = decimalToAtomic(
+      token1AvailableBalance,
+      pool?.tokens[0]?.decimals ?? 7
+    );
     return firstLegDepositRaw > maxToken0;
   }, [
     ammTab,
     depositWithdrawMode,
     firstLegDepositRaw,
     pool?.tokens,
-    spendableXlmStroops,
-    token1Balance,
+    token1AvailableBalance,
   ]);
 
   const withdrawableRaw = useMemo(() => {
@@ -482,6 +481,20 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   const withdrawableFormatted = useMemo(
     () => atomicToDecimal(withdrawableRaw, decimals),
     [withdrawableRaw, decimals]
+  );
+
+  const secondaryWithdrawableRaw = useMemo(() => {
+    if (!position || !pool || !isAmmPairPool) return 0n;
+    const underlyingAmountsRaw = position.metadata?.underlyingAmountsRaw as
+      | string[]
+      | undefined;
+    return BigInt(underlyingAmountsRaw?.[1] ?? "0");
+  }, [pool, position, isAmmPairPool]);
+
+  const secondaryDecimals = pool?.tokens[1]?.decimals ?? 7;
+  const secondaryWithdrawableFormatted = useMemo(
+    () => atomicToDecimal(secondaryWithdrawableRaw, secondaryDecimals),
+    [secondaryWithdrawableRaw, secondaryDecimals]
   );
 
   const ammWithdrawInsufficient = useMemo(() => {
@@ -545,10 +558,10 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           }
         : undefined,
     });
-    await refetchAfterTx();
     setAmmAmount("");
     setAmmAmount2("");
     setAmmInputTokenIndex(0);
+    await refetchAfterTx();
   }, [
     pool,
     address,
@@ -761,14 +774,37 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   const ammInsufficientFundsMessage = useMemo(() => {
     if (
       !depositWithdrawMode ||
+      isActionPending ||
       !activeAmmInputAmount ||
       parseFloat(activeAmmInputAmount) <= 0
     ) {
       return null;
     }
     if (!ammInsufficientFunds) return null;
+    if (ammTab === "withdraw") {
+      return "Insufficient pool position to withdraw";
+    }
+    const missingAssets = [
+      ammFirstLegDepositInsufficient ? pool?.tokens[0]?.code : null,
+      secondTokenInsufficient ? pool?.tokens[1]?.code : null,
+    ]
+      .filter((symbol): symbol is string => Boolean(symbol))
+      .map((symbol) => (symbol === "XLM" ? "spendable XLM" : symbol));
+
+    if (missingAssets.length > 0) {
+      return `Insufficient ${missingAssets.join(" and ")} balance`;
+    }
     return "Insufficient funds";
-  }, [depositWithdrawMode, activeAmmInputAmount, ammInsufficientFunds]);
+  }, [
+    depositWithdrawMode,
+    isActionPending,
+    activeAmmInputAmount,
+    ammInsufficientFunds,
+    ammTab,
+    ammFirstLegDepositInsufficient,
+    secondTokenInsufficient,
+    pool?.tokens,
+  ]);
 
   const panelPool = useMemo<PoolDetailPanelPool | null>(() => {
     if (!pool) return null;
@@ -958,10 +994,11 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         name: ISSUER_LABELS[pool.type] ?? pool.type,
         icon: ISSUER_ICONS[pool.type] ?? null,
       },
-      token1Balance: token1Balance ?? "0",
-      token2Balance: token2Balance ?? "0",
+      token1Balance: token1AvailableBalance,
+      token2Balance: token2AvailableBalance,
       /** LP / supplied position in human units (withdraw max) */
       lpBalance: withdrawableFormatted,
+      lpBalance2: isPairAmm ? secondaryWithdrawableFormatted : undefined,
       collateralBalance: collateralRaw,
       loanBalance: loanRaw,
       borrowLimit,
@@ -977,14 +1014,15 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   }, [
     pool,
     position,
-    token1Balance,
-    token2Balance,
+    token1AvailableBalance,
+    token2AvailableBalance,
     isLendingPool,
     collateralOptionsWithBalances,
     primaryTokenPrice,
     fxRate,
     selectedCurrency,
     withdrawableFormatted,
+    secondaryWithdrawableFormatted,
   ]);
 
   if (isLoading) {
@@ -1059,7 +1097,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           ammSubmitDisabled={ammSubmitDisabled}
           ammInsufficientFundsMessage={ammInsufficientFundsMessage}
           canLend={canLend}
-          canWithdraw={canRemoveOrWithdraw && withdrawableRaw > 0n}
+          canWithdraw={canRemoveOrWithdraw}
           canBorrow={canBorrow}
           onLendSubmit={handleLendOnlySubmit}
           onWithdrawSubmit={handleWithdrawOnlySubmit}

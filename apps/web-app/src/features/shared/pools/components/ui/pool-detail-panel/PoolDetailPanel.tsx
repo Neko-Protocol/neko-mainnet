@@ -89,6 +89,9 @@ export function PoolDetailPanel({
   const balanceForAmm = isDepositTab
     ? (pool.token1Balance ?? "0.00")
     : (pool.lpBalance ?? "0.00");
+  const balanceForAmm2 = isDepositTab
+    ? (pool.token2Balance ?? "0.00")
+    : (pool.lpBalance2 ?? "0.00");
 
   const maxAmm = () => {
     if (isDepositTab)
@@ -148,10 +151,12 @@ export function PoolDetailPanel({
           <AmountInput
             label={isDepositTab ? "Supply" : "Withdraw"}
             token={pool.token1}
+            token2={isPair && !isDepositTab ? pool.token2 : undefined}
             value={ammAmount}
             onChange={(v) => onAmmAmountChange?.(v)}
             balanceLabel="MAX"
             balanceValue={balanceForAmm}
+            balanceValue2={isPair && !isDepositTab ? balanceForAmm2 : undefined}
             onMax={maxAmm}
             disabled={!isWalletConnected}
             usdValue={formatUsdValue(Number.parseFloat(ammUsdValue) || 0)}
