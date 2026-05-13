@@ -285,8 +285,13 @@ export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
                 </MarketAttributeRow>
               )}
               {pool.liquidationLtv > 0 && (
-                <MarketAttributeRow label="Liquidation LTV">
+                <MarketAttributeRow label="Collateral Factor">
                   {pool.liquidationLtv}%
+                </MarketAttributeRow>
+              )}
+              {pool.lFactor != null && (
+                <MarketAttributeRow label="Liability Factor">
+                  {Math.round(pool.lFactor * 100)}%
                 </MarketAttributeRow>
               )}
               {pool.utilization && (
