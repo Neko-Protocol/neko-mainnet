@@ -30,6 +30,8 @@ import type {
   SendResponse,
   AddLiquidityRequest,
   AddLiquidityResponse,
+  RemoveLiquidityRequest,
+  RemoveLiquidityResponse,
   PoolInfo,
   GetPoolRequest,
 } from "../../../types/soroswapTypes";
@@ -55,6 +57,15 @@ export async function submitClassicTrustlineToHorizon(
  * Cached so subsequent quote refreshes skip the slow API call entirely.
  */
 const apiRejectedPairs = new Set<string>();
+
+function normalizeAtomicAmount(value: bigint | string, label: string): bigint {
+  if (typeof value === "bigint") return value;
+  const raw = value.trim();
+  if (!/^\d+$/.test(raw)) {
+    throw new Error(`${label} must be an atomic integer amount`);
+  }
+  return BigInt(raw);
+}
 
 /**
  * Computes a swap quote from on-chain pair reserves using the Uniswap v2 AMM formula.
@@ -700,6 +711,113 @@ export const addLiquidity = async (
         errorMessage.includes("Bad Request")
       ) {
         throw new Error(`Invalid add liquidity request (400): ${errorMessage}`);
+      }
+
+      throw error;
+    }
+
+    throw error;
+  }
+};
+
+export const removeLiquidity = async (
+  request: RemoveLiquidityRequest
+): Promise<RemoveLiquidityResponse> => {
+  const assetA = formatTokenForAPI(request.assetA);
+  const assetB = formatTokenForAPI(request.assetB);
+
+  if (!isValidContractAddress(assetA)) {
+    throw new Error(
+      `Invalid contract address for assetA: ${assetA}. Contract addresses must start with 'C' and be 56 characters long.`
+    );
+  }
+  if (!isValidContractAddress(assetB)) {
+    throw new Error(
+      `Invalid contract address for assetB: ${assetB}. Contract addresses must start with 'C' and be 56 characters long.`
+    );
+  }
+
+  const liquidity = normalizeAtomicAmount(request.liquidity, "liquidity");
+  const amountA = normalizeAtomicAmount(request.amountA, "amountA");
+  const amountB = normalizeAtomicAmount(request.amountB, "amountB");
+
+  if (liquidity <= 0n) {
+    throw new Error("Invalid liquidity. Amount must be greater than 0.");
+  }
+  if (amountA <= 0n) {
+    throw new Error("Invalid amountA. Amount must be greater than 0.");
+  }
+  if (amountB <= 0n) {
+    throw new Error("Invalid amountB. Amount must be greater than 0.");
+  }
+
+  try {
+    const sdk = getSoroswapSDK();
+    const removeLiquidityResponse = (await sdk.removeLiquidity({
+      assetA,
+      assetB,
+      liquidity,
+      amountA,
+      amountB,
+      to: request.to,
+      slippageBps: String(request.slippageBps || 100),
+    })) as { xdr?: string };
+
+    if (
+      !removeLiquidityResponse ||
+      typeof removeLiquidityResponse !== "object"
+    ) {
+      throw new Error("Invalid remove liquidity response from Soroswap SDK");
+    }
+
+    if (
+      !removeLiquidityResponse.xdr ||
+      typeof removeLiquidityResponse.xdr !== "string"
+    ) {
+      throw new Error(
+        "No XDR returned from Soroswap SDK removeLiquidity response"
+      );
+    }
+
+    return { xdr: removeLiquidityResponse.xdr };
+  } catch (error) {
+    if (error instanceof Error) {
+      const errorMessage = error.message;
+
+      if (errorMessage.includes("No liquidity pool found")) {
+        throw error;
+      }
+
+      if (
+        errorMessage.includes("No path found") ||
+        errorMessage.includes("No path") ||
+        errorMessage.includes("404")
+      ) {
+        throw new Error(
+          "No liquidity pool found for this token pair. This could mean:\n" +
+            "• The pool doesn't exist yet and needs to be created first\n" +
+            "• The token addresses may not be correct for this network\n" +
+            "• Try creating the pool first or verify pools exist at https://app.soroswap.finance"
+        );
+      }
+
+      if (
+        errorMessage.includes("API key") ||
+        errorMessage.includes("401") ||
+        errorMessage.includes("403")
+      ) {
+        throw new Error(
+          "Soroswap API key is invalid or expired. Please check your API key configuration at https://api.soroswap.finance/login"
+        );
+      }
+
+      if (
+        errorMessage.includes("400") ||
+        errorMessage.includes("Bad Request")
+      ) {
+        throw new Error(
+          `Invalid remove liquidity request (400): ${errorMessage}`
+        );
       }
 
       throw error;

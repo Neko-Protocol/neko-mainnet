@@ -8,6 +8,8 @@ export type {
   SendResponse,
   AddLiquidityRequest,
   AddLiquidityResponse,
+  RemoveLiquidityRequest,
+  RemoveLiquidityResponse,
   PoolInfo,
   GetPoolRequest,
 } from "../../../types/soroswapTypes";
@@ -36,5 +38,6 @@ export {
   buildTransaction,
   sendTransaction,
   addLiquidity,
+  removeLiquidity,
   submitClassicTrustlineToHorizon,
 } from "./quotes";
