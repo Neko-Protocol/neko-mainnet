@@ -40,6 +40,7 @@ export interface PoolDetailPanelPool {
   token1Balance?: string;
   token2Balance?: string;
   lpBalance?: string;
+  lpBalance2?: string;
   borrowLimit?: string;
   lFactor?: number;
   minCollateralUsd?: number;

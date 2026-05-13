@@ -142,7 +142,11 @@ const Vault: React.FC = () => {
   const vaults = useMemo<VaultView[]>(() => {
     if (vaultsFromApi.length === 0) return [];
     return vaultsFromApi.map((v, idx) => {
-      const tvl = convertUsdDisplayToSelectedCurrency(v.tvl, fxRate, selectedCurrency);
+      const tvl = convertUsdDisplayToSelectedCurrency(
+        v.tvl,
+        fxRate,
+        selectedCurrency
+      );
       const liveApyNum = apyQueries[idx]?.data?.vaultApy;
       const apy7d =
         liveApyNum != null && liveApyNum > 0
@@ -168,7 +172,6 @@ const Vault: React.FC = () => {
     if (!assetFilter) return vaults;
     return vaults.filter((v) => v.supplyAsset?.symbol === assetFilter);
   }, [vaults, assetFilter]);
-
 
   const balancePendingByVaultId = useMemo(() => {
     const map: Record<string, boolean> = {};
@@ -308,14 +311,8 @@ const Vault: React.FC = () => {
           emptySubtitle={emptyVaultSubtitle}
         />
       ) : (
-        <MyVaultPositions
-          vaults={vaults}
-          userBalances={userBalances}
-          onDeposit={(v) => navigateToVault(v, "deposit")}
-          onWithdraw={(v) => navigateToVault(v, "withdraw")}
-        />
+        <MyVaultPositions vaults={vaults} userBalances={userBalances} />
       )}
-
     </PageContainer>
   );
 };

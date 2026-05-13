@@ -2,7 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
-import { formatAmount } from "@/lib/helpers/formatUtils";
+import { useRouter } from "next/navigation";
 import {
   getTokenIconFitClass,
   fromSmallestUnit,
@@ -36,15 +36,13 @@ function useVaultUsdValue(
 interface VaultPositionRowProps {
   vault: VaultView;
   rawBalance: bigint;
-  onDeposit?: (vault: VaultView) => void;
-  onWithdraw?: (vault: VaultView) => void;
+  onOpen: (vault: VaultView) => void;
 }
 
 function VaultPositionRow({
   vault,
   rawBalance,
-  onDeposit,
-  onWithdraw,
+  onOpen,
 }: VaultPositionRowProps) {
   const usdValue = useVaultUsdValue(
     vault.id,
@@ -53,7 +51,18 @@ function VaultPositionRow({
   );
 
   return (
-    <tr className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
+    <tr
+      role="link"
+      tabIndex={0}
+      onClick={() => onOpen(vault)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen(vault);
+        }
+      }}
+      className="border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-colors cursor-pointer focus-visible:outline-none focus-visible:bg-white/[0.04]"
+    >
       <td className="px-4 py-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-[#222] flex items-center justify-center overflow-hidden shrink-0">
@@ -110,25 +119,6 @@ function VaultPositionRow({
           </span>
         )}
       </td>
-
-      <td className="px-4 py-4">
-        <div className="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => onDeposit?.(vault)}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#229EDF] hover:bg-[#1a8bc7] text-white transition-colors"
-          >
-            Deposit
-          </button>
-          <button
-            type="button"
-            onClick={() => onWithdraw?.(vault)}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-colors"
-          >
-            Withdraw
-          </button>
-        </div>
-      </td>
     </tr>
   );
 }
@@ -136,17 +126,17 @@ function VaultPositionRow({
 interface MyVaultPositionsProps {
   vaults: VaultView[];
   userBalances: Record<string, bigint>;
-  onDeposit?: (vault: VaultView) => void;
-  onWithdraw?: (vault: VaultView) => void;
 }
 
 const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
   vaults,
   userBalances,
-  onDeposit,
-  onWithdraw,
 }) => {
+  const router = useRouter();
   const { address } = useWallet();
+  const openVault = (vault: VaultView) => {
+    router.push(`/vaults/${encodeURIComponent(vault.id)}`);
+  };
 
   if (!address) {
     return (
@@ -198,9 +188,6 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
             <th className="px-4 py-3 text-center">
               <span className="text-white/30 text-xs font-medium">Status</span>
             </th>
-            <th className="px-4 py-3 pr-24 text-right">
-              <span className="text-white/30 text-xs font-medium">Actions</span>
-            </th>
           </tr>
         </thead>
         <tbody>
@@ -209,8 +196,7 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
               key={vault.id}
               vault={vault}
               rawBalance={userBalances[vault.id] ?? 0n}
-              onDeposit={onDeposit}
-              onWithdraw={onWithdraw}
+              onOpen={openVault}
             />
           ))}
         </tbody>

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Wallet,
   Coins,
@@ -9,7 +10,6 @@ import {
   TrendingUp,
   ChevronDown,
   Shield,
-  ArrowUpFromLine,
   Zap,
   Sparkles,
 } from "lucide-react";
@@ -37,32 +37,17 @@ interface UnifiedPosition {
   assetCode: string;
   poolName: string;
   depositedFormatted: string;
-  /** Raw atomic withdrawable supply amount for the MAX button */
-  depositedRaw: string;
-  collateralRaw?: string;
-  decimals: number;
-  withdrawUnit?: "underlying" | "lp_shares";
   secondaryDepositedAmount?: string;
   secondaryAssetCode?: string;
   apy: string;
   /** orchestratorId for aggregated pools, undefined for Neko */
   orchestratorId?: string;
+  detailId: string;
   hasEmissions?: boolean;
 }
 
 interface MyPositionsProps {
   defaultTab?: "lend" | "borrow";
-  onWithdraw?: (
-    assetCode: string,
-    protocolId: string,
-    depositedRaw: string,
-    orchestratorId?: string,
-    action?: "withdraw" | "withdrawCollateral",
-    decimals?: number,
-    withdrawUnit?: "underlying" | "lp_shares",
-    secondaryDepositedAmount?: string,
-    secondaryAssetCode?: string
-  ) => void;
 }
 
 function PoolIcon({ assetCode }: { assetCode: string }) {
@@ -145,10 +130,8 @@ function PositionTypeFilter({
   );
 }
 
-const MyPositions: React.FC<MyPositionsProps> = ({
-  defaultTab = "lend",
-  onWithdraw,
-}) => {
+const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"lend" | "borrow">(defaultTab);
   const { mutate: executePoolAction, isPending: isClaimPending } =
     usePoolAction();
@@ -178,21 +161,11 @@ const MyPositions: React.FC<MyPositionsProps> = ({
         pos.depositedFormatted,
         pos.assetCode
       ),
-      depositedRaw: pos.depositedRaw.toString(),
-      decimals: 7,
       apy: `${pos.interestRate.toFixed(2)}%`,
       orchestratorId: `neko:${pos.assetCode}`,
+      detailId: `neko:${pos.assetCode}`,
     })),
     ...aggregatedPositions.map((pos) => {
-      const decimals = pos.pool.tokens[0]?.decimals ?? 7;
-      const suppliedRaw = String(
-        pos.position.metadata?.supplied ?? pos.position.deposited.toString()
-      );
-      const collateralRaw = String(pos.position.metadata?.collateral ?? "0");
-      const withdrawRaw =
-        pos.pool.type === "blend"
-          ? suppliedRaw
-          : pos.position.deposited.toString();
       const withdrawUnit =
         pos.pool.type === "aqua" || pos.pool.type === "soroswap"
           ? (pos.position.metadata?.withdrawUnit as
@@ -223,14 +196,11 @@ const MyPositions: React.FC<MyPositionsProps> = ({
           pos.position.depositedFormatted,
           pos.pool.tokens[0]?.code ?? ""
         ),
-        depositedRaw: withdrawRaw,
-        collateralRaw,
-        decimals,
-        withdrawUnit,
         secondaryDepositedAmount,
         secondaryAssetCode,
         apy: `${pos.pool.apy.toFixed(2)}%`,
         orchestratorId: pos.pool.id,
+        detailId: pos.pool.id,
         hasEmissions: !!pos.pool.metadata?.hasEmissions,
       };
     }),
@@ -310,10 +280,22 @@ const MyPositions: React.FC<MyPositionsProps> = ({
           ) : (
             unified.map((pos) => {
               const logoSrc = PROTOCOL_ICONS[pos.protocolId];
+              const openPosition = () => {
+                router.push(`/pools/${encodeURIComponent(pos.detailId)}`);
+              };
               return (
                 <tr
                   key={pos.key}
-                  className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors"
+                  role="link"
+                  tabIndex={0}
+                  onClick={openPosition}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openPosition();
+                    }
+                  }}
+                  className="border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-colors cursor-pointer focus-visible:outline-none focus-visible:bg-white/[0.04]"
                 >
                   <td className="px-4 py-4 text-center">
                     {logoSrc ? (
@@ -355,55 +337,14 @@ const MyPositions: React.FC<MyPositionsProps> = ({
                   </td>
                   <td className="px-4 py-4 text-center">
                     <div className="inline-flex items-center gap-2">
-                      {onWithdraw && BigInt(pos.depositedRaw || "0") > 0n && (
-                        <button
-                          onClick={() =>
-                            onWithdraw(
-                              pos.assetCode,
-                              pos.protocolId,
-                              pos.depositedRaw,
-                              pos.orchestratorId,
-                              "withdraw",
-                              pos.decimals,
-                              pos.withdrawUnit,
-                              pos.secondaryDepositedAmount,
-                              pos.secondaryAssetCode
-                            )
-                          }
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#229EDF] hover:bg-[#1a8bc7] text-white text-xs font-semibold transition-colors"
-                        >
-                          <ArrowUpFromLine className="h-3.5 w-3.5" />
-                          Withdraw
-                        </button>
-                      )}
-                      {onWithdraw &&
-                        pos.protocolId === "blend" &&
-                        pos.orchestratorId &&
-                        BigInt(pos.collateralRaw || "0") > 0n && (
-                          <button
-                            onClick={() =>
-                              onWithdraw(
-                                pos.assetCode,
-                                pos.protocolId,
-                                pos.collateralRaw!,
-                                pos.orchestratorId,
-                                "withdrawCollateral",
-                                pos.decimals
-                              )
-                            }
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-xs font-semibold transition-colors"
-                          >
-                            <ArrowUpFromLine className="h-3.5 w-3.5" />
-                            Remove Collateral
-                          </button>
-                        )}
                       {pos.hasEmissions && pos.orchestratorId && (
                         <button
                           disabled={
                             claimingPoolId === pos.orchestratorId &&
                             isClaimPending
                           }
-                          onClick={() => {
+                          onClick={(event) => {
+                            event.stopPropagation();
                             setClaimingPoolId(pos.orchestratorId!);
                             const cfg = getAssetsConfig()[pos.assetCode];
                             const auditToken = cfg

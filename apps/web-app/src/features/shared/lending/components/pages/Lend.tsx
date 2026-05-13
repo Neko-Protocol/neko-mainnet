@@ -39,7 +39,6 @@ const Lend: React.FC = () => {
     bTokenBalance,
     isLoadingBalance,
     hasWallet,
-    openModal,
     closeModal,
     handleConfirm,
     refreshBalance,
@@ -129,18 +128,7 @@ const Lend: React.FC = () => {
         />
       )}
 
-      {effectiveTab === "positions" && (
-        <MyLendingPositions
-          onWithdraw={(assetCode, protocolId, orchestratorId) => {
-            const pool = pools.find((p) =>
-              orchestratorId
-                ? p.orchestratorId === orchestratorId
-                : p.protocolId === protocolId && p.assetCode === assetCode
-            );
-            if (pool) openModal(pool, false);
-          }}
-        />
-      )}
+      {effectiveTab === "positions" && <MyLendingPositions />}
 
       {showBackstop && effectiveTab === "backstop" && <BackstopPanel />}
     </PageContainer>
