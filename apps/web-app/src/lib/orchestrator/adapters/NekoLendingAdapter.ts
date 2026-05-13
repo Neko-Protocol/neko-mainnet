@@ -6,12 +6,13 @@ import {
 } from "@/lib/constants/network";
 import { getLendingContracts } from "@/lib/constants/lendingContracts";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { atomicToDecimal, mulDivCeil, mulDivFloor } from "@/lib/helpers/amount";
 import { depositToPool, withdrawFromPool } from "@/lib/helpers/stellar/lending";
 
 import type { BasePoolAdapter } from "../types/adapter.types";
 import type {
   PoolAction,
+  PoolActionOptions,
   PoolInfo,
   PoolPosition,
   PoolType,
@@ -20,9 +21,8 @@ import type {
 import { AdapterError, UnsupportedActionError } from "../types/errors";
 
 const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw"];
+const RATE_SCALAR = 1_000_000_000_000n;
 
-/** Assets that belong to Pool 1 (RWA collateral → borrow USDC/XLM) */
-const POOL1_ASSETS = new Set(["USDC", "XLM"]);
 /** Assets that belong to Pool 2 (USDC/XLM collateral → borrow RWA) */
 const POOL2_ASSETS = new Set(["USTRY", "TESOURO", "CETES", "USDY", "PYUSD"]);
 
@@ -58,6 +58,17 @@ function unwrapResult(value: unknown): bigint {
   }
 
   return 0n;
+}
+
+async function getBTokenRateRaw(
+  client: RwaLendingClient,
+  assetCode: string
+): Promise<bigint> {
+  const rateTx = await client.get_b_token_rate(
+    { asset: assetCode },
+    { simulate: true }
+  );
+  return unwrapResult(rateTx.result) || RATE_SCALAR;
 }
 
 export class NekoLendingAdapter implements BasePoolAdapter {
@@ -112,8 +123,7 @@ export class NekoLendingAdapter implements BasePoolAdapter {
         client.get_pool_state({ simulate: true }).catch(() => null),
       ]);
 
-      const balance =
-        balanceTx.result != null ? BigInt(String(balanceTx.result)) : 0n;
+      const balance = unwrapResult(balanceTx.result);
       const rate = interestRateTx ? unwrapResult(interestRateTx.result) : 0n;
       const stateTag = (poolStateTx?.result as { tag?: string } | undefined)
         ?.tag;
@@ -180,20 +190,29 @@ export class NekoLendingAdapter implements BasePoolAdapter {
     const client = this.clientFor(assetCode);
 
     try {
-      const balanceTx = await client.get_b_token_balance(
-        { lender: userAddress, asset: assetCode },
-        { simulate: true }
-      );
-      const raw =
-        balanceTx.result != null ? BigInt(String(balanceTx.result)) : 0n;
+      const [balanceTx, rateRaw] = await Promise.all([
+        client.get_b_token_balance(
+          { lender: userAddress, asset: assetCode },
+          { simulate: true }
+        ),
+        getBTokenRateRaw(client, assetCode),
+      ]);
+      const bTokens = unwrapResult(balanceTx.result);
+      const deposited = mulDivFloor(bTokens, rateRaw, RATE_SCALAR);
 
       return {
         poolId: `neko:${assetCode}`,
-        deposited: raw,
-        depositedFormatted: fromSmallestUnit(raw.toString(), decimals),
+        deposited,
+        depositedFormatted: atomicToDecimal(deposited, decimals),
         rewards: 0n,
         rewardsFormatted: "0",
-        metadata: { bTokenBalance: raw.toString() },
+        metadata: {
+          supplied: deposited.toString(),
+          collateral: "0",
+          liabilities: "0",
+          bTokenBalance: bTokens.toString(),
+          bTokenRateRaw: rateRaw.toString(),
+        },
       };
     } catch {
       return {
@@ -215,7 +234,7 @@ export class NekoLendingAdapter implements BasePoolAdapter {
     const assetCode = poolId;
     const tokens = getAvailableTokens();
     const decimals = tokens[assetCode]?.decimals ?? 7;
-    const humanAmount = fromSmallestUnit(amount.toString(), decimals);
+    const humanAmount = atomicToDecimal(amount, decimals);
     const contractId = getPoolContractId(assetCode);
 
     try {
@@ -235,18 +254,46 @@ export class NekoLendingAdapter implements BasePoolAdapter {
   async withdraw(
     poolId: string,
     userAddress: string,
-    amount: bigint
+    amount: bigint,
+    _tokenIndex?: number,
+    options?: PoolActionOptions
   ): Promise<TransactionResult> {
     const assetCode = poolId;
     const tokens = getAvailableTokens();
     const decimals = tokens[assetCode]?.decimals ?? 7;
-    const humanAmount = fromSmallestUnit(amount.toString(), decimals);
     const contractId = getPoolContractId(assetCode);
+    const client = this.clientFor(assetCode);
 
     try {
+      const [balanceTx, rateRaw] = await Promise.all([
+        client.get_b_token_balance(
+          { lender: userAddress, asset: assetCode },
+          { simulate: true }
+        ),
+        getBTokenRateRaw(client, assetCode),
+      ]);
+      const bTokenBalance = unwrapResult(balanceTx.result);
+      if (bTokenBalance <= 0n) {
+        throw new Error("No supplied balance available to withdraw");
+      }
+
+      let bTokens = options?.withdrawAll
+        ? bTokenBalance
+        : mulDivCeil(amount, RATE_SCALAR, rateRaw);
+      if (bTokens <= 0n) {
+        throw new Error("Withdrawal amount is too small");
+      }
+      if (bTokens > bTokenBalance) {
+        if (options?.withdrawAll) {
+          bTokens = bTokenBalance;
+        } else {
+          throw new Error("Withdrawal amount exceeds supplied balance");
+        }
+      }
+
       const xdr = await withdrawFromPool(
         assetCode,
-        humanAmount,
+        atomicToDecimal(bTokens, decimals),
         decimals,
         userAddress,
         contractId

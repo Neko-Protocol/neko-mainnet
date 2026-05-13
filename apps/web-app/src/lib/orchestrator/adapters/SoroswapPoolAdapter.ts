@@ -1,15 +1,29 @@
 import {
+  Account,
+  Address,
+  Contract,
+  rpc,
+  scValToNative,
+  TransactionBuilder,
+} from "@stellar/stellar-sdk";
+import {
   getPool,
   addLiquidity,
+  removeLiquidity,
   getAvailableTokens,
 } from "@/lib/helpers/stellar/soroswap";
-import { networkPassphrase } from "@/lib/constants/network";
+import {
+  networkPassphrase,
+  rpcUrl,
+  stellarNetwork,
+} from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
-import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
+import { mulDivCeil, mulDivFloor } from "@/lib/helpers/amount";
 
 import type { BasePoolAdapter } from "../types/adapter.types";
 import type {
   PoolAction,
+  PoolActionOptions,
   PoolInfo,
   PoolPosition,
   PoolType,
@@ -19,11 +33,22 @@ import type {
 import { AdapterError, UnsupportedActionError } from "../types/errors";
 
 const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw"];
+const WITHDRAW_SLIPPAGE_BPS = 100;
 const LIST_POOLS_CACHE_TTL_MS = 5 * 60 * 1000;
 const BASE_CODES = ["XLM", "USDC", "USDY", "PYUSD", "EURC"];
 // Cap pair discovery so the pools UI stays responsive (each pair may RPC).
 const MAX_DISCOVERY_PAIRS = 12;
 const PAIR_FETCH_TIMEOUT_MS = 4_000;
+
+type SoroswapApiPool = {
+  address: string;
+  tokenA: string;
+  tokenB: string;
+  reserveA: string;
+  reserveB: string;
+  protocol?: string;
+  ledger?: number;
+};
 
 function parsePairId(poolId: string): { codeA: string; codeB: string } {
   const [codeA, codeB] = poolId.split("-");
@@ -47,6 +72,35 @@ function resolveToken(code: string): TokenInfo {
     name: t.name,
     decimals: t.decimals,
   };
+}
+
+function getReservesForRequestedOrder(
+  pool: SoroswapApiPool,
+  tokenA: TokenInfo,
+  tokenB: TokenInfo
+): { reserveForTokenA: bigint; reserveForTokenB: bigint } {
+  const poolTokenA = String(pool.tokenA).toUpperCase();
+  const poolTokenB = String(pool.tokenB).toUpperCase();
+  const requestTokenA = tokenA.address.toUpperCase();
+  const requestTokenB = tokenB.address.toUpperCase();
+
+  if (poolTokenA === requestTokenA && poolTokenB === requestTokenB) {
+    return {
+      reserveForTokenA: BigInt(pool.reserveA),
+      reserveForTokenB: BigInt(pool.reserveB),
+    };
+  }
+
+  if (poolTokenA === requestTokenB && poolTokenB === requestTokenA) {
+    return {
+      reserveForTokenA: BigInt(pool.reserveB),
+      reserveForTokenB: BigInt(pool.reserveA),
+    };
+  }
+
+  throw new Error(
+    `Unexpected pool token mapping for ${tokenA.code}/${tokenB.code}.`
+  );
 }
 
 export class SoroswapPoolAdapter implements BasePoolAdapter {
@@ -143,29 +197,29 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       }
 
       const pool = pools[0];
-      const reserveA = BigInt(pool.reserveA);
-      const reserveB = BigInt(pool.reserveB);
+      const { reserveForTokenA, reserveForTokenB } =
+        getReservesForRequestedOrder(pool, tokenA, tokenB);
 
       return {
         id: `soroswap:${poolId}`,
         type: "soroswap",
         name: `${codeA} / ${codeB} Soroswap Pool`,
         tokens: [tokenA, tokenB],
-        tvl: reserveA + reserveB,
+        tvl: reserveForTokenA + reserveForTokenB,
         apy: 0,
         state: "active",
         supportedActions: SUPPORTED_ACTIONS,
         metadata: {
           poolAddress: pool.address,
           protocol: pool.protocol,
-          reserveA: pool.reserveA,
-          reserveB: pool.reserveB,
+          reserveA: reserveForTokenA.toString(),
+          reserveB: reserveForTokenB.toString(),
           reserveAFormatted: fromSmallestUnit(
-            reserveA.toString(),
+            reserveForTokenA.toString(),
             tokenA.decimals
           ),
           reserveBFormatted: fromSmallestUnit(
-            reserveB.toString(),
+            reserveForTokenB.toString(),
             tokenB.decimals
           ),
           ledger: pool.ledger,
@@ -264,27 +318,84 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       }
 
       const lpTokenDecimals = 7;
-      const depositedFormatted = await getTokenBalanceFromContract(
+      const sorobanServer = new rpc.Server(rpcUrl, {
+        allowHttp: stellarNetwork === "LOCAL",
+      });
+      const account = await sorobanServer.getAccount(userAddress);
+      const lpShares = await simulateTokenBigint(
         pool.address,
-        userAddress,
-        lpTokenDecimals
+        "balance",
+        account,
+        sorobanServer,
+        userAddress
       );
-      const deposited = toBigIntFromDecimalString(
-        depositedFormatted,
-        lpTokenDecimals
-      );
+      if (lpShares === 0n) return emptyPosition;
+
+      let deposited = lpShares;
+      let depositedDecimals = lpTokenDecimals;
+      let totalLpSupply = 0n;
+      let reserveForTokenA = 0n;
+      let reserveForTokenB = 0n;
+      let underlyingAmountsRaw: string[] = [];
+      let withdrawUnit: "underlying" | "lp_shares" = "lp_shares";
+
+      try {
+        totalLpSupply = await simulateTokenBigint(
+          pool.address,
+          "total_supply",
+          account,
+          sorobanServer
+        );
+        const reserves = getReservesForRequestedOrder(pool, tokenA, tokenB);
+        reserveForTokenA = reserves.reserveForTokenA;
+        reserveForTokenB = reserves.reserveForTokenB;
+
+        if (
+          totalLpSupply > 0n &&
+          reserveForTokenA > 0n &&
+          reserveForTokenB > 0n
+        ) {
+          const underlyingA = mulDivFloor(
+            lpShares,
+            reserveForTokenA,
+            totalLpSupply
+          );
+          const underlyingB = mulDivFloor(
+            lpShares,
+            reserveForTokenB,
+            totalLpSupply
+          );
+          deposited = underlyingA;
+          depositedDecimals = tokenA.decimals;
+          underlyingAmountsRaw = [
+            underlyingA.toString(),
+            underlyingB.toString(),
+          ];
+          withdrawUnit = "underlying";
+        }
+      } catch {
+        // Keep the position visible as LP shares if the pair data cannot be
+        // converted to underlying token amounts.
+      }
 
       return {
         poolId: `soroswap:${poolId}`,
         deposited,
         depositedFormatted: fromSmallestUnit(
           deposited.toString(),
-          lpTokenDecimals
+          depositedDecimals
         ),
         rewards: 0n,
         rewardsFormatted: "0",
         metadata: {
+          poolAddress: pool.address,
           lpTokenAddress: pool.address,
+          lpSharesRaw: lpShares.toString(),
+          totalLpSupply: totalLpSupply.toString(),
+          reserveA: reserveForTokenA.toString(),
+          reserveB: reserveForTokenB.toString(),
+          underlyingAmountsRaw,
+          withdrawUnit,
         },
       };
     } catch {
@@ -317,25 +428,8 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
         );
       }
 
-      const poolTokenA = String(pool.tokenA).toUpperCase();
-      const poolTokenB = String(pool.tokenB).toUpperCase();
-      const requestTokenA = tokenA.address.toUpperCase();
-      const requestTokenB = tokenB.address.toUpperCase();
-
-      let reserveForTokenA: bigint;
-      let reserveForTokenB: bigint;
-
-      if (poolTokenA === requestTokenA && poolTokenB === requestTokenB) {
-        reserveForTokenA = BigInt(pool.reserveA);
-        reserveForTokenB = BigInt(pool.reserveB);
-      } else if (poolTokenA === requestTokenB && poolTokenB === requestTokenA) {
-        reserveForTokenA = BigInt(pool.reserveB);
-        reserveForTokenB = BigInt(pool.reserveA);
-      } else {
-        throw new Error(
-          `Unexpected pool token mapping for ${tokenA.code}/${tokenB.code}.`
-        );
-      }
+      const { reserveForTokenA, reserveForTokenB } =
+        getReservesForRequestedOrder(pool, tokenA, tokenB);
 
       if (reserveForTokenA <= 0n || reserveForTokenB <= 0n) {
         throw new Error(
@@ -369,11 +463,102 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
       throw new AdapterError("soroswap", "deposit", error);
     }
   }
-  async withdraw(): Promise<TransactionResult> {
-    throw new UnsupportedActionError(
-      "soroswap",
-      "withdraw (remove liquidity not yet available via API)"
-    );
+  async withdraw(
+    poolId: string,
+    userAddress: string,
+    amount: bigint,
+    _tokenIndex?: number,
+    options?: PoolActionOptions
+  ): Promise<TransactionResult> {
+    const { codeA, codeB } = parsePairId(poolId);
+    const tokenA = resolveToken(codeA);
+    const tokenB = resolveToken(codeB);
+
+    try {
+      const pools = await getPool({
+        tokenA: tokenA.address,
+        tokenB: tokenB.address,
+      });
+      const pool = pools[0];
+
+      if (!pool?.address) {
+        throw new Error(
+          `No active Soroswap pool found for ${tokenA.code}/${tokenB.code}.`
+        );
+      }
+
+      const { reserveForTokenA, reserveForTokenB } =
+        getReservesForRequestedOrder(pool, tokenA, tokenB);
+
+      if (reserveForTokenA <= 0n || reserveForTokenB <= 0n) {
+        throw new Error(
+          `Pool reserves are invalid for ${tokenA.code}/${tokenB.code}.`
+        );
+      }
+
+      const sorobanServer = new rpc.Server(rpcUrl, {
+        allowHttp: stellarNetwork === "LOCAL",
+      });
+      const account = await sorobanServer.getAccount(userAddress);
+      const [userLpShares, totalLpSupply] = await Promise.all([
+        simulateTokenBigint(
+          pool.address,
+          "balance",
+          account,
+          sorobanServer,
+          userAddress
+        ),
+        simulateTokenBigint(
+          pool.address,
+          "total_supply",
+          account,
+          sorobanServer
+        ),
+      ]);
+
+      if (userLpShares <= 0n) {
+        throw new Error("No Soroswap LP position to withdraw.");
+      }
+      if (totalLpSupply <= 0n) {
+        throw new Error("Soroswap LP total supply is zero.");
+      }
+
+      let liquidity: bigint;
+      if (options?.withdrawAll) {
+        liquidity = userLpShares;
+      } else if (options?.withdrawUnit === "lp_shares") {
+        liquidity = amount;
+      } else {
+        liquidity = mulDivCeil(amount, totalLpSupply, reserveForTokenA);
+      }
+
+      if (liquidity <= 0n) {
+        throw new Error("Withdrawal amount is too small for this pool.");
+      }
+      if (liquidity > userLpShares) {
+        throw new Error("Withdrawal amount exceeds your LP balance.");
+      }
+
+      const expectedA = mulDivFloor(liquidity, reserveForTokenA, totalLpSupply);
+      const expectedB = mulDivFloor(liquidity, reserveForTokenB, totalLpSupply);
+      if (expectedA <= 0n || expectedB <= 0n) {
+        throw new Error("Withdrawal output is too small for this pool.");
+      }
+
+      const result = await removeLiquidity({
+        assetA: tokenA.address,
+        assetB: tokenB.address,
+        liquidity,
+        amountA: expectedA,
+        amountB: expectedB,
+        to: userAddress,
+        slippageBps: WITHDRAW_SLIPPAGE_BPS,
+      });
+
+      return { xdr: result.xdr, networkPassphrase };
+    } catch (error) {
+      throw new AdapterError("soroswap", "withdraw", error);
+    }
   }
 
   async claimRewards(): Promise<TransactionResult> {
@@ -381,17 +566,38 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
   }
 
   supportsAction(action: PoolAction): boolean {
-    if (action === "withdraw") return false;
     return SUPPORTED_ACTIONS.includes(action);
   }
 }
 
-function toBigIntFromDecimalString(value: string, decimals: number): bigint {
-  if (!value || value === "0") return 0n;
-  const [integerPart = "0", fractionPart = ""] = value.split(".");
-  const normalizedFraction = fractionPart
-    .slice(0, decimals)
-    .padEnd(decimals, "0");
-  const normalizedInteger = integerPart.replace(/^0+(?=\d)/, "") || "0";
-  return BigInt(`${normalizedInteger}${normalizedFraction}`);
+async function simulateTokenBigint(
+  contractAddress: string,
+  method: "balance" | "total_supply",
+  account: Account,
+  server: rpc.Server,
+  address?: string
+): Promise<bigint> {
+  const contract = new Contract(contractAddress);
+  const args = address ? [new Address(address).toScVal()] : [];
+  const simulationAccount = new Account(
+    account.accountId(),
+    account.sequenceNumber()
+  );
+  const tx = new TransactionBuilder(simulationAccount, {
+    fee: "1000000",
+    networkPassphrase,
+  })
+    .addOperation(contract.call(method, ...args))
+    .setTimeout(300)
+    .build();
+
+  const simulated = await server.simulateTransaction(tx);
+  const result = simulated as { result?: { retval?: unknown }; error?: string };
+  if (result.error || !result.result?.retval) {
+    throw new Error(`Failed to simulate ${method} for ${contractAddress}`);
+  }
+  const native = scValToNative(
+    result.result.retval as Parameters<typeof scValToNative>[0]
+  );
+  return BigInt(native as string | number | bigint);
 }

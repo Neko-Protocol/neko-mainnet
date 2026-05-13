@@ -27,13 +27,17 @@ export function AnimatedValue({
   useEffect(() => {
     if (value === displayed) return;
     if (timerRef.current) clearTimeout(timerRef.current);
-    setExiting(displayed);
-    setDisplayed(value);
-    timerRef.current = setTimeout(() => setExiting(null), 2600);
+    const previous = displayed;
+    const frame = requestAnimationFrame(() => {
+      setExiting(previous);
+      setDisplayed(value);
+      timerRef.current = setTimeout(() => setExiting(null), 2600);
+    });
     return () => {
+      cancelAnimationFrame(frame);
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [value, displayed]);
 
   return (
     <span
@@ -328,7 +332,7 @@ export function VaultActionPanel({
   isLoading,
   isConfirming = false,
   supplyBalance,
-  sharesBalance,
+  withdrawBalance,
   isWalletConnected,
   apy,
   tokenPriceInCurrency,
@@ -337,7 +341,7 @@ export function VaultActionPanel({
   const supplyLabel = vault.supplyAsset.symbol;
   const hasAmount = !!amount && parseFloat(amount) > 0;
   const depositAmt = parseFloat(amount) || 0;
-  const currentDeposited = parseFloat(sharesBalance) || 0;
+  const currentDeposited = parseFloat(withdrawBalance) || 0;
 
   const apyNum =
     apy && apy !== "-" && apy !== "" ? parseFloat(apy.replace("%", "")) : null;
@@ -370,11 +374,11 @@ export function VaultActionPanel({
     depositExceedsBalance ||
     withdrawExceedsBalance;
 
-  const maxAmount = tab === "deposit" ? supplyBalance : sharesBalance;
+  const maxAmount = tab === "deposit" ? supplyBalance : withdrawBalance;
   const balanceForDisplay =
     tab === "deposit"
       ? `${formatBalance(parseFloat(supplyBalance))} ${supplyLabel}`
-      : `${formatBalance(parseFloat(sharesBalance))} ${supplyLabel}`;
+      : `${formatBalance(parseFloat(withdrawBalance))} ${supplyLabel}`;
 
   return (
     <div className="flex flex-col gap-3">
@@ -429,7 +433,7 @@ export function VaultActionPanel({
         ) : tab === "deposit" ? (
           `Deposit ${supplyLabel}`
         ) : (
-          "Withdraw"
+          `Withdraw ${supplyLabel}`
         )}
       </button>
 

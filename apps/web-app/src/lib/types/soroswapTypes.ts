@@ -65,6 +65,20 @@ export interface AddLiquidityResponse {
   xdr: string;
 }
 
+export interface RemoveLiquidityRequest {
+  assetA: Token | string;
+  assetB: Token | string;
+  liquidity: bigint | string;
+  amountA: bigint | string;
+  amountB: bigint | string;
+  to: string;
+  slippageBps?: number;
+}
+
+export interface RemoveLiquidityResponse {
+  xdr: string;
+}
+
 export interface PoolInfo {
   protocol: string;
   address: string;

@@ -56,6 +56,11 @@ export interface TransactionResult {
   networkPassphrase: string;
 }
 
+export interface PoolActionOptions {
+  withdrawAll?: boolean;
+  withdrawUnit?: "underlying" | "lp_shares";
+}
+
 export interface PoolActionResult {
   tx: TransactionResult;
 
@@ -73,5 +78,7 @@ export interface PoolActionParams {
   action: PoolAction;
   amount: bigint;
   tokenIndex?: number;
+  withdrawAll?: boolean;
+  withdrawUnit?: "underlying" | "lp_shares";
   audit?: PoolActionAuditContext;
 }

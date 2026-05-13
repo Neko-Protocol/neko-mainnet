@@ -6,6 +6,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import { rpcUrl } from "@/lib/constants/network";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
+import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 import { auditService } from "@/lib/services/audit.service";
 import { orchestrator } from "../core/Orchestrator";
 import { buildPoolAuditPayload } from "../utils/buildPoolAuditPayload";
@@ -42,14 +43,19 @@ export function usePoolAction() {
             poolId,
             address,
             amount,
-            tokenIndex
+            tokenIndex,
+            {
+              withdrawAll: params.withdrawAll,
+              withdrawUnit: params.withdrawUnit,
+            }
           );
           break;
         case "withdrawCollateral":
           result = await orchestrator.withdrawCollateral(
             poolId,
             address,
-            amount
+            amount,
+            { withdrawAll: params.withdrawAll }
           );
           break;
         case "borrow":
@@ -69,10 +75,7 @@ export function usePoolAction() {
         networkPassphrase: result.networkPassphrase,
       });
 
-      const signedXdr =
-        typeof signed === "string"
-          ? signed
-          : ((signed as { signedTxXdr?: string }).signedTxXdr ?? "");
+      const signedXdr = extractSignedTxXdr(signed);
 
       const server = new rpc.Server(rpcUrl, { allowHttp: true });
       const tx = TransactionBuilder.fromXDR(
@@ -107,6 +110,15 @@ export function usePoolAction() {
     onSuccess: (_hash, params) => {
       addNotification(`${capitalise(params.action)} successful`, "success");
       queryClient.invalidateQueries({ queryKey: [...POOLS_QUERY_KEY] });
+      queryClient.invalidateQueries({ queryKey: ["orchestrator", "position"] });
+      queryClient.invalidateQueries({
+        queryKey: ["orchestrator", "blend-all-positions"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["orchestrator", "lp-screen"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["tokenBalance"] });
+      queryClient.invalidateQueries({ queryKey: ["userLendingBTokens"] });
     },
 
     onError: (error: unknown, params) => {

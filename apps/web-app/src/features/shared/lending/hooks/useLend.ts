@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { TransactionBuilder, Networks } from "@stellar/stellar-sdk";
+import { TransactionBuilder } from "@stellar/stellar-sdk";
 import { rpc } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
@@ -16,10 +16,12 @@ import {
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 import { usePools, usePoolAction } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { decimalToAtomic } from "@/lib/helpers/amount";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolData } from "../types/lending";
 import {
@@ -119,8 +121,12 @@ export function useLend() {
         isActive: pool.isActive,
         assetCode: pool.assetCode,
         asset: pool.asset,
+        assetDecimals: 7,
         bTokenRate: pool.bTokenRate,
+        bTokenRateRaw: pool.bTokenRateRaw,
         contractId: pool.contractId,
+        isAggregated: true,
+        orchestratorId: `neko:${pool.assetCode}`,
       };
     });
 
@@ -179,6 +185,7 @@ export function useLend() {
           isActive: p.state === "active",
           assetCode: token?.code ?? "?",
           asset: token?.address ?? "",
+          assetDecimals: decimals,
           bTokenRate: undefined,
           totalBorrowed,
           liquidityTokenAmount,
@@ -310,22 +317,23 @@ export function useLend() {
 
       try {
         if (selectedPool.isAggregated && selectedPool.orchestratorId) {
-          const decimals = 7;
-
+          const decimals = selectedPool.assetDecimals ?? 7;
+          const rawAmount = decimalToAtomic(amount, decimals);
+          const depositedRaw =
+            selectedPool.depositedRaw != null
+              ? BigInt(selectedPool.depositedRaw)
+              : null;
           const isWithdrawAll =
-            !isDeposit &&
-            selectedPool.depositedAmount !== undefined &&
-            parseFloat(amount) >=
-              parseFloat(selectedPool.depositedAmount) - 1e-7;
-
-          const rawAmount = isWithdrawAll
-            ? BigInt("999999999999999999")
-            : BigInt(Math.floor(parseFloat(amount) * 10 ** decimals));
+            !isDeposit && depositedRaw != null && rawAmount >= depositedRaw;
 
           const txHash = await executePoolAction({
             poolId: selectedPool.orchestratorId,
-            action: isDeposit ? "deposit" : "withdraw",
+            action: isDeposit
+              ? "deposit"
+              : (selectedPool.withdrawAction ?? "withdraw"),
             amount: rawAmount,
+            withdrawAll: isWithdrawAll,
+            withdrawUnit: selectedPool.withdrawUnit,
           });
 
           logAction(selectedPool.orchestratorId, txHash);
@@ -369,8 +377,9 @@ export function useLend() {
             networkPassphrase: passphrase,
             address,
           });
+          const signedDepositXdr = extractSignedTxXdr(signedDeposit);
           const sendResult = await sorobanServer.sendTransaction(
-            TransactionBuilder.fromXDR(signedDeposit.signedTxXdr, passphrase)
+            TransactionBuilder.fromXDR(signedDepositXdr, passphrase)
           );
           if (sendResult.status === "ERROR")
             throw new Error("Transaction rejected by network");
@@ -391,8 +400,9 @@ export function useLend() {
             networkPassphrase: passphrase,
             address,
           });
+          const signedWithdrawXdr = extractSignedTxXdr(signedWithdraw);
           const sendResult = await sorobanServer.sendTransaction(
-            TransactionBuilder.fromXDR(signedWithdraw.signedTxXdr, passphrase)
+            TransactionBuilder.fromXDR(signedWithdrawXdr, passphrase)
           );
           if (sendResult.status === "ERROR")
             throw new Error("Transaction rejected by network");

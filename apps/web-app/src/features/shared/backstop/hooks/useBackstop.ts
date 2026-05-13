@@ -16,6 +16,7 @@ import {
   getTokenBalance,
 } from "@/lib/helpers/stellar/lending";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 
@@ -115,7 +116,10 @@ export function useBackstop(contractId: string) {
           address,
         });
         const depositResult = await sorobanServer.sendTransaction(
-          TransactionBuilder.fromXDR(signedDeposit.signedTxXdr, passphrase)
+          TransactionBuilder.fromXDR(
+            extractSignedTxXdr(signedDeposit),
+            passphrase
+          )
         );
         if (depositResult.status === "ERROR")
           throw new Error("Transaction rejected by network");
@@ -172,7 +176,7 @@ export function useBackstop(contractId: string) {
           address,
         });
         const queueResult = await sorobanServer.sendTransaction(
-          TransactionBuilder.fromXDR(signed.signedTxXdr, passphrase)
+          TransactionBuilder.fromXDR(extractSignedTxXdr(signed), passphrase)
         );
         if (queueResult.status === "ERROR")
           throw new Error("Transaction rejected by network");
@@ -227,7 +231,7 @@ export function useBackstop(contractId: string) {
           address,
         });
         const withdrawResult = await sorobanServer.sendTransaction(
-          TransactionBuilder.fromXDR(signed.signedTxXdr, passphrase)
+          TransactionBuilder.fromXDR(extractSignedTxXdr(signed), passphrase)
         );
         if (withdrawResult.status === "ERROR")
           throw new Error("Transaction rejected by network");

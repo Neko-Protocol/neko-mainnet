@@ -2,10 +2,11 @@ import {
   Contract,
   Address,
   nativeToScVal,
+  scValToNative,
   xdr as StellarXdr,
   rpc,
   TransactionBuilder,
-  Horizon,
+  Account,
 } from "@stellar/stellar-sdk";
 import type { BasePoolAdapter } from "../types/adapter.types";
 import type {
@@ -16,17 +17,26 @@ import type {
   TokenInfo,
   TransactionResult,
 } from "../types/pool.types";
-import { AdapterError, UnsupportedActionError } from "../types/errors";
+import { AdapterError } from "../types/errors";
 import { getAquaPoolAddresses, AQUA_API_BASE } from "./aqua-config";
-import { aquaProportionalAmountB } from "@/lib/helpers/stellar/aquaDeposit";
+import {
+  aquaProportionalAmountB,
+  reserveStroopsFromApiString,
+} from "@/lib/helpers/stellar/aquaDeposit";
 import {
   rpcUrl,
   networkPassphrase,
-  horizonUrl,
   stellarNetwork,
 } from "@/lib/constants/network";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
+import {
+  decimalToAtomic,
+  mulDivCeil,
+  mulDivFloor,
+  applySlippageBps,
+} from "@/lib/helpers/amount";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import type { PoolActionOptions } from "../types/pool.types";
 
 // Aqua pool type identifiers as returned by the REST API
 type AquaPoolType = "constant_product" | "stable_swap" | "stable";
@@ -35,6 +45,7 @@ interface AquaApiPool {
   index: string;
   address: string;
   share_token_address: string;
+  share_token_decimals?: number;
   tokens_addresses: string[];
   tokens_str: string[];
   pool_type: AquaPoolType;
@@ -53,6 +64,7 @@ interface AquaApiPool {
   // Pool state flags
   deposit_killed: boolean;
   swap_killed: boolean;
+  total_share?: string;
   [key: string]: unknown;
 }
 
@@ -63,8 +75,7 @@ interface AquaApiResponse {
 
 const AQUA_ROUTER = "CBQDHNBFBZYE4MKPWBSJOPIYLW4SFSXAXUTSXJN76GNKYVYPCKWC6QUK";
 const SUPPORTED_ACTIONS: PoolAction[] = ["deposit", "withdraw", "claimRewards"];
-
-const BLOCKED_TOKEN_CODES = new Set(["AQUA", "USDGLO"]);
+const WITHDRAW_SLIPPAGE_BPS = 100;
 
 // Parse a token string like "native" or "CODE:ISSUER" into a TokenInfo
 function parseTokenStr(tokenStr: string, contractAddress: string): TokenInfo {
@@ -146,6 +157,8 @@ function mapApiPool(raw: AquaApiPool): PoolInfo {
       /** Horizon trustline check: `"native"` or `"CODE:ISSUER"` per Aqua API. */
       tokensStr: raw.tokens_str,
       shareTokenAddress: raw.share_token_address,
+      shareTokenDecimals: raw.share_token_decimals ?? 7,
+      totalShare: raw.total_share,
       liquidityUsd,
       reserves,
       /** LP supply (base) APY % */
@@ -178,11 +191,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
   async listPools(limit?: number): Promise<PoolInfo[]> {
     try {
       const raw = await fetchAquaPools(getAquaPoolAddresses());
-      const mapped = raw
-        .map(mapApiPool)
-        .filter((p) =>
-          p.tokens.every((t) => !BLOCKED_TOKEN_CODES.has(t.code.toUpperCase()))
-        );
+      const mapped = raw.map(mapApiPool);
       return limit !== undefined ? mapped.slice(0, limit) : mapped;
     } catch (error) {
       throw new AdapterError("aqua", "listPools", error);
@@ -225,28 +234,65 @@ export class AquaPoolAdapter implements BasePoolAdapter {
         return emptyPosition;
       }
 
-      const shareTokenDecimals = 7;
-      const depositedFormatted = await getTokenBalanceFromContract(
+      const shareTokenDecimals =
+        (poolInfo.metadata.shareTokenDecimals as number | undefined) ?? 7;
+      const shareBalanceFormatted = await getTokenBalanceFromContract(
         shareTokenAddress,
         userAddress,
         shareTokenDecimals
       );
-      const deposited = toBigIntFromDecimalString(
-        depositedFormatted,
+      const lpShares = decimalToAtomic(
+        shareBalanceFormatted,
         shareTokenDecimals
       );
+      if (lpShares === 0n) return emptyPosition;
+
+      const reserves = poolInfo.metadata.reserves as string[] | undefined;
+      const tokenDecimals = poolInfo.tokens[0]?.decimals ?? 7;
+
+      const totalShare = reserveStroopsFromApiString(
+        String(poolInfo.metadata.totalShare ?? "0")
+      );
+      let deposited = lpShares;
+      const totalLpSupply = totalShare;
+      let reserve0 = 0n;
+      let underlyingAmountsRaw: string[] = [];
+      let withdrawUnit: "underlying" | "lp_shares" = "lp_shares";
+
+      try {
+        reserve0 = reserveStroopsFromApiString(reserves?.[0] ?? "0");
+        if (totalLpSupply > 0n && reserve0 > 0n) {
+          underlyingAmountsRaw = (reserves ?? []).map((reserve) =>
+            mulDivFloor(
+              lpShares,
+              reserveStroopsFromApiString(reserve),
+              totalLpSupply
+            ).toString()
+          );
+          deposited = BigInt(underlyingAmountsRaw[0] ?? "0");
+          withdrawUnit = "underlying";
+        }
+      } catch {
+        // Keep the position visible even if the LP -> underlying conversion
+        // cannot be simulated for this Aqua share token.
+      }
 
       return {
         poolId: fullPoolId,
         deposited,
         depositedFormatted: fromSmallestUnit(
           deposited.toString(),
-          shareTokenDecimals
+          withdrawUnit === "underlying" ? tokenDecimals : shareTokenDecimals
         ),
         rewards: 0n,
         rewardsFormatted: "0",
         metadata: {
           shareTokenAddress,
+          lpSharesRaw: lpShares.toString(),
+          totalLpSupply: totalLpSupply.toString(),
+          reserve0: reserve0.toString(),
+          underlyingAmountsRaw,
+          withdrawUnit,
         },
       };
     } catch {
@@ -264,8 +310,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
       const sorobanServer = new rpc.Server(rpcUrl, {
         allowHttp: stellarNetwork === "LOCAL",
       });
-      const horizonServer = new Horizon.Server(horizonUrl);
-      const account = await horizonServer.loadAccount(userAddress);
+      const account = await sorobanServer.getAccount(userAddress);
 
       // Get pool metadata  reserves come directly from the API (no RPC call needed)
       const poolInfo = await this.getPoolInfo(poolId);
@@ -312,22 +357,95 @@ export class AquaPoolAdapter implements BasePoolAdapter {
     poolId: string,
     userAddress: string,
     amount: bigint,
-    _tokenIndex?: number
+    _tokenIndex?: number,
+    options?: PoolActionOptions
   ): Promise<TransactionResult> {
     try {
       const sorobanServer = new rpc.Server(rpcUrl, {
         allowHttp: stellarNetwork === "LOCAL",
       });
-      const horizonServer = new Horizon.Server(horizonUrl);
-      const account = await horizonServer.loadAccount(userAddress);
+      const account = await sorobanServer.getAccount(userAddress);
 
       // Get pool metadata for tokens, pool_index, and token count
       const poolInfo = await this.getPoolInfo(poolId);
       const tokenAddresses = poolInfo.metadata.tokenAddresses as string[];
       const poolIndexHex = poolInfo.metadata.poolIndex as string;
+      const shareTokenAddress = poolInfo.metadata.shareTokenAddress as
+        | string
+        | undefined;
+      const reserves = poolInfo.metadata.reserves as string[] | undefined;
+      const totalShare = reserveStroopsFromApiString(
+        String(poolInfo.metadata.totalShare ?? "0")
+      );
       const nTokens =
         (poolInfo.metadata?.nTokens as number | undefined) ??
         poolInfo.tokens.length;
+      if (!shareTokenAddress) {
+        throw new Error("Aqua share token is not configured for this pool");
+      }
+
+      const userLpShares = await simulateTokenBigint(
+        shareTokenAddress,
+        "balance",
+        account,
+        sorobanServer,
+        userAddress
+      );
+      if (userLpShares <= 0n) {
+        throw new Error("No LP balance available to withdraw");
+      }
+
+      let totalLpSupply: bigint | undefined =
+        totalShare > 0n ? totalShare : undefined;
+      let reserve0 = 0n;
+      let shares: bigint;
+
+      if (options?.withdrawAll) {
+        shares = userLpShares;
+      } else if (options?.withdrawUnit === "lp_shares") {
+        shares = amount;
+      } else {
+        reserve0 = reserveStroopsFromApiString(reserves?.[0] ?? "0");
+        if (!totalLpSupply || totalLpSupply <= 0n || reserve0 <= 0n) {
+          throw new Error("Unable to calculate LP shares for this withdrawal");
+        }
+        shares = mulDivCeil(amount, totalLpSupply, reserve0);
+      }
+
+      if (shares <= 0n) {
+        throw new Error("Withdrawal amount is too small");
+      }
+      if (shares > userLpShares) {
+        if (options?.withdrawAll) {
+          shares = userLpShares;
+        } else {
+          throw new Error("Withdrawal amount exceeds LP balance");
+        }
+      }
+
+      if (totalLpSupply === undefined) {
+        totalLpSupply = totalShare > 0n ? totalShare : undefined;
+      }
+
+      const minAmounts =
+        totalLpSupply && totalLpSupply > 0n
+          ? Array(nTokens)
+              .fill(null)
+              .map((_, index) => {
+                const reserve = reserveStroopsFromApiString(
+                  reserves?.[index] ?? "0"
+                );
+                const expected = mulDivFloor(shares, reserve, totalLpSupply);
+                return nativeToScVal(
+                  expected > 0n
+                    ? applySlippageBps(expected, WITHDRAW_SLIPPAGE_BPS)
+                    : 0n,
+                  { type: "u128" }
+                );
+              })
+          : Array(nTokens)
+              .fill(null)
+              .map(() => nativeToScVal(1n, { type: "u128" }));
 
       // Call the Aquarius Router contract (entry point for all AMM operations)
       const router = new Contract(AQUA_ROUTER);
@@ -338,12 +456,8 @@ export class AquaPoolAdapter implements BasePoolAdapter {
           tokenAddresses.map((addr) => new Address(addr).toScVal())
         ),
         StellarXdr.ScVal.scvBytes(Buffer.from(poolIndexHex, "hex")),
-        nativeToScVal(amount, { type: "u128" }), // LP shares to redeem
-        StellarXdr.ScVal.scvVec(
-          Array(nTokens)
-            .fill(null)
-            .map(() => nativeToScVal(BigInt(1), { type: "u128" }))
-        ) // min_amounts = [1, 1, ...]  accept any amounts
+        nativeToScVal(shares, { type: "u128" }),
+        StellarXdr.ScVal.scvVec(minAmounts)
       );
 
       const tx = new TransactionBuilder(account, {
@@ -371,8 +485,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
       const sorobanServer = new rpc.Server(rpcUrl, {
         allowHttp: stellarNetwork === "LOCAL",
       });
-      const horizonServer = new Horizon.Server(horizonUrl);
-      const account = await horizonServer.loadAccount(userAddress);
+      const account = await sorobanServer.getAccount(userAddress);
 
       const poolContract = new Contract(poolAddress);
       const operation = poolContract.call(
@@ -400,12 +513,34 @@ export class AquaPoolAdapter implements BasePoolAdapter {
   }
 }
 
-function toBigIntFromDecimalString(value: string, decimals: number): bigint {
-  if (!value || value === "0") return 0n;
-  const [integerPart = "0", fractionPart = ""] = value.split(".");
-  const normalizedFraction = fractionPart
-    .slice(0, decimals)
-    .padEnd(decimals, "0");
-  const normalizedInteger = integerPart.replace(/^0+(?=\d)/, "") || "0";
-  return BigInt(`${normalizedInteger}${normalizedFraction}`);
+async function simulateTokenBigint(
+  contractAddress: string,
+  method: "balance" | "total_supply",
+  account: Account,
+  server: rpc.Server,
+  address?: string
+): Promise<bigint> {
+  const contract = new Contract(contractAddress);
+  const args = address ? [new Address(address).toScVal()] : [];
+  const simulationAccount = new Account(
+    account.accountId(),
+    account.sequenceNumber()
+  );
+  const tx = new TransactionBuilder(simulationAccount, {
+    fee: "1000000",
+    networkPassphrase,
+  })
+    .addOperation(contract.call(method, ...args))
+    .setTimeout(300)
+    .build();
+
+  const simulated = await server.simulateTransaction(tx);
+  const result = simulated as { result?: { retval?: unknown }; error?: string };
+  if (result.error || !result.result?.retval) {
+    throw new Error(`Failed to simulate ${method} for ${contractAddress}`);
+  }
+  const native = scValToNative(
+    result.result.retval as Parameters<typeof scValToNative>[0]
+  );
+  return BigInt(native as string | number | bigint);
 }

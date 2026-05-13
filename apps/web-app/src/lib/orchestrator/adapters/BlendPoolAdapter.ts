@@ -8,10 +8,16 @@ import {
 import { TransactionBuilder, rpc, xdr, Horizon } from "@stellar/stellar-sdk";
 
 import { rpcUrl, networkPassphrase, horizonUrl } from "@/lib/constants/network";
+import {
+  applySlippageBps,
+  mulDivCeil,
+  mulDivFloor,
+} from "@/lib/helpers/amount";
 
 import type { BasePoolAdapter } from "../types/adapter.types";
 import type {
   PoolAction,
+  PoolActionOptions,
   PoolInfo,
   PoolPosition,
   PoolType,
@@ -35,6 +41,19 @@ function unwrapSdkResult(raw: unknown): unknown {
   return raw;
 }
 
+function readSingleVaultFund(raw: unknown): bigint {
+  const funds = unwrapSdkResult(raw) as VaultFund[];
+  if (!Array.isArray(funds) || funds.length !== 1) {
+    throw new Error("Only single-asset vault withdrawals are supported");
+  }
+  return BigInt(funds[0].total_amount.toString());
+}
+
+function readBigintResult(raw: unknown): bigint {
+  const value = unwrapSdkResult(raw);
+  return BigInt((value as { toString(): string }).toString());
+}
+
 const SUPPORTED_ACTIONS: PoolAction[] = [
   "deposit",
   "withdraw",
@@ -52,6 +71,12 @@ const REQUEST_TYPE_MAP: Record<string, RequestType> = {
   withdrawCollateral: RequestType.WithdrawCollateral,
   borrow: RequestType.Borrow,
   repay: RequestType.Repay,
+};
+
+const WITHDRAW_SLIPPAGE_BPS = 100;
+
+type VaultFund = {
+  total_amount: { toString(): string };
 };
 
 function parseRawId(rawId: string): {
@@ -289,28 +314,16 @@ export class BlendPoolAdapter implements BasePoolAdapter {
             vault.total_supply({ simulate: true }),
           ]);
 
-          let sharesRaw = balanceTx.result as any;
-          if (typeof sharesRaw?.unwrap === "function")
-            sharesRaw = sharesRaw.unwrap();
-          else if (sharesRaw?.tag === "ok") sharesRaw = sharesRaw.value;
-          const sharesBig = BigInt(sharesRaw.toString());
+          const sharesBig = readBigintResult(balanceTx.result);
 
           if (sharesBig === 0n) return emptyPosition(fullId);
 
-          let funds = fundsTx.result as any;
-          if (typeof funds?.unwrap === "function") funds = funds.unwrap();
-          else if (funds?.tag === "ok") funds = funds.value;
-
-          let totalSharesRaw = supplyTx.result as any;
-          if (typeof totalSharesRaw?.unwrap === "function")
-            totalSharesRaw = totalSharesRaw.unwrap();
-          else if (totalSharesRaw?.tag === "ok")
-            totalSharesRaw = totalSharesRaw.value;
-
-          const totalUnderlying = BigInt(funds[0].total_amount.toString());
-          const totalSupply = BigInt(totalSharesRaw.toString());
+          const totalUnderlying = readSingleVaultFund(fundsTx.result);
+          const totalSupply = readBigintResult(supplyTx.result);
           const deposited =
-            totalSupply > 0n ? (sharesBig * totalUnderlying) / totalSupply : 0n;
+            totalSupply > 0n
+              ? mulDivFloor(sharesBig, totalUnderlying, totalSupply)
+              : 0n;
 
           return {
             poolId: fullId,
@@ -319,9 +332,13 @@ export class BlendPoolAdapter implements BasePoolAdapter {
             rewards: 0n,
             rewardsFormatted: "0",
             metadata: {
+              vaultId,
               supplied: deposited.toString(),
               collateral: "0",
               liabilities: "0",
+              shares: sharesBig.toString(),
+              totalUnderlying: totalUnderlying.toString(),
+              totalSupply: totalSupply.toString(),
             },
           };
         } catch {
@@ -387,24 +404,16 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           vault.total_supply({ simulate: true }),
         ]);
 
-        const sharesRaw = unwrapSdkResult(balanceTx.result);
-        const sharesBig = BigInt(
-          (sharesRaw as { toString(): string }).toString()
-        );
+        const sharesBig = readBigintResult(balanceTx.result);
 
         if (sharesBig === 0n) return emptyPosition(fullId);
 
-        const funds = unwrapSdkResult(fundsTx.result) as Array<{
-          total_amount: { toString(): string };
-        }>;
-        const totalSharesRaw = unwrapSdkResult(supplyTx.result);
-
-        const totalUnderlying = BigInt(funds[0].total_amount.toString());
-        const totalSupply = BigInt(
-          (totalSharesRaw as { toString(): string }).toString()
-        );
+        const totalUnderlying = readSingleVaultFund(fundsTx.result);
+        const totalSupply = readBigintResult(supplyTx.result);
         const deposited =
-          totalSupply > 0n ? (sharesBig * totalUnderlying) / totalSupply : 0n;
+          totalSupply > 0n
+            ? mulDivFloor(sharesBig, totalUnderlying, totalSupply)
+            : 0n;
 
         return {
           poolId: fullId,
@@ -413,9 +422,13 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           rewards: 0n,
           rewardsFormatted: "0",
           metadata: {
+            vaultId,
             supplied: deposited.toString(),
             collateral: "0",
             liabilities: "0",
+            shares: sharesBig.toString(),
+            totalUnderlying: totalUnderlying.toString(),
+            totalSupply: totalSupply.toString(),
           },
         };
       } catch {
@@ -493,7 +506,9 @@ export class BlendPoolAdapter implements BasePoolAdapter {
   async withdraw(
     rawId: string,
     userAddress: string,
-    amount: bigint
+    amount: bigint,
+    _tokenIndex?: number,
+    options?: PoolActionOptions
   ): Promise<TransactionResult> {
     const { poolContractId, assetAddress } = parseRawId(rawId);
     const vaultId = BLEND_POOL_VAULTS[`${poolContractId}:${assetAddress}`];
@@ -506,26 +521,38 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         publicKey: userAddress,
       });
 
-      const [fundsTx, supplyTx] = await Promise.all([
+      const [fundsTx, supplyTx, balanceTx] = await Promise.all([
         vault.fetch_total_managed_funds({ simulate: true }),
         vault.total_supply({ simulate: true }),
+        vault.balance({ id: userAddress }, { simulate: true }),
       ]);
 
-      const funds = unwrapSdkResult(fundsTx.result) as Array<{
-        total_amount: { toString(): string };
-      }>;
-      const totalSharesRaw = unwrapSdkResult(supplyTx.result);
+      const totalUnderlying = readSingleVaultFund(fundsTx.result);
+      const totalSupply = readBigintResult(supplyTx.result);
+      const userShares = readBigintResult(balanceTx.result);
+      if (totalUnderlying <= 0n || totalSupply <= 0n || userShares <= 0n) {
+        throw new Error("No supplied balance available to withdraw");
+      }
 
-      const totalUnderlying = BigInt(funds[0].total_amount.toString());
-      const totalSupply = BigInt(
-        (totalSharesRaw as { toString(): string }).toString()
-      );
-      const shares =
-        totalUnderlying > 0n ? (amount * totalSupply) / totalUnderlying : 0n;
+      let shares = options?.withdrawAll
+        ? userShares
+        : mulDivCeil(amount, totalSupply, totalUnderlying);
+      if (shares <= 0n) {
+        throw new Error("Withdrawal amount is too small");
+      }
+      if (shares > userShares) {
+        if (options?.withdrawAll) {
+          shares = userShares;
+        } else {
+          throw new Error("Withdrawal amount exceeds supplied balance");
+        }
+      }
+
+      const expectedOut = mulDivFloor(shares, totalUnderlying, totalSupply);
 
       const tx = await vault.withdraw({
         withdraw_shares: shares,
-        min_amounts_out: [0n],
+        min_amounts_out: [applySlippageBps(expectedOut, WITHDRAW_SLIPPAGE_BPS)],
         from: userAddress,
       });
       return { xdr: tx.toXDR(), networkPassphrase };
@@ -547,58 +574,19 @@ export class BlendPoolAdapter implements BasePoolAdapter {
 
       const poolUser = await pool.loadUser(userAddress);
       const supplied = poolUser.getSupply(reserve);
-      const collateral = poolUser.getCollateral(reserve);
-      const total = supplied + collateral;
+      const effectiveAmount =
+        options?.withdrawAll || amount > supplied ? supplied : amount;
+      if (effectiveAmount <= 0n) {
+        throw new Error("No supplied balance available to withdraw");
+      }
 
-      // Clamp requested amount to actual on-chain total to handle stale/rounded values
-      const effectiveAmount = amount > total ? total : amount;
-
-      const requests: Request[] = [];
-
-      if (collateral > 0n && supplied > 0n) {
-        // User has both: split proportionally
-        const collateralShare =
-          effectiveAmount >= total
-            ? collateral
-            : (collateral * effectiveAmount) / total;
-        const supplyShare =
-          effectiveAmount >= total
-            ? supplied
-            : effectiveAmount - collateralShare;
-
-        if (collateralShare > 0n) {
-          requests.push({
-            request_type: RequestType.WithdrawCollateral,
-            address: assetAddress,
-            amount: collateralShare,
-          });
-        }
-        if (supplyShare > 0n) {
-          requests.push({
-            request_type: RequestType.Withdraw,
-            address: assetAddress,
-            amount: supplyShare,
-          });
-        }
-      } else if (collateral > 0n) {
-        // Only collateral
-        const withdrawAmt =
-          effectiveAmount > collateral ? collateral : effectiveAmount;
-        requests.push({
-          request_type: RequestType.WithdrawCollateral,
-          address: assetAddress,
-          amount: withdrawAmt,
-        });
-      } else {
-        // Only supply (most common case)
-        const withdrawAmt =
-          effectiveAmount > supplied ? supplied : effectiveAmount;
-        requests.push({
+      const requests: Request[] = [
+        {
           request_type: RequestType.Withdraw,
           address: assetAddress,
-          amount: withdrawAmt,
-        });
-      }
+          amount: effectiveAmount,
+        },
+      ];
 
       const poolContract = new PoolContractV2(poolContractId);
       const opXdr = poolContract.submit({
@@ -688,9 +676,50 @@ export class BlendPoolAdapter implements BasePoolAdapter {
   async withdrawCollateral(
     rawId: string,
     userAddress: string,
-    amount: bigint
+    amount: bigint,
+    options?: PoolActionOptions
   ): Promise<TransactionResult> {
-    return this.buildSubmitTx(rawId, userAddress, amount, "withdrawCollateral");
+    const { poolContractId, assetAddress } = parseRawId(rawId);
+    const network = getBlendNetwork();
+
+    try {
+      const pool = await PoolV2.load(network, poolContractId);
+      const reserve = pool.reserves.get(assetAddress);
+      if (!reserve) {
+        throw new AdapterError(
+          "blend",
+          "withdrawCollateral",
+          `Reserve ${assetAddress} not found in pool ${poolContractId}`
+        );
+      }
+
+      const poolUser = await pool.loadUser(userAddress);
+      const collateral = poolUser.getCollateral(reserve);
+      const effectiveAmount =
+        options?.withdrawAll || amount > collateral ? collateral : amount;
+      if (effectiveAmount <= 0n) {
+        throw new Error("No collateral balance available to remove");
+      }
+
+      const poolContract = new PoolContractV2(poolContractId);
+      const opXdr = poolContract.submit({
+        from: userAddress,
+        spender: userAddress,
+        to: userAddress,
+        requests: [
+          {
+            request_type: RequestType.WithdrawCollateral,
+            address: assetAddress,
+            amount: effectiveAmount,
+          },
+        ],
+      });
+
+      return this.wrapOperation(opXdr, userAddress);
+    } catch (error) {
+      if (error instanceof AdapterError) throw error;
+      throw new AdapterError("blend", "withdrawCollateral", error);
+    }
   }
 
   async claimRewards(

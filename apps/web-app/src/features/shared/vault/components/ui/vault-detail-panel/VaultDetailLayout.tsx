@@ -6,11 +6,17 @@ import { useWallet } from "@/hooks/useWallet";
 import { useVaultBalance } from "@/features/shared/vault/hooks/useVaultBalance";
 import { useVaultAction } from "@/features/shared/vault/hooks/useVaultAction";
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
+import { useVaultData } from "@/features/shared/vault/hooks/useVaultData";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected } from "@/lib/helpers/currency";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
+import {
+  atomicToDecimal,
+  decimalToAtomic,
+  mulDivFloor,
+} from "@/lib/helpers/amount";
 import { VaultDetailHero } from "./VaultDetailHero";
 import { VaultDetailMetrics } from "./VaultDetailMetrics";
 import { VaultDetailInfo } from "./VaultDetailInfo";
@@ -20,8 +26,10 @@ import type { VaultDetailLayoutProps, VaultActionTab } from "./types";
 const PANEL_SCROLL_CLASS =
   "pool-detail-scroll flex max-h-[min(calc(100dvh-7rem),calc(100svh-7rem))] flex-col overflow-y-auto overscroll-contain rounded-2xl bg-[#111111] p-6 lg:rounded-xl";
 
-
-export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps) {
+export function VaultDetailLayout({
+  vault,
+  initialTab,
+}: VaultDetailLayoutProps) {
   const [tab, setTab] = useState<VaultActionTab>(initialTab);
   const [amount, setAmount] = useState("");
 
@@ -30,9 +38,7 @@ export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps)
 
   const { vaultApy } = useVaultApy(vaultContractId);
   const liveApy7d =
-    vaultApy != null && vaultApy > 0
-      ? `${vaultApy.toFixed(2)}%`
-      : vault.apy7d;
+    vaultApy != null && vaultApy > 0 ? `${vaultApy.toFixed(2)}%` : vault.apy7d;
 
   const { price: tokenPriceUsd } = useTokenPrice(vault.supplyAsset.symbol);
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
@@ -40,15 +46,17 @@ export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps)
   const tokenPriceInCurrency =
     tokenPriceUsd > 0 ? convertUsdToSelected(tokenPriceUsd, fxRate) : undefined;
 
-  const { sharesFormatted } = useVaultBalance(vaultContractId);
-  const { isLoading, isConfirming, handleDeposit, handleWithdraw } = useVaultAction(
-    vaultContractId,
-    vault.supplyAsset.symbol,
-    vault.name
-  );
+  const { userShares, sharesFormatted } = useVaultBalance(vaultContractId);
+  const { data: vaultData } = useVaultData(vaultContractId);
+  const { isLoading, isConfirming, handleDeposit, handleWithdraw } =
+    useVaultAction(vaultContractId, vault.supplyAsset.symbol, vault.name);
 
   const { data: supplyBalance = "0" } = useQuery({
-    queryKey: ["vaultSupplyBalance", vault.supplyAsset.contractAddress, address],
+    queryKey: [
+      "vaultSupplyBalance",
+      vault.supplyAsset.contractAddress,
+      address,
+    ],
     queryFn: () =>
       getTokenBalanceFromContract(
         vault.supplyAsset.contractAddress!,
@@ -65,14 +73,25 @@ export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps)
     setAmount("");
   }, []);
 
+  const withdrawUnderlying =
+    vaultData?.totalShares && vaultData.totalShares > 0n
+      ? mulDivFloor(userShares, vaultData.tvl, vaultData.totalShares)
+      : 0n;
+  const withdrawBalance = atomicToDecimal(withdrawUnderlying, 7);
+
   const handleSubmit = useCallback(async () => {
     if (!amount || parseFloat(amount) <= 0) return;
+    const withdrawRaw = tab === "withdraw" ? decimalToAtomic(amount, 7) : 0n;
+    const maxWithdrawRaw =
+      tab === "withdraw" ? decimalToAtomic(withdrawBalance, 7) : 0n;
     const success =
       tab === "deposit"
         ? await handleDeposit(amount)
-        : await handleWithdraw(amount);
+        : await handleWithdraw(amount, {
+            withdrawAll: maxWithdrawRaw > 0n && withdrawRaw >= maxWithdrawRaw,
+          });
     if (success) setAmount("");
-  }, [tab, amount, handleDeposit, handleWithdraw]);
+  }, [tab, amount, withdrawBalance, handleDeposit, handleWithdraw]);
 
   return (
     <div
@@ -96,6 +115,7 @@ export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps)
             isConfirming={isConfirming}
             supplyBalance={String(supplyBalance)}
             sharesBalance={sharesFormatted}
+            withdrawBalance={withdrawBalance}
             isWalletConnected={!!address}
             apy={liveApy7d}
             tokenPriceInCurrency={tokenPriceInCurrency}
@@ -109,7 +129,12 @@ export function VaultDetailLayout({ vault, initialTab }: VaultDetailLayoutProps)
         <div className="pt-8">
           <VaultDetailHero vault={vault} />
           <div className="border-t border-white/5 mb-8" />
-          <VaultDetailMetrics vault={vault} liveApy={liveApy7d} fxRate={fxRate} selectedCurrency={selectedCurrency} />
+          <VaultDetailMetrics
+            vault={vault}
+            liveApy={liveApy7d}
+            fxRate={fxRate}
+            selectedCurrency={selectedCurrency}
+          />
           <div className="border-t border-white/5 mb-8" />
           <VaultDetailInfo vault={vault} />
         </div>

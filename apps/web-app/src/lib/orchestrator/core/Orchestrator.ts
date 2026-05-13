@@ -2,10 +2,12 @@ import { PoolRegistry, poolRegistry } from "./PoolRegistry";
 import { BlendPoolAdapter } from "../adapters/BlendPoolAdapter";
 import { SoroswapPoolAdapter } from "../adapters/SoroswapPoolAdapter";
 import { AquaPoolAdapter } from "../adapters/AquaPoolAdapter";
+import { NekoLendingAdapter } from "../adapters/NekoLendingAdapter";
 import { getBlendPoolIds } from "../adapters/blend-config";
 import { UnsupportedActionError } from "../types/errors";
 
 import type {
+  PoolActionOptions,
   PoolInfo,
   PoolPosition,
   TransactionResult,
@@ -44,11 +46,12 @@ export class Orchestrator {
     poolId: string,
     userAddress: string,
     amount: bigint,
-    tokenIndex?: number
+    tokenIndex?: number,
+    options?: PoolActionOptions
   ): Promise<TransactionResult> {
     const adapter = this.registry.resolve(poolId);
     const rawId = PoolRegistry.stripPrefix(poolId);
-    return adapter.withdraw(rawId, userAddress, amount, tokenIndex);
+    return adapter.withdraw(rawId, userAddress, amount, tokenIndex, options);
   }
 
   async borrow(
@@ -114,14 +117,15 @@ export class Orchestrator {
   async withdrawCollateral(
     poolId: string,
     userAddress: string,
-    amount: bigint
+    amount: bigint,
+    options?: PoolActionOptions
   ): Promise<TransactionResult> {
     const adapter = this.registry.resolve(poolId);
     if (!adapter.withdrawCollateral) {
       throw new UnsupportedActionError(adapter.type, "withdrawCollateral");
     }
     const rawId = PoolRegistry.stripPrefix(poolId);
-    return adapter.withdrawCollateral(rawId, userAddress, amount);
+    return adapter.withdrawCollateral(rawId, userAddress, amount, options);
   }
 
   async claimRewards(
@@ -218,5 +222,6 @@ for (const blendPoolId of getBlendPoolIds()) {
 
 poolRegistry.register(new SoroswapPoolAdapter());
 poolRegistry.register(new AquaPoolAdapter());
+poolRegistry.register(new NekoLendingAdapter());
 
 export const orchestrator = new Orchestrator(poolRegistry);

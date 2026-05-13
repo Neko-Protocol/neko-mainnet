@@ -19,10 +19,18 @@ import {
 } from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import {
+  applySlippageBps,
+  decimalToAtomic,
+  mulDivCeil,
+  mulDivFloor,
+} from "@/lib/helpers/amount";
+import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 import { resolveDecimalsForAuditAssetKey } from "@/lib/helpers/auditAssetAmounts";
 import { auditService } from "@/lib/services/audit.service";
 
 const VAULT_SHARE_DECIMALS = 7;
+const WITHDRAW_SLIPPAGE_BPS = 100;
 
 function unwrapAssembledContractResult<T>(result: unknown): T | undefined {
   if (result === null || result === undefined) return undefined;
@@ -78,16 +86,31 @@ async function signAndSubmit(
   signFn: (
     xdr: string,
     opts: { networkPassphrase: string; address?: string }
-  ) => Promise<{ signedTxXdr: string }>,
+  ) => Promise<string | { signedTxXdr?: string }>,
   address: string
 ) {
   const server = new rpc.Server(configRpcUrl, {
     allowHttp: stellarNetwork === "LOCAL",
   });
   const signed = await signFn(xdr, { networkPassphrase: passphrase, address });
+  const signedTxXdr = extractSignedTxXdr(signed);
   return server.sendTransaction(
-    TransactionBuilder.fromXDR(signed.signedTxXdr, passphrase)
+    TransactionBuilder.fromXDR(signedTxXdr, passphrase)
   );
+}
+
+function readBigintResult(result: unknown): bigint {
+  const value = unwrapAssembledContractResult<unknown>(result);
+  return BigInt((value as { toString(): string }).toString());
+}
+
+function readSingleAssetTotalManaged(result: unknown): bigint {
+  const funds =
+    unwrapAssembledContractResult<Array<{ total_amount: unknown }>>(result);
+  if (!Array.isArray(funds) || funds.length !== 1) {
+    throw new Error("Only single-asset vault withdrawals are supported");
+  }
+  return BigInt(String(funds[0].total_amount));
 }
 
 /**
@@ -248,7 +271,8 @@ export function useVaultAction(
         void invalidateAfterTx();
         return true;
       } catch (err) {
-        if (err instanceof Error && err.message === "USER_REJECTED") return false;
+        if (err instanceof Error && err.message === "USER_REJECTED")
+          return false;
         const contractMsg = extractContractErrorOrNull(err);
         showError(
           typeof contractMsg === "string"
@@ -277,8 +301,11 @@ export function useVaultAction(
   );
 
   const handleWithdraw = useCallback(
-    async (shares: string): Promise<boolean> => {
-      if (!address || !shares || parseFloat(shares) <= 0) return false;
+    async (
+      amount: string,
+      options?: { withdrawAll?: boolean }
+    ): Promise<boolean> => {
+      if (!address || !amount || parseFloat(amount) <= 0) return false;
       if (!vaultContractId) return false;
       setIsLoading(true);
 
@@ -296,11 +323,48 @@ export function useVaultAction(
           ...(allowHttpForSoroban && { allowHttp: true }),
         });
 
-        const sharesBigInt = BigInt(toSmallestUnit(shares, 7));
+        const decimals =
+          resolveDecimalsForAuditAssetKey(supplyAssetSymbol) ??
+          VAULT_SHARE_DECIMALS;
+        const amountUnderlying = decimalToAtomic(amount, decimals);
+
+        const [balanceTx, totalSupplyTx, fundsTx] = await Promise.all([
+          client.balance({ id: address }, { simulate: true }),
+          client.total_supply({ simulate: true }),
+          client.fetch_total_managed_funds({ simulate: true }),
+        ]);
+        const userShares = readBigintResult(balanceTx.result);
+        const totalSupply = readBigintResult(totalSupplyTx.result);
+        const totalManaged = readSingleAssetTotalManaged(fundsTx.result);
+
+        if (userShares <= 0n || totalSupply <= 0n || totalManaged <= 0n) {
+          throw new Error("No vault balance available to withdraw");
+        }
+
+        let sharesBigInt = options?.withdrawAll
+          ? userShares
+          : mulDivCeil(amountUnderlying, totalSupply, totalManaged);
+        if (sharesBigInt <= 0n) {
+          throw new Error("Withdrawal amount is too small");
+        }
+        if (sharesBigInt > userShares) {
+          if (options?.withdrawAll) {
+            sharesBigInt = userShares;
+          } else {
+            throw new Error("Withdrawal amount exceeds vault balance");
+          }
+        }
+        const expectedUnderlying = mulDivFloor(
+          sharesBigInt,
+          totalManaged,
+          totalSupply
+        );
 
         const withdrawTx = await client.withdraw({
           withdraw_shares: sharesBigInt,
-          min_amounts_out: [0n],
+          min_amounts_out: [
+            applySlippageBps(expectedUnderlying, WITHDRAW_SLIPPAGE_BPS),
+          ],
           from: address,
         });
 
@@ -335,34 +399,39 @@ export function useVaultAction(
         }
 
         const underlyingBi = vaultWithdrawUnderlyingOut(withdrawTx.result);
-        const undDec =
-          resolveDecimalsForAuditAssetKey(supplyAssetSymbol) ??
-          VAULT_SHARE_DECIMALS;
         const underlyingHuman =
           underlyingBi != null
-            ? parseFloat(fromSmallestUnit(underlyingBi.toString(), undDec))
-            : undefined;
+            ? parseFloat(fromSmallestUnit(underlyingBi.toString(), decimals))
+            : parseFloat(
+                fromSmallestUnit(expectedUnderlying.toString(), decimals)
+              );
+        const sharesHuman = parseFloat(
+          fromSmallestUnit(sharesBigInt.toString(), VAULT_SHARE_DECIMALS)
+        );
+        const displayAmount =
+          underlyingBi != null
+            ? fromSmallestUnit(underlyingBi.toString(), decimals)
+            : fromSmallestUnit(expectedUnderlying.toString(), decimals);
 
         auditService.log({
           wallet_address: address,
           action_type: "vaults_withdraw",
           asset_in: vaultShareSymbol ?? "vault_shares",
-          amount_in: parseFloat(shares),
+          amount_in: sharesHuman,
           asset_out: supplyAssetSymbol,
-          ...(underlyingHuman != null && Number.isFinite(underlyingHuman)
-            ? { amount_out: underlyingHuman }
-            : {}),
+          amount_out: underlyingHuman,
           pool_id: vaultContractId,
           tx_hash: sendResult.hash,
         });
 
         showSuccess(
-          `Successfully withdrew ${shares} ${vaultShareSymbol ?? "shares"}`
+          `Successfully withdrew ${displayAmount} ${supplyAssetSymbol}`
         );
         void invalidateAfterTx();
         return true;
       } catch (err) {
-        if (err instanceof Error && err.message === "USER_REJECTED") return false;
+        if (err instanceof Error && err.message === "USER_REJECTED")
+          return false;
         const contractMsg = extractContractErrorOrNull(err);
         showError(
           typeof contractMsg === "string"

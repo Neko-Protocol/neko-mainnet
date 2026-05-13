@@ -14,6 +14,7 @@ export interface VaultActionPanelProps {
   isConfirming?: boolean;
   supplyBalance: string;
   sharesBalance: string;
+  withdrawBalance: string;
   isWalletConnected: boolean;
   apy?: string;
   tokenPriceInCurrency?: number;

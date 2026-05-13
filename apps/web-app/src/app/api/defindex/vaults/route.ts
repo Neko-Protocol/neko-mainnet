@@ -102,7 +102,6 @@ export async function GET() {
     });
   }
 
-  // Return cached response if still fresh
   if (serverCache && Date.now() - serverCache.ts < SERVER_CACHE_TTL_MS) {
     return NextResponse.json(serverCache.data);
   }
@@ -111,8 +110,6 @@ export async function GET() {
   const vaults: VaultView[] = [];
   const fetchErrors: { contractId: string; message: string }[] = [];
 
-  // Build batch promises  vault info fetching does NOT need prices,
-  // so we kick off prices and all vault batches simultaneously.
   const assetsConfig = Object.values(getAssetsConfig());
 
   const pricePromise = Promise.allSettled(
@@ -123,7 +120,6 @@ export async function GET() {
     )
   );
 
-  // All batches start in parallel with price fetching
   const batchCount = Math.ceil(ids.length / VAULT_FETCH_CONCURRENCY);
   const batchPromises = Array.from({ length: batchCount }, async (_, bi) => {
     if (bi > 0) await delay(bi * BATCH_GAP_MS);
@@ -136,13 +132,11 @@ export async function GET() {
     );
   });
 
-  // Wait for both prices and all vault batches concurrently
   const [priceResults, ...batchResults] = await Promise.all([
     pricePromise,
     ...batchPromises,
   ]);
 
-  // Build price map
   const priceUsdByAsset: Record<string, number> = {};
   for (const r of priceResults) {
     if (r.status === "fulfilled" && r.value.price > 0) {
@@ -150,7 +144,6 @@ export async function GET() {
     }
   }
 
-  // Transform vault results now that prices are ready
   for (let bi = 0; bi < batchResults.length; bi++) {
     const batchSettled = batchResults[bi] as PromiseSettledResult<{
       contractId: string;
