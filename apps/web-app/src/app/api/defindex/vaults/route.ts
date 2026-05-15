@@ -12,7 +12,7 @@ import type { VaultView } from "@/features/shared/vault/types/vault";
 
 export const dynamic = "force-dynamic";
 
-const SERVER_CACHE_TTL_MS = 2 * 60_000;
+const SERVER_CACHE_TTL_MS = 30_000;
 let serverCache: {
   data: {
     vaults: VaultView[];

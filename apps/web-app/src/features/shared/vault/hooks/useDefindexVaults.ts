@@ -28,7 +28,7 @@ export function useDefindexVaults() {
     queryFn: fetchDefindexVaults,
     staleTime: 30_000,
     gcTime: 15 * 60_000,
-    refetchInterval: 60_000,
+    refetchInterval: 30_000,
     refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
     retry: 1,
