@@ -86,6 +86,24 @@ const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
     creatorIconSrc: "/neko-logo.png",
     issuerIconSrc: "/assets/vault-assets/neko.svg",
   },
+  // CETES Neko
+  CANBU7T77SCJOOAU6VQAOGR7DN36JBQFUN56XS2WA2VPJYUSRUBIPYDS: {
+    createdBy: "Neko",
+    creatorIconSrc: "/neko-logo.png",
+    issuerIconSrc: "/assets/vault-assets/neko.svg",
+  },
+  // USTRY Neko
+  CCIRVAW3IZVAYLHR7YYMZFOQVYEW67OKFFXR3J6ZR2T6YJC5V7GTSNQ5: {
+    createdBy: "Neko",
+    creatorIconSrc: "/neko-logo.png",
+    issuerIconSrc: "/assets/vault-assets/neko.svg",
+  },
+  // TESOURO Neko
+  CBMERS7MJHO6TGKUVWWU34ZSKWCFOWPG2ZCIRIT75IC3YDWBIPBMV5LB: {
+    createdBy: "Neko",
+    creatorIconSrc: "/neko-logo.png",
+    issuerIconSrc: "/assets/vault-assets/neko.svg",
+  },
 };
 
 function toVaultAsset(

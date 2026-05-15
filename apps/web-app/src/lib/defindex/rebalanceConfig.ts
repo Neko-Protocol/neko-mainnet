@@ -28,6 +28,12 @@ const EURC_NEKO_VAULT =
   "CB3FUMFGCF6DHSFK6N2TOKHRMYXS34HFKQR45UKVORCRUM35AF3ES7WQ";
 const USDC_NEKO_VAULT =
   "CCPKQH3K5XUGP5GXCT6WTABS7TGXRR745BJ4MEFSGNATB7AOBRL4VEOT";
+const CETES_NEKO_VAULT =
+  "CANBU7T77SCJOOAU6VQAOGR7DN36JBQFUN56XS2WA2VPJYUSRUBIPYDS";
+const USTRY_NEKO_VAULT =
+  "CCIRVAW3IZVAYLHR7YYMZFOQVYEW67OKFFXR3J6ZR2T6YJC5V7GTSNQ5";
+const TESOURO_NEKO_VAULT =
+  "CBMERS7MJHO6TGKUVWWU34ZSKWCFOWPG2ZCIRIT75IC3YDWBIPBMV5LB";
 const CETES_BLEND_VAULT =
   "CDI2ZW5CKT4OIHX3IGMVJ4VGOH6Z64N2M3URKATYJIX7JRITJFQJPFD7";
 const USTRY_BLEND_VAULT =
@@ -118,6 +124,39 @@ export const VAULT_REBALANCE_CONFIGS: readonly VaultRebalanceConfig[] = [
     strategies: [
       {
         name: "Blend TESOURO Neko",
+        address: TESOURO_BLEND_STRATEGY_CONTRACT,
+        targetBps: 10_000,
+      },
+    ],
+  },
+  {
+    vaultId: CETES_NEKO_VAULT,
+    label: "CETES Neko",
+    strategies: [
+      {
+        name: "CETES Blend Autocompound Etherfuse",
+        address: CETES_BLEND_STRATEGY_CONTRACT,
+        targetBps: 10_000,
+      },
+    ],
+  },
+  {
+    vaultId: USTRY_NEKO_VAULT,
+    label: "USTRY Neko",
+    strategies: [
+      {
+        name: "USTRY Blend Autocompound Etherfuse",
+        address: USTRY_BLEND_STRATEGY_CONTRACT,
+        targetBps: 10_000,
+      },
+    ],
+  },
+  {
+    vaultId: TESOURO_NEKO_VAULT,
+    label: "TESOURO Neko",
+    strategies: [
+      {
+        name: "TESOURO Blend Autocompound Etherfuse",
         address: TESOURO_BLEND_STRATEGY_CONTRACT,
         targetBps: 10_000,
       },

@@ -35,10 +35,11 @@ export const VaultCard: React.FC<VaultCardProps> = ({
   const isLight = (vault.variant ?? "light") === "light";
   const categoryLabel = CATEGORY_LABEL[vault.category];
   const hasPosition = userBalance && userBalance > 0n;
-  const cardHeaderIconSrc = React.useMemo(
-    () => vaultArtForSymbol(vault.supplyAsset.symbol).iconSrc,
+  const cardHeaderArt = React.useMemo(
+    () => vaultArtForSymbol(vault.supplyAsset.symbol),
     [vault.supplyAsset.symbol]
   );
+  const cardHeaderIconSrc = cardHeaderArt.iconSrc;
 
   return (
     <div
@@ -78,6 +79,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
               height={48}
               unoptimized
               className="h-full w-full object-contain"
+              style={cardHeaderArt.imageStyle}
             />
           </div>
 

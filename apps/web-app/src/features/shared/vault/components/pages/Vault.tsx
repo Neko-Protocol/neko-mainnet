@@ -163,9 +163,17 @@ const Vault: React.FC = () => {
         map.set(v.supplyAsset.symbol, vaultAssetFilterIconSrc(v));
       }
     });
+    const PRIORITY = ["USDC", "EURC"];
     return Array.from(map.entries())
       .map(([symbol, iconSrc]) => ({ symbol, iconSrc }))
-      .sort((a, b) => a.symbol.localeCompare(b.symbol));
+      .sort((a, b) => {
+        const ai = PRIORITY.indexOf(a.symbol);
+        const bi = PRIORITY.indexOf(b.symbol);
+        if (ai !== -1 && bi !== -1) return ai - bi;
+        if (ai !== -1) return -1;
+        if (bi !== -1) return 1;
+        return a.symbol.localeCompare(b.symbol);
+      });
   }, [vaultsFromApi]);
 
   const filteredVaults = useMemo(() => {
