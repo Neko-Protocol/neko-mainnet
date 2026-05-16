@@ -114,7 +114,7 @@ export function YourPositionsTable({
                 Position
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-white/30 uppercase tracking-wide">
-                Amount
+                Deposited
               </th>
             </tr>
           </thead>
@@ -146,7 +146,10 @@ export function YourPositionsTable({
                     {formatAmount(
                       safeParseFloat(position.depositedFormatted),
                       2
-                    )}
+                    )}{" "}
+                    <span className="text-white/50 font-normal">
+                      {pool.tokens[0]?.code ?? ""}
+                    </span>
                   </p>
                   {position.rewards > 0n && (
                     <p className="text-[#76C464] text-xs font-semibold mt-0.5">

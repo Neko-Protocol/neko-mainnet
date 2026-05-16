@@ -16,7 +16,7 @@ import type { VaultPositionEntry } from "@/features/expert/dashboard/hooks/useDa
 const DEFAULT_MAX_ROWS = 4;
 const ONE_SHARE = 1_000_000_000_000n;
 
-function VaultUsdValue({
+function VaultAmountAndValue({
   vaultId,
   userShares,
   assetSymbol,
@@ -28,9 +28,20 @@ function VaultUsdValue({
   const { data } = useVaultData(vaultId);
   const { price } = useTokenPrice(assetSymbol);
 
-  if (!data?.pricePerShare || !price || userShares === 0n) {
+  if (!data?.pricePerShare || userShares === 0n) {
     return (
-      <span className="text-white font-semibold text-sm tabular-nums">—</span>
+      <>
+        <td className="px-4 py-3.5 align-middle text-right">
+          <span className="text-white font-semibold text-sm tabular-nums">
+            —
+          </span>
+        </td>
+        <td className="px-4 py-3.5 align-middle text-right">
+          <span className="text-white font-semibold text-sm tabular-nums">
+            —
+          </span>
+        </td>
+      </>
     );
   }
 
@@ -38,12 +49,21 @@ function VaultUsdValue({
   const underlyingAmount = parseFloat(
     fromSmallestUnit(underlyingStroops.toString(), 7)
   );
-  const usd = underlyingAmount * price;
 
   return (
-    <p className="text-white font-semibold text-sm tabular-nums">
-      ${usd.toFixed(2)}
-    </p>
+    <>
+      <td className="px-4 py-3.5 align-middle text-right">
+        <p className="text-white font-semibold text-sm tabular-nums">
+          {underlyingAmount.toFixed(2)}{" "}
+          <span className="text-white/50 font-normal">{assetSymbol}</span>
+        </p>
+      </td>
+      <td className="px-4 py-3.5 align-middle text-right">
+        <p className="text-white font-semibold text-sm tabular-nums">
+          {price ? `$${(underlyingAmount * price).toFixed(2)}` : "—"}
+        </p>
+      </td>
+    </>
   );
 }
 
@@ -85,6 +105,9 @@ export function VaultPositionsTable({
                 Vault
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-white/30 uppercase tracking-wide">
+                Deposited
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-white/30 uppercase tracking-wide">
                 Value
               </th>
             </tr>
@@ -121,13 +144,11 @@ export function VaultPositionsTable({
                     )}
                   </p>
                 </td>
-                <td className="px-4 py-3.5 align-middle text-right">
-                  <VaultUsdValue
-                    vaultId={vault.id}
-                    userShares={userShares}
-                    assetSymbol={vault.supplyAsset.symbol}
-                  />
-                </td>
+                <VaultAmountAndValue
+                  vaultId={vault.id}
+                  userShares={userShares}
+                  assetSymbol={vault.supplyAsset.symbol}
+                />
               </tr>
             ))}
           </tbody>
