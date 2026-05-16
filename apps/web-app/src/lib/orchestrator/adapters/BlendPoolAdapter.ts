@@ -24,9 +24,14 @@ import type {
   TransactionResult,
 } from "../types/pool.types";
 import { AdapterError, UnsupportedActionError } from "../types/errors";
-import { getBlendNetwork, BLEND_POOL_VAULTS } from "./blend-config";
+import {
+  getBlendNetwork,
+  BLEND_POOL_VAULTS,
+  BLEND_ASSET_CODES,
+} from "./blend-config";
 import { getBlndPriceUsd, computeBlendEmissionsApy } from "./blend-emissions";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { getContractToCodeMap } from "@/lib/constants/assets.config";
 
 type SdkResultLike = {
   tag?: string;
@@ -131,6 +136,13 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         tokenMeta = await TokenMetadata.load(network, assetAddress);
       } catch {}
 
+      const contractToCode = getContractToCodeMap();
+      const resolvedCode =
+        tokenMeta?.symbol ??
+        BLEND_ASSET_CODES[assetAddress] ??
+        contractToCode[assetAddress] ??
+        assetAddress.slice(0, 8);
+
       const isVaultPool =
         !!BLEND_POOL_VAULTS[`${poolContractId}:${assetAddress}`];
       let emissionsApy: number | null = null;
@@ -153,11 +165,11 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       return {
         id: `blend:${poolContractId}:${assetAddress}`,
         type: "blend",
-        name: `${tokenMeta?.symbol ?? assetAddress.slice(0, 8)} Blend Pool`,
+        name: `${resolvedCode} Blend Pool`,
         tokens: [
           {
             address: assetAddress,
-            code: tokenMeta?.symbol ?? "UNKNOWN",
+            code: resolvedCode,
             name: tokenMeta?.name ?? assetAddress,
             decimals: tokenMeta?.decimals ?? reserve.config.decimals,
           },
@@ -204,66 +216,75 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       const toProcess =
         limit !== undefined ? reserveEntries.slice(0, limit) : reserveEntries;
 
-      for (const [assetAddress, reserve] of toProcess) {
-        let tokenMeta: TokenMetadata | undefined;
-        try {
-          tokenMeta = await TokenMetadata.load(network, assetAddress);
-        } catch {}
+      const contractToCode = getContractToCodeMap();
+      const statusMap: Record<number, "active" | "frozen" | "on_ice"> = {
+        0: "active",
+        2: "on_ice",
+        4: "frozen",
+      };
 
-        const isVaultPool =
-          !!BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`];
-        let emissionsApy: number | null = null;
-        if (reserve.supplyEmissions && !isVaultPool) {
-          emissionsApy = await computeBlendEmissionsApy(
-            reserve,
-            pool,
-            assetAddress,
-            blndPrice
-          );
-        }
-        const totalApy = reserve.estSupplyApy * 100 + (emissionsApy ?? 0);
+      const resolved = await Promise.all(
+        toProcess.map(async ([assetAddress, reserve]) => {
+          let tokenMeta: TokenMetadata | undefined;
+          try {
+            tokenMeta = await TokenMetadata.load(network, assetAddress);
+          } catch {}
 
-        const statusMap: Record<number, "active" | "frozen" | "on_ice"> = {
-          0: "active",
-          2: "on_ice",
-          4: "frozen",
-        };
+          const resolvedCode =
+            tokenMeta?.symbol ??
+            contractToCode[assetAddress] ??
+            assetAddress.slice(0, 8);
 
-        pools.push({
-          id: `blend:${this.poolContractId}:${assetAddress}`,
-          type: "blend",
-          name: `${tokenMeta?.symbol ?? assetAddress.slice(0, 8)} Blend Pool`,
-          tokens: [
-            {
-              address: assetAddress,
-              code: tokenMeta?.symbol ?? "UNKNOWN",
-              name: tokenMeta?.name ?? assetAddress,
-              decimals: tokenMeta?.decimals ?? reserve.config.decimals,
+          const isVaultPool =
+            !!BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`];
+          let emissionsApy: number | null = null;
+          if (reserve.supplyEmissions && !isVaultPool) {
+            emissionsApy = await computeBlendEmissionsApy(
+              reserve,
+              pool,
+              assetAddress,
+              blndPrice
+            );
+          }
+          const totalApy = reserve.estSupplyApy * 100 + (emissionsApy ?? 0);
+
+          return {
+            id: `blend:${this.poolContractId}:${assetAddress}`,
+            type: "blend" as const,
+            name: `${resolvedCode} Blend Pool`,
+            tokens: [
+              {
+                address: assetAddress,
+                code: resolvedCode,
+                name: tokenMeta?.name ?? assetAddress,
+                decimals: tokenMeta?.decimals ?? reserve.config.decimals,
+              },
+            ],
+            tvl: reserve.totalSupply(),
+            apy: totalApy,
+            state: statusMap[pool.metadata.status] ?? "unknown",
+            supportedActions: SUPPORTED_ACTIONS,
+            metadata: {
+              poolContractId: this.poolContractId,
+              assetAddress,
+              borrowApy: reserve.estBorrowApy * 100,
+              supplyApy: reserve.estSupplyApy * 100,
+              cFactor: reserve.getCollateralFactor(),
+              lFactor: reserve.getLiabilityFactor(),
+              minCollateral: pool.metadata.minCollateral ?? 0n,
+              totalLiabilities: reserve.totalLiabilities().toString(),
+              utilization: reserve.getUtilizationFloat(),
+              poolName: pool.metadata.name,
+              hasEmissions:
+                !isVaultPool &&
+                !!(reserve.supplyEmissions || reserve.borrowEmissions),
+              emissionsApy: emissionsApy ?? 0,
             },
-          ],
-          tvl: reserve.totalSupply(),
-          apy: totalApy,
-          state: statusMap[pool.metadata.status] ?? "unknown",
-          supportedActions: SUPPORTED_ACTIONS,
-          metadata: {
-            poolContractId: this.poolContractId,
-            assetAddress,
-            borrowApy: reserve.estBorrowApy * 100,
-            supplyApy: reserve.estSupplyApy * 100,
-            cFactor: reserve.getCollateralFactor(),
-            lFactor: reserve.getLiabilityFactor(),
-            minCollateral: pool.metadata.minCollateral ?? 0n,
-            totalLiabilities: reserve.totalLiabilities().toString(),
-            utilization: reserve.getUtilizationFloat(),
-            poolName: pool.metadata.name,
-            hasEmissions:
-              !isVaultPool &&
-              !!(reserve.supplyEmissions || reserve.borrowEmissions),
-            emissionsApy: emissionsApy ?? 0,
-          },
-        });
-      }
+          };
+        })
+      );
 
+      pools.push(...resolved);
       return pools;
     } catch (error) {
       console.error("[BlendPoolAdapter] listPools failed:", error);
