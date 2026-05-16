@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useMemo, useState, type ReactNode } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { stellarNetwork } from "@/lib/constants/network";
@@ -15,8 +16,28 @@ type LendTab = "pools" | "backstop" | "positions";
 
 const showBackstop = stellarNetwork !== "PUBLIC";
 
+const VALID_TABS: LendTab[] = ["pools", "backstop", "positions"];
+
 function LendingPanel() {
-  const [activeTab, setActiveTab] = useState<LendTab>("pools");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab") as LendTab | null;
+  const [activeTab, setActiveTab] = useState<LendTab>(
+    tabParam && VALID_TABS.includes(tabParam) ? tabParam : "pools"
+  );
+
+  function handleTabChange(key: LendTab) {
+    setActiveTab(key);
+    const params = new URLSearchParams(searchParams.toString());
+    if (key === "pools") {
+      params.delete("tab");
+    } else {
+      params.set("tab", key);
+    }
+    const qs = params.toString();
+    router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+  }
   const lendTabs = useMemo(
     () =>
       [
@@ -58,7 +79,7 @@ function LendingPanel() {
       <SubTabs
         tabs={[...lendTabs]}
         active={effectiveTab}
-        onChange={setActiveTab}
+        onChange={handleTabChange}
       />
 
       {effectiveTab === "pools" && (

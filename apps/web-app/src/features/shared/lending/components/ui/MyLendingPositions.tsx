@@ -396,13 +396,13 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
           ) : (
             <>
               {nekoUnified.map(renderRow)}
-              {isLoadingNeko && nekoUnified.length === 0 && (
+              {isLoadingNeko && (
                 <tr>
                   <td colSpan={colSpan} className="px-4 py-3 text-center">
                     <div className="flex items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/20 border-t-white/40" />
                       <span className="text-white/30 text-xs">
-                        Loading Neko positions…
+                        Loading positions…
                       </span>
                     </div>
                   </td>
