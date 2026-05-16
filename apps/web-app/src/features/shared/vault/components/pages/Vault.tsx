@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
@@ -36,9 +36,30 @@ function vaultAssetFilterIconSrc(v: VaultView): string {
   return v.supplyAsset.iconSrc;
 }
 
+const VALID_VAULT_TABS: VaultTabKey[] = ["vaults", "positions"];
+
 const Vault: React.FC = () => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<VaultTabKey>("vaults");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const tabParam = searchParams.get("tab") as VaultTabKey | null;
+  const [activeTab, setActiveTab] = useState<VaultTabKey>(
+    tabParam && VALID_VAULT_TABS.includes(tabParam) ? tabParam : "vaults"
+  );
+
+  function handleTabChange(tab: VaultTabKey) {
+    setActiveTab(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    if (tab === "vaults") {
+      params.delete("tab");
+    } else {
+      params.set("tab", tab);
+    }
+    const qs = params.toString();
+    router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+  }
+
   const [assetFilter, setAssetFilter] = useState<string | null>(null);
   const [assetDropdownOpen, setAssetDropdownOpen] = useState(false);
   const assetDropdownRef = useRef<HTMLDivElement>(null);
@@ -238,7 +259,7 @@ const Vault: React.FC = () => {
       />
 
       <div className="mb-6 w-full min-w-0 flex items-center justify-between gap-4">
-        <VaultTabs activeTab={activeTab} onChange={setActiveTab} />
+        <VaultTabs activeTab={activeTab} onChange={handleTabChange} />
         {activeTab === "vaults" && assetOptions.length >= 2 && (
           <div ref={assetDropdownRef} className="relative shrink-0">
             <button

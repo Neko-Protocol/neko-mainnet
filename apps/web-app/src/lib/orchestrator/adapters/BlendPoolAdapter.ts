@@ -24,9 +24,14 @@ import type {
   TransactionResult,
 } from "../types/pool.types";
 import { AdapterError, UnsupportedActionError } from "../types/errors";
-import { getBlendNetwork, BLEND_POOL_VAULTS } from "./blend-config";
+import {
+  getBlendNetwork,
+  BLEND_POOL_VAULTS,
+  BLEND_ASSET_CODES,
+} from "./blend-config";
 import { getBlndPriceUsd, computeBlendEmissionsApy } from "./blend-emissions";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { getContractToCodeMap } from "@/lib/constants/assets.config";
 
 type SdkResultLike = {
   tag?: string;
@@ -131,6 +136,17 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         tokenMeta = await TokenMetadata.load(network, assetAddress);
       } catch {}
 
+      const contractToCode = getContractToCodeMap();
+      const onChainSymbol =
+        tokenMeta?.symbol && tokenMeta.symbol !== "UNKNOWN"
+          ? tokenMeta.symbol
+          : undefined;
+      const resolvedCode =
+        BLEND_ASSET_CODES[assetAddress] ??
+        onChainSymbol ??
+        contractToCode[assetAddress] ??
+        assetAddress.slice(0, 8);
+
       const isVaultPool =
         !!BLEND_POOL_VAULTS[`${poolContractId}:${assetAddress}`];
       let emissionsApy: number | null = null;
@@ -153,11 +169,11 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       return {
         id: `blend:${poolContractId}:${assetAddress}`,
         type: "blend",
-        name: `${tokenMeta?.symbol ?? assetAddress.slice(0, 8)} Blend Pool`,
+        name: `${resolvedCode} Blend Pool`,
         tokens: [
           {
             address: assetAddress,
-            code: tokenMeta?.symbol ?? "UNKNOWN",
+            code: resolvedCode,
             name: tokenMeta?.name ?? assetAddress,
             decimals: tokenMeta?.decimals ?? reserve.config.decimals,
           },
@@ -204,11 +220,28 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       const toProcess =
         limit !== undefined ? reserveEntries.slice(0, limit) : reserveEntries;
 
+      const contractToCode = getContractToCodeMap();
+      const statusMap: Record<number, "active" | "frozen" | "on_ice"> = {
+        0: "active",
+        2: "on_ice",
+        4: "frozen",
+      };
+
       for (const [assetAddress, reserve] of toProcess) {
         let tokenMeta: TokenMetadata | undefined;
         try {
           tokenMeta = await TokenMetadata.load(network, assetAddress);
         } catch {}
+
+        const onChainSymbol =
+          tokenMeta?.symbol && tokenMeta.symbol !== "UNKNOWN"
+            ? tokenMeta.symbol
+            : undefined;
+        const resolvedCode =
+          BLEND_ASSET_CODES[assetAddress] ??
+          onChainSymbol ??
+          contractToCode[assetAddress] ??
+          assetAddress.slice(0, 8);
 
         const isVaultPool =
           !!BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`];
@@ -223,20 +256,14 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         }
         const totalApy = reserve.estSupplyApy * 100 + (emissionsApy ?? 0);
 
-        const statusMap: Record<number, "active" | "frozen" | "on_ice"> = {
-          0: "active",
-          2: "on_ice",
-          4: "frozen",
-        };
-
         pools.push({
           id: `blend:${this.poolContractId}:${assetAddress}`,
           type: "blend",
-          name: `${tokenMeta?.symbol ?? assetAddress.slice(0, 8)} Blend Pool`,
+          name: `${resolvedCode} Blend Pool`,
           tokens: [
             {
               address: assetAddress,
-              code: tokenMeta?.symbol ?? "UNKNOWN",
+              code: resolvedCode,
               name: tokenMeta?.name ?? assetAddress,
               decimals: tokenMeta?.decimals ?? reserve.config.decimals,
             },
@@ -272,113 +299,109 @@ export class BlendPoolAdapter implements BasePoolAdapter {
   }
 
   /**
-   * Load pool + user ONCE and return positions for every reserve.
-   * Use this on the dashboard instead of N separate getUserPosition calls.
    */
-  async getAllUserPositions(userAddress: string): Promise<PoolPosition[]> {
-    const network = getBlendNetwork();
-    // Let PoolV2.load() errors propagate so React Query can retry and set isError.
-    const pool = await PoolV2.load(network, this.poolContractId);
-    const reserveEntries = Array.from(pool.reserves.entries());
-
-    const vaultReserves: typeof reserveEntries = [];
-    const directReserves: typeof reserveEntries = [];
-
-    for (const entry of reserveEntries) {
-      const [assetAddress] = entry;
-      const vaultId =
-        BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`];
-      if (vaultId) {
-        vaultReserves.push(entry);
-      } else {
-        directReserves.push(entry);
-      }
-    }
-
-    const vaultResults = await Promise.all(
-      vaultReserves.map(async ([assetAddress, reserve]) => {
-        const fullId = `blend:${this.poolContractId}:${assetAddress}`;
-        const vaultId =
-          BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`]!;
-        try {
-          const vault = new DefindexVaultClient({
-            contractId: vaultId,
-            rpcUrl,
-            networkPassphrase,
-            publicKey: userAddress,
-          });
-
-          const [balanceTx, fundsTx, supplyTx] = await Promise.all([
-            vault.balance({ id: userAddress }, { simulate: true }),
-            vault.fetch_total_managed_funds({ simulate: true }),
-            vault.total_supply({ simulate: true }),
-          ]);
-
-          const sharesBig = readBigintResult(balanceTx.result);
-
-          if (sharesBig === 0n) return emptyPosition(fullId);
-
-          const totalUnderlying = readSingleVaultFund(fundsTx.result);
-          const totalSupply = readBigintResult(supplyTx.result);
-          const deposited =
-            totalSupply > 0n
-              ? mulDivFloor(sharesBig, totalUnderlying, totalSupply)
-              : 0n;
-
-          return {
-            poolId: fullId,
-            deposited,
-            depositedFormatted: formatUnits(deposited, reserve.config.decimals),
-            rewards: 0n,
-            rewardsFormatted: "0",
-            metadata: {
-              vaultId,
-              supplied: deposited.toString(),
-              collateral: "0",
-              liabilities: "0",
-              shares: sharesBig.toString(),
-              totalUnderlying: totalUnderlying.toString(),
-              totalSupply: totalSupply.toString(),
-            },
-          };
-        } catch {
-          return emptyPosition(fullId);
-        }
-      })
+  async getAllVaultUserPositions(userAddress: string): Promise<PoolPosition[]> {
+    const vaultEntries = Object.entries(BLEND_POOL_VAULTS).filter(([key]) =>
+      key.startsWith(`${this.poolContractId}:`)
     );
 
-    const directResults: PoolPosition[] = [];
-    if (directReserves.length > 0) {
+    const results: PoolPosition[] = [];
+    for (let vi = 0; vi < vaultEntries.length; vi++) {
+      const [key, vaultId] = vaultEntries[vi];
+      const assetAddress = key.slice(this.poolContractId.length + 1);
+      const fullId = `blend:${this.poolContractId}:${assetAddress}`;
+      if (vi > 0) await new Promise((r) => setTimeout(r, 200));
       try {
-        const poolUser = await pool.loadUser(userAddress);
-        const { claimedTokens } = poolUser.estimateEmissions(
-          Array.from(pool.reserves.values())
-        );
-        for (const [assetAddress, reserve] of directReserves) {
-          const supplied = poolUser.getSupply(reserve);
-          const collateral = poolUser.getCollateral(reserve);
-          const liabilities = poolUser.getLiabilities(reserve);
-          const deposited = supplied + collateral;
-          directResults.push({
-            poolId: `blend:${this.poolContractId}:${assetAddress}`,
-            deposited,
-            depositedFormatted: formatUnits(deposited, reserve.config.decimals),
-            rewards: 0n,
-            rewardsFormatted: "0",
-            metadata: {
-              supplied: supplied.toString(),
-              collateral: collateral.toString(),
-              liabilities: liabilities.toString(),
-              claimedTokens,
-            },
-          });
+        const vault = new DefindexVaultClient({
+          contractId: vaultId,
+          rpcUrl,
+          networkPassphrase,
+          publicKey: userAddress,
+        });
+        const [balanceTx, fundsTx, supplyTx] = await Promise.all([
+          vault.balance({ id: userAddress }, { simulate: true }),
+          vault.fetch_total_managed_funds({ simulate: true }),
+          vault.total_supply({ simulate: true }),
+        ]);
+        const sharesBig = readBigintResult(balanceTx.result);
+        if (sharesBig === 0n) {
+          results.push(emptyPosition(fullId));
+          continue;
         }
+        const totalUnderlying = readSingleVaultFund(fundsTx.result);
+        const totalSupply = readBigintResult(supplyTx.result);
+        const deposited =
+          totalSupply > 0n
+            ? mulDivFloor(sharesBig, totalUnderlying, totalSupply)
+            : 0n;
+        results.push({
+          poolId: fullId,
+          deposited,
+          depositedFormatted: formatUnits(deposited, 7),
+          rewards: 0n,
+          rewardsFormatted: "0",
+          metadata: {
+            vaultId,
+            supplied: deposited.toString(),
+            collateral: "0",
+            liabilities: "0",
+            shares: sharesBig.toString(),
+            totalUnderlying: totalUnderlying.toString(),
+            totalSupply: totalSupply.toString(),
+          },
+        });
       } catch {
-        // loadUser failed  skip direct reserves, vault results still returned
+        results.push(emptyPosition(fullId));
       }
     }
+    return results;
+  }
 
-    return [...vaultResults, ...directResults];
+  async getDirectUserPositions(userAddress: string): Promise<PoolPosition[]> {
+    const network = getBlendNetwork();
+    const pool = await PoolV2.load(network, this.poolContractId);
+    const directReserves = Array.from(pool.reserves.entries()).filter(
+      ([assetAddress]) =>
+        !BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`]
+    );
+
+    if (directReserves.length === 0) return [];
+
+    try {
+      const poolUser = await pool.loadUser(userAddress);
+      const { claimedTokens } = poolUser.estimateEmissions(
+        Array.from(pool.reserves.values())
+      );
+      return directReserves.map(([assetAddress, reserve]) => {
+        const supplied = poolUser.getSupply(reserve);
+        const collateral = poolUser.getCollateral(reserve);
+        const liabilities = poolUser.getLiabilities(reserve);
+        const deposited = supplied + collateral;
+        return {
+          poolId: `blend:${this.poolContractId}:${assetAddress}`,
+          deposited,
+          depositedFormatted: formatUnits(deposited, reserve.config.decimals),
+          rewards: 0n,
+          rewardsFormatted: "0",
+          metadata: {
+            supplied: supplied.toString(),
+            collateral: collateral.toString(),
+            liabilities: liabilities.toString(),
+            claimedTokens,
+          },
+        };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  async getAllUserPositions(userAddress: string): Promise<PoolPosition[]> {
+    const [vault, direct] = await Promise.all([
+      this.getAllVaultUserPositions(userAddress),
+      this.getDirectUserPositions(userAddress),
+    ]);
+    return [...vault, ...direct];
   }
 
   async getUserPosition(

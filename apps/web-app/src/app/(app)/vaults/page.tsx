@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Vault from "@/features/shared/vault/components/pages/Vault";
 
 export const metadata: Metadata = {
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function VaultPage() {
-  return <Vault />;
+  return (
+    <Suspense>
+      <Vault />
+    </Suspense>
+  );
 }
