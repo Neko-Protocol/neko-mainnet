@@ -18,6 +18,17 @@ export function getBlendPoolIds(): string[] {
   return BLEND_POOLS[stellarNetwork] ?? [];
 }
 
+// Maps asset contract address → known token code for Blend pool reserves.
+// Used as a fallback when TokenMetadata.load() fails on-chain.
+export const BLEND_ASSET_CODES: Record<string, string> = {
+  CAL6ER2TI6CTRAY6BFXWNWA7WTYXUXTQCHUBCIBU5O6KM3HJFG6Z6VXV: "CETES",
+  CBLV4ATSIWU67CFSQU2NVRKINQIKUZ2ODSZBUJTJ43VJVRSBTZYOPNUR: "USTRY",
+  CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75: "USDC",
+  CD6M4R2322BYCY2LNWM74PEBQAQ63SA3DUJLI3L4225U4ZVCLMSCBCIS: "TESOURO",
+  CC5CE6MWISDXT3MLNQ7R3FVILFVFEIH3COWGH45GJKL6BD2ZHF7F7JVI: "EURC",
+  CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA: "XLM",
+};
+
 // Maps "<poolContractId>:<assetAddress>" → Neko DeFindex vault contract ID
 export const BLEND_POOL_VAULTS: Record<string, string> = {
   // CETES reserve → Neko CETES vault
