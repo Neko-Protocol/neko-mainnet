@@ -5,6 +5,11 @@ import { POOLS_QUERY_KEY } from "@/lib/orchestrator/hooks/usePools";
 import { orchestrator } from "@/lib/orchestrator/core/Orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { batchCheckLpBalances } from "@/lib/services/positionScanner";
+import {
+  BLEND_ASSET_CODES,
+  BLEND_POOL_VAULTS,
+} from "@/lib/orchestrator/adapters/blend-config";
+import { getContractToCodeMap } from "@/lib/constants/assets.config";
 import type {
   PoolInfo,
   PoolPosition,
@@ -17,14 +22,45 @@ export interface UserPositionWithPool {
 
 const POSITION_STALE_TIME = 60_000;
 
+const BLEND_SUPPORTED_ACTIONS: PoolInfo["supportedActions"] = [
+  "deposit",
+  "withdraw",
+  "supplyCollateral",
+  "withdrawCollateral",
+  "borrow",
+  "repay",
+  "claimRewards",
+];
+
+function buildVaultPoolInfoStub(poolId: string): PoolInfo | null {
+  const parts = poolId.split(":");
+  if (parts.length < 3) return null;
+  const [, poolContractId, assetAddress] = parts;
+  if (!poolContractId || !assetAddress) return null;
+
+  const contractToCode = getContractToCodeMap();
+  const code =
+    BLEND_ASSET_CODES[assetAddress] ??
+    contractToCode[assetAddress] ??
+    assetAddress.slice(0, 8);
+
+  return {
+    id: poolId,
+    type: "blend",
+    name: `${code} Blend Pool`,
+    tokens: [{ address: assetAddress, code, name: code, decimals: 7 }],
+    tvl: 0n,
+    apy: 0,
+    state: "active",
+    supportedActions: BLEND_SUPPORTED_ACTIONS,
+    metadata: { poolContractId, assetAddress, hasEmissions: false },
+  };
+}
+
 export function useUserPositions() {
   const { address } = useWallet();
   const queryClient = useQueryClient();
 
-  // ── Blend pools (explicit fetch) ───────────────────────────────────────────
-  // We fetch blend pools explicitly so we know exactly when they're ready.
-  // usePools().isLoading turns false as soon as any pool type resolves, so
-  // we'd race to fetch positions against a still-empty blendPools list.
   const blendListQuery = useQuery<PoolInfo[]>({
     queryKey: [...POOLS_QUERY_KEY, "blend"],
     queryFn: () => orchestrator.getPoolsByType("blend"),
@@ -35,10 +71,6 @@ export function useUserPositions() {
 
   const blendPools = blendListQuery.data ?? [];
 
-  // ── Non-blend pools (cache-only, no fresh fetch) ───────────────────────────
-  // Reading from cache prevents triggering fresh Soroswap/Aqua pool discovery
-  // here, which would flood the API with 429s when navigating directly to My
-  // Positions. The Pools tab's usePools() populates this cache on first visit.
   const cachedSoroswap =
     queryClient.getQueryData<PoolInfo[]>([...POOLS_QUERY_KEY, "soroswap"]) ??
     [];
@@ -46,24 +78,27 @@ export function useUserPositions() {
     queryClient.getQueryData<PoolInfo[]>([...POOLS_QUERY_KEY, "aqua"]) ?? [];
   const nonBlendPools = [...cachedSoroswap, ...cachedAqua];
 
-  // ── Blend batch query ──────────────────────────────────────────────────────
-  // ONE PoolV2.load + ONE loadUser covers every blend reserve → 2 RPC calls.
-  // Wait for blend pool list specifically so both don't race for RPC bandwidth.
-  // Note: we do NOT pre-screen via Horizon tx history here because sub-contract
-  // calls (e.g. depositing via a DeFindex vault) are invisible to the scanner.
-  const blendPositionsQuery = useQuery<PoolPosition[]>({
-    queryKey: ["orchestrator", "blend-all-positions", address],
-    queryFn: () => orchestrator.getAllBlendUserPositions(address!),
-    enabled: Boolean(address) && !blendListQuery.isLoading,
+  const vaultBlendPositionsQuery = useQuery<PoolPosition[]>({
+    queryKey: ["orchestrator", "blend-vault-positions", address],
+    queryFn: () => orchestrator.getAllBlendVaultUserPositions(address!),
+    enabled: Boolean(address),
     staleTime: POSITION_STALE_TIME,
     retry: 3,
     retryDelay: (attempt) => attempt * 1000,
     refetchOnWindowFocus: false,
   });
 
+  const directBlendPositionsQuery = useQuery<PoolPosition[]>({
+    queryKey: ["orchestrator", "blend-direct-positions", address],
+    queryFn: () => orchestrator.getAllBlendDirectUserPositions(address!),
+    enabled: Boolean(address) && !blendListQuery.isLoading,
+    staleTime: POSITION_STALE_TIME,
+    retry: 2,
+    retryDelay: (attempt) => attempt * 1000,
+    refetchOnWindowFocus: false,
+  });
+
   // ── LP balance pre-screen (Aqua + Soroswap) ───────────────────────────────
-  // ONE getLedgerEntries call checks all LP / share token balances at once.
-  // Pools with no balance are filtered out before any getUserPosition fires.
   const lpScreenQuery = useQuery<Set<string>>({
     queryKey: [
       "orchestrator",
@@ -78,8 +113,6 @@ export function useUserPositions() {
     retryDelay: (attempt) => attempt * 800,
   });
 
-  // Only query getUserPosition for pools that passed the LP pre-screen.
-  // If the screen hasn't run yet, hold off (empty array) to avoid a wasted burst.
   const poolsWithBalance = lpScreenQuery.data ?? null;
   const filteredNonBlendPools =
     poolsWithBalance !== null
@@ -103,13 +136,19 @@ export function useUserPositions() {
   // ── Assemble results ───────────────────────────────────────────────────────
   const positions: UserPositionWithPool[] = [];
 
-  // Blend positions (from batch)
-  for (const pos of blendPositionsQuery.data ?? []) {
+  for (const pos of vaultBlendPositionsQuery.data ?? []) {
+    if (pos.deposited === 0n) continue;
+    const pool =
+      blendPools.find((p) => p.id === pos.poolId) ??
+      buildVaultPoolInfoStub(pos.poolId);
+    if (pool) positions.push({ pool, position: pos });
+  }
+
+  for (const pos of directBlendPositionsQuery.data ?? []) {
     const hasDeposit = pos.deposited > 0n;
     const hasLiabilities =
       parseFloat(String(pos.metadata?.liabilities ?? "0")) > 0;
     if (!hasDeposit && !hasLiabilities) continue;
-
     const pool = blendPools.find((p) => p.id === pos.poolId);
     if (pool) positions.push({ pool, position: pos });
   }
@@ -127,8 +166,9 @@ export function useUserPositions() {
   });
 
   const isLoading =
+    vaultBlendPositionsQuery.isLoading ||
     blendListQuery.isLoading ||
-    blendPositionsQuery.isLoading ||
+    directBlendPositionsQuery.isLoading ||
     (nonBlendPools.length > 0 && lpScreenQuery.isLoading);
 
   return { positions, isLoading, hasWallet: Boolean(address) };
