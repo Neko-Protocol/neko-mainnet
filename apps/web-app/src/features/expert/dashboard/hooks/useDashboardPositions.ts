@@ -48,12 +48,15 @@ export function useDashboardPositions() {
 
   // ── Priority 2: Blend batch ────────────────────────────────────────────────
   // ONE PoolV2.load + ONE loadUser covers all blend reserves → 2 RPC calls total.
+  // Wait for pool list to finish before fetching positions so they don't race
+  // each other for Soroban RPC bandwidth on page load.
   const blendPositionsQuery = useQuery<PoolPosition[]>({
     queryKey: ["orchestrator", "blend-all-positions", address],
     queryFn: () => orchestrator.getAllBlendUserPositions(address!),
-    enabled: Boolean(address),
+    enabled: Boolean(address) && poolsReady,
     staleTime: 5 * 60_000,
     retry: 3,
+    retryDelay: (attempt) => attempt * 1000,
     refetchOnWindowFocus: false,
   });
 
