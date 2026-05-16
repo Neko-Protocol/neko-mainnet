@@ -94,7 +94,10 @@ export function VaultActionModal({
     if (!amount || parseFloat(amount) <= 0) return;
     if (mode === "deposit") {
       const success = await handleDeposit(amount);
-      if (success) setShowSuccess(true);
+      if (success && !localStorage.getItem("neko_first_deposit")) {
+        localStorage.setItem("neko_first_deposit", "1");
+        setShowSuccess(true);
+      }
     } else {
       const withdrawRaw = decimalToAtomic(amount, 7);
       await handleWithdraw(amount, {

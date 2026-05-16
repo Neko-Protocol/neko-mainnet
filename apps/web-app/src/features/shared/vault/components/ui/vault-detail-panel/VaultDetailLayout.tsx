@@ -94,7 +94,10 @@ export function VaultDetailLayout({
           });
     if (success) {
       setAmount("");
-      if (tab === "deposit") setShowSuccessModal(true);
+      if (tab === "deposit" && !localStorage.getItem("neko_first_deposit")) {
+        localStorage.setItem("neko_first_deposit", "1");
+        setShowSuccessModal(true);
+      }
     }
   }, [tab, amount, withdrawBalance, handleDeposit, handleWithdraw]);
 
@@ -115,14 +118,6 @@ export function VaultDetailLayout({
         aria-label="Vault actions"
       >
         <div className={PANEL_SCROLL_CLASS}>
-          {/* dev-only test button — remove before launch */}
-          <button
-            type="button"
-            onClick={() => setShowSuccessModal(true)}
-            className="mb-3 w-full py-1.5 rounded-lg border border-dashed border-white/20 text-white/30 text-xs hover:text-white/60 hover:border-white/40 transition-colors"
-          >
-            Test success modal
-          </button>
           <VaultActionPanel
             vault={vault}
             tab={tab}

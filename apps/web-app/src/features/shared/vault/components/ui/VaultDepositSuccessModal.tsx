@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Check, X } from "lucide-react";
+import { Check, X, Copy, CheckCheck } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 
-const TWEET_TEXT_PLAIN =
-  "Just made my first deposit into a @NekoProto vault! Real yield on RWAs. \n\nOn @BuildOnStellar \n\nare yours working yet?";
-const SHARE_URL = `https://x.com/intent/tweet?text=${encodeURIComponent(TWEET_TEXT_PLAIN)}&url=${encodeURIComponent("https://nekoprotocol.xyz/share")}`;
+const TWEET_TEXT = encodeURIComponent(
+  "Just made my first deposit into a @NekoProto vault! Real yield on RWAs. \n\nOn @BuildOnStellar \n\nare yours working yet? nekoprotocol.xyz"
+);
+const SHARE_URL = `https://x.com/intent/tweet?text=${TWEET_TEXT}`;
 const BANNER_PATH = "/X-Banner.png";
 
 const XLogo = () => (
@@ -15,16 +16,6 @@ const XLogo = () => (
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
   </svg>
 );
-
-async function getBannerFile(): Promise<File | null> {
-  try {
-    const response = await fetch(BANNER_PATH);
-    const blob = await response.blob();
-    return new File([blob], "neko-banner.png", { type: blob.type });
-  } catch {
-    return null;
-  }
-}
 
 interface VaultDepositSuccessModalProps {
   vaultName: string;
@@ -36,7 +27,7 @@ export function VaultDepositSuccessModal({
   onClose,
 }: VaultDepositSuccessModalProps) {
   const [visible, setVisible] = useState(false);
-  const [hint, setHint] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const t = requestAnimationFrame(() => setVisible(true));
@@ -48,35 +39,21 @@ export function VaultDepositSuccessModal({
     setTimeout(onClose, 220);
   };
 
-  const handleShare = async () => {
-    const file = await getBannerFile();
-
-    // Mobile: Web Share API with image file (iOS Safari, Android Chrome)
-    if (file && navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          text: TWEET_TEXT_PLAIN,
-        });
-        return;
-      } catch {
-        // User cancelled or share failed — fall through
-      }
+  const handleCopyImage = async () => {
+    try {
+      const response = await fetch(BANNER_PATH);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob }),
+      ]);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Clipboard API not supported
     }
+  };
 
-    // Desktop: copy image to clipboard so user can paste in tweet composer
-    if (file) {
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({ [file.type]: file }),
-        ]);
-        setHint("Image copied — paste it in your tweet!");
-        setTimeout(() => setHint(null), 4000);
-      } catch {
-        // Clipboard not supported, just open Twitter
-      }
-    }
-
+  const handleShare = () => {
     window.open(SHARE_URL, "_blank", "noopener,noreferrer");
   };
 
@@ -104,7 +81,6 @@ export function VaultDepositSuccessModal({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Close */}
           <button
             aria-label="Close"
             onClick={handleClose}
@@ -113,9 +89,7 @@ export function VaultDepositSuccessModal({
             <X className="h-4 w-4" />
           </button>
 
-          {/* Content */}
           <div className="flex flex-col items-center px-10 pt-7 pb-6 gap-4">
-            {/* Checkmark */}
             <div
               className="flex items-center justify-center rounded-full"
               style={{
@@ -129,7 +103,6 @@ export function VaultDepositSuccessModal({
               <Check className="h-7 w-7 text-[#4ADE80]" strokeWidth={2.5} />
             </div>
 
-            {/* Text */}
             <div className="text-center space-y-1.5">
               <p className="text-white font-semibold text-xl leading-snug">
                 Deposit successful!
@@ -141,10 +114,8 @@ export function VaultDepositSuccessModal({
               </p>
             </div>
 
-            {/* Divider */}
             <div className="w-full h-px bg-white/6" />
 
-            {/* Banner preview */}
             <div className="w-full overflow-hidden rounded-xl border border-white/8">
               <Image
                 src={BANNER_PATH}
@@ -156,8 +127,34 @@ export function VaultDepositSuccessModal({
               />
             </div>
 
-            {/* Share on X */}
             <div className="w-full flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleCopyImage}
+                className="flex w-full items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-colors border"
+                style={{
+                  background: copied
+                    ? "rgba(74,222,128,0.08)"
+                    : "rgba(255,255,255,0.05)",
+                  borderColor: copied
+                    ? "rgba(74,222,128,0.3)"
+                    : "rgba(255,255,255,0.1)",
+                  color: copied ? "#4ADE80" : "rgba(255,255,255,0.6)",
+                }}
+              >
+                {copied ? (
+                  <>
+                    <CheckCheck className="h-4 w-4" />
+                    Image copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    Copy image to paste in tweet
+                  </>
+                )}
+              </button>
+
               <button
                 type="button"
                 onClick={handleShare}
@@ -177,10 +174,6 @@ export function VaultDepositSuccessModal({
                 <XLogo />
                 Share on X
               </button>
-
-              {hint && (
-                <p className="text-center text-xs text-[#4ADE80]/80">{hint}</p>
-              )}
 
               <button
                 type="button"
