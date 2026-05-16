@@ -257,22 +257,18 @@ export class SoroswapPoolAdapter implements BasePoolAdapter {
     const pairsToFetch =
       limit !== undefined ? allPairs.slice(0, limit) : allPairs;
 
-    // Process in bounded batches to avoid bursty 429 spikes
-    const BATCH_SIZE = 3;
+    // Fully sequential — one pair at a time with a fixed delay to avoid 429s.
     const settled: PromiseSettledResult<PoolInfo>[] = [];
-    for (let i = 0; i < pairsToFetch.length; i += BATCH_SIZE) {
-      const batch = pairsToFetch.slice(i, i + BATCH_SIZE);
-      const batchResults = await Promise.allSettled(
-        batch.map((pair) => this.getPoolInfoWithTimeout(pair))
-      );
-      settled.push(...batchResults);
-      if (i + BATCH_SIZE < pairsToFetch.length) {
-        const has429 = batchResults.some(
-          (result) =>
-            result.status === "rejected" &&
-            String(result.reason).includes("429")
-        );
-        await new Promise((r) => setTimeout(r, has429 ? 1500 : 400));
+    for (let i = 0; i < pairsToFetch.length; i++) {
+      const result = await Promise.allSettled([
+        this.getPoolInfoWithTimeout(pairsToFetch[i]),
+      ]);
+      settled.push(...result);
+      const has429 =
+        result[0].status === "rejected" &&
+        String(result[0].reason).includes("429");
+      if (i < pairsToFetch.length - 1) {
+        await new Promise((r) => setTimeout(r, has429 ? 2000 : 250));
       }
     }
 

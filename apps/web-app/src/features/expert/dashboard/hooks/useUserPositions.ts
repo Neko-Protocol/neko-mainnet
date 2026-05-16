@@ -72,7 +72,7 @@ export function useUserPositions() {
       nonBlendPools.map((p) => p.id).join(","),
     ],
     queryFn: () => batchCheckLpBalances(nonBlendPools, address!),
-    enabled: Boolean(address) && !isLoadingPools && nonBlendPools.length > 0,
+    enabled: Boolean(address) && nonBlendPools.length > 0,
     staleTime: POSITION_STALE_TIME,
     retry: 2,
     retryDelay: (attempt) => attempt * 800,
