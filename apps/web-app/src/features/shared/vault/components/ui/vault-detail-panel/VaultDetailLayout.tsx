@@ -21,6 +21,7 @@ import { VaultDetailHero } from "./VaultDetailHero";
 import { VaultDetailMetrics } from "./VaultDetailMetrics";
 import { VaultDetailInfo } from "./VaultDetailInfo";
 import { VaultActionPanel } from "./VaultActionPanel";
+import { VaultDepositSuccessModal } from "@/features/shared/vault/components/ui/VaultDepositSuccessModal";
 import type { VaultDetailLayoutProps, VaultActionTab } from "./types";
 
 const PANEL_SCROLL_CLASS =
@@ -32,6 +33,7 @@ export function VaultDetailLayout({
 }: VaultDetailLayoutProps) {
   const [tab, setTab] = useState<VaultActionTab>(initialTab);
   const [amount, setAmount] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const { address } = useWallet();
   const vaultContractId = vault.detail?.contracts?.vault ?? null;
@@ -90,7 +92,10 @@ export function VaultDetailLayout({
         : await handleWithdraw(amount, {
             withdrawAll: maxWithdrawRaw > 0n && withdrawRaw >= maxWithdrawRaw,
           });
-    if (success) setAmount("");
+    if (success) {
+      setAmount("");
+      if (tab === "deposit") setShowSuccessModal(true);
+    }
   }, [tab, amount, withdrawBalance, handleDeposit, handleWithdraw]);
 
   return (
@@ -98,12 +103,26 @@ export function VaultDetailLayout({
       className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl"
       style={{ background: "#111111" }}
     >
+      {showSuccessModal && (
+        <VaultDepositSuccessModal
+          vaultName={vault.name}
+          onClose={() => setShowSuccessModal(false)}
+        />
+      )}
       {/* Fixed right action panel */}
       <aside
         className="z-30 w-full min-w-0 shrink-0 lg:fixed lg:right-8 lg:top-28 lg:z-40 lg:w-[min(24rem,calc(100vw-4rem))] lg:max-w-[calc(100vw-4rem)] lg:p-0"
         aria-label="Vault actions"
       >
         <div className={PANEL_SCROLL_CLASS}>
+          {/* dev-only test button — remove before launch */}
+          <button
+            type="button"
+            onClick={() => setShowSuccessModal(true)}
+            className="mb-3 w-full py-1.5 rounded-lg border border-dashed border-white/20 text-white/30 text-xs hover:text-white/60 hover:border-white/40 transition-colors"
+          >
+            Test success modal
+          </button>
           <VaultActionPanel
             vault={vault}
             tab={tab}
@@ -125,7 +144,7 @@ export function VaultDetailLayout({
       </aside>
 
       {/* Scrollable left content */}
-      <section className="pool-detail-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-8 pb-8 pt-0 lg:pr-6 lg:mr-[calc(24rem+2rem)]">
+      <section className="pool-detail-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-8 pb-8 pt-0 lg:pr-6 lg:mr-104">
         <div className="pt-8">
           <VaultDetailHero vault={vault} />
           <div className="border-t border-white/5 mb-8" />
