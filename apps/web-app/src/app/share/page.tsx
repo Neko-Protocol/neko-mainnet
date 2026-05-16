@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { ShareRedirect } from "./ShareRedirect";
 
 const BASE_URL = "https://nekoprotocol.xyz";
 
@@ -34,5 +34,5 @@ export const metadata: Metadata = {
 };
 
 export default function SharePage() {
-  redirect("/dashboard");
+  return <ShareRedirect />;
 }

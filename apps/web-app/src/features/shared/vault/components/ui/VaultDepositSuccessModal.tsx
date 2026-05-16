@@ -5,10 +5,9 @@ import Image from "next/image";
 import { Check, X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 
-const TWEET_TEXT = encodeURIComponent(
-  "Just made my first deposit into a @NekoProto vault! Real yield on RWAs. \n\nOn @BuildOnStellar \n\nare yours working yet?"
-);
-const SHARE_URL = `https://x.com/intent/tweet?text=${TWEET_TEXT}&url=${encodeURIComponent("https://nekoprotocol.xyz/share")}`;
+const TWEET_TEXT_PLAIN =
+  "Just made my first deposit into a @NekoProto vault! Real yield on RWAs. \n\nOn @BuildOnStellar \n\nare yours working yet?";
+const SHARE_URL = `https://x.com/intent/tweet?text=${encodeURIComponent(TWEET_TEXT_PLAIN)}&url=${encodeURIComponent("https://nekoprotocol.xyz/share")}`;
 const BANNER_PATH = "/X-Banner.png";
 
 const XLogo = () => (
@@ -17,14 +16,13 @@ const XLogo = () => (
   </svg>
 );
 
-async function copyBannerToClipboard(): Promise<boolean> {
+async function getBannerFile(): Promise<File | null> {
   try {
     const response = await fetch(BANNER_PATH);
     const blob = await response.blob();
-    await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-    return true;
+    return new File([blob], "neko-banner.png", { type: blob.type });
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -38,6 +36,7 @@ export function VaultDepositSuccessModal({
   onClose,
 }: VaultDepositSuccessModalProps) {
   const [visible, setVisible] = useState(false);
+  const [hint, setHint] = useState<string | null>(null);
 
   useEffect(() => {
     const t = requestAnimationFrame(() => setVisible(true));
@@ -50,7 +49,34 @@ export function VaultDepositSuccessModal({
   };
 
   const handleShare = async () => {
-    await copyBannerToClipboard();
+    const file = await getBannerFile();
+
+    // Mobile: Web Share API with image file (iOS Safari, Android Chrome)
+    if (file && navigator.canShare?.({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          text: TWEET_TEXT_PLAIN,
+        });
+        return;
+      } catch {
+        // User cancelled or share failed — fall through
+      }
+    }
+
+    // Desktop: copy image to clipboard so user can paste in tweet composer
+    if (file) {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ [file.type]: file }),
+        ]);
+        setHint("Image copied — paste it in your tweet!");
+        setTimeout(() => setHint(null), 4000);
+      } catch {
+        // Clipboard not supported, just open Twitter
+      }
+    }
+
     window.open(SHARE_URL, "_blank", "noopener,noreferrer");
   };
 
@@ -119,21 +145,19 @@ export function VaultDepositSuccessModal({
             <div className="w-full h-px bg-white/6" />
 
             {/* Banner preview */}
-            <div className="w-full flex flex-col gap-2">
-              <div className="relative w-full overflow-hidden rounded-xl border border-white/8">
-                <Image
-                  src={BANNER_PATH}
-                  alt="Share banner"
-                  width={400}
-                  height={200}
-                  unoptimized
-                  className="w-full h-auto object-cover"
-                />
-              </div>
+            <div className="w-full overflow-hidden rounded-xl border border-white/8">
+              <Image
+                src={BANNER_PATH}
+                alt="Share banner"
+                width={400}
+                height={200}
+                unoptimized
+                className="w-full h-auto object-cover"
+              />
             </div>
 
             {/* Share on X */}
-            <div className="w-full flex flex-col gap-2.5">
+            <div className="w-full flex flex-col gap-2">
               <button
                 type="button"
                 onClick={handleShare}
@@ -154,10 +178,14 @@ export function VaultDepositSuccessModal({
                 Share on X
               </button>
 
+              {hint && (
+                <p className="text-center text-xs text-[#4ADE80]/80">{hint}</p>
+              )}
+
               <button
                 type="button"
                 onClick={handleClose}
-                className="w-full py-2.5 rounded-xl text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
+                className="w-full py-2 rounded-xl text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
               >
                 Done
               </button>
