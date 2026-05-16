@@ -3,41 +3,29 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Check, X } from "lucide-react";
+import { ShareOnXButton } from "@/components/ShareOnXButton";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { MOCK_SHARE_DEFAULTS } from "@/lib/share";
 
-const TWEET_TEXT_PLAIN =
-  "Just made my first deposit into a @NekoProto vault! Real yield on RWAs. \n\nOn @BuildOnStellar \n\nare yours working yet?";
-const SHARE_URL = `https://x.com/intent/tweet?text=${encodeURIComponent(TWEET_TEXT_PLAIN)}&url=${encodeURIComponent("https://nekoprotocol.xyz/share")}`;
-const BANNER_PATH = "/X-Banner.png";
-
-const XLogo = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
-);
-
-async function getBannerFile(): Promise<File | null> {
-  try {
-    const response = await fetch(BANNER_PATH);
-    const blob = await response.blob();
-    return new File([blob], "neko-banner.png", { type: blob.type });
-  } catch {
-    return null;
-  }
-}
+const BANNER_PATH = "/x/X-Banner.png";
 
 interface VaultDepositSuccessModalProps {
   vaultName: string;
   onClose: () => void;
+  /** Defaults to mock demo values until deposits mint server-side share IDs */
+  amount?: string;
+  apy?: string;
+  shareId?: string;
 }
 
 export function VaultDepositSuccessModal({
   vaultName,
   onClose,
+  amount = MOCK_SHARE_DEFAULTS.amount,
+  apy = MOCK_SHARE_DEFAULTS.apy,
+  shareId = MOCK_SHARE_DEFAULTS.shareId,
 }: VaultDepositSuccessModalProps) {
   const [visible, setVisible] = useState(false);
-  const [hint, setHint] = useState<string | null>(null);
-
   useEffect(() => {
     const t = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(t);
@@ -46,38 +34,6 @@ export function VaultDepositSuccessModal({
   const handleClose = () => {
     setVisible(false);
     setTimeout(onClose, 220);
-  };
-
-  const handleShare = async () => {
-    const file = await getBannerFile();
-
-    // Mobile: Web Share API with image file (iOS Safari, Android Chrome)
-    if (file && navigator.canShare?.({ files: [file] })) {
-      try {
-        await navigator.share({
-          files: [file],
-          text: TWEET_TEXT_PLAIN,
-        });
-        return;
-      } catch {
-        // User cancelled or share failed — fall through
-      }
-    }
-
-    // Desktop: copy image to clipboard so user can paste in tweet composer
-    if (file) {
-      try {
-        await navigator.clipboard.write([
-          new ClipboardItem({ [file.type]: file }),
-        ]);
-        setHint("Image copied — paste it in your tweet!");
-        setTimeout(() => setHint(null), 4000);
-      } catch {
-        // Clipboard not supported, just open Twitter
-      }
-    }
-
-    window.open(SHARE_URL, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -158,29 +114,12 @@ export function VaultDepositSuccessModal({
 
             {/* Share on X */}
             <div className="w-full flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={handleShare}
-                className="flex w-full items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all duration-150"
-                style={{
-                  background: "#000",
-                  color: "#fff",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "#1a1a1a")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "#000")
-                }
-              >
-                <XLogo />
-                Share on X
-              </button>
-
-              {hint && (
-                <p className="text-center text-xs text-[#4ADE80]/80">{hint}</p>
-              )}
+              <ShareOnXButton
+                amount={amount}
+                vaultName={vaultName}
+                apy={apy}
+                shareId={shareId}
+              />
 
               <button
                 type="button"
