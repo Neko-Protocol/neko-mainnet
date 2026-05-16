@@ -57,8 +57,9 @@ export function DiscoverPageLayout({ renderCard }: DiscoverPageLayoutProps) {
         title="Discover Assets"
         subtitle="Live spot prices and background on every supported asset"
         badge="Market data"
-        imageSrc="/banners/oracle.svg"
+        imageSrc="/banners/discover.png"
         imageAlt="Discover assets"
+        imageSize="large"
         className="mb-8"
       />
 
