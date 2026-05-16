@@ -86,24 +86,28 @@ const MainStats: React.FC = () => {
     });
 
   const positionsNetUsd = React.useMemo(() => {
-    return positions.reduce((sum, item) => {
-      const token = item.pool.tokens[0];
-      if (!token?.code) return sum;
+    // Exclude vault-backed positions — they are already counted in vaultsTotalUsd.
+    // Vault positions have metadata.vaultId set by getAllVaultUserPositions.
+    return positions
+      .filter(({ position }) => !position.metadata?.vaultId)
+      .reduce((sum, item) => {
+        const token = item.pool.tokens[0];
+        if (!token?.code) return sum;
 
-      const price =
-        walletPriceByCode[token.code] ?? missingPriceMap[token.code] ?? 0;
+        const price =
+          walletPriceByCode[token.code] ?? missingPriceMap[token.code] ?? 0;
 
-      const deposited = parseBalance(item.position.depositedFormatted);
-      const liabilitiesRaw = item.position.metadata?.liabilities;
-      const liabilities =
-        liabilitiesRaw == null
-          ? 0
-          : Number(
-              fromSmallestUnit(String(liabilitiesRaw), token.decimals ?? 7)
-            );
+        const deposited = parseBalance(item.position.depositedFormatted);
+        const liabilitiesRaw = item.position.metadata?.liabilities;
+        const liabilities =
+          liabilitiesRaw == null
+            ? 0
+            : Number(
+                fromSmallestUnit(String(liabilitiesRaw), token.decimals ?? 7)
+              );
 
-      return sum + (deposited - liabilities) * price;
-    }, 0);
+        return sum + (deposited - liabilities) * price;
+      }, 0);
   }, [positions, walletPriceByCode, missingPriceMap]);
 
   const portfolioTotalUsd = totalUsd + positionsNetUsd + vaultsTotalUsd;
