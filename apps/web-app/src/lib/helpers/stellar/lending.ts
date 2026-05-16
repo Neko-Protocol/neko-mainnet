@@ -473,27 +473,22 @@ export const getBTokenBalanceRaw = async (
   walletAddress: string,
   contractId: string = networks.testnet.contractId
 ): Promise<bigint> => {
-  try {
-    const client = new RwaLendingClient({
-      contractId,
-      rpcUrl: rpcUrl,
-      networkPassphrase: networkPassphrase,
-      ...(allowHttpForSoroban && { allowHttp: true }),
-    });
+  const client = new RwaLendingClient({
+    contractId,
+    rpcUrl: rpcUrl,
+    networkPassphrase: networkPassphrase,
+    ...(allowHttpForSoroban && { allowHttp: true }),
+  });
 
-    const tx = await client.get_b_token_balance(
-      { lender: walletAddress, asset: assetCode },
-      { simulate: true }
-    );
+  const tx = await client.get_b_token_balance(
+    { lender: walletAddress, asset: assetCode },
+    { simulate: true }
+  );
 
-    const value = tx.result;
-    if (!value) return 0n;
+  const value = tx.result;
+  if (value == null) return 0n;
 
-    return typeof value === "bigint" ? value : BigInt(String(value));
-  } catch (error) {
-    console.error("Error getting bToken balance (raw):", error);
-    return 0n;
-  }
+  return typeof value === "bigint" ? value : BigInt(String(value));
 };
 
 /**
