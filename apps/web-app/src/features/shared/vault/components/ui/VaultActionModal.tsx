@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { X, Loader2 } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { VaultDepositSuccessModal } from "./VaultDepositSuccessModal";
 import { useVaultBalance } from "../../hooks/useVaultBalance";
 import { useVaultAction } from "../../hooks/useVaultAction";
 import { useVaultData } from "../../hooks/useVaultData";
@@ -23,6 +24,7 @@ interface VaultActionModalProps {
   supplyAssetContractAddress?: string;
   supplyAssetSymbol?: string;
   vaultShareSymbol?: string;
+  vaultName?: string;
   /** Pre-fill deposit amount (e.g. simulator wizard). */
   initialAmount?: string;
 }
@@ -34,10 +36,12 @@ export function VaultActionModal({
   supplyAssetContractAddress,
   supplyAssetSymbol,
   vaultShareSymbol,
+  vaultName,
   initialAmount = "",
 }: VaultActionModalProps) {
   const [visible, setVisible] = useState(false);
   const [amount, setAmount] = useState(initialAmount);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [mode, setMode] = useState<"deposit" | "withdraw">(
     isDeposit ? "deposit" : "withdraw"
   );
@@ -89,15 +93,16 @@ export function VaultActionModal({
   const handleConfirm = async () => {
     if (!amount || parseFloat(amount) <= 0) return;
     if (mode === "deposit") {
-      await handleDeposit(amount);
+      const success = await handleDeposit(amount);
+      if (success) setShowSuccess(true);
     } else {
       const withdrawRaw = decimalToAtomic(amount, 7);
       await handleWithdraw(amount, {
         withdrawAll:
           withdrawUnderlying > 0n && withdrawRaw >= withdrawUnderlying,
       });
+      handleClose();
     }
-    handleClose();
   };
 
   const depositExceedsBalance =
@@ -117,6 +122,15 @@ export function VaultActionModal({
     withdrawExceedsBalance;
 
   const supplyLabel = supplyAssetSymbol ?? "Token";
+
+  if (showSuccess) {
+    return (
+      <VaultDepositSuccessModal
+        vaultName={vaultName ?? supplyAssetSymbol ?? "vault"}
+        onClose={handleClose}
+      />
+    );
+  }
 
   return (
     <ModalPortal>

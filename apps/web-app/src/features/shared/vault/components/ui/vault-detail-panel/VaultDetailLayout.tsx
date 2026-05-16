@@ -21,6 +21,7 @@ import { VaultDetailHero } from "./VaultDetailHero";
 import { VaultDetailMetrics } from "./VaultDetailMetrics";
 import { VaultDetailInfo } from "./VaultDetailInfo";
 import { VaultActionPanel } from "./VaultActionPanel";
+import { VaultDepositSuccessModal } from "@/features/shared/vault/components/ui/VaultDepositSuccessModal";
 import type { VaultDetailLayoutProps, VaultActionTab } from "./types";
 
 const PANEL_SCROLL_CLASS =
@@ -32,6 +33,7 @@ export function VaultDetailLayout({
 }: VaultDetailLayoutProps) {
   const [tab, setTab] = useState<VaultActionTab>(initialTab);
   const [amount, setAmount] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const { address } = useWallet();
   const vaultContractId = vault.detail?.contracts?.vault ?? null;
@@ -90,7 +92,10 @@ export function VaultDetailLayout({
         : await handleWithdraw(amount, {
             withdrawAll: maxWithdrawRaw > 0n && withdrawRaw >= maxWithdrawRaw,
           });
-    if (success) setAmount("");
+    if (success) {
+      setAmount("");
+      if (tab === "deposit") setShowSuccessModal(true);
+    }
   }, [tab, amount, withdrawBalance, handleDeposit, handleWithdraw]);
 
   return (
@@ -98,6 +103,12 @@ export function VaultDetailLayout({
       className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl"
       style={{ background: "#111111" }}
     >
+      {showSuccessModal && (
+        <VaultDepositSuccessModal
+          vaultName={vault.name}
+          onClose={() => setShowSuccessModal(false)}
+        />
+      )}
       {/* Fixed right action panel */}
       <aside
         className="z-30 w-full min-w-0 shrink-0 lg:fixed lg:right-8 lg:top-28 lg:z-40 lg:w-[min(24rem,calc(100vw-4rem))] lg:max-w-[calc(100vw-4rem)] lg:p-0"
