@@ -8,6 +8,24 @@ import { useDashboardVaultPositions } from "@/features/expert/dashboard/hooks/us
 import { YourPositionsTable } from "./YourPositionsTable";
 import { VaultPositionsTable } from "./VaultPositionsTable";
 
+function SectionSkeleton({ label }: { label: string }) {
+  return (
+    <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
+        <span className="text-white/30 text-xs font-semibold uppercase tracking-wide">
+          {label}
+        </span>
+      </div>
+      <div className="p-6 flex items-center justify-center gap-2">
+        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white/50" />
+        <span className="text-white/30 text-xs">
+          Loading {label.toLowerCase()}...
+        </span>
+      </div>
+    </div>
+  );
+}
+
 const YourPositions: React.FC = () => {
   const { positions, isLoading, isError, hasWallet, refetch } =
     useDashboardPositions();
@@ -16,8 +34,11 @@ const YourPositions: React.FC = () => {
 
   if (!hasWallet) return null;
 
-  const combinedLoading = isLoading || vaultLoading;
-  const hasPositions = positions.length > 0 || vaultPositions.length > 0;
+  const hasPoolData = positions.length > 0;
+  const hasVaultData = vaultPositions.length > 0;
+  const nothingYet = isLoading && vaultLoading && !hasPoolData && !hasVaultData;
+  const bothDone = !isLoading && !vaultLoading;
+  const emptyState = bothDone && !hasPoolData && !hasVaultData && !isError;
 
   return (
     <div className="w-full">
@@ -27,28 +48,12 @@ const YourPositions: React.FC = () => {
         </h2>
       </div>
 
-      {combinedLoading ? (
+      {nothingYet ? (
         <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-10 flex items-center justify-center gap-3">
           <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/20 border-t-white/60" />
           <span className="text-white/40 text-sm">Loading positions...</span>
         </div>
-      ) : isError ? (
-        <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-10 text-center">
-          <Layers className="h-8 w-8 text-white/20 mx-auto mb-3" />
-          <p className="text-white font-semibold text-sm mb-1">
-            Couldn&apos;t load positions
-          </p>
-          <p className="text-white/40 text-xs mb-4">
-            Network error — please try again
-          </p>
-          <button
-            onClick={refetch}
-            className="inline-flex items-center gap-1.5 rounded-full bg-[#2A2A2A] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#333] transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      ) : !hasPositions ? (
+      ) : emptyState ? (
         <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-10 text-center">
           <Layers className="h-8 w-8 text-white/20 mx-auto mb-3" />
           <p className="text-white font-semibold text-sm mb-1">
@@ -66,10 +71,29 @@ const YourPositions: React.FC = () => {
         </div>
       ) : (
         <div className="flex flex-col gap-4">
-          {positions.length > 0 && <YourPositionsTable positions={positions} />}
-          {vaultPositions.length > 0 && (
-            <VaultPositionsTable positions={vaultPositions} />
+          {hasPoolData && <YourPositionsTable positions={positions} />}
+          {isLoading && !hasPoolData && !isError && (
+            <SectionSkeleton label="Pools" />
           )}
+          {isError && !hasPoolData && (
+            <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-8 text-center">
+              <p className="text-white font-semibold text-sm mb-1">
+                Couldn&apos;t load pool positions
+              </p>
+              <p className="text-white/40 text-xs mb-4">
+                Network error — please try again
+              </p>
+              <button
+                onClick={refetch}
+                className="inline-flex items-center gap-1.5 rounded-full bg-[#2A2A2A] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#333] transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {hasVaultData && <VaultPositionsTable positions={vaultPositions} />}
+          {vaultLoading && !hasVaultData && <SectionSkeleton label="Vaults" />}
         </div>
       )}
     </div>
