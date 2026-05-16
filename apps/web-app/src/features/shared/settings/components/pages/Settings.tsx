@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Wallet, Mail, Sliders, LayoutGrid, Network } from "lucide-react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -13,6 +14,14 @@ import { SettingsEmailSection } from "../ui/SettingsEmailSection";
 
 type SectionId = "wallet" | "email" | "preferences" | "uiMode" | "network";
 
+const VALID_SECTION_IDS: SectionId[] = [
+  "preferences",
+  "uiMode",
+  "email",
+  "wallet",
+  "network",
+];
+
 const TABS: { id: SectionId; label: string; Icon: React.ElementType }[] = [
   { id: "preferences", label: "Preferences", Icon: Sliders },
   { id: "uiMode", label: "App Mode", Icon: LayoutGrid },
@@ -22,8 +31,27 @@ const TABS: { id: SectionId; label: string; Icon: React.ElementType }[] = [
 ];
 
 export default function Settings() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { copy, copiedKey } = useCopyToClipboard({ showNotification: true });
-  const [active, setActive] = React.useState<SectionId>("preferences");
+
+  const tabParam = searchParams.get("tab") as SectionId | null;
+  const [active, setActive] = React.useState<SectionId>(
+    tabParam && VALID_SECTION_IDS.includes(tabParam) ? tabParam : "preferences"
+  );
+
+  function handleTabChange(id: SectionId) {
+    setActive(id);
+    const params = new URLSearchParams(searchParams.toString());
+    if (id === "preferences") {
+      params.delete("tab");
+    } else {
+      params.set("tab", id);
+    }
+    const qs = params.toString();
+    router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+  }
 
   return (
     <PageContainer maxWidth="4xl">
@@ -51,7 +79,7 @@ export default function Settings() {
                 type="button"
                 role="tab"
                 aria-selected={isActive}
-                onClick={() => setActive(id)}
+                onClick={() => handleTabChange(id)}
                 className={`flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-white text-black"
