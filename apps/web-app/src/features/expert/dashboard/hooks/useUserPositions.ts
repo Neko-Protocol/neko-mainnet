@@ -51,13 +51,16 @@ export function useUserPositions() {
 
   // ── Blend batch query ──────────────────────────────────────────────────────
   // ONE PoolV2.load + ONE loadUser covers every blend reserve → 2 RPC calls.
+  // Wait for pool list first so both don't race for RPC bandwidth on page load.
   // Skipped entirely on subsequent visits when Horizon scan confirms no history.
   const blendPositionsQuery = useQuery<PoolPosition[]>({
     queryKey: ["orchestrator", "blend-all-positions", address],
     queryFn: () => orchestrator.getAllBlendUserPositions(address!),
-    enabled: Boolean(address) && hasBlendHistory,
+    enabled: Boolean(address) && !isLoadingPools && hasBlendHistory,
     staleTime: POSITION_STALE_TIME,
-    retry: 1,
+    retry: 3,
+    retryDelay: (attempt) => attempt * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // ── LP balance pre-screen (Aqua + Soroswap) ───────────────────────────────
@@ -73,7 +76,8 @@ export function useUserPositions() {
     queryFn: () => batchCheckLpBalances(nonBlendPools, address!),
     enabled: Boolean(address) && !isLoadingPools && nonBlendPools.length > 0,
     staleTime: POSITION_STALE_TIME,
-    retry: 1,
+    retry: 2,
+    retryDelay: (attempt) => attempt * 800,
   });
 
   // Only query getUserPosition for pools that passed the LP pre-screen.
@@ -90,7 +94,8 @@ export function useUserPositions() {
       queryFn: () => orchestrator.getUserPosition(pool.id, address!),
       enabled: Boolean(address),
       staleTime: POSITION_STALE_TIME,
-      retry: 1,
+      retry: 2,
+      retryDelay: (attempt: number) => attempt * 800,
     })),
   });
 
