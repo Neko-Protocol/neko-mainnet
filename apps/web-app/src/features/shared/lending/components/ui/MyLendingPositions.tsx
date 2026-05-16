@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -12,7 +12,9 @@ import {
   Shield,
   Zap,
   Sparkles,
+  DollarSign,
 } from "lucide-react";
+import { useQueries } from "@tanstack/react-query";
 import { useUserLendingPositions } from "../../hooks/useUserLendingPositions";
 import { useUserPositions } from "@/features/expert/dashboard/hooks/useUserPositions";
 import { usePoolAction } from "@/lib/orchestrator";
@@ -23,6 +25,7 @@ import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { safeParseFloat } from "@/lib/helpers/formatUtils";
 import { atomicToDecimal } from "@/lib/helpers/amount";
+import { stellarPriceService } from "@/lib/services/stellar-price.service";
 
 const PROTOCOL_ICONS: Record<string, string> = {
   neko: "/neko-logo.png",
@@ -37,6 +40,7 @@ interface UnifiedPosition {
   assetCode: string;
   poolName: string;
   depositedFormatted: string;
+  depositedRaw: number;
   secondaryDepositedAmount?: string;
   secondaryAssetCode?: string;
   apy: string;
@@ -160,6 +164,7 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
       pos.depositedFormatted,
       pos.assetCode
     ),
+    depositedRaw: safeParseFloat(pos.depositedFormatted),
     apy: `${pos.interestRate.toFixed(2)}%`,
     orchestratorId: `neko:${pos.assetCode}`,
     detailId: `neko:${pos.assetCode}`,
@@ -197,6 +202,7 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
         pos.position.depositedFormatted,
         pos.pool.tokens[0]?.code ?? ""
       ),
+      depositedRaw: safeParseFloat(pos.position.depositedFormatted),
       secondaryDepositedAmount,
       secondaryAssetCode,
       apy: `${pos.pool.apy.toFixed(2)}%`,
@@ -208,13 +214,45 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
 
   const unified = [...nekoUnified, ...aggUnified];
 
-  const colSpan = 5;
+  // ── USD prices for all unique asset codes ──────────────────────────────────
+  const allCodes = useMemo(
+    () => [...new Set(unified.map((p) => p.assetCode))],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [unified.map((p) => p.key).join(",")]
+  );
+
+  const priceQueries = useQueries({
+    queries: allCodes.map((code) => ({
+      queryKey: ["tokenPrice", code],
+      queryFn: () => stellarPriceService.getPriceWithSource(code, ""),
+      staleTime: 2 * 60_000,
+      retry: 1,
+      throwOnError: false,
+    })),
+  });
+
+  const priceMap = useMemo(() => {
+    const map = new Map<string, number>();
+    allCodes.forEach((code, i) => {
+      map.set(code, priceQueries[i]?.data?.price ?? 0);
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allCodes, priceQueries.map((q) => q.data?.price).join(",")]);
+
+  const colSpan = 6;
 
   function renderRow(pos: UnifiedPosition) {
     const logoSrc = PROTOCOL_ICONS[pos.protocolId];
     const openPosition = () => {
       router.push(`/pools/${encodeURIComponent(pos.detailId)}`);
     };
+    const price = priceMap.get(pos.assetCode) ?? 0;
+    const usdValue = pos.depositedRaw * price;
+    const usdFormatted =
+      usdValue > 0
+        ? `$${usdValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : "—";
     return (
       <tr
         key={pos.key}
@@ -261,6 +299,9 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
               )}
             </div>
           )}
+        </td>
+        <td className="px-4 py-4 text-center text-sm tabular-nums text-white/70">
+          {usdFormatted}
         </td>
         <td className="px-4 py-4 text-center text-white text-sm">{pos.apy}</td>
         <td className="px-4 py-4 text-center">
@@ -358,6 +399,12 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
               icon={Coins}
               label="Deposited"
               tooltip="Amount currently deposited"
+              centered
+            />
+            <ColHeader
+              icon={DollarSign}
+              label="Value"
+              tooltip="Estimated USD value"
               centered
             />
             <ColHeader
