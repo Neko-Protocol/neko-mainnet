@@ -139,6 +139,7 @@ export function useUserPositions() {
 
   const isLoading =
     isLoadingPools ||
+    blendListQuery.isLoading ||
     horizonScanQuery.isLoading ||
     (hasBlendHistory && blendPositionsQuery.isLoading) ||
     (nonBlendPools.length > 0 && lpScreenQuery.isLoading);
