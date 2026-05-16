@@ -9,7 +9,8 @@ import { YourPositionsTable } from "./YourPositionsTable";
 import { VaultPositionsTable } from "./VaultPositionsTable";
 
 const YourPositions: React.FC = () => {
-  const { positions, isLoading, isError, hasWallet } = useDashboardPositions();
+  const { positions, isLoading, isError, hasWallet, refetch } =
+    useDashboardPositions();
   const { positions: vaultPositions, isLoading: vaultLoading } =
     useDashboardVaultPositions();
 
@@ -37,9 +38,15 @@ const YourPositions: React.FC = () => {
           <p className="text-white font-semibold text-sm mb-1">
             Couldn&apos;t load positions
           </p>
-          <p className="text-white/40 text-xs">
-            Network error please refresh the page
+          <p className="text-white/40 text-xs mb-4">
+            Network error — please try again
           </p>
+          <button
+            onClick={refetch}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#2A2A2A] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#333] transition-colors"
+          >
+            Retry
+          </button>
         </div>
       ) : !hasPositions ? (
         <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-10 text-center">

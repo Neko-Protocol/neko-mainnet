@@ -128,7 +128,19 @@ export function useDashboardPositions() {
     blendPositionsQuery.isLoading ||
     (nonBlendPools.length > 0 && lpScreenQuery.isLoading);
 
-  const isError = blendPositionsQuery.isError;
+  const poolsLoadFailed =
+    blendQuery.isError && !blendQuery.isLoading && !blendQuery.data;
+  const isError = blendPositionsQuery.isError || poolsLoadFailed;
 
-  return { positions, isLoading, isError, hasWallet: Boolean(address) };
+  async function refetch() {
+    await Promise.all([blendQuery.refetch(), blendPositionsQuery.refetch()]);
+  }
+
+  return {
+    positions,
+    isLoading,
+    isError,
+    hasWallet: Boolean(address),
+    refetch,
+  };
 }
