@@ -1,19 +1,32 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { Check, X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 
 const TWEET_TEXT = encodeURIComponent(
-  "Acabo de hacer mi primer deposito en un vault de @NekoProto www.nekoprotocol.com"
+  "Just made my first deposit into a @NekoProto vault! Real yield on RWAs. \n\nOn @BuildOnStellar \n\nare yours working yet?"
 );
-const SHARE_URL = `https://x.com/intent/tweet?text=${TWEET_TEXT}`;
+const SHARE_URL = `https://x.com/intent/tweet?text=${TWEET_TEXT}&url=${encodeURIComponent("https://nekoprotocol.xyz/share")}`;
+const BANNER_PATH = "/X-Banner.png";
 
 const XLogo = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
   </svg>
 );
+
+async function copyBannerToClipboard(): Promise<boolean> {
+  try {
+    const response = await fetch(BANNER_PATH);
+    const blob = await response.blob();
+    await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 interface VaultDepositSuccessModalProps {
   vaultName: string;
@@ -36,14 +49,15 @@ export function VaultDepositSuccessModal({
     setTimeout(onClose, 220);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
+    await copyBannerToClipboard();
     window.open(SHARE_URL, "_blank", "noopener,noreferrer");
   };
 
   return (
     <ModalPortal>
       <div
-        className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4 transition-opacity duration-200"
+        className="fixed inset-0 z-60 flex items-end sm:items-center justify-center sm:p-4 transition-opacity duration-200"
         style={{
           background: "rgba(0,0,0,0.75)",
           backdropFilter: "blur(6px)",
@@ -52,7 +66,7 @@ export function VaultDepositSuccessModal({
         onClick={handleClose}
       >
         <div
-          className="relative w-full sm:max-w-sm flex flex-col rounded-t-2xl sm:rounded-2xl overflow-hidden transition-all duration-220"
+          className="relative w-full sm:max-w-lg flex flex-col rounded-t-2xl sm:rounded-2xl overflow-hidden transition-all duration-220"
           style={{
             background: "#141414",
             border: "1px solid rgba(255,255,255,0.08)",
@@ -74,7 +88,7 @@ export function VaultDepositSuccessModal({
           </button>
 
           {/* Content */}
-          <div className="flex flex-col items-center px-8 pt-10 pb-8 gap-5">
+          <div className="flex flex-col items-center px-10 pt-7 pb-6 gap-4">
             {/* Checkmark */}
             <div
               className="flex items-center justify-center rounded-full"
@@ -91,10 +105,10 @@ export function VaultDepositSuccessModal({
 
             {/* Text */}
             <div className="text-center space-y-1.5">
-              <p className="text-white font-semibold text-lg leading-snug">
+              <p className="text-white font-semibold text-xl leading-snug">
                 Deposit successful!
               </p>
-              <p className="text-white/45 text-sm leading-relaxed">
+              <p className="text-white/45 text-base leading-relaxed">
                 You just deposited into{" "}
                 <span className="text-white/70 font-medium">{vaultName}</span>.
                 Your assets are now earning yield.
@@ -103,6 +117,20 @@ export function VaultDepositSuccessModal({
 
             {/* Divider */}
             <div className="w-full h-px bg-white/6" />
+
+            {/* Banner preview */}
+            <div className="w-full flex flex-col gap-2">
+              <div className="relative w-full overflow-hidden rounded-xl border border-white/8">
+                <Image
+                  src={BANNER_PATH}
+                  alt="Share banner"
+                  width={400}
+                  height={200}
+                  unoptimized
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+            </div>
 
             {/* Share on X */}
             <div className="w-full flex flex-col gap-2.5">

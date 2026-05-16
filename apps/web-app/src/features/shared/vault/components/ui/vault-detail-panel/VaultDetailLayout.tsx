@@ -115,6 +115,14 @@ export function VaultDetailLayout({
         aria-label="Vault actions"
       >
         <div className={PANEL_SCROLL_CLASS}>
+          {/* dev-only test button — remove before launch */}
+          <button
+            type="button"
+            onClick={() => setShowSuccessModal(true)}
+            className="mb-3 w-full py-1.5 rounded-lg border border-dashed border-white/20 text-white/30 text-xs hover:text-white/60 hover:border-white/40 transition-colors"
+          >
+            Test success modal
+          </button>
           <VaultActionPanel
             vault={vault}
             tab={tab}
@@ -136,7 +144,7 @@ export function VaultDetailLayout({
       </aside>
 
       {/* Scrollable left content */}
-      <section className="pool-detail-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-8 pb-8 pt-0 lg:pr-6 lg:mr-[calc(24rem+2rem)]">
+      <section className="pool-detail-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-8 pb-8 pt-0 lg:pr-6 lg:mr-104">
         <div className="pt-8">
           <VaultDetailHero vault={vault} />
           <div className="border-t border-white/5 mb-8" />
