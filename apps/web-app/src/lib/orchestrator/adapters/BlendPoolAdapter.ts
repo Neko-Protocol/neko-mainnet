@@ -328,57 +328,64 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       }
     }
 
-    const vaultResults = await Promise.all(
-      vaultReserves.map(async ([assetAddress, reserve]) => {
-        const fullId = `blend:${this.poolContractId}:${assetAddress}`;
-        const vaultId =
-          BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`]!;
-        try {
-          const vault = new DefindexVaultClient({
-            contractId: vaultId,
-            rpcUrl,
-            networkPassphrase,
-            publicKey: userAddress,
-          });
+    // Process vault reserves one at a time with a small stagger to avoid
+    // flooding the Soroban RPC — each vault makes 3 simultaneous calls,
+    // so N vaults in parallel = 3N concurrent requests → 429.
+    const vaultResults: PoolPosition[] = [];
+    for (let vi = 0; vi < vaultReserves.length; vi++) {
+      const [assetAddress, reserve] = vaultReserves[vi];
+      const fullId = `blend:${this.poolContractId}:${assetAddress}`;
+      const vaultId =
+        BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`]!;
+      if (vi > 0) await new Promise((r) => setTimeout(r, 200));
+      try {
+        const vault = new DefindexVaultClient({
+          contractId: vaultId,
+          rpcUrl,
+          networkPassphrase,
+          publicKey: userAddress,
+        });
 
-          const [balanceTx, fundsTx, supplyTx] = await Promise.all([
-            vault.balance({ id: userAddress }, { simulate: true }),
-            vault.fetch_total_managed_funds({ simulate: true }),
-            vault.total_supply({ simulate: true }),
-          ]);
+        const [balanceTx, fundsTx, supplyTx] = await Promise.all([
+          vault.balance({ id: userAddress }, { simulate: true }),
+          vault.fetch_total_managed_funds({ simulate: true }),
+          vault.total_supply({ simulate: true }),
+        ]);
 
-          const sharesBig = readBigintResult(balanceTx.result);
+        const sharesBig = readBigintResult(balanceTx.result);
 
-          if (sharesBig === 0n) return emptyPosition(fullId);
-
-          const totalUnderlying = readSingleVaultFund(fundsTx.result);
-          const totalSupply = readBigintResult(supplyTx.result);
-          const deposited =
-            totalSupply > 0n
-              ? mulDivFloor(sharesBig, totalUnderlying, totalSupply)
-              : 0n;
-
-          return {
-            poolId: fullId,
-            deposited,
-            depositedFormatted: formatUnits(deposited, reserve.config.decimals),
-            rewards: 0n,
-            rewardsFormatted: "0",
-            metadata: {
-              vaultId,
-              supplied: deposited.toString(),
-              collateral: "0",
-              liabilities: "0",
-              shares: sharesBig.toString(),
-              totalUnderlying: totalUnderlying.toString(),
-              totalSupply: totalSupply.toString(),
-            },
-          };
-        } catch {
-          return emptyPosition(fullId);
+        if (sharesBig === 0n) {
+          vaultResults.push(emptyPosition(fullId));
+          continue;
         }
-      })
-    );
+
+        const totalUnderlying = readSingleVaultFund(fundsTx.result);
+        const totalSupply = readBigintResult(supplyTx.result);
+        const deposited =
+          totalSupply > 0n
+            ? mulDivFloor(sharesBig, totalUnderlying, totalSupply)
+            : 0n;
+
+        vaultResults.push({
+          poolId: fullId,
+          deposited,
+          depositedFormatted: formatUnits(deposited, reserve.config.decimals),
+          rewards: 0n,
+          rewardsFormatted: "0",
+          metadata: {
+            vaultId,
+            supplied: deposited.toString(),
+            collateral: "0",
+            liabilities: "0",
+            shares: sharesBig.toString(),
+            totalUnderlying: totalUnderlying.toString(),
+            totalSupply: totalSupply.toString(),
+          },
+        });
+      } catch {
+        vaultResults.push(emptyPosition(fullId));
+      }
+    }
 
     const directResults: PoolPosition[] = [];
     if (directReserves.length > 0) {

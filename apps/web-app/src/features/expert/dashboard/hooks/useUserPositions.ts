@@ -1,7 +1,7 @@
 "use client";
 
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { usePools, POOLS_QUERY_KEY } from "@/lib/orchestrator/hooks/usePools";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { POOLS_QUERY_KEY } from "@/lib/orchestrator/hooks/usePools";
 import { orchestrator } from "@/lib/orchestrator/core/Orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { batchCheckLpBalances } from "@/lib/services/positionScanner";
@@ -19,14 +19,12 @@ const POSITION_STALE_TIME = 60_000;
 
 export function useUserPositions() {
   const { address } = useWallet();
+  const queryClient = useQueryClient();
 
-  // ── All pools ──────────────────────────────────────────────────────────────
-  const { data: pools = [], isLoading: isLoadingPools } = usePools();
-
-  // Explicit blend pool query — same cache key as usePools() uses, so React Query
-  // deduplicates the network call. We need this to know specifically when blend
-  // pools have loaded, because usePools().isLoading turns false as soon as any
-  // pool type resolves (soroswap/aqua may beat blend), leaving blendPools empty.
+  // ── Blend pools (explicit fetch) ───────────────────────────────────────────
+  // We fetch blend pools explicitly so we know exactly when they're ready.
+  // usePools().isLoading turns false as soon as any pool type resolves, so
+  // we'd race to fetch positions against a still-empty blendPools list.
   const blendListQuery = useQuery<PoolInfo[]>({
     queryKey: [...POOLS_QUERY_KEY, "blend"],
     queryFn: () => orchestrator.getPoolsByType("blend"),
@@ -36,7 +34,17 @@ export function useUserPositions() {
   });
 
   const blendPools = blendListQuery.data ?? [];
-  const nonBlendPools = pools.filter((p) => p.type !== "blend");
+
+  // ── Non-blend pools (cache-only, no fresh fetch) ───────────────────────────
+  // Reading from cache prevents triggering fresh Soroswap/Aqua pool discovery
+  // here, which would flood the API with 429s when navigating directly to My
+  // Positions. The Pools tab's usePools() populates this cache on first visit.
+  const cachedSoroswap =
+    queryClient.getQueryData<PoolInfo[]>([...POOLS_QUERY_KEY, "soroswap"]) ??
+    [];
+  const cachedAqua =
+    queryClient.getQueryData<PoolInfo[]>([...POOLS_QUERY_KEY, "aqua"]) ?? [];
+  const nonBlendPools = [...cachedSoroswap, ...cachedAqua];
 
   // ── Blend batch query ──────────────────────────────────────────────────────
   // ONE PoolV2.load + ONE loadUser covers every blend reserve → 2 RPC calls.
@@ -79,13 +87,16 @@ export function useUserPositions() {
       : [];
 
   const positionQueries = useQueries({
-    queries: filteredNonBlendPools.map((pool) => ({
+    queries: filteredNonBlendPools.map((pool, i) => ({
       queryKey: ["orchestrator", "position", pool.id, address],
-      queryFn: () => orchestrator.getUserPosition(pool.id, address!),
+      queryFn: async () => {
+        if (i > 0) await new Promise((r) => setTimeout(r, i * 300));
+        return orchestrator.getUserPosition(pool.id, address!);
+      },
       enabled: Boolean(address),
       staleTime: POSITION_STALE_TIME,
       retry: 2,
-      retryDelay: (attempt: number) => attempt * 800,
+      retryDelay: (attempt: number) => attempt * 1000,
     })),
   });
 
@@ -116,7 +127,6 @@ export function useUserPositions() {
   });
 
   const isLoading =
-    isLoadingPools ||
     blendListQuery.isLoading ||
     blendPositionsQuery.isLoading ||
     (nonBlendPools.length > 0 && lpScreenQuery.isLoading);
