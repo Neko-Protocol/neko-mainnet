@@ -94,7 +94,10 @@ export function VaultDetailLayout({
           });
     if (success) {
       setAmount("");
-      if (tab === "deposit") setShowSuccessModal(true);
+      if (tab === "deposit" && !localStorage.getItem("neko_first_deposit")) {
+        localStorage.setItem("neko_first_deposit", "1");
+        setShowSuccessModal(true);
+      }
     }
   }, [tab, amount, withdrawBalance, handleDeposit, handleWithdraw]);
 
