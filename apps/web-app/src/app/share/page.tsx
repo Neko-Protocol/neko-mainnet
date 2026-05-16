@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ShareRedirect } from "./ShareRedirect";
+import Link from "next/link";
 
 const BASE_URL = "https://nekoprotocol.xyz";
 
@@ -34,5 +34,26 @@ export const metadata: Metadata = {
 };
 
 export default function SharePage() {
-  return <ShareRedirect />;
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#111111",
+        color: "#fff",
+        fontFamily: "sans-serif",
+        gap: 16,
+      }}
+    >
+      <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>
+        Neko Protocol
+      </p>
+      <Link href="/dashboard" style={{ color: "#229EDF", fontSize: 14 }}>
+        Go to app →
+      </Link>
+    </div>
+  );
 }
