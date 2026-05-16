@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { usePools } from "@/lib/orchestrator/hooks/usePools";
+import { usePools, POOLS_QUERY_KEY } from "@/lib/orchestrator/hooks/usePools";
 import { orchestrator } from "@/lib/orchestrator/core/Orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { getBlendPoolIds } from "@/lib/orchestrator/adapters/blend-config";
@@ -25,7 +25,19 @@ export function useUserPositions() {
   // ── All pools ──────────────────────────────────────────────────────────────
   const { data: pools = [], isLoading: isLoadingPools } = usePools();
 
-  const blendPools = pools.filter((p) => p.type === "blend");
+  // Explicit blend pool query — same cache key as usePools() uses, so React Query
+  // deduplicates the network call. We need this to know specifically when blend
+  // pools have loaded, because usePools().isLoading turns false as soon as any
+  // pool type resolves (soroswap/aqua may beat blend), leaving blendPools empty.
+  const blendListQuery = useQuery<PoolInfo[]>({
+    queryKey: [...POOLS_QUERY_KEY, "blend"],
+    queryFn: () => orchestrator.getPoolsByType("blend"),
+    staleTime: 3 * 60_000,
+    retry: 2,
+    throwOnError: false,
+  });
+
+  const blendPools = blendListQuery.data ?? [];
   const nonBlendPools = pools.filter((p) => p.type !== "blend");
 
   // ── Priority 2: Horizon activity scan ─────────────────────────────────────
@@ -56,7 +68,7 @@ export function useUserPositions() {
   const blendPositionsQuery = useQuery<PoolPosition[]>({
     queryKey: ["orchestrator", "blend-all-positions", address],
     queryFn: () => orchestrator.getAllBlendUserPositions(address!),
-    enabled: Boolean(address) && !isLoadingPools && hasBlendHistory,
+    enabled: Boolean(address) && !blendListQuery.isLoading && hasBlendHistory,
     staleTime: POSITION_STALE_TIME,
     retry: 3,
     retryDelay: (attempt) => attempt * 1000,
