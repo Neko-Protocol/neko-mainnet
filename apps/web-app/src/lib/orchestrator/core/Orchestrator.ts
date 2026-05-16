@@ -185,7 +185,6 @@ export class Orchestrator {
       .flatMap((r) => r.value);
   }
 
-  /** @deprecated Use getAllBlendVaultUserPositions + getAllBlendDirectUserPositions. */
   async getAllBlendUserPositions(userAddress: string): Promise<PoolPosition[]> {
     const blendAdapters = this.registry
       .getAdapters()

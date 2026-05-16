@@ -396,7 +396,6 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     }
   }
 
-  /** @deprecated Use getAllVaultUserPositions + getDirectUserPositions separately. */
   async getAllUserPositions(userAddress: string): Promise<PoolPosition[]> {
     const [vault, direct] = await Promise.all([
       this.getAllVaultUserPositions(userAddress),
