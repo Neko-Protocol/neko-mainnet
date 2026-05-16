@@ -19,6 +19,10 @@ export interface BannerPageProps {
 
   imageSize?: "default" | "large";
 
+  imageLayoutClassName?: string;
+
+  imageObjectClassName?: string;
+
   actions?: React.ReactNode;
 
   className?: string;
@@ -32,6 +36,8 @@ export function BannerPage({
   imageAlt = "",
   imagePosition = "right",
   imageSize = "default",
+  imageLayoutClassName,
+  imageObjectClassName,
   actions,
   className,
 }: BannerPageProps) {
@@ -70,6 +76,8 @@ export function BannerPage({
             alt={imageAlt}
             position={imagePosition}
             size={imageSize}
+            layoutClassName={imageLayoutClassName}
+            objectClassName={imageObjectClassName}
           />
         </div>
       )}
@@ -94,6 +102,8 @@ interface IllustrationProps {
   alt: string;
   position: "right" | "bottom-right";
   size: "default" | "large";
+  layoutClassName?: string;
+  objectClassName?: string;
 }
 
 const IMAGE_LAYOUT: Record<IllustrationProps["size"], string> = {
@@ -101,18 +111,26 @@ const IMAGE_LAYOUT: Record<IllustrationProps["size"], string> = {
   large: "-right-120 -top-18 h-[155%] w-[120%]",
 };
 
-function Illustration({ src, alt, position, size }: IllustrationProps) {
+function Illustration({
+  src,
+  alt,
+  position,
+  size,
+  layoutClassName,
+  objectClassName,
+}: IllustrationProps) {
   const objectClass =
-    position === "bottom-right"
+    objectClassName ??
+    (position === "bottom-right"
       ? "object-contain object-bottom-right"
       : size === "large"
         ? "object-contain object-right object-top"
-        : "object-contain object-right";
+        : "object-contain object-right");
   return (
     <div
       className={cn(
         "pointer-events-none absolute select-none",
-        IMAGE_LAYOUT[size]
+        layoutClassName ?? IMAGE_LAYOUT[size]
       )}
     >
       <Image
