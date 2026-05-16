@@ -415,7 +415,7 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
                     <div className="flex items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/20 border-t-white/40" />
                       <span className="text-white/30 text-xs">
-                        Loading Blend / Aqua positions…
+                        Loading positions…
                       </span>
                     </div>
                   </td>
