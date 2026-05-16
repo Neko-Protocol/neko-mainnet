@@ -232,6 +232,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
 
           const resolvedCode =
             tokenMeta?.symbol ??
+            BLEND_ASSET_CODES[assetAddress] ??
             contractToCode[assetAddress] ??
             assetAddress.slice(0, 8);
 
