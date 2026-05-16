@@ -137,9 +137,13 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       } catch {}
 
       const contractToCode = getContractToCodeMap();
+      const onChainSymbol =
+        tokenMeta?.symbol && tokenMeta.symbol !== "UNKNOWN"
+          ? tokenMeta.symbol
+          : undefined;
       const resolvedCode =
-        tokenMeta?.symbol ??
         BLEND_ASSET_CODES[assetAddress] ??
+        onChainSymbol ??
         contractToCode[assetAddress] ??
         assetAddress.slice(0, 8);
 
@@ -229,9 +233,20 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           tokenMeta = await TokenMetadata.load(network, assetAddress);
         } catch {}
 
+        const onChainSymbol =
+          tokenMeta?.symbol && tokenMeta.symbol !== "UNKNOWN"
+            ? tokenMeta.symbol
+            : undefined;
+        if (
+          !BLEND_ASSET_CODES[assetAddress] &&
+          !onChainSymbol &&
+          !contractToCode[assetAddress]
+        ) {
+          console.warn("[BlendPool] unresolved reserve address:", assetAddress);
+        }
         const resolvedCode =
-          tokenMeta?.symbol ??
           BLEND_ASSET_CODES[assetAddress] ??
+          onChainSymbol ??
           contractToCode[assetAddress] ??
           assetAddress.slice(0, 8);
 
