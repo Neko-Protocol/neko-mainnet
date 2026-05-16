@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Check, X } from "lucide-react";
+import { Check, X, Copy, CheckCheck } from "lucide-react";
 import { ShareOnXButton } from "@/components/ShareOnXButton";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { MOCK_SHARE_DEFAULTS } from "@/lib/share";
@@ -26,6 +26,8 @@ export function VaultDepositSuccessModal({
   shareId = MOCK_SHARE_DEFAULTS.shareId,
 }: VaultDepositSuccessModalProps) {
   const [visible, setVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     const t = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(t);
@@ -34,6 +36,20 @@ export function VaultDepositSuccessModal({
   const handleClose = () => {
     setVisible(false);
     setTimeout(onClose, 220);
+  };
+
+  const handleCopyImage = async () => {
+    try {
+      const response = await fetch(BANNER_PATH);
+      const blob = await response.blob();
+      await navigator.clipboard.write([
+        new ClipboardItem({ [blob.type]: blob }),
+      ]);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Clipboard API not supported
+    }
   };
 
   return (
@@ -60,7 +76,6 @@ export function VaultDepositSuccessModal({
           }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Close */}
           <button
             aria-label="Close"
             onClick={handleClose}
@@ -69,9 +84,7 @@ export function VaultDepositSuccessModal({
             <X className="h-4 w-4" />
           </button>
 
-          {/* Content */}
           <div className="flex flex-col items-center px-10 pt-7 pb-6 gap-4">
-            {/* Checkmark */}
             <div
               className="flex items-center justify-center rounded-full"
               style={{
@@ -85,7 +98,6 @@ export function VaultDepositSuccessModal({
               <Check className="h-7 w-7 text-[#4ADE80]" strokeWidth={2.5} />
             </div>
 
-            {/* Text */}
             <div className="text-center space-y-1.5">
               <p className="text-white font-semibold text-xl leading-snug">
                 Deposit successful!
@@ -97,10 +109,8 @@ export function VaultDepositSuccessModal({
               </p>
             </div>
 
-            {/* Divider */}
             <div className="w-full h-px bg-white/6" />
 
-            {/* Banner preview */}
             <div className="w-full overflow-hidden rounded-xl border border-white/8">
               <Image
                 src={BANNER_PATH}
@@ -112,8 +122,34 @@ export function VaultDepositSuccessModal({
               />
             </div>
 
-            {/* Share on X */}
             <div className="w-full flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleCopyImage}
+                className="flex w-full items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-colors border"
+                style={{
+                  background: copied
+                    ? "rgba(74,222,128,0.08)"
+                    : "rgba(255,255,255,0.05)",
+                  borderColor: copied
+                    ? "rgba(74,222,128,0.3)"
+                    : "rgba(255,255,255,0.1)",
+                  color: copied ? "#4ADE80" : "rgba(255,255,255,0.6)",
+                }}
+              >
+                {copied ? (
+                  <>
+                    <CheckCheck className="h-4 w-4" />
+                    Image copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    Copy image to paste in tweet
+                  </>
+                )}
+              </button>
+
               <ShareOnXButton
                 amount={amount}
                 vaultName={vaultName}
