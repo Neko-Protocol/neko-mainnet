@@ -72,9 +72,12 @@ export function useVaultsTotalUsd() {
 
   // Same queryKey as useVaultData → cache hit when VaultPositionsTable already loaded them.
   const vaultDataQueries = useQueries({
-    queries: positions.map(({ vault }) => ({
+    queries: positions.map(({ vault }, i) => ({
       queryKey: ["vaultData", vault.id],
-      queryFn: () => fetchVaultLiveStats(vault.id),
+      queryFn: async () => {
+        if (i > 0) await new Promise((r) => setTimeout(r, i * 400));
+        return fetchVaultLiveStats(vault.id);
+      },
       staleTime: 5 * 60_000,
       gcTime: 15 * 60_000,
       refetchInterval: 5 * 60_000,
@@ -116,7 +119,8 @@ export function useVaultsTotalUsd() {
         fromSmallestUnit(underlyingStroops.toString(), 7)
       );
       const price = priceMap[vault.supplyAsset.symbol] ?? 0;
-      return sum + underlyingAmount * price;
+      const vaultUsd = underlyingAmount * price;
+      return sum + vaultUsd;
     }, 0);
   }, [positions, vaultDataQueries, priceMap]);
 
