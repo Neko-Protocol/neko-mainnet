@@ -26,6 +26,7 @@ import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { safeParseFloat } from "@/lib/helpers/formatUtils";
 import { atomicToDecimal } from "@/lib/helpers/amount";
 import { stellarPriceService } from "@/lib/services/stellar-price.service";
+import { BLEND_VAULT_ONLY_RESERVES } from "@/lib/orchestrator/adapters/blend-config";
 
 const PROTOCOL_ICONS: Record<string, string> = {
   neko: "/neko-logo.png",
@@ -150,7 +151,10 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
     useUserPositions();
 
   const aggregatedPositions = allPositions.filter(
-    (p) => p.pool.type !== "neko" && p.position.deposited > 0n
+    (p) =>
+      p.pool.type !== "neko" &&
+      p.position.deposited > 0n &&
+      !p.pool.tokens.some((t) => BLEND_VAULT_ONLY_RESERVES.has(t.address))
   );
 
   const isLoading = isLoadingNeko || isLoadingAggregated;

@@ -13,6 +13,7 @@ import {
   DASHBOARD_POOL_QUERY_OPTS,
 } from "./useDashboardPools";
 import { batchCheckLpBalances } from "@/lib/services/positionScanner";
+import { BLEND_VAULT_ONLY_RESERVES } from "@/lib/orchestrator/adapters/blend-config";
 
 export function useDashboardPositions() {
   const { address } = useWallet();
@@ -46,10 +47,6 @@ export function useDashboardPositions() {
   const poolsReady =
     !blendQuery.isLoading && !aquaQuery.isLoading && !soroswapQuery.isLoading;
 
-  // ── Priority 2: Blend batch ────────────────────────────────────────────────
-  // ONE PoolV2.load + ONE loadUser covers all blend reserves → 2 RPC calls total.
-  // Wait for pool list to finish before fetching positions so they don't race
-  // each other for Soroban RPC bandwidth on page load.
   const blendPositionsQuery = useQuery<PoolPosition[]>({
     queryKey: ["orchestrator", "blend-all-positions", address],
     queryFn: () => orchestrator.getAllBlendUserPositions(address!),
@@ -60,9 +57,6 @@ export function useDashboardPositions() {
     refetchOnWindowFocus: false,
   });
 
-  // ── Priority 2: LP balance pre-screen ─────────────────────────────────────
-  // ONE getLedgerEntries call checks all Aqua + Soroswap LP balances at once.
-  // Only pools with a non-zero balance proceed to full getUserPosition queries.
   const lpScreenQuery = useQuery<Set<string>>({
     queryKey: [
       "orchestrator",
@@ -104,7 +98,11 @@ export function useDashboardPositions() {
       const hasDeposit = pos.deposited > 0n;
       const hasLiabilities =
         parseFloat(String(pos.metadata?.liabilities ?? "0")) > 0;
-      return hasDeposit || hasLiabilities;
+      if (!hasDeposit && !hasLiabilities) return false;
+      // Exclude vault-only reserves — they're already counted in vaultsTotalUsd
+      const parts = pos.poolId.split(":");
+      const assetAddress = parts[2];
+      return !assetAddress || !BLEND_VAULT_ONLY_RESERVES.has(assetAddress);
     })
     .map((pos) => {
       const pool = allBlendPools.find((p) => p.id === pos.poolId);

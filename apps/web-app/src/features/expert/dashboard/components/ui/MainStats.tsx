@@ -106,13 +106,9 @@ const MainStats: React.FC = () => {
     }, 0);
   }, [positions, walletPriceByCode, missingPriceMap]);
 
-  const portfolioTotalUsd = totalUsd + positionsNetUsd + vaultsTotalUsd;
+  const portfolioTotalUsd = positionsNetUsd + vaultsTotalUsd;
   const isLoading =
-    isFetchingBalances ||
-    isLoadingPortfolio ||
-    isLoadingPositions ||
-    isLoadingMissingPrices ||
-    isLoadingVaults;
+    isLoadingPositions || isLoadingMissingPrices || isLoadingVaults;
   const totalInSelected = convertUsdToSelected(portfolioTotalUsd, fxRate);
   const formattedTotal = formatCurrency(
     totalInSelected,
@@ -133,7 +129,7 @@ const MainStats: React.FC = () => {
           label="Total Portfolio Value"
           value={address ? formattedTotal : formattedZero}
           isLoading={isLoading && !!address}
-          tooltip="Sum of wallet tokens + pool positions + vault positions in USD."
+          tooltip="Sum of pool positions + vault positions in USD."
         />
         <StatCard
           icon={<Coins className="h-5 w-5" />}
@@ -146,6 +142,7 @@ const MainStats: React.FC = () => {
           label="Avg. Pool APY"
           tooltip="Average APY across your active pool positions."
           value={avgPoolApy !== null ? `${avgPoolApy}%` : "-"}
+          isLoading={isLoading && !!address}
         />
       </div>
     </div>

@@ -138,6 +138,8 @@ function parseSoroswapPricePayload(
  * through to Soroswap → CoinGecko as before.
  */
 export class StellarPriceService {
+  private readonly inflight = new Map<string, Promise<PricedResult>>();
+
   async getCoinGeckoSimpleUsd(coinGeckoId: string): Promise<number> {
     const id = coinGeckoId.trim();
     if (!id) return 0;
@@ -216,6 +218,22 @@ export class StellarPriceService {
   }
 
   async getPriceWithSource(
+    tokenCode: string,
+    contractAddress?: string
+  ): Promise<PricedResult> {
+    if (!tokenCode || typeof tokenCode !== "string") {
+      return { price: 0, source: null };
+    }
+    const key = `${tokenCode}:${contractAddress ?? ""}`;
+    const existing = this.inflight.get(key);
+    if (existing) return existing;
+    const promise = this._fetchPriceWithSource(tokenCode, contractAddress);
+    this.inflight.set(key, promise);
+    promise.finally(() => this.inflight.delete(key));
+    return promise;
+  }
+
+  private async _fetchPriceWithSource(
     tokenCode: string,
     contractAddress?: string
   ): Promise<PricedResult> {
