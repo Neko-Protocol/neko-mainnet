@@ -74,7 +74,20 @@ export async function POST(request: NextRequest) {
       bumpLeg(assetOut, body.amount_out),
     ]);
 
-    return NextResponse.json({ ok: true }, { status: 201 });
+    let isFirstVaultDeposit: boolean | undefined;
+    if (body.action_type === "vaults_deposit") {
+      const { count } = await supabase
+        .from("audit_logs")
+        .select("id", { count: "exact", head: true })
+        .eq("wallet_address", body.wallet_address)
+        .eq("action_type", "vaults_deposit");
+      isFirstVaultDeposit = count === 1;
+    }
+
+    return NextResponse.json(
+      { ok: true, isFirstVaultDeposit },
+      { status: 201 }
+    );
   } catch {
     return NextResponse.json({ ok: true });
   }

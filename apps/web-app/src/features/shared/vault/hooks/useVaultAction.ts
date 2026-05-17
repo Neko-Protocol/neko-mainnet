@@ -187,9 +187,13 @@ export function useVaultAction(
   );
 
   const handleDeposit = useCallback(
-    async (amount: string): Promise<boolean> => {
-      if (!address || !amount || parseFloat(amount) <= 0) return false;
-      if (!vaultContractId) return false;
+    async (
+      amount: string
+    ): Promise<{ success: boolean; isFirstVaultDeposit: boolean }> => {
+      if (!address || !amount || parseFloat(amount) <= 0)
+        return { success: false, isFirstVaultDeposit: false };
+      if (!vaultContractId)
+        return { success: false, isFirstVaultDeposit: false };
       setIsLoading(true);
 
       try {
@@ -254,7 +258,7 @@ export function useVaultAction(
               )
             : undefined;
 
-        auditService.log({
+        const { isFirstVaultDeposit } = await auditService.log({
           wallet_address: address,
           action_type: "vaults_deposit",
           asset_in: supplyAssetSymbol,
@@ -267,12 +271,14 @@ export function useVaultAction(
           tx_hash: sendResult.hash,
         });
 
-        showSuccess(`Successfully deposited ${amount} ${supplyAssetSymbol}`);
         void invalidateAfterTx();
-        return true;
+        return {
+          success: true,
+          isFirstVaultDeposit: isFirstVaultDeposit ?? false,
+        };
       } catch (err) {
         if (err instanceof Error && err.message === "USER_REJECTED")
-          return false;
+          return { success: false, isFirstVaultDeposit: false };
         const contractMsg = extractContractErrorOrNull(err);
         showError(
           typeof contractMsg === "string"
@@ -281,7 +287,7 @@ export function useVaultAction(
               ? err.message
               : "An unexpected error occurred."
         );
-        return false;
+        return { success: false, isFirstVaultDeposit: false };
       } finally {
         setIsLoading(false);
         setIsConfirming(false);
@@ -293,7 +299,6 @@ export function useVaultAction(
       signTransaction,
       invalidateAfterTx,
       showError,
-      showSuccess,
       supplyAssetSymbol,
       vaultContractId,
       vaultShareSymbol,
@@ -465,5 +470,6 @@ export function useVaultAction(
     hasWallet: !!address,
     handleDeposit,
     handleWithdraw,
+    showSuccess,
   };
 }

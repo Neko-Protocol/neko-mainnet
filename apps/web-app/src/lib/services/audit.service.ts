@@ -3,15 +3,18 @@ import type { AuditEvent, AuditLog } from "@/lib/types/audit.types";
 class AuditService {
   private readonly baseUrl = "/api/audit";
 
-  async log(event: AuditEvent): Promise<void> {
+  async log(event: AuditEvent): Promise<{ isFirstVaultDeposit?: boolean }> {
     try {
-      await fetch(this.baseUrl, {
+      const res = await fetch(this.baseUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(event),
       });
+      if (!res.ok) return {};
+      const data = (await res.json()) as { isFirstVaultDeposit?: boolean };
+      return { isFirstVaultDeposit: data.isFirstVaultDeposit };
     } catch {
-      // fire-and-forget  never propagate errors
+      return {};
     }
   }
 
