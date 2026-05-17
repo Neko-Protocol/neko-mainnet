@@ -3,28 +3,27 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Check, X, Copy, CheckCheck } from "lucide-react";
+import { ShareOnXButton } from "@/components/ShareOnXButton";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { MOCK_SHARE_DEFAULTS } from "@/lib/share";
 
-const TWEET_TEXT = encodeURIComponent(
-  "Just made my first deposit into a @NekoProto vault! Real yield on RWAs. \n\nOn @BuildOnStellar \n\nare yours working yet? nekoprotocol.xyz"
-);
-const SHARE_URL = `https://x.com/intent/tweet?text=${TWEET_TEXT}`;
-const BANNER_PATH = "/X-Banner.png";
-
-const XLogo = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
-);
+const BANNER_PATH = "/x/X-Banner.png";
 
 interface VaultDepositSuccessModalProps {
   vaultName: string;
   onClose: () => void;
+  /** Defaults to mock demo values until deposits mint server-side share IDs */
+  amount?: string;
+  apy?: string;
+  shareId?: string;
 }
 
 export function VaultDepositSuccessModal({
   vaultName,
   onClose,
+  amount = MOCK_SHARE_DEFAULTS.amount,
+  apy = MOCK_SHARE_DEFAULTS.apy,
+  shareId = MOCK_SHARE_DEFAULTS.shareId,
 }: VaultDepositSuccessModalProps) {
   const [visible, setVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -51,10 +50,6 @@ export function VaultDepositSuccessModal({
     } catch {
       // Clipboard API not supported
     }
-  };
-
-  const handleShare = () => {
-    window.open(SHARE_URL, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -155,25 +150,12 @@ export function VaultDepositSuccessModal({
                 )}
               </button>
 
-              <button
-                type="button"
-                onClick={handleShare}
-                className="flex w-full items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all duration-150"
-                style={{
-                  background: "#000",
-                  color: "#fff",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.background = "#1a1a1a")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = "#000")
-                }
-              >
-                <XLogo />
-                Share on X
-              </button>
+              <ShareOnXButton
+                amount={amount}
+                vaultName={vaultName}
+                apy={apy}
+                shareId={shareId}
+              />
 
               <button
                 type="button"
