@@ -4,6 +4,13 @@ export const SITE_URL = "https://nekoprotocol.xyz" as const;
 export const DAPP_VAULTS_PUBLIC_URL =
   "https://dapp.nekoprotocol.xyz/vaults" as const;
 
+/** Deployed dapp origin (`metadataBase`, canonical URLs for social). */
+export const DAPP_PUBLIC_ORIGIN = new URL(DAPP_VAULTS_PUBLIC_URL).origin;
+
+/** OG / Twitter large card — absolute URL so crawlers hit the CDN/app reliably. */
+export const DAPP_SOCIAL_CARD_IMAGE =
+  "https://dapp.nekoprotocol.xyz/x/X-Banner.png" as const;
+
 export type VaultDepositShareIntentParams = {
   vaultName: string;
   /** e.g. `5.00%` — shown as `Vault · 5.00% APY` (never includes deposit $). */
