@@ -16,6 +16,7 @@ import {
 } from "@/lib/helpers/amount";
 import { useQuery } from "@tanstack/react-query";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
+import { useVaultApy } from "../../hooks/useVaultApy";
 
 interface VaultActionModalProps {
   vaultContractId: string;
@@ -47,6 +48,9 @@ export function VaultActionModal({
   );
 
   const { address } = useWallet();
+  const { vaultApy } = useVaultApy(vaultContractId);
+  const apyDisplay =
+    vaultApy != null && vaultApy > 0 ? `${vaultApy.toFixed(2)}%` : "—";
   const { userShares } = useVaultBalance(vaultContractId);
   const { data: vaultData } = useVaultData(vaultContractId);
   const { isLoading, handleDeposit, handleWithdraw } = useVaultAction(
@@ -130,6 +134,7 @@ export function VaultActionModal({
     return (
       <VaultDepositSuccessModal
         vaultName={vaultName ?? supplyAssetSymbol ?? "vault"}
+        apy={apyDisplay}
         onClose={handleClose}
       />
     );

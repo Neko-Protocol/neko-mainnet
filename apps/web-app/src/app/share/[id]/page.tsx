@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ShareOnXButton } from "@/components/ShareOnXButton";
-import { MOCK_SHARE_DEFAULTS, SITE_URL, buildSharePageUrl } from "@/lib/share";
+import {
+  MOCK_SHARE_DEFAULTS,
+  SITE_URL,
+  buildSharePageUrl,
+  buildStaticShareBannerUrl,
+} from "@/lib/share";
 
 type SharePageProps = {
   params: Promise<{ id: string }>;
@@ -22,10 +27,11 @@ export async function generateMetadata({
   const title = `Vault deposit · ${payload.vaultName} | Neko Protocol`;
   const description = `Deposited ${payload.amount} into ${payload.vaultName} (${payload.apy} APY). Real yield on RWAs, powered by Stellar.`;
 
-  const ogImageUrl = new URL(
+  const staticBannerUrl = buildStaticShareBannerUrl();
+  const ogImageDynamic = new URL(
     `/share/${encodeURIComponent(id)}/opengraph-image`,
     SITE_URL
-  );
+  ).toString();
 
   return {
     title,
@@ -40,7 +46,13 @@ export async function generateMetadata({
       type: "website",
       images: [
         {
-          url: ogImageUrl.toString(),
+          url: staticBannerUrl,
+          width: 1200,
+          height: 630,
+          alt: "Neko Protocol — vault share banner",
+        },
+        {
+          url: ogImageDynamic,
           width: 1200,
           height: 630,
           alt: "Neko Protocol vault deposit share card",
@@ -53,9 +65,26 @@ export async function generateMetadata({
       description,
       site: "@NekoProto",
       creator: "@NekoProto",
-      images: [ogImageUrl.toString()],
+      images: [
+        {
+          url: staticBannerUrl,
+          width: 1200,
+          height: 630,
+          alt: "Neko Protocol — vault share banner",
+        },
+      ],
     },
     robots: { index: true, follow: true },
+    /**
+     * Meta duplicados por compatibilidad: algunos scrapers de X leen solo
+     * twitter:image / dimensiones explícitas (además de og:image).
+     */
+    other: {
+      "twitter:image": staticBannerUrl,
+      "twitter:image:width": "1200",
+      "twitter:image:height": "630",
+      "twitter:image:alt": "Neko Protocol — vault share banner",
+    },
   };
 }
 
