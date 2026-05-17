@@ -31,6 +31,10 @@ export const BLEND_ASSET_CODES: Record<string, string> = {
   native: "XLM",
 };
 
+export const BLEND_VAULT_ONLY_RESERVES = new Set([
+  "CC5CE6MWISDXT3MLNQ7R3FVILFVFEIH3COWGH45GJKL6BD2ZHF7F7JVI", // EURC
+]);
+
 // Maps "<poolContractId>:<assetAddress>" → Neko DeFindex vault contract ID
 export const BLEND_POOL_VAULTS: Record<string, string> = {
   // CETES reserve → Neko CETES vault
