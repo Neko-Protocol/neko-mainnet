@@ -21,7 +21,7 @@ import { VaultDetailHero } from "./VaultDetailHero";
 import { VaultDetailMetrics } from "./VaultDetailMetrics";
 import { VaultDetailInfo } from "./VaultDetailInfo";
 import { VaultActionPanel } from "./VaultActionPanel";
-import { VaultDepositSuccessModal } from "@/features/shared/vault/components/ui/VaultDepositSuccessModal";
+import { FirstVaultDepositSuccessModal } from "@/features/shared/vault/components/ui/FirstVaultDepositSuccessModal";
 import type { VaultDetailLayoutProps, VaultActionTab } from "./types";
 
 const PANEL_SCROLL_CLASS =
@@ -50,8 +50,13 @@ export function VaultDetailLayout({
 
   const { userShares, sharesFormatted } = useVaultBalance(vaultContractId);
   const { data: vaultData } = useVaultData(vaultContractId);
-  const { isLoading, isConfirming, handleDeposit, handleWithdraw } =
-    useVaultAction(vaultContractId, vault.supplyAsset.symbol, vault.name);
+  const {
+    isLoading,
+    isConfirming,
+    handleDeposit,
+    handleWithdraw,
+    showSuccess,
+  } = useVaultAction(vaultContractId, vault.supplyAsset.symbol, vault.name);
 
   const { data: supplyBalance = "0" } = useQuery({
     queryKey: [
@@ -83,23 +88,36 @@ export function VaultDetailLayout({
 
   const handleSubmit = useCallback(async () => {
     if (!amount || parseFloat(amount) <= 0) return;
-    const withdrawRaw = tab === "withdraw" ? decimalToAtomic(amount, 7) : 0n;
-    const maxWithdrawRaw =
-      tab === "withdraw" ? decimalToAtomic(withdrawBalance, 7) : 0n;
-    const success =
-      tab === "deposit"
-        ? await handleDeposit(amount)
-        : await handleWithdraw(amount, {
-            withdrawAll: maxWithdrawRaw > 0n && withdrawRaw >= maxWithdrawRaw,
-          });
-    if (success) {
-      setAmount("");
-      if (tab === "deposit" && !localStorage.getItem("neko_first_deposit")) {
-        localStorage.setItem("neko_first_deposit", "1");
-        setSuccessModalOpen(true);
+
+    if (tab === "deposit") {
+      const { success, isFirstVaultDeposit } = await handleDeposit(amount);
+      if (success) {
+        setAmount("");
+        if (isFirstVaultDeposit) {
+          setSuccessModalOpen(true);
+        } else {
+          showSuccess(
+            `Successfully deposited ${amount} ${vault.supplyAsset.symbol}`
+          );
+        }
       }
+    } else {
+      const withdrawRaw = decimalToAtomic(amount, 7);
+      const maxWithdrawRaw = decimalToAtomic(withdrawBalance, 7);
+      const success = await handleWithdraw(amount, {
+        withdrawAll: maxWithdrawRaw > 0n && withdrawRaw >= maxWithdrawRaw,
+      });
+      if (success) setAmount("");
     }
-  }, [tab, amount, withdrawBalance, handleDeposit, handleWithdraw]);
+  }, [
+    tab,
+    amount,
+    withdrawBalance,
+    vault.supplyAsset.symbol,
+    handleDeposit,
+    handleWithdraw,
+    showSuccess,
+  ]);
 
   return (
     <div
@@ -107,7 +125,7 @@ export function VaultDetailLayout({
       style={{ background: "#111111" }}
     >
       {successModalOpen && (
-        <VaultDepositSuccessModal
+        <FirstVaultDepositSuccessModal
           vaultName={vault.name}
           apy={liveApy7d ?? vault.apy7d ?? "—"}
           onClose={() => setSuccessModalOpen(false)}
@@ -136,13 +154,6 @@ export function VaultDetailLayout({
             tokenPriceInCurrency={tokenPriceInCurrency}
             selectedCurrency={selectedCurrency}
           />
-          <button
-            type="button"
-            onClick={() => setSuccessModalOpen(true)}
-            className="mt-3 w-full rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2.5 text-center text-xs font-semibold text-amber-200/95 transition-colors hover:bg-amber-500/16"
-          >
-            Probar compartir en X (test)
-          </button>
         </div>
       </aside>
 

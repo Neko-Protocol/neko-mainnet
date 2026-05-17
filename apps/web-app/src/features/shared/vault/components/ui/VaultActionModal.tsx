@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { X, Loader2 } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
-import { VaultDepositSuccessModal } from "./VaultDepositSuccessModal";
+import { FirstVaultDepositSuccessModal } from "./FirstVaultDepositSuccessModal";
 import { useVaultBalance } from "../../hooks/useVaultBalance";
 import { useVaultAction } from "../../hooks/useVaultAction";
 import { useVaultData } from "../../hooks/useVaultData";
@@ -53,11 +53,12 @@ export function VaultActionModal({
     vaultApy != null && vaultApy > 0 ? `${vaultApy.toFixed(2)}%` : "—";
   const { userShares } = useVaultBalance(vaultContractId);
   const { data: vaultData } = useVaultData(vaultContractId);
-  const { isLoading, handleDeposit, handleWithdraw } = useVaultAction(
-    vaultContractId,
-    supplyAssetSymbol,
-    vaultShareSymbol
-  );
+  const {
+    isLoading,
+    handleDeposit,
+    handleWithdraw,
+    showSuccess: notifyDepositSuccess,
+  } = useVaultAction(vaultContractId, supplyAssetSymbol, vaultShareSymbol);
 
   const { data: supplyBalance = "0" } = useQuery({
     queryKey: ["vaultSupplyBalance", supplyAssetContractAddress, address],
@@ -97,10 +98,13 @@ export function VaultActionModal({
   const handleConfirm = async () => {
     if (!amount || parseFloat(amount) <= 0) return;
     if (mode === "deposit") {
-      const success = await handleDeposit(amount);
-      if (success && !localStorage.getItem("neko_first_deposit")) {
-        localStorage.setItem("neko_first_deposit", "1");
+      const { success, isFirstVaultDeposit } = await handleDeposit(amount);
+      if (success && isFirstVaultDeposit) {
         setShowSuccess(true);
+      } else if (success) {
+        notifyDepositSuccess(
+          `Successfully deposited ${amount} ${supplyAssetSymbol ?? ""}`
+        );
       }
     } else {
       const withdrawRaw = decimalToAtomic(amount, 7);
@@ -132,7 +136,7 @@ export function VaultActionModal({
 
   if (showSuccess) {
     return (
-      <VaultDepositSuccessModal
+      <FirstVaultDepositSuccessModal
         vaultName={vaultName ?? supplyAssetSymbol ?? "vault"}
         apy={apyDisplay}
         onClose={handleClose}
