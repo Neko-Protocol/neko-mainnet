@@ -8,9 +8,8 @@ const VAULTS_TITLE = "Vaults | Neko Protocol";
 const VAULTS_DESCRIPTION =
   "Discover and deposit into Neko vaults. Real-time RWA yield on Stellar.";
 
-/** Recommended Twitter / OG preview asset for the vaults landing URL. */
 const VAULTS_CARD_IMAGE =
-  "https://pbs.twimg.com/media/HIjD6WKXwAED9hd.jpg" as const;
+  "https://dapp.nekoprotocol.xyz/x/X-Banner.png" as const;
 
 export const metadata: Metadata = {
   metadataBase: new URL(DAPP_ORIGIN),
@@ -31,8 +30,8 @@ export const metadata: Metadata = {
         url: VAULTS_CARD_IMAGE,
         width: 1200,
         height: 630,
-        alt: "Neko Protocol vaults - Real yield on RWAs",
-        type: "image/jpeg",
+        alt: "Neko Protocol - Real yield from RWAs on Stellar",
+        type: "image/png",
       },
     ],
   },
@@ -47,13 +46,11 @@ export const metadata: Metadata = {
         url: VAULTS_CARD_IMAGE,
         width: 1200,
         height: 630,
-        alt: "Neko Protocol vaults - Real yield on RWAs",
-        type: "image/jpeg",
+        alt: "Neko Protocol - Real yield from RWAs on Stellar",
+        type: "image/png",
       },
     ],
-    image: VAULTS_CARD_IMAGE,
-    "image:src": VAULTS_CARD_IMAGE,
-  } as Metadata["twitter"],
+  },
   robots: { index: true, follow: true },
 };
 
