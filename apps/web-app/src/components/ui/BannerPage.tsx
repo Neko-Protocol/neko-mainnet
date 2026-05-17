@@ -108,7 +108,7 @@ interface IllustrationProps {
 
 const IMAGE_LAYOUT: Record<IllustrationProps["size"], string> = {
   default: "right-0 top-0 h-full w-[55%]",
-  large: "-right-120 -top-18 h-[155%] w-[120%]",
+  large: "-right-116 -top-15 h-[155%] w-[120%]",
 };
 
 function Illustration({
