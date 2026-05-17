@@ -22,11 +22,13 @@ import {
 export interface AssetPriceCardProps {
   tokenCode: string;
   assetInfo?: AssetInfo | null;
+  apy?: number;
 }
 
 export function AssetPriceCard({
   tokenCode,
   assetInfo: assetInfoProp,
+  apy,
 }: AssetPriceCardProps) {
   const codeUpper = tokenCode.toUpperCase();
   const { price, isLoading } = useTokenPrice(tokenCode);
@@ -103,11 +105,18 @@ export function AssetPriceCard({
               <p className="text-white/40 text-[10px] font-semibold uppercase tracking-widest mb-1">
                 Spot ({selectedCurrency})
               </p>
-              <p
-                className={`text-3xl font-bold tabular-nums ${hasPrice ? "text-white" : "text-white/40"}`}
-              >
-                {formattedPrice}
-              </p>
+              <div className="flex items-baseline gap-3">
+                <p
+                  className={`text-3xl font-bold tabular-nums ${hasPrice ? "text-white" : "text-white/40"}`}
+                >
+                  {formattedPrice}
+                </p>
+                {apy !== undefined && (
+                  <span className="text-emerald-400 text-sm font-semibold tabular-nums">
+                    ~{apy.toFixed(2)}% APY
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
