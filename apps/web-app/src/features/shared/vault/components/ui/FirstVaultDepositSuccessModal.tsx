@@ -4,22 +4,22 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Check, X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
-import { VaultDepositShareOnXButton } from "./VaultDepositShareOnXButton";
+import { FirstVaultDepositShareOnXButton } from "./FirstVaultDepositShareOnXButton";
 
 const BANNER_PATH = "/x/X-Banner.png";
 
-export interface VaultDepositSuccessModalProps {
+export interface FirstVaultDepositSuccessModalProps {
   vaultName: string;
   /** Display APY for the tweet stats line only (e.g. `5.00%`). Never includes $. */
   apy: string;
   onClose: () => void;
 }
 
-export function VaultDepositSuccessModal({
+export function FirstVaultDepositSuccessModal({
   vaultName,
   apy,
   onClose,
-}: VaultDepositSuccessModalProps) {
+}: FirstVaultDepositSuccessModalProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ export function VaultDepositSuccessModal({
                 Deposit successful!
               </p>
               <p className="text-white/45 text-base leading-relaxed">
-                You just deposited into{" "}
+                You&apos;ve made your first deposit into a Neko vault {" "}
                 <span className="text-white/70 font-medium">{vaultName}</span>.
                 Your assets are now earning yield.
               </p>
@@ -103,7 +103,7 @@ export function VaultDepositSuccessModal({
             </div>
 
             <div className="w-full flex flex-col gap-2">
-              <VaultDepositShareOnXButton vaultName={vaultName} apy={apy} />
+              <FirstVaultDepositShareOnXButton vaultName={vaultName} apy={apy} />
 
               <button
                 type="button"

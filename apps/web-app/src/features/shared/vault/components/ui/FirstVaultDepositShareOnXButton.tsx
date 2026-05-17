@@ -4,20 +4,20 @@ import { useCallback } from "react";
 import { generateVaultDepositShareIntentUrl } from "@/lib/share";
 import { cn } from "@/lib/utils";
 
-export type VaultDepositShareOnXButtonProps = {
+export type FirstVaultDepositShareOnXButtonProps = {
   vaultName: string;
   apy: string;
   className?: string;
 };
 
 /**
- * Opens the X composer with vault deposit copy (vault name + APY only; never $).
+ * Opens the X composer with first-vault-deposit copy (vault name + APY only; never $).
  */
-export function VaultDepositShareOnXButton({
+export function FirstVaultDepositShareOnXButton({
   vaultName,
   apy,
   className,
-}: VaultDepositShareOnXButtonProps) {
+}: FirstVaultDepositShareOnXButtonProps) {
   const handleClick = useCallback(() => {
     const url = generateVaultDepositShareIntentUrl({ vaultName, apy });
     window.open(url, "_blank", "noopener,noreferrer");
