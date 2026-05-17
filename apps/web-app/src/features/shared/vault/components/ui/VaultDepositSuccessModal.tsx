@@ -2,31 +2,25 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Check, X, Copy, CheckCheck } from "lucide-react";
-import { ShareOnXButton } from "@/components/ShareOnXButton";
+import { Check, X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
-import { MOCK_SHARE_DEFAULTS } from "@/lib/share";
+import { VaultDepositShareOnXButton } from "./VaultDepositShareOnXButton";
 
 const BANNER_PATH = "/x/X-Banner.png";
 
-interface VaultDepositSuccessModalProps {
+export interface VaultDepositSuccessModalProps {
   vaultName: string;
+  /** Display APY for the tweet stats line only (e.g. `5.00%`). Never includes $. */
+  apy: string;
   onClose: () => void;
-  /** Defaults to mock demo values until deposits mint server-side share IDs */
-  amount?: string;
-  apy?: string;
-  shareId?: string;
 }
 
 export function VaultDepositSuccessModal({
   vaultName,
+  apy,
   onClose,
-  amount = MOCK_SHARE_DEFAULTS.amount,
-  apy = MOCK_SHARE_DEFAULTS.apy,
-  shareId = MOCK_SHARE_DEFAULTS.shareId,
 }: VaultDepositSuccessModalProps) {
   const [visible, setVisible] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const t = requestAnimationFrame(() => setVisible(true));
@@ -36,20 +30,6 @@ export function VaultDepositSuccessModal({
   const handleClose = () => {
     setVisible(false);
     setTimeout(onClose, 220);
-  };
-
-  const handleCopyImage = async () => {
-    try {
-      const response = await fetch(BANNER_PATH);
-      const blob = await response.blob();
-      await navigator.clipboard.write([
-        new ClipboardItem({ [blob.type]: blob }),
-      ]);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      // Clipboard API not supported
-    }
   };
 
   return (
@@ -123,39 +103,7 @@ export function VaultDepositSuccessModal({
             </div>
 
             <div className="w-full flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={handleCopyImage}
-                className="flex w-full items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-colors border"
-                style={{
-                  background: copied
-                    ? "rgba(74,222,128,0.08)"
-                    : "rgba(255,255,255,0.05)",
-                  borderColor: copied
-                    ? "rgba(74,222,128,0.3)"
-                    : "rgba(255,255,255,0.1)",
-                  color: copied ? "#4ADE80" : "rgba(255,255,255,0.6)",
-                }}
-              >
-                {copied ? (
-                  <>
-                    <CheckCheck className="h-4 w-4" />
-                    Image copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4" />
-                    Copy image to paste in tweet
-                  </>
-                )}
-              </button>
-
-              <ShareOnXButton
-                amount={amount}
-                vaultName={vaultName}
-                apy={apy}
-                shareId={shareId}
-              />
+              <VaultDepositShareOnXButton vaultName={vaultName} apy={apy} />
 
               <button
                 type="button"

@@ -22,12 +22,7 @@ import { VaultDetailMetrics } from "./VaultDetailMetrics";
 import { VaultDetailInfo } from "./VaultDetailInfo";
 import { VaultActionPanel } from "./VaultActionPanel";
 import { VaultDepositSuccessModal } from "@/features/shared/vault/components/ui/VaultDepositSuccessModal";
-import { MOCK_SHARE_DEFAULTS } from "@/lib/share";
 import type { VaultDetailLayoutProps, VaultActionTab } from "./types";
-
-const isShareTestEnabled =
-  process.env.NODE_ENV === "development" ||
-  process.env.NEXT_PUBLIC_ENABLE_SHARE_TEST === "true";
 
 const PANEL_SCROLL_CLASS =
   "pool-detail-scroll flex max-h-[min(calc(100dvh-7rem),calc(100svh-7rem))] flex-col overflow-y-auto overscroll-contain rounded-2xl bg-[#111111] p-6 lg:rounded-xl";
@@ -38,9 +33,7 @@ export function VaultDetailLayout({
 }: VaultDetailLayoutProps) {
   const [tab, setTab] = useState<VaultActionTab>(initialTab);
   const [amount, setAmount] = useState("");
-  const [successModal, setSuccessModal] = useState<
-    null | "first-deposit" | "share-test"
-  >(null);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
 
   const { address } = useWallet();
   const vaultContractId = vault.detail?.contracts?.vault ?? null;
@@ -103,7 +96,7 @@ export function VaultDetailLayout({
       setAmount("");
       if (tab === "deposit" && !localStorage.getItem("neko_first_deposit")) {
         localStorage.setItem("neko_first_deposit", "1");
-        setSuccessModal("first-deposit");
+        setSuccessModalOpen(true);
       }
     }
   }, [tab, amount, withdrawBalance, handleDeposit, handleWithdraw]);
@@ -113,17 +106,11 @@ export function VaultDetailLayout({
       className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl"
       style={{ background: "#111111" }}
     >
-      {successModal && (
+      {successModalOpen && (
         <VaultDepositSuccessModal
           vaultName={vault.name}
-          {...(successModal === "share-test"
-            ? {
-                amount: MOCK_SHARE_DEFAULTS.amount,
-                apy: liveApy7d ?? MOCK_SHARE_DEFAULTS.apy,
-                shareId: MOCK_SHARE_DEFAULTS.shareId,
-              }
-            : {})}
-          onClose={() => setSuccessModal(null)}
+          apy={liveApy7d ?? vault.apy7d ?? "—"}
+          onClose={() => setSuccessModalOpen(false)}
         />
       )}
       {/* Fixed right action panel */}
@@ -149,15 +136,13 @@ export function VaultDetailLayout({
             tokenPriceInCurrency={tokenPriceInCurrency}
             selectedCurrency={selectedCurrency}
           />
-          {isShareTestEnabled && (
-            <button
-              type="button"
-              onClick={() => setSuccessModal("share-test")}
-              className="mt-3 w-full rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2.5 text-center text-xs font-semibold text-amber-200/95 transition-colors hover:bg-amber-500/16"
-            >
-              Probar “Compartir en X” (test)
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setSuccessModalOpen(true)}
+            className="mt-3 w-full rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2.5 text-center text-xs font-semibold text-amber-200/95 transition-colors hover:bg-amber-500/16"
+          >
+            Probar compartir en X (test)
+          </button>
         </div>
       </aside>
 

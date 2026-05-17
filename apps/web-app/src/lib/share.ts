@@ -1,5 +1,48 @@
 export const SITE_URL = "https://nekoprotocol.xyz" as const;
 
+/** Public vaults URL used in deposit-success tweets (Twitter Card target). */
+export const DAPP_VAULTS_PUBLIC_URL =
+  "https://dapp.nekoprotocol.xyz/vaults" as const;
+
+export type VaultDepositShareIntentParams = {
+  vaultName: string;
+  /** e.g. `5.00%` — shown as `Vault · 5.00% APY` (never includes deposit $). */
+  apy: string;
+};
+
+export function formatVaultShareStatsLine(
+  vaultName: string,
+  apy: string
+): string {
+  const trimmed = apy.trim();
+  const apyPart = trimmed.endsWith("%") ? `${trimmed} APY` : `${trimmed}% APY`;
+  return `${vaultName} · ${apyPart}`;
+}
+
+export function buildVaultDepositSuccessTweetBody(
+  params: VaultDepositShareIntentParams
+): string {
+  const stats = formatVaultShareStatsLine(params.vaultName, params.apy);
+
+  return [
+    "Just made my first deposit into a @NekoProto vault! 🔥",
+    "",
+    stats,
+    "",
+    "Now earning real yield from RWAs, powered by @BuildOnStellar.",
+    "",
+    "Time to put your RWAs to work 👇🏼",
+    DAPP_VAULTS_PUBLIC_URL,
+  ].join("\n");
+}
+
+export function generateVaultDepositShareIntentUrl(
+  params: VaultDepositShareIntentParams
+): string {
+  const text = buildVaultDepositSuccessTweetBody(params);
+  return `https://twitter.com/intent/tweet?${new URLSearchParams({ text }).toString()}`;
+}
+
 export type ShareTweetParams = {
   amount: string;
   vaultName: string;
@@ -12,7 +55,8 @@ export function buildSharePageUrl(shareId: string): string {
   return `${SITE_URL}/share/${encodedId}`;
 }
 
-function buildTweetText(params: ShareTweetParams): string {
+/** Tweet body lines (no URL). Used by Web Share and intent `text` param. */
+export function buildTweetText(params: ShareTweetParams): string {
   const statsLine = `${params.vaultName} · ${params.amount} · ${params.apy} APY`;
 
   return [
@@ -40,6 +84,11 @@ export function generateShareTweet(params: ShareTweetParams): string {
   });
 
   return `https://twitter.com/intent/tweet?${searchParams.toString()}`;
+}
+
+/** Absolute URL to static banner — Twitter’s crawler reliably fetches static files. */
+export function buildStaticShareBannerUrl(): string {
+  return new URL("/x/X-Banner.png", SITE_URL).toString();
 }
 
 /** Mock share payload for demos until deposits persist server-side IDs. */
