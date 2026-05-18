@@ -178,7 +178,7 @@ export function useSwapExecution() {
               ? tokenOut
               : (tokenOut.code ??
                 (tokenOut.type === "native" ? "XLM" : tokenOut.contract)),
-          amount_in: parseFloat(amountIn),
+          token_amount_in: parseFloat(amountIn),
           ...(amountOutHuman != null && Number.isFinite(amountOutHuman)
             ? { amount_out: amountOutHuman }
             : {}),
