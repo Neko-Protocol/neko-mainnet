@@ -27,6 +27,38 @@ export async function POST(request: NextRequest) {
     const assetIn = normalizeAuditAssetKey(body.asset_in);
     const assetOut = normalizeAuditAssetKey(body.asset_out);
 
+    const tokenAmountIn = body.token_amount_in ?? null;
+    let amountInUsd: number | null = null;
+    if (assetIn && tokenAmountIn != null && Number.isFinite(tokenAmountIn)) {
+      const { data: priceRow } = await supabase
+        .from("asset_price_history")
+        .select("price")
+        .eq("symbol", assetIn.toUpperCase())
+        .order("recorded_at", { ascending: false })
+        .limit(1)
+        .single();
+      if (priceRow?.price && priceRow.price > 0) {
+        amountInUsd = tokenAmountIn * priceRow.price;
+      }
+    }
+    if (
+      amountInUsd == null &&
+      assetOut &&
+      body.amount_out != null &&
+      Number.isFinite(body.amount_out)
+    ) {
+      const { data: priceRow } = await supabase
+        .from("asset_price_history")
+        .select("price")
+        .eq("symbol", assetOut.toUpperCase())
+        .order("recorded_at", { ascending: false })
+        .limit(1)
+        .single();
+      if (priceRow?.price && priceRow.price > 0) {
+        amountInUsd = body.amount_out * priceRow.price;
+      }
+    }
+
     const { data: inserted, error: insertError } = await supabase
       .from("audit_logs")
       .insert({
@@ -34,7 +66,8 @@ export async function POST(request: NextRequest) {
         action_type: body.action_type,
         asset_in: assetIn,
         asset_out: assetOut,
-        amount_in: body.amount_in ?? null,
+        amount_in: amountInUsd,
+        token_amount_in: tokenAmountIn,
         amount_out: body.amount_out ?? null,
         pool_id: body.pool_id ?? null,
         network: NETWORK,
@@ -70,7 +103,7 @@ export async function POST(request: NextRequest) {
     };
 
     await Promise.all([
-      bumpLeg(assetIn, body.amount_in),
+      bumpLeg(assetIn, amountInUsd),
       bumpLeg(assetOut, body.amount_out),
     ]);
 
