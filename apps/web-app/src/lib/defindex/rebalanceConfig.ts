@@ -14,8 +14,6 @@ export interface VaultRebalanceConfig {
 const EURC_NEKO_VAULT =
   "CB3FUMFGCF6DHSFK6N2TOKHRMYXS34HFKQR45UKVORCRUM35AF3ES7WQ";
 const USDC_NEKO_VAULT =
-  "CCPKQH3K5XUGP5GXCT6WTABS7TGXRR745BJ4MEFSGNATB7AOBRL4VEOT";
-const USDC_NEKO_VAULT_V2 =
   "CCUZC3HC5TH2VCYZFUG57E6IGKPL45YUN2SI3UEYQUBA7RCYHUIZBSFV";
 const CETES_NEKO_VAULT =
   "CANBU7T77SCJOOAU6VQAOGR7DN36JBQFUN56XS2WA2VPJYUSRUBIPYDS";
@@ -61,22 +59,6 @@ export const VAULT_REBALANCE_CONFIGS: readonly VaultRebalanceConfig[] = [
   {
     vaultId: USDC_NEKO_VAULT,
     label: "USDC Neko",
-    strategies: [
-      {
-        name: "USDC Fixed Neko",
-        address: USDC_FIXED_NEKO_STRATEGY_CONTRACT,
-        targetBps: 5_000,
-      },
-      {
-        name: "USDC Etherfuse Neko",
-        address: USDC_ETHERFUSE_NEKO_STRATEGY_CONTRACT,
-        targetBps: 5_000,
-      },
-    ],
-  },
-  {
-    vaultId: USDC_NEKO_VAULT_V2,
-    label: "USDC Neko v2",
     strategies: [
       {
         name: "USDC Fixed Neko",
