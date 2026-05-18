@@ -17,6 +17,10 @@ export interface BannerPageProps {
 
   imagePosition?: "right" | "bottom-right";
 
+  showImageOnMobile?: boolean;
+
+  imageWrapperClassName?: string;
+
   actions?: React.ReactNode;
 
   className?: string;
@@ -29,6 +33,8 @@ export function BannerPage({
   imageSrc,
   imageAlt = "",
   imagePosition = "right",
+  showImageOnMobile = false,
+  imageWrapperClassName,
   actions,
   className,
 }: BannerPageProps) {
@@ -61,7 +67,12 @@ export function BannerPage({
 
       {}
       {imageSrc && (
-        <div className="hidden sm:block">
+        <div
+          className={cn(
+            showImageOnMobile ? "block" : "hidden sm:block",
+            imageWrapperClassName
+          )}
+        >
           <Illustration
             src={imageSrc}
             alt={imageAlt}

@@ -253,8 +253,10 @@ export function SimulatorWizard() {
     ]
   );
 
-  const scrollLockedDestination =
-    state.phase === "select_destination" || state.phase === "optional_stack";
+  const scrollLockedStep =
+    state.phase === "select_token" ||
+    state.phase === "select_destination" ||
+    state.phase === "optional_stack";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6">
@@ -265,7 +267,7 @@ export function SimulatorWizard() {
       <div
         className={cn(
           "flex min-h-0 flex-1 flex-col",
-          scrollLockedDestination ? "overflow-hidden" : "overflow-y-auto"
+          scrollLockedStep ? "overflow-hidden" : "overflow-y-auto"
         )}
       >
         {state.phase === "select_token" && (

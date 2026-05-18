@@ -9,34 +9,18 @@ import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
-import { getAssetTaxonomy } from "@/features/shared/discover/utils/assetClass";
+import {
+  CLASS_ACCENT,
+  getAssetTaxonomy,
+} from "@/features/shared/discover/utils/assetClass";
 import type { SimulatorToken } from "../../types/simulator.types";
-import { Info } from "lucide-react";
-import { AppTooltip } from "@/components/ui/AppTooltip";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface TokenCardProps {
   token: SimulatorToken;
   isSelected: boolean;
   onSelect: () => void;
 }
-
-const TOKEN_DESCRIPTIONS: Record<string, string> = {
-  XLM: "The native currency of the Stellar network, used for transaction fees and basic operations.",
-  EURC: "Euro-pegged stablecoin issued by Circle. 1 EURC is always redeemable for 1 euro.",
-  USDC: "US dollar stablecoin issued by Circle. 1 USDC is always redeemable for 1 US dollar.",
-  PYUSD:
-    "US dollar stablecoin issued by PayPal, backed 1:1 by US dollar reserves.",
-  USDY: "Yield-bearing US dollar token by Ondo Finance. Earns daily interest from short-term US Treasuries.",
-  USDGLO:
-    "US dollar stablecoin by the Glo Foundation. Its reserves fund public goods and charities.",
-  CETES:
-    "Mexican government treasury certificates tokenized by Etherfuse. Earns yield in Mexican pesos.",
-  USTRY:
-    "US Treasury bond token by Etherfuse. Backed by US government securities, earns yield in USD.",
-  TESOURO:
-    "Brazilian government bond tokenized by Etherfuse. Earns yield denominated in Brazilian reais.",
-  KTB: "South Korean government bond tokenized by Etherfuse. Earns yield denominated in Korean won.",
-};
 
 export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
   const { light } = useHaptics();
@@ -45,7 +29,7 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
   const { price, isLoading: priceLoading } = useTokenPrice(token.code);
 
   const taxonomy = getAssetTaxonomy(token.code.toUpperCase());
-  const sameNameAndCode = token.name.toUpperCase() === token.code.toUpperCase();
+  const accent = taxonomy ? CLASS_ACCENT[taxonomy.class] : null;
 
   const priceLabel =
     priceLoading || price <= 0
@@ -57,30 +41,6 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
       ? `${formatAmount(token.balance)} ${token.code}`
       : null;
 
-  const showPriceRow = priceLoading || price > 0;
-
-  const chipClass =
-    taxonomy?.class === "stablecoin"
-      ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/15"
-      : taxonomy?.class === "sovereign-bond"
-        ? "bg-blue-500/10 text-blue-300 border border-blue-500/15"
-        : token.code.toUpperCase() === "XLM"
-          ? "bg-white/8 text-white/50 border border-white/10"
-          : null;
-
-  const chipLabel =
-    taxonomy?.class === "stablecoin"
-      ? "Stablecoin"
-      : taxonomy?.class === "sovereign-bond"
-        ? "Gov Bond"
-        : token.code.toUpperCase() === "XLM"
-          ? "Native"
-          : null;
-
-  const description = TOKEN_DESCRIPTIONS[token.code.toUpperCase()] ?? null;
-
-  const showPriceOrBalanceFooter = showPriceRow || !!showBalance;
-
   return (
     <button
       type="button"
@@ -89,74 +49,97 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
         onSelect();
       }}
       className={cn(
-        "group flex flex-col gap-3 rounded-2xl border bg-[#2A2A2A] p-4 text-left transition-all",
-        "hover:border-white/20 hover:bg-[#2F2F2F]",
+        "group relative flex h-full min-h-[210px] flex-col overflow-hidden rounded-2xl border bg-[#1C1C1C] p-5 text-left transition-all duration-200",
+        "hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#202020]",
         isSelected
           ? "border-[#229EDF] ring-1 ring-[#229EDF]/40"
-          : "border-white/10"
+          : "border-white/5"
       )}
       aria-pressed={isSelected}
     >
-      <div className="flex items-center gap-3">
-        <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full shadow-md">
-          {token.iconSrc ? (
-            <Image
-              src={token.iconSrc}
-              alt={token.code}
-              width={44}
-              height={44}
-              unoptimized
-              className={getTokenIconFitClass(token.code)}
-            />
-          ) : (
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#229EDF]/30 text-sm font-bold text-white">
-              {token.code[0]}
-            </div>
+      {accent && (
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-50 blur-3xl",
+            accent.bg
           )}
-        </div>
-        <div className="min-w-0 flex-1 space-y-1">
-          {sameNameAndCode ? (
-            <p className="truncate text-sm font-semibold text-white">
+        />
+      )}
+
+      <div className="relative mb-5 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#121212] ring-1 ring-white/10">
+            {token.iconSrc ? (
+              <Image
+                src={token.iconSrc}
+                alt={token.code}
+                width={44}
+                height={44}
+                unoptimized
+                className={getTokenIconFitClass(token.code)}
+              />
+            ) : (
+              token.code[0]
+            )}
+          </div>
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold leading-tight text-white">
               {token.code}
+            </h3>
+            <p className="mt-0.5 truncate text-xs text-white/50">
+              {token.name}
             </p>
-          ) : (
-            <>
-              <p className="truncate text-sm font-semibold text-white">
-                {token.name}
-              </p>
-              <p className="text-xs text-white/50">{token.code}</p>
-            </>
-          )}
-          {chipClass && chipLabel ? (
-            <span
-              className={cn(
-                "inline-block text-[10px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5",
-                chipClass
-              )}
-            >
-              {chipLabel}
-            </span>
-          ) : null}
+          </div>
         </div>
-        {description ? (
-          <AppTooltip content={description} widthClassName="w-60">
-            <span className="shrink-0 text-white/25 transition-colors hover:text-white/60">
-              <Info size={14} />
-            </span>
-          </AppTooltip>
+
+        {isSelected ? (
+          <span className="shrink-0 rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#229EDF]">
+            Selected
+          </span>
         ) : null}
       </div>
 
-      {showPriceOrBalanceFooter ? (
-        <div className="flex flex-col gap-0.5">
-          {showPriceRow ? (
-            <span className="text-xs text-white/50">{priceLabel}</span>
+      <div className="relative flex flex-1 flex-col justify-between gap-4">
+        <div>
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-white/40">
+            Price ({selectedCurrency})
+          </p>
+          {priceLoading ? (
+            <div className="flex min-h-9 items-center gap-2">
+              <LoadingSpinner variant="dots" size="sm" />
+              <span className="text-xs text-white/40">Loading price...</span>
+            </div>
+          ) : (
+            <p
+              className={cn(
+                "text-3xl font-bold tabular-nums",
+                price > 0 ? "text-white" : "text-white/40"
+              )}
+            >
+              {price > 0 ? priceLabel : "No data"}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {taxonomy && accent ? (
+            <span
+              className={cn(
+                "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold",
+                accent.chip
+              )}
+            >
+              {taxonomy.classLabel}
+            </span>
           ) : null}
           {showBalance ? (
-            <span className="text-xs text-white/70">{showBalance}</span>
+            <span className="inline-flex items-center rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/45">
+              {showBalance}
+            </span>
           ) : null}
         </div>
-      ) : null}
+      </div>
     </button>
   );
 }
