@@ -1,15 +1,3 @@
-export type VaultHarvestConfig =
-  | {
-      type: "blend";
-      label: string;
-      strategyAddress: string;
-    }
-  | {
-      type: "aquarius";
-      label: string;
-      strategyAddress: string;
-    };
-
 export interface VaultRebalanceStrategyConfig {
   name: string;
   address: string;
@@ -20,7 +8,6 @@ export interface VaultRebalanceConfig {
   vaultId: string;
   label: string;
   strategies: readonly VaultRebalanceStrategyConfig[];
-  harvest?: readonly VaultHarvestConfig[];
 }
 
 // The only vault contracts currently managed by the keeper.
