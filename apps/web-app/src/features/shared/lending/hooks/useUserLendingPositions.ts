@@ -23,19 +23,23 @@ export function useUserLendingPositions() {
   const { data: pools = [], isLoading: poolsLoading } = useLendingPools();
 
   const balanceQueries = useQueries({
-    queries: pools.map((pool) => ({
+    queries: pools.map((pool, i) => ({
       queryKey: [
         "userLendingBTokens",
         pool.assetCode,
         pool.contractId,
         address,
       ],
-      queryFn: () =>
-        getBTokenBalanceRaw(pool.assetCode, address!, pool.contractId),
+      queryFn: async () => {
+        if (i > 0) await new Promise((r) => setTimeout(r, i * 150));
+        return getBTokenBalanceRaw(pool.assetCode, address!, pool.contractId);
+      },
       enabled: Boolean(address) && pools.length > 0,
       staleTime: 30_000,
       gcTime: 5 * 60_000,
-      retry: 1,
+      retry: 2,
+      retryDelay: (attempt: number) => attempt * 800,
+      throwOnError: false,
     })),
   });
 

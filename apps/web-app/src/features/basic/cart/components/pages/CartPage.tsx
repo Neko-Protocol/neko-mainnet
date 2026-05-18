@@ -49,8 +49,10 @@ export function CartPage() {
         title="Your Cart"
         subtitle="Review your pending purchases and confirm them all at once."
         badge="Checkout"
-        imageSrc="/banners/swap.svg"
+        imageSrc="/banners/cart.png"
         imageAlt="Cart illustration"
+        imageLayoutClassName="-right-95 -top-9 h-[174%] w-[125%]"
+        imageObjectClassName="object-contain object-right object-top"
         className="mb-6"
       />
 

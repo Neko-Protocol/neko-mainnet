@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { X, Loader2 } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
+import { FirstVaultDepositSuccessModal } from "./FirstVaultDepositSuccessModal";
 import { useVaultBalance } from "../../hooks/useVaultBalance";
 import { useVaultAction } from "../../hooks/useVaultAction";
 import { useVaultData } from "../../hooks/useVaultData";
@@ -15,6 +16,7 @@ import {
 } from "@/lib/helpers/amount";
 import { useQuery } from "@tanstack/react-query";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
+import { useVaultApy } from "../../hooks/useVaultApy";
 
 interface VaultActionModalProps {
   vaultContractId: string;
@@ -23,6 +25,7 @@ interface VaultActionModalProps {
   supplyAssetContractAddress?: string;
   supplyAssetSymbol?: string;
   vaultShareSymbol?: string;
+  vaultName?: string;
   /** Pre-fill deposit amount (e.g. simulator wizard). */
   initialAmount?: string;
 }
@@ -34,22 +37,28 @@ export function VaultActionModal({
   supplyAssetContractAddress,
   supplyAssetSymbol,
   vaultShareSymbol,
+  vaultName,
   initialAmount = "",
 }: VaultActionModalProps) {
   const [visible, setVisible] = useState(false);
   const [amount, setAmount] = useState(initialAmount);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [mode, setMode] = useState<"deposit" | "withdraw">(
     isDeposit ? "deposit" : "withdraw"
   );
 
   const { address } = useWallet();
+  const { vaultApy } = useVaultApy(vaultContractId);
+  const apyDisplay =
+    vaultApy != null && vaultApy > 0 ? `${vaultApy.toFixed(2)}%` : "—";
   const { userShares } = useVaultBalance(vaultContractId);
   const { data: vaultData } = useVaultData(vaultContractId);
-  const { isLoading, handleDeposit, handleWithdraw } = useVaultAction(
-    vaultContractId,
-    supplyAssetSymbol,
-    vaultShareSymbol
-  );
+  const {
+    isLoading,
+    handleDeposit,
+    handleWithdraw,
+    showSuccess: notifyDepositSuccess,
+  } = useVaultAction(vaultContractId, supplyAssetSymbol, vaultShareSymbol);
 
   const { data: supplyBalance = "0" } = useQuery({
     queryKey: ["vaultSupplyBalance", supplyAssetContractAddress, address],
@@ -89,15 +98,22 @@ export function VaultActionModal({
   const handleConfirm = async () => {
     if (!amount || parseFloat(amount) <= 0) return;
     if (mode === "deposit") {
-      await handleDeposit(amount);
+      const { success, isFirstVaultDeposit } = await handleDeposit(amount);
+      if (success && isFirstVaultDeposit) {
+        setShowSuccess(true);
+      } else if (success) {
+        notifyDepositSuccess(
+          `Successfully deposited ${amount} ${supplyAssetSymbol ?? ""}`
+        );
+      }
     } else {
       const withdrawRaw = decimalToAtomic(amount, 7);
       await handleWithdraw(amount, {
         withdrawAll:
           withdrawUnderlying > 0n && withdrawRaw >= withdrawUnderlying,
       });
+      handleClose();
     }
-    handleClose();
   };
 
   const depositExceedsBalance =
@@ -117,6 +133,16 @@ export function VaultActionModal({
     withdrawExceedsBalance;
 
   const supplyLabel = supplyAssetSymbol ?? "Token";
+
+  if (showSuccess) {
+    return (
+      <FirstVaultDepositSuccessModal
+        vaultName={vaultName ?? supplyAssetSymbol ?? "vault"}
+        apy={apyDisplay}
+        onClose={handleClose}
+      />
+    );
+  }
 
   return (
     <ModalPortal>

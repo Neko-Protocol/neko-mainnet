@@ -20,6 +20,11 @@ export interface BannerPageProps {
   showImageOnMobile?: boolean;
 
   imageWrapperClassName?: string;
+  imageSize?: "default" | "large";
+
+  imageLayoutClassName?: string;
+
+  imageObjectClassName?: string;
 
   actions?: React.ReactNode;
 
@@ -35,6 +40,9 @@ export function BannerPage({
   imagePosition = "right",
   showImageOnMobile = false,
   imageWrapperClassName,
+  imageSize = "default",
+  imageLayoutClassName,
+  imageObjectClassName,
   actions,
   className,
 }: BannerPageProps) {
@@ -77,6 +85,9 @@ export function BannerPage({
             src={imageSrc}
             alt={imageAlt}
             position={imagePosition}
+            size={imageSize}
+            layoutClassName={imageLayoutClassName}
+            objectClassName={imageObjectClassName}
           />
         </div>
       )}
@@ -100,15 +111,38 @@ interface IllustrationProps {
   src: string;
   alt: string;
   position: "right" | "bottom-right";
+  size: "default" | "large";
+  layoutClassName?: string;
+  objectClassName?: string;
 }
 
-function Illustration({ src, alt, position }: IllustrationProps) {
+const IMAGE_LAYOUT: Record<IllustrationProps["size"], string> = {
+  default: "right-0 top-0 h-full w-[55%]",
+  large: "-right-116 -top-15 h-[155%] w-[120%]",
+};
+
+function Illustration({
+  src,
+  alt,
+  position,
+  size,
+  layoutClassName,
+  objectClassName,
+}: IllustrationProps) {
   const objectClass =
-    position === "bottom-right"
+    objectClassName ??
+    (position === "bottom-right"
       ? "object-contain object-bottom-right"
-      : "object-contain object-right";
+      : size === "large"
+        ? "object-contain object-right object-top"
+        : "object-contain object-right");
   return (
-    <div className="pointer-events-none absolute right-0 top-0 h-full w-[55%] select-none">
+    <div
+      className={cn(
+        "pointer-events-none absolute select-none",
+        layoutClassName ?? IMAGE_LAYOUT[size]
+      )}
+    >
       <Image
         src={src}
         alt={alt}

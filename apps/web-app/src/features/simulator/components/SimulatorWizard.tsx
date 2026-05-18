@@ -369,6 +369,7 @@ export function SimulatorWizard() {
           }
           supplyAssetSymbol={depositIntent.vault.supplyAsset.symbol}
           vaultShareSymbol={depositIntent.vault.name}
+          vaultName={depositIntent.vault.name}
           initialAmount={depositIntent.depositAmountHuman ?? state.amount}
           onClose={() => setDepositIntent(null)}
         />

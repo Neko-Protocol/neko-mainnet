@@ -119,7 +119,8 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
       </div>
       <div className="flex items-center justify-between mt-1 gap-2">
         <span className="text-white/40 text-xs min-w-0 truncate">
-          Your balance {isLoadingBalance ? "..." : formatAmount(maxAmt || "0", 2)}
+          Your balance{" "}
+          {isLoadingBalance ? "..." : formatAmount(maxAmt || "0", 2)}
         </span>
         <button
           onClick={isReadOnly ? undefined : onMaxClick}
@@ -251,7 +252,7 @@ const Swap: React.FC = () => {
             ? {
                 styles: {
                   button:
-                    "!mx-auto !mt-3 !box-border !flex !h-9 !w-[220px] !max-w-full !-translate-x-16 !items-center !justify-center !rounded-full !bg-[#229EDF] !px-4 !text-sm !font-semibold !leading-5 !text-white !no-underline hover:!bg-[#1a8bc7]",
+                    "!mx-auto !mt-3 !box-border !flex !h-9 !w-[220px] !max-w-full !items-center !justify-center !rounded-full !bg-[#229EDF] !px-4 !text-sm !font-semibold !leading-5 !text-white !no-underline hover:!bg-[#1a8bc7]",
                 },
                 button: {
                   title: "View on Stellar Expert",

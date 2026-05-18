@@ -60,7 +60,7 @@ export function buildPoolAuditPayload(
   switch (action) {
     case "deposit":
     case "supplyCollateral": {
-      const amount_in = parseHuman(amount, d0);
+      const token_amount_in = parseHuman(amount, d0);
       if (
         action === "deposit" &&
         audit.poolType === "aqua" &&
@@ -74,7 +74,7 @@ export function buildPoolAuditPayload(
           return {
             ...base,
             asset_in: code0,
-            amount_in,
+            token_amount_in,
             asset_out: t1.code ?? "?",
             amount_out: parseHuman(amtB, d1),
           };
@@ -83,7 +83,7 @@ export function buildPoolAuditPayload(
       return {
         ...base,
         asset_in: code0,
-        amount_in,
+        token_amount_in,
       };
     }
     case "withdraw":
@@ -103,7 +103,7 @@ export function buildPoolAuditPayload(
       return {
         ...base,
         asset_in: code0,
-        amount_in: parseHuman(amount, d0),
+        token_amount_in: parseHuman(amount, d0),
       };
   }
 }

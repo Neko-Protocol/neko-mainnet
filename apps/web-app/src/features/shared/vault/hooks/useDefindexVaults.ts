@@ -26,9 +26,10 @@ export function useDefindexVaults() {
   return useQuery({
     queryKey: ["defindex-vaults"],
     queryFn: fetchDefindexVaults,
-    staleTime: 2 * 60_000,
+    staleTime: 30_000,
     gcTime: 15 * 60_000,
-    refetchOnWindowFocus: false,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
     placeholderData: keepPreviousData,
     retry: 1,
   });

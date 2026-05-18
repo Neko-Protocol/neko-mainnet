@@ -6,7 +6,6 @@ import {
   Layers,
   Settings,
   Shield,
-  Banknote,
   Vault,
   ShoppingCart,
 } from "lucide-react";
@@ -25,7 +24,6 @@ export function getNavItems(
       : [{ label: "Cart", href: "/cart", icon: ShoppingCart }]),
     { label: "Vault", href: "/vaults", icon: Vault },
     { label: "Strategies", href: "/strategies", icon: Layers },
-    { label: "Ramps", href: "/ramps", icon: Banknote },
     { label: "Settings", href: "/settings", icon: Settings },
     ...(isAdmin
       ? [{ label: "Admin", href: "/dashboard/admin", icon: Shield }]

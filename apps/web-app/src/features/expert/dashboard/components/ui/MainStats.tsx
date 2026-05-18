@@ -14,6 +14,7 @@ import { stellarPriceService } from "@/lib/services/stellar-price.service";
 import { usePortfolioValue } from "@/features/shared/dashboard/hooks/usePortfolioValue";
 import { useDashboardPools } from "@/features/expert/dashboard/hooks/useDashboardPools";
 import { useDashboardPositions } from "@/features/expert/dashboard/hooks/useDashboardPositions";
+import { useVaultsTotalUsd } from "@/features/expert/dashboard/hooks/useVaultsTotalUsd";
 import { StatCard } from "@/features/shared/discover/components/ui/StatCard";
 
 const MainStats: React.FC = () => {
@@ -24,18 +25,19 @@ const MainStats: React.FC = () => {
     isLoading: isLoadingPortfolio,
   } = usePortfolioValue();
   const { positions, isLoading: isLoadingPositions } = useDashboardPositions();
+  const { totalUsd: vaultsTotalUsd, isLoading: isLoadingVaults } =
+    useVaultsTotalUsd();
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate();
   const { assets } = useDashboardPools();
 
+  // Average APY of pools where the user actually has positions
   const avgPoolApy = React.useMemo(() => {
-    if (assets.length === 0) return null;
-    const sum = assets.reduce((acc, a) => {
-      const parsed = parseFloat(a.roi.replace("%", ""));
-      return acc + (Number.isFinite(parsed) ? parsed : 0);
-    }, 0);
-    return (sum / assets.length).toFixed(SUMMARY_DISPLAY_DECIMALS);
-  }, [assets]);
+    const positionsWithApy = positions.filter(({ pool }) => pool.apy > 0);
+    if (positionsWithApy.length === 0) return null;
+    const sum = positionsWithApy.reduce((acc, { pool }) => acc + pool.apy, 0);
+    return (sum / positionsWithApy.length).toFixed(SUMMARY_DISPLAY_DECIMALS);
+  }, [positions]);
 
   const walletPriceByCode = React.useMemo(() => {
     const map: Record<string, number> = {};
@@ -104,12 +106,9 @@ const MainStats: React.FC = () => {
     }, 0);
   }, [positions, walletPriceByCode, missingPriceMap]);
 
-  const portfolioTotalUsd = totalUsd + positionsNetUsd;
+  const portfolioTotalUsd = positionsNetUsd + vaultsTotalUsd;
   const isLoading =
-    isFetchingBalances ||
-    isLoadingPortfolio ||
-    isLoadingPositions ||
-    isLoadingMissingPrices;
+    isLoadingPositions || isLoadingMissingPrices || isLoadingVaults;
   const totalInSelected = convertUsdToSelected(portfolioTotalUsd, fxRate);
   const formattedTotal = formatCurrency(
     totalInSelected,
@@ -130,7 +129,7 @@ const MainStats: React.FC = () => {
           label="Total Portfolio Value"
           value={address ? formattedTotal : formattedZero}
           isLoading={isLoading && !!address}
-          tooltip="Aggregates tokens on wallet, pools positions, vaults, etc."
+          tooltip="Sum of pool positions + vault positions in USD."
         />
         <StatCard
           icon={<Coins className="h-5 w-5" />}
@@ -141,7 +140,9 @@ const MainStats: React.FC = () => {
         <StatCard
           icon={<TrendingUp className="h-5 w-5" />}
           label="Avg. Pool APY"
+          tooltip="Average APY across your active pool positions."
           value={avgPoolApy !== null ? `${avgPoolApy}%` : "-"}
+          isLoading={isLoading && !!address}
         />
       </div>
     </div>

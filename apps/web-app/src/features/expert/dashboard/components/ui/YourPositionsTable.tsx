@@ -10,6 +10,7 @@ import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
 import type { PoolInfo } from "@/lib/orchestrator/types/pool.types";
 import { formatAmount, safeParseFloat } from "@/lib/helpers/formatUtils";
+import { useTokenPrice } from "@/hooks/useTokenPrice";
 
 const DEFAULT_MAX_ROWS = 4;
 
@@ -72,6 +73,29 @@ function PoolPositionIcons({ pool }: { pool: PoolInfo }) {
   );
 }
 
+function PoolValueCell({
+  tokenCode,
+  depositedFormatted,
+}: {
+  tokenCode: string;
+  depositedFormatted: string;
+}) {
+  const { price } = useTokenPrice(tokenCode);
+  const amount = safeParseFloat(depositedFormatted);
+
+  if (!price || amount === 0) {
+    return (
+      <span className="text-white font-semibold text-sm tabular-nums">—</span>
+    );
+  }
+
+  return (
+    <span className="text-white font-semibold text-sm tabular-nums">
+      ${(amount * price).toFixed(2)}
+    </span>
+  );
+}
+
 export interface YourPositionsTableProps {
   positions: UserPositionWithPool[];
   maxRows?: number;
@@ -114,7 +138,10 @@ export function YourPositionsTable({
                 Position
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-white/30 uppercase tracking-wide">
-                Amount
+                Deposited
+              </th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-white/30 uppercase tracking-wide">
+                Value
               </th>
             </tr>
           </thead>
@@ -146,7 +173,10 @@ export function YourPositionsTable({
                     {formatAmount(
                       safeParseFloat(position.depositedFormatted),
                       2
-                    )}
+                    )}{" "}
+                    <span className="text-white/50 font-normal">
+                      {pool.tokens[0]?.code ?? ""}
+                    </span>
                   </p>
                   {position.rewards > 0n && (
                     <p className="text-[#76C464] text-xs font-semibold mt-0.5">
@@ -158,6 +188,12 @@ export function YourPositionsTable({
                       rewards
                     </p>
                   )}
+                </td>
+                <td className="px-4 py-3.5 align-middle text-right">
+                  <PoolValueCell
+                    tokenCode={pool.tokens[0]?.code ?? ""}
+                    depositedFormatted={position.depositedFormatted}
+                  />
                 </td>
               </tr>
             ))}

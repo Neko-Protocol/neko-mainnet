@@ -22,10 +22,12 @@ export function useDashboardVaultPositions() {
   const vaults = vaultsPayload?.vaults ?? [];
 
   const balanceQueries = useQueries({
-    queries: vaults.map((vault) => ({
+    queries: vaults.map((vault, i) => ({
       queryKey: ["vaultBalance", vault.id, address],
       queryFn: async (): Promise<bigint> => {
         if (!address) return 0n;
+        // Stagger requests to avoid overwhelming the Soroban RPC endpoint
+        if (i > 0) await new Promise((r) => setTimeout(r, i * 150));
         const client = new DefindexVaultClient({
           contractId: vault.id,
           rpcUrl,
@@ -39,7 +41,8 @@ export function useDashboardVaultPositions() {
       staleTime: 30_000,
       gcTime: 5 * 60_000,
       refetchOnWindowFocus: false,
-      retry: false,
+      retry: 2,
+      retryDelay: (attempt: number) => attempt * 800,
       throwOnError: false,
     })),
   });

@@ -303,13 +303,14 @@ export function useLend() {
       setIsLoading(true);
 
       const logAction = (poolId: string, txHash?: string) => {
+        const tokenAmt = parseFloat(amount);
         auditService.log({
           wallet_address: address,
           action_type: isDeposit ? "lend_deposit" : "lend_withdraw",
           asset_in: isDeposit ? selectedPool.assetCode : undefined,
           asset_out: isDeposit ? undefined : selectedPool.assetCode,
-          amount_in: isDeposit ? parseFloat(amount) : undefined,
-          amount_out: isDeposit ? undefined : parseFloat(amount),
+          token_amount_in: isDeposit ? tokenAmt : undefined,
+          amount_out: isDeposit ? undefined : tokenAmt,
           pool_id: poolId,
           tx_hash: txHash,
         });

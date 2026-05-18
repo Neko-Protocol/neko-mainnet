@@ -15,22 +15,27 @@ import type { VaultView } from "../../types/vault";
 
 const ONE_SHARE = 1_000_000_000_000n;
 
-function useVaultUsdValue(
+function useVaultPosition(
   vaultId: string,
   userShares: bigint,
   assetSymbol: string
-): string {
+): { deposited: string; usdValue: string } {
   const { data } = useVaultData(vaultId);
   const { price } = useTokenPrice(assetSymbol);
 
-  if (!data?.pricePerShare || !price || userShares === 0n) return "";
+  if (!data?.pricePerShare || userShares === 0n)
+    return { deposited: "", usdValue: "" };
 
   const underlyingStroops = (userShares * data.pricePerShare) / ONE_SHARE;
   const underlyingAmount = parseFloat(
     fromSmallestUnit(underlyingStroops.toString(), 7)
   );
-  const usd = underlyingAmount * price;
-  return `$${usd.toFixed(2)}`;
+  const deposited = `${underlyingAmount.toFixed(2)} ${assetSymbol}`;
+  const usdValue =
+    price > 0
+      ? `$${(underlyingAmount * price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : "";
+  return { deposited, usdValue };
 }
 
 interface VaultPositionRowProps {
@@ -44,7 +49,7 @@ function VaultPositionRow({
   rawBalance,
   onOpen,
 }: VaultPositionRowProps) {
-  const usdValue = useVaultUsdValue(
+  const { deposited, usdValue } = useVaultPosition(
     vault.id,
     rawBalance,
     vault.supplyAsset.symbol
@@ -87,7 +92,13 @@ function VaultPositionRow({
 
       <td className="px-4 py-4 text-center">
         <span className="text-white font-bold text-sm tabular-nums">
-          {usdValue}
+          {deposited || "—"}
+        </span>
+      </td>
+
+      <td className="px-4 py-4 text-center">
+        <span className="text-white font-bold text-sm tabular-nums">
+          {usdValue || "—"}
         </span>
       </td>
 
@@ -178,6 +189,11 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
             </th>
             <th className="px-4 py-3 text-left">
               <span className="text-white/30 text-xs font-medium">Asset</span>
+            </th>
+            <th className="px-4 py-3 text-center">
+              <span className="text-white/30 text-xs font-medium">
+                Deposited
+              </span>
             </th>
             <th className="px-4 py-3 text-center">
               <span className="text-white/30 text-xs font-medium">Value</span>

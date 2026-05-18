@@ -39,6 +39,7 @@ import {
 } from "../../utils/assetClass";
 import type { PriceSource } from "@/lib/services/stellar-price.service";
 import { AttributeRow, CopyAddress, useIsMaxSm } from "../ui/AssetDetailAtoms";
+import { useEtherfuseYields } from "@/features/simulator/hooks/useEtherfuseYields";
 
 const PRICE_SOURCE_LABEL: Record<PriceSource, string> = {
   reflector: "Reflector",
@@ -174,6 +175,11 @@ export function AssetDetailLayout({
 
   const { data: priceHistory, isLoading: isLoadingHistory } =
     useAssetPriceHistory(symbolUpper || undefined);
+
+  const { data: etherfuseYields } = useEtherfuseYields();
+  const yieldEntry = etherfuseYields?.find(
+    (e) => e.symbol.toUpperCase() === symbolUpper
+  );
 
   const chartData = useMemo(
     () =>
@@ -465,9 +471,17 @@ export function AssetDetailLayout({
                       {taxonomy.issuer}
                     </AttributeRow>
                   )}
-                  <AttributeRow label="Yield bearing">
-                    {taxonomy?.yieldBearing ? "Yes" : "No"}
-                  </AttributeRow>
+                  {yieldEntry ? (
+                    <AttributeRow label="APY">
+                      <span className="text-emerald-400 font-semibold">
+                        ~{yieldEntry.apy.toFixed(2)}%
+                      </span>
+                    </AttributeRow>
+                  ) : (
+                    <AttributeRow label="Yield bearing">
+                      {taxonomy?.yieldBearing ? "Yes" : "No"}
+                    </AttributeRow>
+                  )}
                   <AttributeRow label="Price source">
                     {priceSourceLabel(priceSource) ?? "Unavailable"}
                   </AttributeRow>

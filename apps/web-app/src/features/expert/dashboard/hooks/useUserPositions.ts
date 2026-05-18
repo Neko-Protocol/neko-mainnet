@@ -1,12 +1,15 @@
 "use client";
 
-import { useQueries, useQuery } from "@tanstack/react-query";
-import { usePools } from "@/lib/orchestrator/hooks/usePools";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { POOLS_QUERY_KEY } from "@/lib/orchestrator/hooks/usePools";
 import { orchestrator } from "@/lib/orchestrator/core/Orchestrator";
 import { useWallet } from "@/hooks/useWallet";
-import { getBlendPoolIds } from "@/lib/orchestrator/adapters/blend-config";
-import { scanUserContractInteractions } from "@/lib/services/horizonActivityScanner";
 import { batchCheckLpBalances } from "@/lib/services/positionScanner";
+import {
+  BLEND_ASSET_CODES,
+  BLEND_POOL_VAULTS,
+} from "@/lib/orchestrator/adapters/blend-config";
+import { getContractToCodeMap } from "@/lib/constants/assets.config";
 import type {
   PoolInfo,
   PoolPosition,
@@ -19,50 +22,83 @@ export interface UserPositionWithPool {
 
 const POSITION_STALE_TIME = 60_000;
 
+const BLEND_SUPPORTED_ACTIONS: PoolInfo["supportedActions"] = [
+  "deposit",
+  "withdraw",
+  "supplyCollateral",
+  "withdrawCollateral",
+  "borrow",
+  "repay",
+  "claimRewards",
+];
+
+function buildVaultPoolInfoStub(poolId: string): PoolInfo | null {
+  const parts = poolId.split(":");
+  if (parts.length < 3) return null;
+  const [, poolContractId, assetAddress] = parts;
+  if (!poolContractId || !assetAddress) return null;
+
+  const contractToCode = getContractToCodeMap();
+  const code =
+    BLEND_ASSET_CODES[assetAddress] ??
+    contractToCode[assetAddress] ??
+    assetAddress.slice(0, 8);
+
+  return {
+    id: poolId,
+    type: "blend",
+    name: `${code} Blend Pool`,
+    tokens: [{ address: assetAddress, code, name: code, decimals: 7 }],
+    tvl: 0n,
+    apy: 0,
+    state: "active",
+    supportedActions: BLEND_SUPPORTED_ACTIONS,
+    metadata: { poolContractId, assetAddress, hasEmissions: false },
+  };
+}
+
 export function useUserPositions() {
   const { address } = useWallet();
+  const queryClient = useQueryClient();
 
-  // ── All pools ──────────────────────────────────────────────────────────────
-  const { data: pools = [], isLoading: isLoadingPools } = usePools();
-
-  const blendPools = pools.filter((p) => p.type === "blend");
-  const nonBlendPools = pools.filter((p) => p.type !== "blend");
-
-  // ── Priority 2: Horizon activity scan ─────────────────────────────────────
-  // Decodes Horizon tx envelopes to find which Soroban contracts the user has
-  // ever called. Cached 10 min  runs once per session in practice.
-  const horizonScanQuery = useQuery<Set<string>>({
-    queryKey: ["horizon-scan", address],
-    queryFn: () => scanUserContractInteractions(address!),
-    enabled: Boolean(address),
-    staleTime: 10 * 60_000,
-    gcTime: 30 * 60_000,
+  const blendListQuery = useQuery<PoolInfo[]>({
+    queryKey: [...POOLS_QUERY_KEY, "blend"],
+    queryFn: () => orchestrator.getPoolsByType("blend"),
+    staleTime: 3 * 60_000,
+    retry: 2,
+    throwOnError: false,
   });
 
-  const knownContracts = horizonScanQuery.data;
-  const blendContractIds = getBlendPoolIds();
+  const blendPools = blendListQuery.data ?? [];
 
-  // While scan hasn't returned yet, assume the user might have blend history
-  // (conservative default so we don't skip on first load).
-  // After the first scan completes it is cached and the check is instant.
-  const hasBlendHistory =
-    knownContracts == null ||
-    blendContractIds.some((id) => knownContracts.has(id));
+  const cachedSoroswap =
+    queryClient.getQueryData<PoolInfo[]>([...POOLS_QUERY_KEY, "soroswap"]) ??
+    [];
+  const cachedAqua =
+    queryClient.getQueryData<PoolInfo[]>([...POOLS_QUERY_KEY, "aqua"]) ?? [];
+  const nonBlendPools = [...cachedSoroswap, ...cachedAqua];
 
-  // ── Blend batch query ──────────────────────────────────────────────────────
-  // ONE PoolV2.load + ONE loadUser covers every blend reserve → 2 RPC calls.
-  // Skipped entirely on subsequent visits when Horizon scan confirms no history.
-  const blendPositionsQuery = useQuery<PoolPosition[]>({
-    queryKey: ["orchestrator", "blend-all-positions", address],
-    queryFn: () => orchestrator.getAllBlendUserPositions(address!),
-    enabled: Boolean(address) && hasBlendHistory,
+  const vaultBlendPositionsQuery = useQuery<PoolPosition[]>({
+    queryKey: ["orchestrator", "blend-vault-positions", address],
+    queryFn: () => orchestrator.getAllBlendVaultUserPositions(address!),
+    enabled: Boolean(address),
     staleTime: POSITION_STALE_TIME,
-    retry: 1,
+    retry: 3,
+    retryDelay: (attempt) => attempt * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  const directBlendPositionsQuery = useQuery<PoolPosition[]>({
+    queryKey: ["orchestrator", "blend-direct-positions", address],
+    queryFn: () => orchestrator.getAllBlendDirectUserPositions(address!),
+    enabled: Boolean(address) && !blendListQuery.isLoading,
+    staleTime: POSITION_STALE_TIME,
+    retry: 2,
+    retryDelay: (attempt) => attempt * 1000,
+    refetchOnWindowFocus: false,
   });
 
   // ── LP balance pre-screen (Aqua + Soroswap) ───────────────────────────────
-  // ONE getLedgerEntries call checks all LP / share token balances at once.
-  // Pools with no balance are filtered out before any getUserPosition fires.
   const lpScreenQuery = useQuery<Set<string>>({
     queryKey: [
       "orchestrator",
@@ -71,13 +107,12 @@ export function useUserPositions() {
       nonBlendPools.map((p) => p.id).join(","),
     ],
     queryFn: () => batchCheckLpBalances(nonBlendPools, address!),
-    enabled: Boolean(address) && !isLoadingPools && nonBlendPools.length > 0,
+    enabled: Boolean(address) && nonBlendPools.length > 0,
     staleTime: POSITION_STALE_TIME,
-    retry: 1,
+    retry: 2,
+    retryDelay: (attempt) => attempt * 800,
   });
 
-  // Only query getUserPosition for pools that passed the LP pre-screen.
-  // If the screen hasn't run yet, hold off (empty array) to avoid a wasted burst.
   const poolsWithBalance = lpScreenQuery.data ?? null;
   const filteredNonBlendPools =
     poolsWithBalance !== null
@@ -85,25 +120,35 @@ export function useUserPositions() {
       : [];
 
   const positionQueries = useQueries({
-    queries: filteredNonBlendPools.map((pool) => ({
+    queries: filteredNonBlendPools.map((pool, i) => ({
       queryKey: ["orchestrator", "position", pool.id, address],
-      queryFn: () => orchestrator.getUserPosition(pool.id, address!),
+      queryFn: async () => {
+        if (i > 0) await new Promise((r) => setTimeout(r, i * 300));
+        return orchestrator.getUserPosition(pool.id, address!);
+      },
       enabled: Boolean(address),
       staleTime: POSITION_STALE_TIME,
-      retry: 1,
+      retry: 2,
+      retryDelay: (attempt: number) => attempt * 1000,
     })),
   });
 
   // ── Assemble results ───────────────────────────────────────────────────────
   const positions: UserPositionWithPool[] = [];
 
-  // Blend positions (from batch)
-  for (const pos of blendPositionsQuery.data ?? []) {
+  for (const pos of vaultBlendPositionsQuery.data ?? []) {
+    if (pos.deposited === 0n) continue;
+    const pool =
+      blendPools.find((p) => p.id === pos.poolId) ??
+      buildVaultPoolInfoStub(pos.poolId);
+    if (pool) positions.push({ pool, position: pos });
+  }
+
+  for (const pos of directBlendPositionsQuery.data ?? []) {
     const hasDeposit = pos.deposited > 0n;
     const hasLiabilities =
       parseFloat(String(pos.metadata?.liabilities ?? "0")) > 0;
     if (!hasDeposit && !hasLiabilities) continue;
-
     const pool = blendPools.find((p) => p.id === pos.poolId);
     if (pool) positions.push({ pool, position: pos });
   }
@@ -121,9 +166,9 @@ export function useUserPositions() {
   });
 
   const isLoading =
-    isLoadingPools ||
-    horizonScanQuery.isLoading ||
-    (hasBlendHistory && blendPositionsQuery.isLoading) ||
+    vaultBlendPositionsQuery.isLoading ||
+    blendListQuery.isLoading ||
+    directBlendPositionsQuery.isLoading ||
     (nonBlendPools.length > 0 && lpScreenQuery.isLoading);
 
   return { positions, isLoading, hasWallet: Boolean(address) };

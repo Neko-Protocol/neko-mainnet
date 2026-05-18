@@ -137,7 +137,54 @@ export class Orchestrator {
     return adapter.claimRewards(rawId, userAddress);
   }
 
-  /** One PoolV2.load + one loadUser for ALL blend reserves  far fewer RPC calls than per-reserve queries. */
+  async getAllBlendVaultUserPositions(
+    userAddress: string
+  ): Promise<PoolPosition[]> {
+    const blendAdapters = this.registry
+      .getAdapters()
+      .filter((a): a is BlendPoolAdapter => a instanceof BlendPoolAdapter);
+
+    const settled = await Promise.allSettled(
+      blendAdapters.map((a) => a.getAllVaultUserPositions(userAddress))
+    );
+
+    const fulfilled = settled.filter(
+      (r): r is PromiseFulfilledResult<PoolPosition[]> =>
+        r.status === "fulfilled"
+    );
+
+    if (fulfilled.length === 0 && blendAdapters.length > 0) {
+      const firstRejected = settled.find((r) => r.status === "rejected") as
+        | PromiseRejectedResult
+        | undefined;
+      throw (
+        firstRejected?.reason ??
+        new Error("Failed to load blend vault positions")
+      );
+    }
+
+    return fulfilled.flatMap((r) => r.value);
+  }
+
+  async getAllBlendDirectUserPositions(
+    userAddress: string
+  ): Promise<PoolPosition[]> {
+    const blendAdapters = this.registry
+      .getAdapters()
+      .filter((a): a is BlendPoolAdapter => a instanceof BlendPoolAdapter);
+
+    const settled = await Promise.allSettled(
+      blendAdapters.map((a) => a.getDirectUserPositions(userAddress))
+    );
+
+    return settled
+      .filter(
+        (r): r is PromiseFulfilledResult<PoolPosition[]> =>
+          r.status === "fulfilled"
+      )
+      .flatMap((r) => r.value);
+  }
+
   async getAllBlendUserPositions(userAddress: string): Promise<PoolPosition[]> {
     const blendAdapters = this.registry
       .getAdapters()
@@ -152,7 +199,6 @@ export class Orchestrator {
         r.status === "fulfilled"
     );
 
-    // If every adapter failed (RPC errors etc.), propagate so React Query retries
     if (fulfilled.length === 0 && blendAdapters.length > 0) {
       const firstRejected = settled.find((r) => r.status === "rejected") as
         | PromiseRejectedResult

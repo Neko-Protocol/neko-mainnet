@@ -1,14 +1,22 @@
+import type React from "react";
 import type { VaultAsset, VaultView } from "../types/vault";
 
 const DEFAULT_ICON = "/assets/vault-assets/usdc.svg";
 
 const VAULT_ASSET_ART: Record<
   string,
-  { iconSrc: string; iconWhiteSrc: string }
+  {
+    iconSrc: string;
+    iconWhiteSrc: string;
+    objectPosition?: string;
+    objectFit?: "contain" | "cover";
+    imageStyle?: React.CSSProperties;
+  }
 > = {
   USDC: {
     iconSrc: "/assets/vault-assets/usdc.svg",
     iconWhiteSrc: "/assets/vault-assets/usdc-white.svg",
+    imageStyle: { transform: "scale(0.92)" },
   },
   CETES: {
     iconSrc: "/assets/vault-assets/cetes.svg",
@@ -17,10 +25,17 @@ const VAULT_ASSET_ART: Record<
   EURC: {
     iconSrc: "/assets/vault-assets/eurc.svg",
     iconWhiteSrc: "/assets/vault-assets/eurc-white.svg",
+    imageStyle: { transform: "scale(0.92)" },
   },
   USTRY: {
     iconSrc: "/assets/vault-assets/ustry.svg",
     iconWhiteSrc: "/assets/vault-assets/ustry-white.svg",
+    imageStyle: { transform: "translateY(-15%)" },
+  },
+  TESOURO: {
+    iconSrc: "/assets/vault-assets/tesouro.svg",
+    iconWhiteSrc: "/assets/vault-assets/tesouro-white.svg",
+    imageStyle: { transform: "translateY(-15%)" },
   },
 };
 
@@ -47,12 +62,16 @@ function resolveVaultArtKey(
   if (normalized.includes("USDC")) return "USDC";
   if (normalized.includes("EURC")) return "EURC";
   if (normalized.includes("USTRY")) return "USTRY";
+  if (normalized.includes("TESOURO")) return "TESOURO";
   return null;
 }
 
 export function vaultArtForSymbol(symbol: string): {
   iconSrc: string;
   iconWhiteSrc: string;
+  objectPosition?: string;
+  objectFit?: "contain" | "cover";
+  imageStyle?: React.CSSProperties;
 } {
   const key = resolveVaultArtKey(normalizeVaultSymbol(symbol));
   return key
