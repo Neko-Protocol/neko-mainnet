@@ -114,7 +114,7 @@ export function useBorrowExecution() {
           action_type: "borrow_deposit",
           asset_in: collateralTokenCode,
           asset_out: assetCode,
-          amount_in: collateralNum,
+          token_amount_in: collateralNum,
           amount_out: borrowNum,
           tx_hash: txHash,
         });

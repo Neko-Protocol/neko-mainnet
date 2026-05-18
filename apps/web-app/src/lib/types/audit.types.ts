@@ -17,6 +17,7 @@ export interface AuditEvent {
   asset_in?: string;
   asset_out?: string;
   amount_in?: number;
+  token_amount_in?: number;
   amount_out?: number;
   pool_id?: string;
   tx_hash?: string;

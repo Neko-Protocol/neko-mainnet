@@ -4,6 +4,7 @@ type AuditLogInsert = {
   asset_in: string | null;
   asset_out: string | null;
   amount_in: number | null;
+  token_amount_in: number | null;
   amount_out: number | null;
   pool_id: string | null;
   network: string;
@@ -53,6 +54,28 @@ export type Database = {
         Row: AuditLogInsert & { id: string; created_at: string };
         Insert: AuditLogInsert;
         Update: Partial<AuditLogInsert>;
+        Relationships: [];
+      };
+      asset_price_history: {
+        Row: {
+          id: string;
+          symbol: string;
+          price: number;
+          source: string | null;
+          recorded_at: string;
+        };
+        Insert: {
+          symbol: string;
+          price: number;
+          source?: string | null;
+          recorded_at?: string;
+        };
+        Update: Partial<{
+          symbol: string;
+          price: number;
+          source: string | null;
+          recorded_at: string;
+        }>;
         Relationships: [];
       };
       asset_volume_stats: {

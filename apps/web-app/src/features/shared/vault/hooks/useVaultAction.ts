@@ -262,7 +262,7 @@ export function useVaultAction(
           wallet_address: address,
           action_type: "vaults_deposit",
           asset_in: supplyAssetSymbol,
-          amount_in: parseFloat(amount),
+          token_amount_in: parseFloat(amount),
           asset_out: vaultShareSymbol ?? "vault_shares",
           ...(mintedSharesHuman != null && Number.isFinite(mintedSharesHuman)
             ? { amount_out: mintedSharesHuman }
@@ -422,7 +422,7 @@ export function useVaultAction(
           wallet_address: address,
           action_type: "vaults_withdraw",
           asset_in: vaultShareSymbol ?? "vault_shares",
-          amount_in: sharesHuman,
+          token_amount_in: sharesHuman,
           asset_out: supplyAssetSymbol,
           amount_out: underlyingHuman,
           pool_id: vaultContractId,
