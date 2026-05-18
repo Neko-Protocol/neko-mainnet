@@ -218,7 +218,7 @@ function AmountInputCard({
           </span>
           <button
             type="button"
-            onClick={() => onAmountChange(parseFloat(maxAmount).toFixed(2))}
+            onClick={() => onAmountChange(maxAmount)}
             className="px-2.5 py-1 rounded-lg bg-white/10 text-white/60 text-xs font-semibold hover:bg-white/15 transition-colors"
           >
             MAX
