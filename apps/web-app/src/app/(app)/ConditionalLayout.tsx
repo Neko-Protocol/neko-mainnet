@@ -10,6 +10,7 @@ export function ConditionalLayout({ children }: { children: ReactNode }) {
   const isPoolDetail = /^\/pools\/[^/]+/.test(pathname);
   const isVaultDetail = /^\/vaults\/[^/]+/.test(pathname);
   const isDiscoverAssetDetail = /^\/discover\/[^/]+/.test(pathname);
+  const isStrategiesRoute = /^\/strategies(?:\/|$)/.test(pathname);
 
   if (isPoolDetail || isVaultDetail) {
     return (
@@ -30,6 +31,21 @@ export function ConditionalLayout({ children }: { children: ReactNode }) {
       >
         {children}
       </main>
+    );
+  }
+
+  if (isStrategiesRoute) {
+    return (
+      <>
+        <Sidebar />
+        <MobileHeader />
+        <main
+          className="pt-20 lg:pt-0 lg:ml-[270px] flex h-dvh max-h-dvh min-h-0 min-w-0 w-full flex-1 flex-col items-center overflow-hidden text-white"
+          style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+        >
+          {children}
+        </main>
+      </>
     );
   }
 

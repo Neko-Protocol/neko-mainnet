@@ -2,30 +2,36 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { SimulatorWizard } from "../components/SimulatorWizard";
 
 export default function SimulatorPage() {
   return (
-    <PageContainer maxWidth="5xl" className="flex min-h-0 w-full flex-col py-6">
-      <div className="flex h-[calc(100dvh-9rem)] flex-col gap-6 md:h-[calc(100dvh-6rem)] lg:h-[calc(100dvh-4rem)]">
-        <header className="flex shrink-0 flex-col gap-2">
-          <Link
-            href="/strategies"
-            className="flex w-fit items-center gap-1.5 text-sm text-white/40 transition-colors hover:text-white/70"
-          >
-            <ArrowLeft size={14} />
-            Strategies
-          </Link>
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold text-white sm:text-3xl">
-              Strategy Builder
-            </h1>
-            <p className="text-sm text-white/40">
-              Pick a token to see how it can earn, then put it to work.
-            </p>
-          </div>
-        </header>
+    <PageContainer
+      maxWidth="5xl"
+      className="flex h-full min-h-0 w-full flex-col"
+    >
+      <div className="flex min-h-0 flex-1 flex-col gap-6">
+        <BannerPage
+          title="Strategy Builder"
+          subtitle="Pick a token to see how it can earn, then put it to work."
+          badge="Strategies"
+          imageSrc="/banners/strategy-builder.svg"
+          imageAlt="Strategy builder"
+          showImageOnMobile
+          imageWrapperClassName="opacity-35 sm:opacity-100"
+          className="shrink-0 min-h-[128px] sm:min-h-[170px]"
+          actions={
+            <Link
+              href="/strategies"
+              className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+            >
+              <ArrowLeft size={13} />
+              Strategies
+            </Link>
+          }
+        />
 
         <SimulatorWizard />
       </div>

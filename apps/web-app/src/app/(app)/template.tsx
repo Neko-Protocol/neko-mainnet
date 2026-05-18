@@ -12,15 +12,18 @@ export default function DashboardTemplate({
   const poolDetail = /^\/pools\/[^/]+/.test(pathname);
   const vaultDetail = /^\/vaults\/[^/]+/.test(pathname);
   const discoverDetail = /^\/discover\/[^/]+/.test(pathname);
+  const strategiesRoute = /^\/strategies(?:\/|$)/.test(pathname);
 
   return (
     <div
       className={
         poolDetail || vaultDetail
           ? "flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden pt-6 sm:pt-8 pb-2"
-          : discoverDetail
-            ? "w-full min-w-0 max-w-full flex flex-col items-stretch py-6 sm:py-8"
-            : "w-full min-w-0 max-w-full flex flex-col items-center overflow-x-hidden px-4 sm:px-6 py-6 sm:py-8"
+          : strategiesRoute
+            ? "flex h-full min-h-0 w-full max-w-full flex-1 flex-col overflow-hidden px-4 py-6 sm:px-6 sm:py-8"
+            : discoverDetail
+              ? "w-full min-w-0 max-w-full flex flex-col items-stretch py-6 sm:py-8"
+              : "w-full min-w-0 max-w-full flex flex-col items-center overflow-x-hidden px-4 sm:px-6 py-6 sm:py-8"
       }
     >
       {children}

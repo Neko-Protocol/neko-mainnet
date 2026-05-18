@@ -17,6 +17,9 @@ export interface BannerPageProps {
 
   imagePosition?: "right" | "bottom-right";
 
+  showImageOnMobile?: boolean;
+
+  imageWrapperClassName?: string;
   imageSize?: "default" | "large";
 
   imageLayoutClassName?: string;
@@ -35,6 +38,8 @@ export function BannerPage({
   imageSrc,
   imageAlt = "",
   imagePosition = "right",
+  showImageOnMobile = false,
+  imageWrapperClassName,
   imageSize = "default",
   imageLayoutClassName,
   imageObjectClassName,
@@ -70,7 +75,12 @@ export function BannerPage({
 
       {}
       {imageSrc && (
-        <div className="hidden sm:block">
+        <div
+          className={cn(
+            showImageOnMobile ? "block" : "hidden sm:block",
+            imageWrapperClassName
+          )}
+        >
           <Illustration
             src={imageSrc}
             alt={imageAlt}

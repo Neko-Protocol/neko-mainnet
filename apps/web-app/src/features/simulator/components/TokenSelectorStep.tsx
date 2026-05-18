@@ -17,8 +17,8 @@ export function TokenSelectorStep({
   const { tokens, isLoading } = useSimulatorTokens();
 
   return (
-    <section className="flex flex-col gap-4">
-      <header className="flex flex-col gap-1">
+    <section className="flex min-h-0 flex-1 flex-col gap-4">
+      <header className="flex shrink-0 flex-col gap-1">
         <h2 className="text-xl font-semibold text-white">
           What are you starting with?
         </h2>
@@ -36,15 +36,17 @@ export function TokenSelectorStep({
           No tokens found. Try again in a moment.
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {tokens.map((token) => (
-            <TokenCard
-              key={token.code}
-              token={token}
-              isSelected={selected?.code === token.code}
-              onSelect={() => onSelect(token)}
-            />
-          ))}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
+          <div className="grid grid-cols-1 gap-5 pb-1 md:grid-cols-2 lg:grid-cols-3">
+            {tokens.map((token) => (
+              <TokenCard
+                key={token.code}
+                token={token}
+                isSelected={selected?.code === token.code}
+                onSelect={() => onSelect(token)}
+              />
+            ))}
+          </div>
         </div>
       )}
     </section>
