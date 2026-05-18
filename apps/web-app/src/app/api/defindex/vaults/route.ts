@@ -37,17 +37,36 @@ function formatVaultFetchError(reason: unknown): string {
 }
 
 function isRateLimitError(err: unknown): boolean {
-  const msg =
-    err instanceof Error ? err.message : String(err ?? "").toLowerCase();
+  // The DeFindex SDK rejects with the raw API response body
+  // (e.g. { message: "Rate limit exceeded", statusCode: 429 }), not an Error
+  // instance, so extract message + statusCode defensively.
+  let msg = "";
+  let statusCode: number | undefined;
+  if (err instanceof Error) {
+    msg = err.message;
+  } else if (err && typeof err === "object") {
+    const o = err as Record<string, unknown>;
+    if (typeof o.message === "string") msg = o.message;
+    else if (typeof o.error === "string") msg = o.error;
+    if (typeof o.statusCode === "number") statusCode = o.statusCode;
+    if (typeof o.status === "number" && statusCode === undefined)
+      statusCode = o.status;
+  } else {
+    msg = String(err ?? "");
+  }
+  const lower = msg.toLowerCase();
   return (
-    msg.toLowerCase().includes("rate limit") ||
-    msg.includes("429") ||
-    msg.includes("too many")
+    statusCode === 429 ||
+    lower.includes("rate limit") ||
+    lower.includes("429") ||
+    lower.includes("too many")
   );
 }
 
-const VAULT_FETCH_CONCURRENCY = 5;
-const BATCH_GAP_MS = 50;
+// DeFindex API rate-limits aggressive parallel calls. Keep concurrency low and
+// batches well-spaced so we don't poison the response with partial failures.
+const VAULT_FETCH_CONCURRENCY = 2;
+const BATCH_GAP_MS = 350;
 
 async function delay(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -58,7 +77,7 @@ async function fetchVaultInfo(
   sdk: InstanceType<typeof DefindexSDK>,
   contractId: string,
   network: SupportedNetworks,
-  maxRetries = 3
+  maxRetries = 5
 ): Promise<{ contractId: string; info: VaultInfoResponse }> {
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
@@ -66,7 +85,10 @@ async function fetchVaultInfo(
       return { contractId, info };
     } catch (err) {
       if (isRateLimitError(err) && attempt < maxRetries) {
-        await delay(600 * (attempt + 1));
+        // Exponential backoff with jitter: ~800ms, 1.6s, 3.2s, 6.4s, 12.8s.
+        const base = 800 * Math.pow(2, attempt);
+        const jitter = Math.floor(Math.random() * 200);
+        await delay(base + jitter);
         continue;
       }
       throw err;
@@ -180,7 +202,12 @@ export async function GET() {
     vaults,
     ...(fetchErrors.length > 0 ? { fetchErrors } : {}),
   };
-  serverCache = { data: responseData, ts: Date.now() };
+  // Only cache fully-successful responses. A partial failure (typically a
+  // DeFindex rate limit on one vault) would otherwise pin a broken response
+  // for SERVER_CACHE_TTL_MS and hide vaults from the UI until it expires.
+  if (fetchErrors.length === 0) {
+    serverCache = { data: responseData, ts: Date.now() };
+  }
 
   return NextResponse.json(responseData);
 }

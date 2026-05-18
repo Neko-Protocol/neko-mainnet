@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  Address,
-  BASE_FEE,
-  Keypair,
-  Operation,
-  TransactionBuilder,
-  rpc,
-  xdr,
-} from "@stellar/stellar-sdk";
+import { Keypair, TransactionBuilder, rpc } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import {
   getConfiguredRebalanceVaultIds,
   getVaultRebalanceConfig,
-  type VaultHarvestConfig,
   type VaultRebalanceConfig,
 } from "@/lib/defindex/rebalanceConfig";
 import {
@@ -51,17 +42,6 @@ type TxResult = {
   status: string;
 };
 
-type HarvestResult = TxResult & {
-  type: VaultHarvestConfig["type"];
-  label: string;
-  strategy: string;
-};
-
-type HarvestSummary = {
-  attempted: boolean;
-  results: HarvestResult[];
-};
-
 type FeesSummary = {
   attempted: boolean;
   results: Array<TxResult & { step: string }>;
@@ -86,7 +66,6 @@ type VaultKeeperResult = {
   vaultId: string;
   label: string;
   success: boolean;
-  harvest: HarvestSummary;
   rebalance: RebalanceSummary;
   fees: FeesSummary;
   warnings: string[];
@@ -145,10 +124,6 @@ function hasTransactionBudget(deadlineMs?: number): boolean {
 
 function emptyFeesSummary(): FeesSummary {
   return { attempted: false, results: [], feesCollected: false };
-}
-
-function skippedHarvestSummary(): HarvestSummary {
-  return { attempted: false, results: [] };
 }
 
 function skippedRebalanceSummary(
@@ -216,162 +191,6 @@ async function sendTx(
   }
   const finalStatus = await waitForTx(server, sendResult.hash);
   return { hash: sendResult.hash, status: finalStatus };
-}
-
-async function harvestAquarius(
-  harvest: VaultHarvestConfig,
-  keypair: Keypair,
-  server: rpc.Server,
-  networkPassphrase: string,
-  vaultContractId: string
-): Promise<HarvestResult> {
-  try {
-    const account = await server.getAccount(keypair.publicKey());
-    const tx = new TransactionBuilder(account, {
-      fee: BASE_FEE,
-      networkPassphrase,
-    })
-      .addOperation(
-        Operation.invokeContractFunction({
-          contract: harvest.strategyAddress,
-          function: "harvest",
-          args: [new Address(vaultContractId).toScVal(), xdr.ScVal.scvVoid()],
-        })
-      )
-      .setTimeout(30)
-      .build();
-
-    const prepared = await server.prepareTransaction(tx);
-    prepared.sign(keypair);
-    const sendResult = await server.sendTransaction(prepared);
-    if (sendResult.status !== "PENDING") {
-      return {
-        type: harvest.type,
-        label: harvest.label,
-        strategy: harvest.strategyAddress,
-        hash: sendResult.hash ?? "",
-        status: "submit_error",
-      };
-    }
-    const finalStatus = await waitForTx(server, sendResult.hash);
-    return {
-      type: harvest.type,
-      label: harvest.label,
-      strategy: harvest.strategyAddress,
-      hash: sendResult.hash,
-      status: finalStatus,
-    };
-  } catch (e) {
-    return {
-      type: harvest.type,
-      label: harvest.label,
-      strategy: harvest.strategyAddress,
-      hash: "",
-      status: `error: ${errorToString(e)}`,
-    };
-  }
-}
-
-async function harvestBlendStrategy(
-  harvest: VaultHarvestConfig,
-  keypair: Keypair,
-  server: rpc.Server,
-  networkPassphrase: string
-): Promise<HarvestResult> {
-  try {
-    const account = await server.getAccount(keypair.publicKey());
-    const tx = new TransactionBuilder(account, {
-      fee: BASE_FEE,
-      networkPassphrase,
-    })
-      .addOperation(
-        Operation.invokeContractFunction({
-          contract: harvest.strategyAddress,
-          function: "harvest",
-          args: [
-            new Address(keypair.publicKey()).toScVal(),
-            xdr.ScVal.scvVoid(),
-          ],
-        })
-      )
-      .setTimeout(30)
-      .build();
-
-    const prepared = await server.prepareTransaction(tx);
-    prepared.sign(keypair);
-    const sendResult = await server.sendTransaction(prepared);
-    if (sendResult.status !== "PENDING") {
-      return {
-        type: harvest.type,
-        label: harvest.label,
-        strategy: harvest.strategyAddress,
-        hash: sendResult.hash ?? "",
-        status: "submit_error",
-      };
-    }
-    const finalStatus = await waitForTx(server, sendResult.hash);
-    return {
-      type: harvest.type,
-      label: harvest.label,
-      strategy: harvest.strategyAddress,
-      hash: sendResult.hash,
-      status: finalStatus,
-    };
-  } catch (e) {
-    return {
-      type: harvest.type,
-      label: harvest.label,
-      strategy: harvest.strategyAddress,
-      hash: "",
-      status: `error: ${errorToString(e)}`,
-    };
-  }
-}
-
-async function runHarvests(
-  config: VaultRebalanceConfig,
-  keypair: Keypair,
-  server: rpc.Server,
-  networkPassphrase: string,
-  deadlineMs?: number
-): Promise<HarvestSummary> {
-  const harvests = config.harvest ?? [];
-  const results: HarvestResult[] = [];
-
-  for (const harvest of harvests) {
-    if (!hasTransactionBudget(deadlineMs)) {
-      results.push({
-        type: harvest.type,
-        label: harvest.label,
-        strategy: harvest.strategyAddress,
-        hash: "",
-        status: "skipped_timeout_budget",
-      });
-      continue;
-    }
-
-    const result =
-      harvest.type === "aquarius"
-        ? await harvestAquarius(
-            harvest,
-            keypair,
-            server,
-            networkPassphrase,
-            config.vaultId
-          )
-        : await harvestBlendStrategy(
-            harvest,
-            keypair,
-            server,
-            networkPassphrase
-          );
-    results.push(result);
-  }
-
-  return {
-    attempted: harvests.length > 0,
-    results,
-  };
 }
 
 async function fetchManagedFunds(
@@ -511,7 +330,6 @@ function skippedVaultResult(
     vaultId: config.vaultId,
     label: config.label,
     success: false,
-    harvest: skippedHarvestSummary(),
     rebalance: skippedRebalanceSummary(reason),
     fees: emptyFeesSummary(),
     warnings: warning ? [warning] : [],
@@ -533,19 +351,6 @@ async function runVaultKeeper(
     networkPassphrase,
     publicKey: keypair.publicKey(),
   });
-
-  const harvest = await runHarvests(
-    config,
-    keypair,
-    server,
-    networkPassphrase,
-    deadlineMs
-  );
-  for (const result of harvest.results) {
-    if (result.status !== "SUCCESS") {
-      warnings.push(`Harvest ${result.label} returned ${result.status}`);
-    }
-  }
 
   try {
     const funds = await fetchManagedFunds(client);
@@ -593,7 +398,6 @@ async function runVaultKeeper(
       // missing trustline outside our vaults. Keep it visible in warnings, but
       // do not fail the keeper when rebalance/invest itself succeeded.
       success: rebalanceOk,
-      harvest,
       rebalance,
       fees,
       warnings,
@@ -604,7 +408,6 @@ async function runVaultKeeper(
       vaultId: config.vaultId,
       label: config.label,
       success: false,
-      harvest,
       rebalance: skippedRebalanceSummary("error"),
       fees: emptyFeesSummary(),
       warnings: [...warnings, message],
