@@ -56,6 +56,28 @@ export type Database = {
         Update: Partial<AuditLogInsert>;
         Relationships: [];
       };
+      asset_price_history: {
+        Row: {
+          id: string;
+          symbol: string;
+          price: number;
+          source: string | null;
+          recorded_at: string;
+        };
+        Insert: {
+          symbol: string;
+          price: number;
+          source?: string | null;
+          recorded_at?: string;
+        };
+        Update: Partial<{
+          symbol: string;
+          price: number;
+          source: string | null;
+          recorded_at: string;
+        }>;
+        Relationships: [];
+      };
       asset_volume_stats: {
         Row: AssetVolumeStatsInsert & {
           id: string;
