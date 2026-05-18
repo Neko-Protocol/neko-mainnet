@@ -86,6 +86,12 @@ const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
     creatorIconSrc: "/neko-logo.png",
     issuerIconSrc: "/assets/vault-assets/neko.svg",
   },
+  // USDC Neko v2 (Fixed-only)
+  CCUZC3HC5TH2VCYZFUG57E6IGKPL45YUN2SI3UEYQUBA7RCYHUIZBSFV: {
+    createdBy: "Neko",
+    creatorIconSrc: "/neko-logo.png",
+    issuerIconSrc: "/assets/vault-assets/neko.svg",
+  },
   // CETES Neko
   CANBU7T77SCJOOAU6VQAOGR7DN36JBQFUN56XS2WA2VPJYUSRUBIPYDS: {
     createdBy: "Neko",
