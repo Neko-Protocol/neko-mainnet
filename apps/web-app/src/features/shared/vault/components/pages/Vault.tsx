@@ -13,7 +13,6 @@ import { VaultTabs, type VaultTabKey } from "../ui/VaultTabs";
 import MyVaultPositions from "../ui/MyVaultPositions";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useDefindexVaults } from "../../hooks/useDefindexVaults";
-import { fetchVaultApy } from "../../hooks/useVaultApy";
 import {
   rpcUrl,
   networkPassphrase,
@@ -115,18 +114,6 @@ const Vault: React.FC = () => {
 
   const { address } = useWallet();
 
-  const apyQueries = useQueries({
-    queries: vaultsFromApi.map((v) => ({
-      queryKey: ["vault-apy", v.id],
-      queryFn: () => fetchVaultApy(v.id),
-      staleTime: 10 * 60_000,
-      gcTime: 15 * 60_000,
-      refetchOnWindowFocus: false,
-      retry: false,
-      enabled: !!v.id,
-    })),
-  });
-
   // Fetch all vault balances in parallel
   const balanceQueries = useQueries({
     queries: vaultsFromApi.map((v) => ({
@@ -162,20 +149,11 @@ const Vault: React.FC = () => {
 
   const vaults = useMemo<VaultView[]>(() => {
     if (vaultsFromApi.length === 0) return [];
-    return vaultsFromApi.map((v, idx) => {
-      const tvl = convertUsdDisplayToSelectedCurrency(
-        v.tvl,
-        fxRate,
-        selectedCurrency
-      );
-      const liveApyNum = apyQueries[idx]?.data?.vaultApy;
-      const apy7d =
-        liveApyNum != null && liveApyNum > 0
-          ? `${liveApyNum.toFixed(2)}%`
-          : v.apy7d;
-      return { ...v, tvl, apy7d };
-    });
-  }, [vaultsFromApi, fxRate, selectedCurrency, apyQueries]);
+    return vaultsFromApi.map((v) => ({
+      ...v,
+      tvl: convertUsdDisplayToSelectedCurrency(v.tvl, fxRate, selectedCurrency),
+    }));
+  }, [vaultsFromApi, fxRate, selectedCurrency]);
 
   const assetOptions = useMemo(() => {
     const map = new Map<string, string>();
