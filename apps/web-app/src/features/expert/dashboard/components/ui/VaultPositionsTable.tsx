@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+
 import {
   getTokenIconFitClass,
   fromSmallestUnit,
@@ -82,18 +82,6 @@ export function VaultPositionsTable({
 
   return (
     <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
-        <span className="text-white/30 text-xs font-semibold uppercase tracking-wide">
-          Vaults
-        </span>
-        <Link
-          href="/vaults"
-          className="flex items-center gap-1 text-xs text-white/30 hover:text-white transition-colors"
-        >
-          Manage
-          <ArrowRight className="h-3 w-3" />
-        </Link>
-      </div>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
@@ -116,7 +104,7 @@ export function VaultPositionsTable({
             {tableRows.map(({ vault, userShares }) => (
               <tr
                 key={vault.id}
-                onClick={() => router.push("/vaults")}
+                onClick={() => router.push(`/vaults/${vault.id}`)}
                 className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.04] transition-colors cursor-pointer"
               >
                 <td className="px-4 py-3.5 align-middle w-16">
@@ -160,7 +148,7 @@ export function VaultPositionsTable({
             href="/vaults"
             className="text-xs text-white/40 hover:text-white transition-colors"
           >
-            +{hiddenCount} more in Vaults
+            +{hiddenCount} more
           </Link>
         </div>
       )}

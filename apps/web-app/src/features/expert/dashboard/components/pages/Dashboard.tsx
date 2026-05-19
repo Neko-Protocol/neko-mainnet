@@ -23,10 +23,10 @@ const Dashboard: React.FC = () => {
         />
         <EmailNudgeBanner />
         <MainStats />
+        <YourPositions />
         <QuickActions />
         <DiscoverAssets />
         <AssetBreakdown />
-        <YourPositions />
       </PageContainer>
     </div>
   );
