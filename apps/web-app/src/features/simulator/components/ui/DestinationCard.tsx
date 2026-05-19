@@ -64,9 +64,6 @@ export function DestinationCard({
               <p className="mt-1 flex flex-wrap items-baseline gap-1.5">
                 <span className="text-[10px] text-white/30">Pool size</span>
                 <span className="text-sm font-medium text-white/80">
-                  <span className="text-white/50" aria-hidden>
-                    $
-                  </span>
                   {destination.tvlLabel}
                 </span>
               </p>
