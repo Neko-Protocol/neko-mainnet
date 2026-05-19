@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import "@stellar/design-system/build/styles.min.css";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -74,6 +75,7 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>{children}</Providers>
+        <Analytics />
       </body>
     </html>
   );
