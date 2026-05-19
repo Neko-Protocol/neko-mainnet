@@ -259,7 +259,7 @@ export function SimulatorWizard() {
     state.phase === "optional_stack";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
       <div className="shrink-0">
         <StepIndicator steps={stepsMeta} currentPhase={state.phase} />
       </div>

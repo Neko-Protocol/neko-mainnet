@@ -80,8 +80,8 @@ const STATIC_OVERRIDES: Record<string, Partial<VaultConfig>> = {
     creatorIconSrc: "/neko-logo.png",
     issuerIconSrc: "/assets/vault-assets/neko.svg",
   },
-  // USDC Neko
-  CCPKQH3K5XUGP5GXCT6WTABS7TGXRR745BJ4MEFSGNATB7AOBRL4VEOT: {
+  // USDC Neko (Fixed-only)
+  CCUZC3HC5TH2VCYZFUG57E6IGKPL45YUN2SI3UEYQUBA7RCYHUIZBSFV: {
     createdBy: "Neko",
     creatorIconSrc: "/neko-logo.png",
     issuerIconSrc: "/assets/vault-assets/neko.svg",

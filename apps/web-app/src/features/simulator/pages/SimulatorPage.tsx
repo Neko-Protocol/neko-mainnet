@@ -19,6 +19,8 @@ export default function SimulatorPage() {
           badge="Strategies"
           imageSrc="/banners/strategy-builder.svg"
           imageAlt="Strategy builder"
+          showImageOnMobile
+          imageWrapperClassName="opacity-35 sm:opacity-100"
           className="shrink-0 min-h-[128px] sm:min-h-[170px]"
           actions={
             <Link

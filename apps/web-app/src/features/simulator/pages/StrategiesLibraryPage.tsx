@@ -28,7 +28,7 @@ export default function StrategiesLibraryPage() {
 
   return (
     <PageContainer
-      maxWidth="7xl"
+      maxWidth="5xl"
       className="flex h-full min-h-0 w-full flex-col"
     >
       <BannerPage
@@ -54,8 +54,8 @@ export default function StrategiesLibraryPage() {
       ) : myStrategies.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
-          <div className="grid grid-cols-1 gap-5 pb-1 md:grid-cols-2 xl:grid-cols-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable]">
+          <div className="grid grid-cols-1 pt-4 gap-5 md:grid-cols-2 lg:grid-cols-3">
             {myStrategies.map((s) => (
               <StrategyRow
                 key={s.id}
