@@ -21,7 +21,7 @@ export default function SimulatorPage() {
           imageAlt="Strategy builder"
           showImageOnMobile
           imageWrapperClassName="opacity-35 sm:opacity-100"
-          className="shrink-0 min-h-[128px] sm:min-h-[170px]"
+          className="shrink-0 min-h-[128px] sm:min-h-[240px]"
           actions={
             <Link
               href="/strategies"

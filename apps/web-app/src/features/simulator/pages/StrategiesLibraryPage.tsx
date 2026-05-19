@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import {
   useStrategiesStore,
@@ -27,22 +28,22 @@ export default function StrategiesLibraryPage() {
 
   return (
     <PageContainer
-      maxWidth="7xl"
+      maxWidth="5xl"
       className="flex h-full min-h-0 w-full flex-col"
     >
-      <div className="mb-6 flex shrink-0 items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-white sm:text-3xl">
-            Strategies
-          </h1>
-          <p className="mt-1 text-sm text-white/40">
-            Plan your positions. Execute when ready.
-          </p>
-        </div>
+      <BannerPage
+        title="Strategies"
+        subtitle="Plan your positions. Execute when ready."
+        imageSrc="/banners/strategy-builder.svg"
+        imageAlt="Strategies"
+        imageWrapperClassName="opacity-35 sm:opacity-100"
+        className="shrink-0 min-h-[128px] sm:min-h-[240px]"
+      />
 
+      <div className="flex shrink-0 items-center justify-end py-4">
         <Link
           href="/strategies/new"
-          className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#229EDF] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1f8ec9]"
+          className="flex items-center gap-1.5 rounded-full bg-[#229EDF] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1f8ec9]"
         >
           <Plus size={15} />
           Build new
@@ -54,8 +55,8 @@ export default function StrategiesLibraryPage() {
       ) : myStrategies.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
-          <div className="grid grid-cols-1 gap-5 pb-1 md:grid-cols-2 xl:grid-cols-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable]">
+          <div className="grid grid-cols-1 pt-4 gap-5 md:grid-cols-2 lg:grid-cols-3">
             {myStrategies.map((s) => (
               <StrategyRow
                 key={s.id}
