@@ -3,11 +3,11 @@
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { CLASS_ACCENT } from "@/features/shared/discover/utils/assetClass";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useFilteredDestinations } from "../hooks/useFilteredDestinations";
 import { DestinationCard } from "./ui/DestinationCard";
+import { VaultDestinationCard } from "./ui/VaultDestinationCard";
 import type {
   SimulatorDestination,
   SimulatorToken,
@@ -32,9 +32,10 @@ function EtherfuseBondCard({
   onSelect: () => void;
 }) {
   const { light } = useHaptics();
-  const accent = CLASS_ACCENT["sovereign-bond"];
   const symbol =
     destination.bondSymbol ?? destination.acceptedTokenCodes[0] ?? "";
+  const symbolInitial =
+    symbol.trim().length > 0 ? symbol.trim()[0].toUpperCase() : "?";
   const apy = destination.apy ?? 0;
   const icon = destination.bondIcon;
 
@@ -46,58 +47,82 @@ function EtherfuseBondCard({
         onSelect();
       }}
       className={cn(
-        "flex w-full flex-col gap-3 rounded-2xl border border-transparent p-4 text-left ring-1 transition-all",
-        accent.bg,
-        accent.text,
-        accent.ring,
-        "hover:brightness-110",
-        isSelected && "border-[#229EDF] ring-2 ring-[#229EDF]/40"
+        "group relative flex h-full min-h-[190px] flex-col overflow-hidden rounded-2xl border bg-[#1C1C1C] p-5 text-left transition-all duration-200",
+        "hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#202020]",
+        isSelected
+          ? "border-[#229EDF] ring-1 ring-[#229EDF]/40"
+          : "border-white/5"
       )}
       aria-pressed={isSelected}
     >
-      <div className="flex items-start gap-3">
-        <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-blue-500/20 shadow-md">
+      <div className="relative mb-5 flex items-start justify-between gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-2 ring-[#1C1C1C]">
           {icon ? (
             <Image
               src={icon}
-              alt={symbol}
-              width={40}
-              height={40}
+              alt={symbol || destination.name}
+              width={44}
+              height={44}
               unoptimized
               className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-sm font-bold">
-              {symbol[0]}
-            </div>
+            <span className="text-sm font-bold text-[#121212]">
+              {symbolInitial}
+            </span>
           )}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-base font-semibold text-white">
-              {destination.name}
-            </h3>
-            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-300">
-              Low Risk
-            </span>
-          </div>
-          <div className="mt-2 flex flex-wrap items-baseline gap-1.5">
-            <span className="text-2xl font-bold text-emerald-400">
-              ~{apy.toFixed(2)}%
-            </span>
-            <span className="text-xs font-normal text-white/50">/ year</span>
-          </div>
-        </div>
+
+        {isSelected ? (
+          <span className="shrink-0 rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#229EDF]">
+            Selected
+          </span>
+        ) : null}
       </div>
 
-      <ul className="flex flex-col gap-1 text-xs text-white/50">
-        {destination.strategyLabels.map((label) => (
-          <li key={label} className="flex items-start gap-2">
-            <span className="mt-[0.35rem] inline-block size-1 shrink-0 rounded-full bg-white/50" />
-            <span>{label}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="relative flex min-h-0 flex-1 flex-col justify-between gap-4">
+        <div className="min-w-0">
+          <span className="inline-flex items-center rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/50">
+            {destination.protocol}
+          </span>
+          <h3 className="mt-1.5 truncate text-sm font-semibold leading-tight text-white">
+            {destination.name}
+          </h3>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div>
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-white/40">
+              APY
+            </p>
+            {apy > 0 ? (
+              <p className="flex flex-wrap items-baseline gap-x-1">
+                <span className="text-3xl font-bold tabular-nums text-white">
+                  {apy.toFixed(2)}%
+                </span>
+                <span className="text-sm font-medium text-white/35">
+                  {" /yr"}
+                </span>
+              </p>
+            ) : (
+              <p className="text-3xl font-bold tabular-nums text-white/40">—</p>
+            )}
+          </div>
+
+          {destination.strategyLabels.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5">
+              {destination.strategyLabels.map((label) => (
+                <span
+                  key={label}
+                  className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-white/45"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
     </button>
   );
 }
@@ -212,7 +237,7 @@ export function DestinationSelectorStep({
                 : `No auto-invest vaults accept ${token.code} yet. Try another option.`}
           </div>
         ) : tab === "hold-bond" ? (
-          <div className="flex flex-col gap-3 pb-1">
+          <div className="grid grid-cols-1 gap-4 pt-2 pb-5 md:grid-cols-2">
             {(visible as SimulatorDestination[]).map((destination) => (
               <EtherfuseBondCard
                 key={`yield:${destination.id}`}
@@ -222,8 +247,19 @@ export function DestinationSelectorStep({
               />
             ))}
           </div>
+        ) : tab === "vaults" ? (
+          <div className="grid grid-cols-1 gap-4 pt-2 pb-5">
+            {(visible as SimulatorDestination[]).map((destination) => (
+              <VaultDestinationCard
+                key={`vault:${destination.id}`}
+                destination={destination}
+                isSelected={selected?.id === destination.id}
+                onSelect={onSelect}
+              />
+            ))}
+          </div>
         ) : (
-          <div className="flex flex-col gap-3 pb-1">
+          <div className="grid grid-cols-1 gap-4 pt-2 pb-5 md:grid-cols-2">
             {(visible as SimulatorDestination[]).map((destination) => (
               <DestinationCard
                 key={`${destination.kind}:${destination.id}`}
