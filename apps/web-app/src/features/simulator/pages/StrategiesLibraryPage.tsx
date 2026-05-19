@@ -35,9 +35,11 @@ export default function StrategiesLibraryPage() {
         title="Strategies"
         subtitle="Plan your positions. Execute when ready."
         badge="Saved strategies"
-        imageSrc="/banners/strategy-builder.svg"
+        imageSrc="/banners/oracle.svg"
         imageAlt="Strategies"
         className="mb-6 shrink-0 min-h-[128px] sm:min-h-[170px]"
+        imageLayoutClassName="right-0 -bottom-10 h-[125%] w-[55%]"
+        imageObjectClassName="object-contain object-right object-bottom"
         actions={
           <Link
             href="/strategies/new"
