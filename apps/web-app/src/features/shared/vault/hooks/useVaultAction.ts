@@ -165,6 +165,8 @@ export function useVaultAction(
         queryClient.invalidateQueries({ queryKey: ["vaultBalance"] }),
         queryClient.invalidateQueries({ queryKey: ["vaultSupplyBalance"] }),
         queryClient.invalidateQueries({ queryKey: ["vaultData"] }),
+        queryClient.invalidateQueries({ queryKey: ["bearingYieldBalance"] }),
+        queryClient.invalidateQueries({ queryKey: ["defindex-vaults"] }),
       ]),
     [queryClient]
   );
