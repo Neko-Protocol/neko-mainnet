@@ -36,8 +36,8 @@ export function TokenSelectorStep({
           No tokens found. Try again in a moment.
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
-          <div className="grid grid-cols-1 gap-5 pb-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-5 pr-1 [scrollbar-gutter:stable]">
+          <div className="grid grid-cols-1 pt-4 gap-5 md:grid-cols-2 lg:grid-cols-3">
             {tokens.map((token) => (
               <TokenCard
                 key={token.code}
