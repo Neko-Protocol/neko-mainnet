@@ -15,7 +15,11 @@
       "Bash(npx eslint *)",
       "mcp__cursor-coder__cursor_edit_code",
       "Bash(git commit *)",
-      "Bash(npm audit *)"
+      "Bash(npm audit *)",
+      "WebFetch(domain:mintlify.com)",
+      "Bash(git reset *)"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": ["mintlify"]
 }

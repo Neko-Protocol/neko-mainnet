@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getAppOrigin } from "@/lib/config/app-origin";
 import { getSupabaseAdmin } from "@/lib/services/supabase.server";
 
 // Two entry points for confirming a magic-link email:
@@ -22,9 +23,7 @@ function getAuthClient() {
 }
 
 function settingsRedirect(req: NextRequest, status: "verified" | "error") {
-  const origin =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-    new URL(req.url).origin;
+  const origin = getAppOrigin(new URL(req.url).origin);
   return NextResponse.redirect(`${origin}/settings?email=${status}`);
 }
 

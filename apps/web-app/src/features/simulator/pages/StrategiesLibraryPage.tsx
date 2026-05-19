@@ -34,21 +34,20 @@ export default function StrategiesLibraryPage() {
       <BannerPage
         title="Strategies"
         subtitle="Plan your positions. Execute when ready."
+        badge="Saved strategies"
         imageSrc="/banners/strategy-builder.svg"
         imageAlt="Strategies"
-        imageWrapperClassName="opacity-35 sm:opacity-100"
-        className="shrink-0 min-h-[128px] sm:min-h-[240px]"
+        className="mb-6 shrink-0 min-h-[128px] sm:min-h-[170px]"
+        actions={
+          <Link
+            href="/strategies/new"
+            className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+          >
+            <Plus size={13} />
+            Build new
+          </Link>
+        }
       />
-
-      <div className="flex shrink-0 items-center justify-end py-4">
-        <Link
-          href="/strategies/new"
-          className="flex items-center gap-1.5 rounded-full bg-[#229EDF] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1f8ec9]"
-        >
-          <Plus size={15} />
-          Build new
-        </Link>
-      </div>
 
       {!address ? (
         <NoWalletState />

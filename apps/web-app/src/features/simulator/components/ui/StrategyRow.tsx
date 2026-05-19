@@ -67,6 +67,7 @@ export function StrategyRow({
 
   const taxonomy = getAssetTaxonomy(token.code);
   const accent = taxonomy ? CLASS_ACCENT[taxonomy.class] : null;
+  const iconSrc = getTokenIcon(token.code) ?? token.iconSrc;
   const labels = [
     destination.protocol,
     ...destination.strategyLabels,
@@ -79,21 +80,18 @@ export function StrategyRow({
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#121212] ring-1 ring-white/10">
-            {(() => {
-              const icon = getTokenIcon(token.code) ?? token.iconSrc;
-              return icon ? (
-                <Image
-                  src={icon}
-                  alt={token.code}
-                  width={44}
-                  height={44}
-                  unoptimized
-                  className={getTokenIconFitClass(token.code)}
-                />
-              ) : (
-                token.code[0]
-              );
-            })()}
+            {iconSrc ? (
+              <Image
+                src={iconSrc}
+                alt={token.code}
+                width={44}
+                height={44}
+                unoptimized
+                className={getTokenIconFitClass(token.code)}
+              />
+            ) : (
+              token.code[0]
+            )}
           </div>
           <div className="min-w-0">
             <h3 className="truncate text-sm font-semibold leading-tight text-white">
