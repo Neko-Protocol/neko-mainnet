@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { getAppOrigin } from "@/lib/config/app-origin";
 import { dbNetwork, getSupabaseAdmin } from "@/lib/services/supabase.server";
 import type { EmailStartRequest } from "@/lib/types/user.types";
 
 const NETWORK = dbNetwork();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function getOrigin(req: NextRequest): string {
-  const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
-  if (fromEnv) return fromEnv;
-  return new URL(req.url).origin;
-}
 
 function getAuthClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -48,10 +43,15 @@ export async function POST(request: NextRequest) {
       { onConflict: "wallet_address" }
     );
 
-    const redirectTo = `${getOrigin(request)}/auth/email-confirmed?wallet=${encodeURIComponent(wallet)}`;
+    const origin = getAppOrigin(new URL(request.url).origin);
+    const redirectTo = `${origin}/auth/email-confirmed?wallet=${encodeURIComponent(wallet)}`;
     const { error } = await auth.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true, emailRedirectTo: redirectTo },
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: redirectTo,
+        data: { wallet_address: wallet },
+      },
     });
 
     if (error) {
