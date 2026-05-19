@@ -1,12 +1,15 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import { Layers } from "lucide-react";
 import { useDashboardPositions } from "@/features/expert/dashboard/hooks/useDashboardPositions";
 import { useDashboardVaultPositions } from "@/features/expert/dashboard/hooks/useDashboardVaultPositions";
+import { useBearingYieldPositions } from "@/features/expert/dashboard/hooks/useBearingYieldPositions";
+import { useEtherfuseYields } from "@/features/simulator/hooks/useEtherfuseYields";
 import { YourPositionsTable } from "./YourPositionsTable";
 import { VaultPositionsTable } from "./VaultPositionsTable";
+import { BearingYieldTable } from "./BearingYieldTable";
 
 function SectionSkeleton({ label }: { label: string }) {
   return (
@@ -31,14 +34,32 @@ const YourPositions: React.FC = () => {
     useDashboardPositions();
   const { positions: vaultPositions, isLoading: vaultLoading } =
     useDashboardVaultPositions();
+  const { positions: bearingYieldPositions, isLoading: bearingLoading } =
+    useBearingYieldPositions(vaultPositions);
+  const { data: etherfuseYields } = useEtherfuseYields();
+  const yieldsMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const entry of etherfuseYields ?? []) {
+      map[entry.symbol.toUpperCase()] = entry.apy;
+    }
+    return map;
+  }, [etherfuseYields]);
 
   if (!hasWallet) return null;
 
   const hasPoolData = positions.length > 0;
   const hasVaultData = vaultPositions.length > 0;
-  const nothingYet = isLoading && vaultLoading && !hasPoolData && !hasVaultData;
-  const bothDone = !isLoading && !vaultLoading;
-  const emptyState = bothDone && !hasPoolData && !hasVaultData && !isError;
+  const hasBearingData = bearingYieldPositions.length > 0;
+  const nothingYet =
+    isLoading &&
+    vaultLoading &&
+    bearingLoading &&
+    !hasPoolData &&
+    !hasVaultData &&
+    !hasBearingData;
+  const allDone = !isLoading && !vaultLoading && !bearingLoading;
+  const emptyState =
+    allDone && !hasPoolData && !hasVaultData && !hasBearingData && !isError;
 
   return (
     <div className="w-full">
@@ -94,6 +115,16 @@ const YourPositions: React.FC = () => {
 
           {hasVaultData && <VaultPositionsTable positions={vaultPositions} />}
           {vaultLoading && !hasVaultData && <SectionSkeleton label="Vaults" />}
+
+          {hasBearingData && (
+            <BearingYieldTable
+              positions={bearingYieldPositions}
+              yieldsMap={yieldsMap}
+            />
+          )}
+          {bearingLoading && !hasBearingData && (
+            <SectionSkeleton label="Bearing Yield Assets" />
+          )}
         </div>
       )}
     </div>
