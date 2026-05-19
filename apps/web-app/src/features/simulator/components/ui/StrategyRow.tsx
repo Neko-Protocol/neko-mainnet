@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Play, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import {
   CLASS_ACCENT,
   getAssetTaxonomy,
@@ -67,6 +67,7 @@ export function StrategyRow({
 
   const taxonomy = getAssetTaxonomy(token.code);
   const accent = taxonomy ? CLASS_ACCENT[taxonomy.class] : null;
+  const iconSrc = getTokenIcon(token.code) ?? token.iconSrc;
   const labels = [
     destination.protocol,
     ...destination.strategyLabels,
@@ -79,9 +80,9 @@ export function StrategyRow({
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#121212] ring-1 ring-white/10">
-            {token.iconSrc ? (
+            {iconSrc ? (
               <Image
-                src={token.iconSrc}
+                src={iconSrc}
                 alt={token.code}
                 width={44}
                 height={44}

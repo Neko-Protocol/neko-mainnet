@@ -108,7 +108,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       name: "EUR Coin",
       contract: "CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV",
       decimals: 7,
-      icon: "https://ipfs.io/ipfs/bafkreidizqlammdzrrurfq3o5owta77fiyonn6ri72h6rltqimn2xs2by4",
+      icon: "/assets/eurc-logo.png",
       priceSource: "reflector",
       isStablecoin: true,
       coinGeckoId: "eurc",

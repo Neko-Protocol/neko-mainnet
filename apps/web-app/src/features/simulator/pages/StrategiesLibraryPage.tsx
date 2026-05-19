@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import {
   useStrategiesStore,
@@ -30,24 +31,23 @@ export default function StrategiesLibraryPage() {
       maxWidth="7xl"
       className="flex h-full min-h-0 w-full flex-col"
     >
-      <div className="mb-6 flex shrink-0 items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-white sm:text-3xl">
-            Strategies
-          </h1>
-          <p className="mt-1 text-sm text-white/40">
-            Plan your positions. Execute when ready.
-          </p>
-        </div>
-
-        <Link
-          href="/strategies/new"
-          className="flex shrink-0 items-center gap-1.5 rounded-full bg-[#229EDF] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1f8ec9]"
-        >
-          <Plus size={15} />
-          Build new
-        </Link>
-      </div>
+      <BannerPage
+        title="Strategies"
+        subtitle="Plan your positions. Execute when ready."
+        badge="Saved strategies"
+        imageSrc="/banners/strategy-builder.svg"
+        imageAlt="Strategies"
+        className="mb-6 shrink-0 min-h-[128px] sm:min-h-[170px]"
+        actions={
+          <Link
+            href="/strategies/new"
+            className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/30 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+          >
+            <Plus size={13} />
+            Build new
+          </Link>
+        }
+      />
 
       {!address ? (
         <NoWalletState />
