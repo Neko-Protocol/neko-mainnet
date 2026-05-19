@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Play, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import {
   CLASS_ACCENT,
   getAssetTaxonomy,
@@ -79,18 +79,21 @@ export function StrategyRow({
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#121212] ring-1 ring-white/10">
-            {token.iconSrc ? (
-              <Image
-                src={token.iconSrc}
-                alt={token.code}
-                width={44}
-                height={44}
-                unoptimized
-                className={getTokenIconFitClass(token.code)}
-              />
-            ) : (
-              token.code[0]
-            )}
+            {(() => {
+              const icon = getTokenIcon(token.code) ?? token.iconSrc;
+              return icon ? (
+                <Image
+                  src={icon}
+                  alt={token.code}
+                  width={44}
+                  height={44}
+                  unoptimized
+                  className={getTokenIconFitClass(token.code)}
+                />
+              ) : (
+                token.code[0]
+              );
+            })()}
           </div>
           <div className="min-w-0">
             <h3 className="truncate text-sm font-semibold leading-tight text-white">
