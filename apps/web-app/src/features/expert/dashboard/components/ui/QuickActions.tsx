@@ -8,6 +8,7 @@ import {
   Compass,
   ArrowRight,
   Gavel,
+  Vault,
 } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
@@ -25,6 +26,12 @@ const allActions = [
     description: "Earn yield in pools",
     href: "/pools",
     icon: Droplets,
+  },
+  {
+    label: "Deposit in Vault",
+    description: "Earn yield in vaults",
+    href: "/vaults",
+    icon: Vault,
   },
   {
     label: "Explore Assets",
