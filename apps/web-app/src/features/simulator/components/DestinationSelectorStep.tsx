@@ -248,7 +248,7 @@ export function DestinationSelectorStep({
             ))}
           </div>
         ) : tab === "vaults" ? (
-          <div className="grid grid-cols-1 gap-4 pt-2 pb-5">
+          <div className="grid grid-cols-1 gap-4 pt-2 pb-5 p-2">
             {(visible as SimulatorDestination[]).map((destination) => (
               <VaultDestinationCard
                 key={`vault:${destination.id}`}
