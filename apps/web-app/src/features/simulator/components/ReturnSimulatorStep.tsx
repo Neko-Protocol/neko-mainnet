@@ -224,6 +224,9 @@ interface ReturnSimulatorStepProps {
     expectedBondOutHuman: string;
   }) => void | Promise<void>;
   isSwapDepositPending?: boolean;
+  onBack?: () => void;
+  onSaveStrategy?: () => void;
+  showSaveStrategy?: boolean;
 }
 
 export function ReturnSimulatorStep({
@@ -236,6 +239,9 @@ export function ReturnSimulatorStep({
   onStartDepositOrchestrator,
   onSwapAndDeposit,
   isSwapDepositPending = false,
+  onBack,
+  onSaveStrategy,
+  showSaveStrategy = false,
 }: ReturnSimulatorStepProps) {
   const { balances, address } = useWallet();
   const { light, success } = useHaptics();
@@ -573,86 +579,88 @@ export function ReturnSimulatorStep({
                   </p>
                 )}
             </div>
-
-            {/* Compact earnings preview - only shown when amount entered */}
-            {stableAmountNum > 0 && (
-              <div className="flex items-center gap-3 rounded-2xl border border-white/8 bg-[#1E1E1E] px-4 py-3">
-                <div>
-                  <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/40">
-                    After 1 year
-                  </p>
-                  {isWaitingForApy ||
-                  (stableFundsBondPurchase && swapQuote.isFetching) ? (
-                    <div className="h-6 w-24 rounded bg-white/10" />
-                  ) : (
-                    <p className="text-xl font-bold tabular-nums text-[#4ADE80]">
-                      {oneYearLabel ?? "-"}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
-          {/* end inner flex col */}
         </div>
-        {/* end scrollable area */}
 
-        {/* CTA - pinned at bottom, never scrolls away */}
-        <div className="shrink-0 border-t border-white/8 pt-4 flex items-center justify-between gap-3">
-          {/* Secondary: see breakdown */}
-          {stableAmountNum > 0 ? (
-            <button
-              type="button"
-              onClick={() => setProjectionsOpen(true)}
-              className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white/60 transition-colors hover:border-white/30 hover:text-white"
-            >
-              See breakdown
-            </button>
-          ) : (
-            <div />
-          )}
+        {/* Unified nav bar - replaces both the old CTA row and the wizard's separate WizardNav */}
+        <div className="shrink-0 border-t border-white/8 pt-4">
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Left: Back + See breakdown */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  light();
+                  onBack?.();
+                }}
+                className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/5"
+              >
+                Back
+              </button>
+              {stableAmountNum > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setProjectionsOpen(true)}
+                  className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-medium text-white/60 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  See breakdown
+                </button>
+              )}
+            </div>
 
-          {/* Primary: deposit / got it */}
-          {!canDeposit ? (
-            <button
-              type="button"
-              disabled={stableAmountNum <= 0}
-              className={cn(
-                "rounded-full px-6 py-2.5 text-sm font-semibold transition-colors",
-                stableAmountNum <= 0
-                  ? "cursor-not-allowed bg-white/10 text-white/40"
-                  : "border border-white/15 bg-transparent text-white hover:bg-white/5"
+            {/* Right: Save strategy + primary action */}
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:gap-3">
+              {showSaveStrategy && (
+                <button
+                  type="button"
+                  onClick={onSaveStrategy}
+                  className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 transition-colors hover:border-white/30 hover:text-white"
+                >
+                  Save strategy
+                </button>
               )}
-            >
-              Got it
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() =>
-                useSwapThenDeposit
-                  ? void handleSwapAndDepositClick()
-                  : handleDepositClick()
-              }
-              disabled={ctaDisabled || !walletConnected}
-              className={cn(
-                "rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-colors",
-                ctaDisabled || !walletConnected
-                  ? "cursor-not-allowed bg-white/10 text-white/40"
-                  : "bg-[#229EDF] hover:bg-[#1f8ec9]"
+              {!canDeposit ? (
+                <button
+                  type="button"
+                  disabled={stableAmountNum <= 0}
+                  className={cn(
+                    "rounded-full px-6 py-2.5 text-sm font-semibold transition-colors",
+                    stableAmountNum <= 0
+                      ? "cursor-not-allowed bg-white/10 text-white/40"
+                      : "border border-white/15 text-white hover:bg-white/5"
+                  )}
+                >
+                  Got it
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() =>
+                    useSwapThenDeposit
+                      ? void handleSwapAndDepositClick()
+                      : handleDepositClick()
+                  }
+                  disabled={ctaDisabled || !walletConnected}
+                  className={cn(
+                    "rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-colors",
+                    ctaDisabled || !walletConnected
+                      ? "cursor-not-allowed bg-white/10 text-white/40"
+                      : "bg-[#229EDF] hover:bg-[#1f8ec9]"
+                  )}
+                >
+                  {!walletConnected
+                    ? useSwapThenDeposit
+                      ? "Connect wallet to swap & deposit"
+                      : "Connect wallet to deposit"
+                    : isSwapDepositPending
+                      ? "Swapping…"
+                      : useSwapThenDeposit
+                        ? "Swap & deposit"
+                        : "Deposit"}
+                </button>
               )}
-            >
-              {!walletConnected
-                ? useSwapThenDeposit
-                  ? "Connect wallet to swap & deposit"
-                  : "Connect wallet to deposit"
-                : isSwapDepositPending
-                  ? "Swapping…"
-                  : useSwapThenDeposit
-                    ? "Swap & deposit"
-                    : "Deposit"}
-            </button>
-          )}
+            </div>
+          </div>
         </div>
       </section>
 
