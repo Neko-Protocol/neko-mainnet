@@ -47,7 +47,7 @@ function EtherfuseBondCard({
         onSelect();
       }}
       className={cn(
-        "group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border bg-[#1C1C1C] px-5 py-4 text-left transition-all duration-200",
+        "group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border bg-[#1C1C1C] px-5 py-5 text-left transition-all duration-200",
         "hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#202020]",
         isSelected
           ? "border-[#229EDF] ring-1 ring-[#229EDF]/40"
@@ -56,13 +56,13 @@ function EtherfuseBondCard({
       aria-pressed={isSelected}
     >
       {/* Icon */}
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-2 ring-[#1C1C1C]">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-2 ring-[#1C1C1C]">
         {icon ? (
           <Image
             src={icon}
             alt={symbol || destination.name}
-            width={40}
-            height={40}
+            width={48}
+            height={48}
             unoptimized
             className="h-full w-full object-cover"
           />
@@ -75,7 +75,7 @@ function EtherfuseBondCard({
 
       {/* Name + protocol */}
       <div className="min-w-0 flex-1">
-        <h3 className="truncate text-sm font-semibold leading-tight text-white">
+        <h3 className="truncate text-base font-semibold leading-tight text-white">
           {destination.name}
         </h3>
         <span className="mt-1 inline-flex items-center rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/50">
@@ -87,7 +87,7 @@ function EtherfuseBondCard({
       <div className="shrink-0 text-right">
         {apy > 0 ? (
           <>
-            <p className="text-xl font-bold tabular-nums text-white">
+            <p className="text-2xl font-bold tabular-nums text-white">
               {apy.toFixed(2)}%
             </p>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
@@ -96,7 +96,7 @@ function EtherfuseBondCard({
           </>
         ) : (
           <>
-            <p className="text-xl font-bold tabular-nums text-white/30">-</p>
+            <p className="text-2xl font-bold tabular-nums text-white/30">-</p>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
               APY
             </p>
