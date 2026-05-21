@@ -108,19 +108,6 @@ function EtherfuseBondCard({
               <p className="text-3xl font-bold tabular-nums text-white/40">-</p>
             )}
           </div>
-
-          {destination.strategyLabels.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {destination.strategyLabels.map((label) => (
-                <span
-                  key={label}
-                  className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-white/45"
-                >
-                  {label}
-                </span>
-              ))}
-            </div>
-          ) : null}
         </div>
       </div>
     </button>
