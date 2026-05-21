@@ -4,11 +4,15 @@ import Image from "next/image";
 import { useMemo } from "react";
 import { useHaptics } from "@/hooks/useHaptics";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { useFxRate } from "@/hooks/useFxRate";
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
 import { useWallet } from "@/hooks/useWallet";
 import { cn } from "@/lib/utils";
 import { formatAmount, safeParseFloat } from "@/lib/helpers/formatUtils";
+import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
+import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import type { MappedBalances } from "@/lib/helpers/stellar/wallet";
+import { useCurrencyStore } from "@/stores/currency.store";
 import { useEtherfuseYields } from "../hooks/useEtherfuseYields";
 import {
   isEtherfuseBondToken,
@@ -16,9 +20,8 @@ import {
 } from "../hooks/useFilteredDestinations";
 import { useProjectedReturns } from "../hooks/useProjectedReturns";
 import { useSimulatorStablecoinBondQuote } from "../hooks/useSimulatorStablecoinBondQuote";
-import { ProjectionTable } from "./ui/ProjectionTable";
-import { StrategySummaryCard } from "./ui/StrategySummaryCard";
 import type {
+  Projection,
   SimulatorDestination,
   SimulatorToken,
 } from "../types/simulator.types";
@@ -28,7 +31,6 @@ import {
 } from "../utils/wizardPhases";
 import type { VaultView } from "@/features/shared/vault/types/vault";
 
-/** Stable bond deposit amount string after swap (vault / pool hooks expect human). */
 function bondOutToDepositString(n: number): string {
   if (!Number.isFinite(n) || n <= 0) return "";
   const s = n.toFixed(10).replace(/\.?0+$/, "");
@@ -57,26 +59,169 @@ function getHoldingsAmount(balances: MappedBalances, code: string): number {
   return 0;
 }
 
+// ── Sub-components ──────────────────────────────────────────────────────────
+
+function StrategyRecap({
+  token,
+  destination,
+  apy,
+  isLoading,
+}: {
+  token: SimulatorToken;
+  destination: SimulatorDestination;
+  apy: number | null;
+  isLoading: boolean;
+}) {
+  const iconSrc = getTokenIcon(token.code) ?? token.iconSrc;
+  const hasPositiveApy = apy !== null && !Number.isNaN(apy) && apy > 0;
+
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-white/8 bg-[#1E1E1E] px-4 py-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-white/10">
+        {iconSrc ? (
+          <Image
+            src={iconSrc}
+            alt={token.code}
+            width={36}
+            height={36}
+            unoptimized
+            className={getTokenIconFitClass(token.code)}
+          />
+        ) : (
+          <span className="text-xs font-bold text-[#121212]">
+            {token.code[0]}
+          </span>
+        )}
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
+        <span className="font-semibold text-white">{token.code}</span>
+        <span className="text-white/30">→</span>
+        <span className="truncate font-medium text-white/70">
+          {destination.name}
+        </span>
+        <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/50">
+          {destination.protocol}
+        </span>
+      </div>
+
+      <div className="shrink-0 text-right">
+        {isLoading ? (
+          <div className="h-5 w-14 rounded bg-white/10" />
+        ) : hasPositiveApy ? (
+          <span className="text-sm font-bold text-[#4ADE80]">
+            {apy!.toFixed(2)}%
+          </span>
+        ) : (
+          <span className="text-sm font-bold text-white/30">-</span>
+        )}
+        <p className="text-[10px] text-white/30">APY</p>
+      </div>
+    </div>
+  );
+}
+
+function EarningsPanel({
+  projections,
+  tokenCode,
+  hasPrice,
+  isLoading,
+}: {
+  projections: Projection[];
+  tokenCode: string;
+  hasPrice: boolean;
+  isLoading: boolean;
+}) {
+  const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
+  const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
+
+  const fmtFiat = (usd: number) =>
+    hasPrice
+      ? formatCurrency(convertUsdToSelected(usd, fxRate), selectedCurrency)
+      : null;
+
+  const oneYear = projections.find((p) => p.months === 12);
+  const others = projections.filter((p) => p.months !== 12);
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* Hero: 1-year earnings */}
+      <div className="rounded-2xl border border-white/8 bg-[#1E1E1E] px-5 py-5">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/40">
+          Projected after 1 year
+        </p>
+        {isLoading ? (
+          <div className="h-10 w-40 rounded-lg bg-white/10" />
+        ) : oneYear ? (
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            {hasPrice ? (
+              <>
+                <span className="text-4xl font-bold tabular-nums text-[#4ADE80]">
+                  +{fmtFiat(oneYear.earningsUsd)}
+                </span>
+                <span className="text-base font-medium text-white/40">
+                  +{formatAmount(oneYear.earningsToken)} {tokenCode}
+                </span>
+              </>
+            ) : (
+              <span className="text-4xl font-bold tabular-nums text-[#4ADE80]">
+                +{formatAmount(oneYear.earningsToken)} {tokenCode}
+              </span>
+            )}
+          </div>
+        ) : null}
+        <p className="mt-3 text-xs text-white/30">
+          Estimate based on current rate. Actual returns will vary.
+        </p>
+      </div>
+
+      {/* 1 month + 6 months chips */}
+      <div className="grid grid-cols-2 gap-3">
+        {others.map((p) => (
+          <div
+            key={p.periodLabel}
+            className="rounded-xl border border-white/8 bg-[#1E1E1E] px-4 py-3"
+          >
+            <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-white/40">
+              {p.periodLabel}
+            </p>
+            {isLoading ? (
+              <div className="h-5 w-20 rounded bg-white/10" />
+            ) : (
+              <>
+                <p className="text-base font-bold tabular-nums text-white">
+                  {hasPrice
+                    ? `+${fmtFiat(p.earningsUsd)}`
+                    : `+${formatAmount(p.earningsToken)} ${tokenCode}`}
+                </p>
+                {hasPrice && (
+                  <p className="text-xs text-white/35">
+                    +{formatAmount(p.earningsToken)} {tokenCode}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
+
 interface ReturnSimulatorStepProps {
   token: SimulatorToken;
   simulation: SimulationResolved;
   amount: string;
   onAmountChange: (next: string) => void;
-  /** Vault modal opener - wizard resolves VaultView from raw */
   onStartDepositVault?: (vault: VaultView) => void;
-  /** Lending supply deposit - wizard builds tx */
   onStartDepositLending?: () => void;
-  /** Orchestrator pool deposit - wizard builds tx */
   onStartDepositOrchestrator?: () => void;
-  /**
-   * Stablecoin → bond swap then open deposit (same session).
-   * `expectedBondOutHuman` is the quoted bond amount used to pre-fill deposit.
-   */
   onSwapAndDeposit?: (payload: {
     stableAmount: string;
     expectedBondOutHuman: string;
   }) => void | Promise<void>;
-  /** While swap tx is signing / submitting */
   isSwapDepositPending?: boolean;
 }
 
@@ -160,9 +305,7 @@ export function ReturnSimulatorStep({
   );
 
   const effectiveApy = useMemo(() => {
-    if (isYieldOnlyHold) {
-      return projectionDestination.apy;
-    }
+    if (isYieldOnlyHold) return projectionDestination.apy;
 
     const stackedBondLeg =
       bondQuote &&
@@ -216,7 +359,6 @@ export function ReturnSimulatorStep({
     apy,
     tokenPriceUsd: price,
   });
-  const oneYear = projections.find((p) => p.months === 12);
 
   const hasPrice = price > 0 && !priceLoading;
   const isWaitingForApy = isVault && apyLoading && apy === null;
@@ -243,6 +385,8 @@ export function ReturnSimulatorStep({
     isYieldOnlyHold && bondHold
       ? bondHold
       : (depositVenue ?? projectionDestination);
+
+  const earningsTokenLabel = bondHold?.bondSymbol ?? amountAssetCode;
 
   const handleMax = () => {
     light();
@@ -292,148 +436,146 @@ export function ReturnSimulatorStep({
     }
   };
 
-  const earningsTokenLabel = bondHold?.bondSymbol ?? amountAssetCode;
-
   return (
-    <section className="flex flex-col gap-4">
-      <header className="flex flex-col gap-1">
+    <section className="flex flex-col gap-5 pb-4">
+      {/* Header */}
+      <header className="flex shrink-0 flex-col gap-1">
         <h2 className="text-xl font-semibold text-white">
           {isYieldOnlyHold
             ? `Watch your ${earningsTokenLabel} grow`
             : "See what you could earn"}
         </h2>
-        <p className="text-sm text-white/60">
+        <p className="text-sm text-white/50">
           {stableFundsBondPurchase
             ? `Enter how much ${token.code} to use. We'll swap it to ${bondSymbolResolved} and deposit it for you.`
             : "Enter an amount to see your projected earnings."}
         </p>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="flex flex-col gap-4">
-          <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-4">
-            <label
-              htmlFor="simulator-amount"
-              className="text-xs font-semibold uppercase tracking-widest text-white/40"
-            >
-              {stableFundsBondPurchase
-                ? `How much ${token.code}?`
-                : "How much?"}
-            </label>
-            <div className="mt-2 flex items-center gap-2">
-              <input
-                id="simulator-amount"
-                inputMode="decimal"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => {
-                  const next = e.target.value.replace(/[^0-9.]/g, "");
-                  onAmountChange(next);
-                }}
-                className="w-full bg-transparent text-3xl font-semibold text-white outline-none placeholder:text-white/30"
-              />
-              <span className="flex shrink-0 items-center gap-2 text-base font-semibold text-white/80">
-                {bondHold?.bondIcon &&
-                isYieldOnlyHold &&
-                !stableFundsBondPurchase ? (
-                  <Image
-                    src={bondHold.bondIcon}
-                    alt={amountAssetCode}
-                    width={24}
-                    height={24}
-                    unoptimized
-                    className="rounded-full"
-                  />
-                ) : token.iconSrc && stableFundsBondPurchase ? (
-                  <Image
-                    src={token.iconSrc}
-                    alt={token.code}
-                    width={24}
-                    height={24}
-                    unoptimized
-                    className="rounded-full"
-                  />
-                ) : null}
-                {stableFundsBondPurchase ? token.code : amountAssetCode}
-              </span>
-            </div>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-1 text-xs text-white/50">
-              <span>
-                {token.hasWallet
-                  ? `Balance: ${formatAmount(walletBalanceForAmount)} ${stableFundsBondPurchase ? token.code : amountAssetCode}`
-                  : "Connect wallet to deposit or see your balance"}
-              </span>
-              {token.hasWallet && walletBalanceForAmount > 0 && (
-                <button
-                  type="button"
-                  onClick={handleMax}
-                  className="rounded-full bg-[#229EDF]/10 px-3 py-1 text-xs font-semibold text-[#229EDF] hover:bg-[#229EDF]/20"
-                >
-                  Max
-                </button>
-              )}
-            </div>
-            {stableFundsBondPurchase && stableAmountNum > 0 && (
-              <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
-                {swapQuote.isFetching ? (
-                  <span>Fetching swap estimate…</span>
-                ) : swapQuote.isError ? (
-                  <span className="text-amber-200/90">
-                    Could not price {token.code} → {bondSymbolResolved}. Try a
-                    smaller amount or swap manually on the Swap page.
-                  </span>
-                ) : swapQuote.data ? (
-                  <span>
-                    ≈{" "}
-                    <span className="font-mono font-semibold text-white">
-                      {formatAmount(swapQuote.data.bondOutHuman)}{" "}
-                      {bondSymbolResolved}
-                    </span>{" "}
-                    after swap (estimate; actual output may differ slightly).
-                    Projections below use this bond amount.
-                  </span>
-                ) : null}
-              </div>
-            )}
-            {bondHold &&
-              token.code !== amountAssetCode &&
-              bondHold.bondSymbol &&
-              !stableFundsBondPurchase && (
-                <p className="mt-2 text-xs text-white/45">
-                  Projections are in {bondHold.bondSymbol}.
-                </p>
-              )}
-          </div>
+      {/* Strategy recap */}
+      <StrategyRecap
+        token={summaryToken}
+        destination={summaryDestination}
+        apy={apy}
+        isLoading={isWaitingForApy}
+      />
 
-          <StrategySummaryCard
-            token={summaryToken}
-            destination={{
-              ...summaryDestination,
-              apy: apy ?? summaryDestination.apy,
+      {/* Amount input */}
+      <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-4">
+        <label
+          htmlFor="simulator-amount"
+          className="text-xs font-semibold uppercase tracking-widest text-white/40"
+        >
+          {stableFundsBondPurchase ? `How much ${token.code}?` : "How much?"}
+        </label>
+        <div className="mt-2 flex items-center gap-2">
+          <input
+            id="simulator-amount"
+            inputMode="decimal"
+            placeholder="0.00"
+            value={amount}
+            onChange={(e) => {
+              const next = e.target.value.replace(/[^0-9.]/g, "");
+              onAmountChange(next);
             }}
-            amount={principalBondTokens}
-            apy={apy}
-            oneYearProjection={oneYear}
-            hasPrice={hasPrice}
+            className="w-full bg-transparent text-3xl font-semibold text-white outline-none placeholder:text-white/30"
           />
+          <span className="flex shrink-0 items-center gap-2 text-base font-semibold text-white/80">
+            {bondHold?.bondIcon &&
+            isYieldOnlyHold &&
+            !stableFundsBondPurchase ? (
+              <Image
+                src={bondHold.bondIcon}
+                alt={amountAssetCode}
+                width={24}
+                height={24}
+                unoptimized
+                className="rounded-full"
+              />
+            ) : token.iconSrc && stableFundsBondPurchase ? (
+              <Image
+                src={token.iconSrc}
+                alt={token.code}
+                width={24}
+                height={24}
+                unoptimized
+                className="rounded-full"
+              />
+            ) : null}
+            {stableFundsBondPurchase ? token.code : amountAssetCode}
+          </span>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <ProjectionTable
-            projections={projections}
-            tokenCode={amountAssetCode}
-            hasPrice={hasPrice}
-            isLoading={
-              isWaitingForApy ||
-              (stableFundsBondPurchase &&
-                swapQuote.isFetching &&
-                stableAmountNum > 0)
-            }
-          />
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-1 text-xs text-white/50">
+          <span>
+            {token.hasWallet
+              ? `Balance: ${formatAmount(walletBalanceForAmount)} ${stableFundsBondPurchase ? token.code : amountAssetCode}`
+              : "Connect wallet to deposit"}
+          </span>
+          {token.hasWallet && walletBalanceForAmount > 0 && (
+            <button
+              type="button"
+              onClick={handleMax}
+              className="rounded-full bg-[#229EDF]/10 px-3 py-1 text-xs font-semibold text-[#229EDF] hover:bg-[#229EDF]/20"
+            >
+              Max
+            </button>
+          )}
         </div>
+
+        {stableFundsBondPurchase && stableAmountNum > 0 && (
+          <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+            {swapQuote.isFetching ? (
+              <span>Fetching swap estimate…</span>
+            ) : swapQuote.isError ? (
+              <span className="text-amber-200/90">
+                Could not price {token.code} → {bondSymbolResolved}. Try a
+                smaller amount or swap manually on the Swap page.
+              </span>
+            ) : swapQuote.data ? (
+              <span>
+                ≈{" "}
+                <span className="font-mono font-semibold text-white">
+                  {formatAmount(swapQuote.data.bondOutHuman)}{" "}
+                  {bondSymbolResolved}
+                </span>{" "}
+                after swap (estimate; actual output may differ slightly).
+              </span>
+            ) : null}
+          </div>
+        )}
+
+        {bondHold &&
+          token.code !== amountAssetCode &&
+          bondHold.bondSymbol &&
+          !stableFundsBondPurchase && (
+            <p className="mt-2 text-xs text-white/40">
+              Projections are in {bondHold.bondSymbol}.
+            </p>
+          )}
       </div>
 
-      <div className="flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
+      {/* Earnings */}
+      {stableAmountNum > 0 ? (
+        <EarningsPanel
+          projections={projections}
+          tokenCode={amountAssetCode}
+          hasPrice={hasPrice}
+          isLoading={
+            isWaitingForApy ||
+            (stableFundsBondPurchase &&
+              swapQuote.isFetching &&
+              stableAmountNum > 0)
+          }
+        />
+      ) : (
+        <div className="rounded-2xl border border-white/8 bg-[#1E1E1E] px-5 py-8 text-center text-sm text-white/30">
+          Enter an amount above to see your projected earnings.
+        </div>
+      )}
+
+      {/* CTA */}
+      <div className="flex flex-col-reverse items-stretch gap-3 pt-1 sm:flex-row sm:items-center sm:justify-end">
         {!canDeposit ? (
           <button
             type="button"
