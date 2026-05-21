@@ -574,48 +574,51 @@ export function ReturnSimulatorStep({
                 )}
             </div>
 
-            {/* Compact earnings preview + See breakdown */}
-            <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-[#1E1E1E] px-4 py-3">
-              <div>
-                <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/40">
-                  After 1 year
-                </p>
-                {isWaitingForApy ||
-                (stableFundsBondPurchase &&
-                  swapQuote.isFetching &&
-                  stableAmountNum > 0) ? (
-                  <div className="h-6 w-24 rounded bg-white/10" />
-                ) : oneYearLabel && stableAmountNum > 0 ? (
-                  <p className="text-xl font-bold tabular-nums text-[#4ADE80]">
-                    {oneYearLabel}
+            {/* Compact earnings preview - only shown when amount entered */}
+            {stableAmountNum > 0 && (
+              <div className="flex items-center gap-3 rounded-2xl border border-white/8 bg-[#1E1E1E] px-4 py-3">
+                <div>
+                  <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/40">
+                    After 1 year
                   </p>
-                ) : (
-                  <p className="text-sm text-white/30">Enter an amount above</p>
-                )}
+                  {isWaitingForApy ||
+                  (stableFundsBondPurchase && swapQuote.isFetching) ? (
+                    <div className="h-6 w-24 rounded bg-white/10" />
+                  ) : (
+                    <p className="text-xl font-bold tabular-nums text-[#4ADE80]">
+                      {oneYearLabel ?? "-"}
+                    </p>
+                  )}
+                </div>
               </div>
-              {stableAmountNum > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setProjectionsOpen(true)}
-                  className="shrink-0 text-xs font-medium text-[#229EDF] hover:underline"
-                >
-                  See breakdown →
-                </button>
-              )}
-            </div>
+            )}
           </div>
           {/* end inner flex col */}
         </div>
         {/* end scrollable area */}
 
         {/* CTA - pinned at bottom, never scrolls away */}
-        <div className="shrink-0 border-t border-white/8 pt-4 flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
+        <div className="shrink-0 border-t border-white/8 pt-4 flex items-center justify-between gap-3">
+          {/* Secondary: see breakdown */}
+          {stableAmountNum > 0 ? (
+            <button
+              type="button"
+              onClick={() => setProjectionsOpen(true)}
+              className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white/60 transition-colors hover:border-white/30 hover:text-white"
+            >
+              See breakdown
+            </button>
+          ) : (
+            <div />
+          )}
+
+          {/* Primary: deposit / got it */}
           {!canDeposit ? (
             <button
               type="button"
               disabled={stableAmountNum <= 0}
               className={cn(
-                "rounded-full px-6 py-3 text-sm font-semibold transition-colors",
+                "rounded-full px-6 py-2.5 text-sm font-semibold transition-colors",
                 stableAmountNum <= 0
                   ? "cursor-not-allowed bg-white/10 text-white/40"
                   : "border border-white/15 bg-transparent text-white hover:bg-white/5"
@@ -633,7 +636,7 @@ export function ReturnSimulatorStep({
               }
               disabled={ctaDisabled || !walletConnected}
               className={cn(
-                "rounded-full px-6 py-3 text-sm font-semibold text-white transition-colors",
+                "rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-colors",
                 ctaDisabled || !walletConnected
                   ? "cursor-not-allowed bg-white/10 text-white/40"
                   : "bg-[#229EDF] hover:bg-[#1f8ec9]"
