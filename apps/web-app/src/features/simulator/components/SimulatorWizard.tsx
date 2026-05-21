@@ -256,7 +256,8 @@ export function SimulatorWizard() {
   const scrollLockedStep =
     state.phase === "select_token" ||
     state.phase === "select_destination" ||
-    state.phase === "optional_stack";
+    state.phase === "optional_stack" ||
+    state.phase === "simulate";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
