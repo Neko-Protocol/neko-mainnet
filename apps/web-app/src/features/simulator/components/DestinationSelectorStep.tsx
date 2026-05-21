@@ -105,7 +105,7 @@ function EtherfuseBondCard({
                 </span>
               </p>
             ) : (
-              <p className="text-3xl font-bold tabular-nums text-white/40">—</p>
+              <p className="text-3xl font-bold tabular-nums text-white/40">-</p>
             )}
           </div>
 
@@ -182,20 +182,27 @@ export function DestinationSelectorStep({
         </p>
       </header>
 
-      <div className="flex shrink-0 flex-wrap items-center gap-2 self-start rounded-full bg-[#2A2A2A] p-1">
+      <div className="flex w-full shrink-0 rounded-full bg-[#2A2A2A] p-1">
         {tabs.map((t) => (
           <button
             key={t.id}
             type="button"
             onClick={() => handleTabChange(t.id)}
             className={cn(
-              "rounded-full px-4 py-1.5 text-sm transition-colors",
+              "flex-1 rounded-full px-2 py-1.5 text-xs transition-colors sm:px-4 sm:text-sm",
               tab === t.id
                 ? "bg-[#229EDF] font-semibold text-white"
                 : "font-medium text-white/50 hover:text-white/80"
             )}
           >
-            {t.label}
+            <span className="hidden sm:inline">{t.label}</span>
+            <span className="sm:hidden">
+              {t.id === "pools"
+                ? "Pools"
+                : t.id === "vaults"
+                  ? "Vaults"
+                  : "Bonds"}
+            </span>
             <span
               className={cn(
                 "tabular-nums text-xs font-normal",
@@ -259,7 +266,7 @@ export function DestinationSelectorStep({
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 pt-2 pb-5 md:grid-cols-2">
+          <div className="flex flex-col gap-3 pt-2 pb-5">
             {(visible as SimulatorDestination[]).map((destination) => (
               <DestinationCard
                 key={`${destination.kind}:${destination.id}`}
