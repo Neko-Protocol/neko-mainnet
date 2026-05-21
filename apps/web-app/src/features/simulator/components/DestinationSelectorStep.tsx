@@ -83,8 +83,13 @@ function EtherfuseBondCard({
         </span>
       </div>
 
-      {/* APY */}
+      {/* APY + Selected */}
       <div className="shrink-0 text-right">
+        {isSelected ? (
+          <span className="mb-1.5 inline-block rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#229EDF]">
+            Selected
+          </span>
+        ) : null}
         {apy > 0 ? (
           <>
             <p className="text-2xl font-bold tabular-nums text-white">
@@ -103,12 +108,6 @@ function EtherfuseBondCard({
           </>
         )}
       </div>
-
-      {isSelected ? (
-        <span className="absolute right-3 top-3 rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#229EDF]">
-          Selected
-        </span>
-      ) : null}
     </button>
   );
 }

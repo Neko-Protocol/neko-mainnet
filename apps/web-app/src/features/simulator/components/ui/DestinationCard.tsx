@@ -103,8 +103,13 @@ export function DestinationCard({
         </div>
       </div>
 
-      {/* APY */}
+      {/* APY + Selected */}
       <div className="shrink-0 text-right">
+        {isSelected ? (
+          <span className="mb-1.5 inline-block rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#229EDF]">
+            Selected
+          </span>
+        ) : null}
         {hasPositiveApy ? (
           <>
             <p className="text-xl font-bold tabular-nums text-white">
@@ -123,12 +128,6 @@ export function DestinationCard({
           </>
         )}
       </div>
-
-      {isSelected ? (
-        <span className="absolute right-3 top-3 rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#229EDF]">
-          Selected
-        </span>
-      ) : null}
     </button>
   );
 }
