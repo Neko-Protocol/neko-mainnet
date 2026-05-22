@@ -41,7 +41,7 @@ async function fetchAllInPages(
   supabase: SupabaseClient,
   table: string,
   columns: string,
-  filter?: { column: string; gte: string }
+  filter?: { column: string; gte: string } | { notNullColumn: string }
 ): Promise<Row[]> {
   const orderColumn =
     table === "audit_logs"
@@ -61,7 +61,13 @@ async function fetchAllInPages(
     if (orderColumn) {
       q = q.order(orderColumn, { ascending: true });
     }
-    if (filter) q = q.gte(filter.column, filter.gte);
+    if (filter) {
+      if ("notNullColumn" in filter) {
+        q = q.not(filter.notNullColumn, "is", null);
+      } else {
+        q = q.gte(filter.column, filter.gte);
+      }
+    }
     const { data, error } = await q;
     if (error) break;
     const rows = (data ?? []) as unknown as Row[];
@@ -93,18 +99,19 @@ export async function getOverviewStats(): Promise<{
         .select("*", { count: "exact", head: true })
         .gte("created_at", weekAgo),
       supabase.from("audit_logs").select("*", { count: "exact", head: true }),
-      supabase.from("asset_volume_stats").select("total_volume"),
+      fetchAllInPages(supabase, "audit_logs", "amount_in", {
+        notNullColumn: "amount_in",
+      }),
       fetchAllInPages(supabase, "audit_logs", "wallet_address", {
         column: "created_at",
         gte: weekAgo,
       }),
     ]);
 
-  const totalVolumeUsd =
-    (volumeRows.data ?? []).reduce(
-      (sum, r) => sum + (Number(r.total_volume) || 0),
-      0
-    ) ?? 0;
+  const totalVolumeUsd = volumeRows.reduce((sum, r) => {
+    const v = Number(r.amount_in);
+    return sum + (Number.isFinite(v) && v > 0 ? v : 0);
+  }, 0);
 
   const walletSet = new Set<string>();
   for (const r of recentWallets) {
@@ -249,6 +256,9 @@ export async function getDailyTransactions(
 export async function getTopAssetsByVolume(
   limit = 10
 ): Promise<{ asset_key: string; total_volume: number; touch_count: number }[]> {
+  // `total_volume` from asset_volume_stats is not reliable USD volume when the outbound
+  // leg is a non-stablecoin (e.g. raw XLM amounts). Prefer `touch_count` for a trustworthy
+  // activity metric until volume is recomputed consistently.
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
 

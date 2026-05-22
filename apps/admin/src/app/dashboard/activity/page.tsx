@@ -30,7 +30,7 @@ export default async function DashboardActivityPage() {
 
   const assetBarData = topAssets.map((a) => ({
     label: a.asset_key,
-    value: a.total_volume,
+    value: a.touch_count,
   }));
 
   const mostUsedDisplay = topAction?.action_type.replaceAll("_", " ") ?? "—";
@@ -87,10 +87,11 @@ export default async function DashboardActivityPage() {
 
       <section className="mb-8 rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
         <h2 className="mb-1 text-lg font-semibold text-white">
-          Top assets by volume
+          Top assets (touch count)
         </h2>
         <p className="mb-2 text-xs text-white/45">
-          From aggregated asset_volume_stats
+          Touch count is the reliable activity signal; aggregated volume from
+          asset_volume_stats can mix raw unit amounts for non-stable outputs.
         </p>
         <SimpleBarChart data={assetBarData} height={260} />
       </section>
