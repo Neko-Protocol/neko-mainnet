@@ -33,7 +33,10 @@ export function SimpleDonutChart({
   data: Row[];
   height?: number;
 }) {
-  const chartData = data.map((d) => ({ name: d.label, value: d.value }));
+  const chartData = data.map((d) => ({
+    name: d.label === "default" ? "No preference" : d.label,
+    value: d.value,
+  }));
   const total = chartData.reduce((s, d) => s + (d.value || 0), 0);
 
   return (
@@ -61,8 +64,8 @@ export function SimpleDonutChart({
               nameKey="name"
               cx="40%"
               cy="50%"
-              innerRadius={44}
-              outerRadius={72}
+              innerRadius={55}
+              outerRadius={80}
               paddingAngle={2}
               stroke="none"
               startAngle={90}
@@ -77,13 +80,11 @@ export function SimpleDonutChart({
             </Pie>
           </PieChart>
         </ResponsiveContainer>
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center pr-[28%]">
-          <div className="text-center">
-            <p className="text-[10px] font-medium uppercase tracking-wide text-white/45">
-              Total
-            </p>
-            <p className="text-xl font-bold text-white">{total}</p>
-          </div>
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
+            TOTAL
+          </p>
+          <p className="text-2xl font-bold text-white">{total}</p>
         </div>
       </div>
     </div>
