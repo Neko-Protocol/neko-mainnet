@@ -256,7 +256,8 @@ export function SimulatorWizard() {
   const scrollLockedStep =
     state.phase === "select_token" ||
     state.phase === "select_destination" ||
-    state.phase === "optional_stack";
+    state.phase === "optional_stack" ||
+    state.phase === "simulate";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
@@ -306,6 +307,9 @@ export function SimulatorWizard() {
             onStartDepositOrchestrator={handleStartDepositOrchestrator}
             onSwapAndDeposit={handleSwapAndDeposit}
             isSwapDepositPending={swapDepositBusy}
+            onBack={goBack}
+            onSaveStrategy={() => setSaveDialogOpen(true)}
+            showSaveStrategy={!!(state.token && state.destination && address)}
           />
         )}
       </div>
@@ -318,26 +322,6 @@ export function SimulatorWizard() {
           onContinue={goNext}
           continueDisabled={continueDisabled}
           continueLabel={continueLabel}
-        />
-      )}
-
-      {state.phase === "simulate" && (
-        <WizardNav
-          className="mt-0 shrink-0"
-          showBack
-          onBack={goBack}
-          showContinue={false}
-          rightSlot={
-            state.token && state.destination && address ? (
-              <button
-                type="button"
-                onClick={() => setSaveDialogOpen(true)}
-                className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 transition-colors hover:border-white/30 hover:text-white"
-              >
-                Save strategy
-              </button>
-            ) : null
-          }
         />
       )}
 

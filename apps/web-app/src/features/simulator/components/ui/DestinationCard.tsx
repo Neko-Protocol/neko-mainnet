@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useHaptics } from "@/hooks/useHaptics";
-import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
+import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import type { SimulatorDestination } from "../../types/simulator.types";
 
 interface DestinationCardProps {
@@ -18,96 +18,116 @@ export function DestinationCard({
   onSelect,
 }: DestinationCardProps) {
   const { light } = useHaptics();
-  const isVault = destination.kind === "vault";
-  const { vaultApy, isLoading: apyLoading } = useVaultApy(
-    isVault ? destination.id : null
-  );
 
-  const apy = isVault ? vaultApy : destination.apy;
+  const apy = destination.apy;
+  const hasPositiveApy =
+    apy !== null && apy !== undefined && !Number.isNaN(apy) && apy > 0;
 
-  const showApySkeleton = apyLoading && isVault;
-  const showPositiveApy =
-    !showApySkeleton && apy !== null && apy !== undefined && apy > 0;
+  const blndEmissions =
+    destination.blndEmissionsApy != null && destination.blndEmissionsApy > 0
+      ? destination.blndEmissionsApy
+      : null;
 
   const handleClick = () => {
     light();
-    onSelect({
-      ...destination,
-      apy: apy ?? destination.apy,
-    });
+    onSelect(destination);
   };
 
-  return (
-    <div
-      className={cn(
-        "flex w-full flex-col rounded-2xl border border-white/8 bg-[#1C1C1C] transition-all",
-        isSelected && "border-[#229EDF] ring-1 ring-[#229EDF]/40"
-      )}
-    >
-      <button
-        type="button"
-        onClick={handleClick}
-        className="flex w-full flex-col p-4 text-left hover:bg-[#222222] rounded-2xl transition-all"
-        aria-pressed={isSelected}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="truncate text-base font-semibold text-white">
-                {destination.name}
-              </h3>
-              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/70">
-                {destination.protocol}
-              </span>
-            </div>
-            {destination.tvlLabel ? (
-              <p className="mt-1 flex flex-wrap items-baseline gap-1.5">
-                <span className="text-[10px] text-white/30">Pool size</span>
-                <span className="text-sm font-medium text-white/80">
-                  <span className="text-white/50" aria-hidden>
-                    $
-                  </span>
-                  {destination.tvlLabel}
-                </span>
-              </p>
-            ) : null}
-          </div>
-          <div className="flex shrink-0 flex-col items-end text-right">
-            {showApySkeleton ? (
-              <div
-                className="h-8 w-[4.5rem] animate-pulse rounded-md bg-white/[0.08]"
-                aria-hidden
-              />
-            ) : showPositiveApy ? (
-              <>
-                <p className="text-2xl font-bold leading-tight text-[#229EDF]">
-                  {apy!.toFixed(2)}%
-                </p>
-                <p className="mt-0.5 text-xs text-white/40">/ year</p>
-              </>
-            ) : (
-              <p className="text-2xl leading-tight text-white/30"></p>
-            )}
-          </div>
-        </div>
-      </button>
+  const tokenCodes = destination.acceptedTokenCodes.slice(0, 2);
 
-      {destination.blndEmissionsApy && destination.blndEmissionsApy > 0 ? (
-        <div className="px-4 pb-3 text-right">
-          <p className="text-xs font-medium text-emerald-400">
-            +{destination.blndEmissionsApy.toFixed(2)}% BLND
-          </p>
-          <p className="text-[10px] text-white/40 leading-tight">
-            Paid in BLND · volatile ·{" "}
-            <Link
-              href="/swap"
-              className="text-emerald-400/70 underline underline-offset-2 hover:text-emerald-400"
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className={cn(
+        "group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border bg-[#1C1C1C] px-5 py-4 text-left transition-all duration-200",
+        "hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#202020]",
+        isSelected
+          ? "border-[#229EDF] ring-1 ring-[#229EDF]/40"
+          : "border-white/5"
+      )}
+      aria-pressed={isSelected}
+    >
+      {/* Token icons */}
+      <div className="flex shrink-0 items-center">
+        {tokenCodes.map((code, index) => {
+          const iconSrc = getTokenIcon(code);
+          const initial =
+            code.trim().length > 0 ? code.trim()[0].toUpperCase() : "?";
+          return (
+            <div
+              key={`${code}-${index}`}
+              className={cn(
+                "relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-2 ring-[#1C1C1C]",
+                index > 0 && "-ml-3"
+              )}
             >
-              swap with Neko
-            </Link>
-          </p>
+              {iconSrc ? (
+                <Image
+                  src={iconSrc}
+                  alt={code}
+                  width={40}
+                  height={40}
+                  unoptimized
+                  className={getTokenIconFitClass(code)}
+                />
+              ) : (
+                <span className="text-sm font-bold text-[#121212]">
+                  {initial}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Name + protocol */}
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-sm font-semibold leading-tight text-white">
+          {destination.name}
+        </h3>
+        <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/50">
+            {destination.protocol}
+          </span>
+          {destination.tvlLabel ? (
+            <span className="text-[10px] text-white/35">
+              {destination.tvlLabel}
+            </span>
+          ) : null}
+          {blndEmissions != null ? (
+            <span className="text-[10px] font-medium text-emerald-400">
+              +{blndEmissions.toFixed(2)}% BLND
+            </span>
+          ) : null}
         </div>
-      ) : null}
-    </div>
+      </div>
+
+      {/* APY + Selected */}
+      <div className="shrink-0 text-right">
+        {isSelected ? (
+          <span className="mb-1.5 inline-block rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#229EDF]">
+            Selected
+          </span>
+        ) : null}
+        {hasPositiveApy ? (
+          <>
+            <p className="text-xl font-bold tabular-nums text-white">
+              {apy!.toFixed(2)}%
+            </p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
+              APY
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-xl font-bold tabular-nums text-white/30">-</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
+              APY
+            </p>
+          </>
+        )}
+      </div>
+    </button>
   );
 }

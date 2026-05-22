@@ -50,7 +50,7 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
         onSelect();
       }}
       className={cn(
-        "group relative flex h-full min-h-[210px] flex-col overflow-hidden rounded-2xl border bg-[#1C1C1C] p-5 text-left transition-all duration-200",
+        "group relative flex h-full min-h-[170px] flex-col overflow-hidden rounded-2xl border bg-[#1C1C1C] p-5 text-left transition-all duration-200 sm:min-h-[210px]",
         "hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#202020]",
         isSelected
           ? "border-[#229EDF] ring-1 ring-[#229EDF]/40"
