@@ -35,6 +35,14 @@ function mapRow(row: Record<string, unknown>): Invitation | null {
     ? (statusRaw as InvitationStatus)
     : "pending";
 
+  const strategyIdRaw = row.strategy_id;
+  const strategy_id =
+    strategyIdRaw === null || strategyIdRaw === undefined
+      ? null
+      : typeof strategyIdRaw === "string"
+        ? strategyIdRaw
+        : String(strategyIdRaw);
+
   return {
     id,
     email: String(row.email ?? ""),
@@ -51,6 +59,7 @@ function mapRow(row: Record<string, unknown>): Invitation | null {
       row.created_by === null || row.created_by === undefined
         ? null
         : String(row.created_by),
+    strategy_id,
     accepted_at: typeof row.accepted_at === "string" ? row.accepted_at : null,
     expires_at: String(row.expires_at ?? ""),
     created_at: String(row.created_at ?? ""),
@@ -61,6 +70,7 @@ export async function listInvitations(filters?: {
   status?: string;
   type?: string;
   assigned_to?: string;
+  strategy_id?: string;
 }): Promise<Invitation[]> {
   const supabase = getSupabaseAdmin();
   if (!supabase) return [];
@@ -69,6 +79,10 @@ export async function listInvitations(filters?: {
     .from("invitations")
     .select("*")
     .order("created_at", { ascending: false });
+
+  if (filters?.strategy_id !== undefined && filters.strategy_id.length > 0) {
+    q = q.eq("strategy_id", filters.strategy_id);
+  }
 
   if (filters?.status && STATUS_SET.has(filters.status as InvitationStatus)) {
     q = q.eq("status", filters.status);
@@ -101,6 +115,7 @@ export async function createInvitation(data: {
   notes: string | null;
   created_by: string;
   expires_days: number;
+  strategy_id: string | null;
 }): Promise<Invitation | null> {
   const supabase = getSupabaseAdmin();
   if (!supabase) return null;
@@ -112,6 +127,9 @@ export async function createInvitation(data: {
   const assigned =
     (data.assigned_to?.trim()?.length ?? 0) ? data.assigned_to!.trim() : null;
 
+  const strat =
+    (data.strategy_id?.trim()?.length ?? 0) ? data.strategy_id!.trim() : null;
+
   const { data: inserted, error } = await supabase
     .from("invitations")
     .insert({
@@ -121,6 +139,7 @@ export async function createInvitation(data: {
       notes: data.notes?.trim() || null,
       created_by: data.created_by,
       expires_at: expiresAt,
+      strategy_id: strat,
     })
     .select("*")
     .maybeSingle();

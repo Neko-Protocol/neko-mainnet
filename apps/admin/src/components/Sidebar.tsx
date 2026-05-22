@@ -7,7 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
-  UserPlus,
+  Target,
   Users,
 } from "lucide-react";
 
@@ -16,7 +16,7 @@ const links = [
   { href: "/dashboard/users", label: "Users", icon: Users },
   { href: "/dashboard/activity", label: "Activity", icon: Activity },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: Mail },
-  { href: "/dashboard/invitations", label: "Invitations", icon: UserPlus },
+  { href: "/dashboard/strategies", label: "Strategies", icon: Target },
 ] as const;
 
 export function Sidebar() {

@@ -21,6 +21,7 @@ export type Invitation = {
   assigned_to: string | null;
   notes: string | null;
   created_by: string | null;
+  strategy_id: string | null;
   accepted_at: string | null;
   expires_at: string;
   created_at: string;
