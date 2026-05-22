@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Activity, LayoutDashboard, LogOut, Users } from "lucide-react";
+import { Activity, LayoutDashboard, LogOut, Mail, Users } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
   { href: "/dashboard/users", label: "Users", icon: Users },
   { href: "/dashboard/activity", label: "Activity", icon: Activity },
+  { href: "/dashboard/campaigns", label: "Campaigns", icon: Mail },
 ] as const;
 
 export function Sidebar() {
