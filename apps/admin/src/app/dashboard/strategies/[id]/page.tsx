@@ -163,7 +163,7 @@ export default function StrategyDetailPage() {
   const [eDesc, setEDesc] = useState("");
   const [eType, setEType] = useState<StrategyType>("acquisition");
   const [eTarget, setETarget] = useState(0);
-  const [eTargetVolume, setETargetVolume] = useState(0);
+  const [eTargetVolume, setETargetVolume] = useState("");
   const [eAssigned, setEAssigned] = useState("");
   const [eStatus, setEStatus] = useState<StrategyStatus>("active");
   const [closingStrategy, setClosingStrategy] = useState(false);
@@ -185,6 +185,9 @@ export default function StrategyDetailPage() {
     string | null
   >(null);
 
+  const [realTvl, setRealTvl] = useState<number | null>(null);
+  const [realTvlLoading, setRealTvlLoading] = useState(false);
+
   const loadAll = useCallback(async () => {
     if (!id) return;
     setLoading(true);
@@ -196,6 +199,11 @@ export default function StrategyDetailPage() {
       ]);
       setStrategy(s);
       setInvitations(Array.isArray(invs) ? invs : []);
+      setRealTvlLoading(true);
+      fetchJson<{ real_volume: number }>(`/api/strategies/${id}/real-volume`)
+        .then((d) => setRealTvl(d.real_volume))
+        .catch(() => setRealTvl(null))
+        .finally(() => setRealTvlLoading(false));
     } catch {
       setStrategy(null);
       setInvitations([]);
@@ -301,7 +309,8 @@ export default function StrategyDetailPage() {
           description: eDesc.trim() || null,
           type: eType,
           target_count: eTarget,
-          target_volume: eTargetVolume,
+          target_volume:
+            eTargetVolume === "" ? 0 : Math.max(0, Number(eTargetVolume) || 0),
           assigned_to: eAssigned.trim() || null,
           status: eStatus,
         }),
@@ -546,7 +555,9 @@ export default function StrategyDetailPage() {
               setEDesc(strategy.description ?? "");
               setEType(strategy.type);
               setETarget(strategy.target_count);
-              setETargetVolume(strategy.target_volume ?? 0);
+              setETargetVolume(
+                strategy.target_volume > 0 ? String(strategy.target_volume) : ""
+              );
               setEAssigned(strategy.assigned_to ?? "");
               setEStatus(strategy.status);
               setError(null);
@@ -565,7 +576,7 @@ export default function StrategyDetailPage() {
         </p>
       ) : null}
 
-      <div className="mb-6 grid gap-4 md:grid-cols-5">
+      <div className="mb-6 grid gap-4 md:grid-cols-3 lg:grid-cols-6">
         <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
           <p className="text-sm text-white/50">Invited</p>
           <p className="mt-2 text-3xl font-bold text-white">
@@ -600,6 +611,21 @@ export default function StrategyDetailPage() {
           </div>
           <p className="mt-2 text-3xl font-bold tabular-nums text-white">
             {fmtUsd(totalVolumeMoved)}
+          </p>
+        </div>
+        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-[#4ADE80]/20">
+          <p className="text-sm text-white/50">Real TVL (on-chain)</p>
+          <p className="mt-2 text-3xl font-bold text-[#4ADE80]">
+            {realTvlLoading ? (
+              <span className="inline-block h-8 w-24 animate-pulse rounded-lg bg-white/10" />
+            ) : realTvl != null ? (
+              fmtUsd(realTvl)
+            ) : (
+              "—"
+            )}
+          </p>
+          <p className="mt-1 text-xs text-white/35">
+            from audit logs since launch
           </p>
         </div>
       </div>
@@ -640,6 +666,18 @@ export default function StrategyDetailPage() {
                 role="presentation"
               />
             </div>
+            {realTvl != null ? (
+              <p className="mt-2 text-xs text-white/40">
+                On-chain:{" "}
+                <span className="text-white/70">{fmtUsd(realTvl)}</span>
+                {strategy.target_volume > 0
+                  ? ` · ${Math.min(
+                      100,
+                      Math.round((realTvl / strategy.target_volume) * 100)
+                    )}% of target`
+                  : ""}
+              </p>
+            ) : null}
             {strategy.target_volume === 0 ? (
               <p className="mt-1.5 text-xs text-white/35">
                 No volume target set
@@ -866,10 +904,9 @@ export default function StrategyDetailPage() {
                     id="e-target-vol"
                     type="number"
                     min={0}
+                    step="any"
                     value={eTargetVolume}
-                    onChange={(e) =>
-                      setETargetVolume(Number(e.target.value) || 0)
-                    }
+                    onChange={(e) => setETargetVolume(e.target.value)}
                     className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
                   />
                 </div>

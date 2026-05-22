@@ -118,7 +118,7 @@ export default function StrategiesClient(props: Props) {
   const [formDescription, setFormDescription] = useState("");
   const [formType, setFormType] = useState<StrategyType>("acquisition");
   const [formTarget, setFormTarget] = useState(50);
-  const [formTargetVolume, setFormTargetVolume] = useState<number>(0);
+  const [formTargetVolume, setFormTargetVolume] = useState("");
   const [formAssigned, setFormAssigned] = useState("");
   const [formStatus, setFormStatus] = useState<StrategyStatus>("active");
 
@@ -150,7 +150,10 @@ export default function StrategiesClient(props: Props) {
           description: formDescription.trim() || null,
           type: formType,
           target_count: formTarget,
-          target_volume: formTargetVolume,
+          target_volume:
+            formTargetVolume === ""
+              ? 0
+              : Math.max(0, Number(formTargetVolume) || 0),
           assigned_to: formAssigned.trim() || null,
           status: formStatus,
         }),
@@ -172,7 +175,7 @@ export default function StrategiesClient(props: Props) {
       setFormDescription("");
       setFormType("acquisition");
       setFormTarget(50);
-      setFormTargetVolume(0);
+      setFormTargetVolume("");
       setFormAssigned("");
       setFormStatus("active");
       if (created?.id) {
@@ -522,11 +525,9 @@ export default function StrategiesClient(props: Props) {
                     id="strat-target-volume"
                     type="number"
                     min={0}
-                    step="1"
+                    step="any"
                     value={formTargetVolume}
-                    onChange={(e) =>
-                      setFormTargetVolume(Number(e.target.value) || 0)
-                    }
+                    onChange={(e) => setFormTargetVolume(e.target.value)}
                     className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
                   />
                 </div>

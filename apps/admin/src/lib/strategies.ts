@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from "@/lib/supabase";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   type Strategy,
   type StrategyStatus,
@@ -289,6 +290,93 @@ export async function deleteStrategy(id: string): Promise<void> {
   const supabase = getSupabaseAdmin();
   if (!supabase) return;
   await supabase.from("strategies").delete().eq("id", id);
+}
+
+async function sumAuditAmountUsdForWalletsSince(
+  supabase: SupabaseClient,
+  walletChunk: string[],
+  createdAtGte: string
+): Promise<number> {
+  const pageSize = 1000;
+  let offset = 0;
+  let sum = 0;
+  for (;;) {
+    const { data, error } = await supabase
+      .from("audit_logs")
+      .select("amount_in")
+      .in("wallet_address", walletChunk)
+      .gte("created_at", createdAtGte)
+      .not("amount_in", "is", null)
+      .order("id", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+
+    if (error || !data?.length) break;
+    const rows = data as Record<string, unknown>[];
+    for (const r of rows) {
+      const v = Number(r.amount_in);
+      if (Number.isFinite(v) && v > 0) sum += v;
+    }
+    if (rows.length < pageSize) break;
+    offset += pageSize;
+  }
+  return sum;
+}
+
+/** USD volume from audit_logs (amount_in), cohort = invited emails → user wallets, since strategy launch. */
+export async function getStrategyRealVolumeUsd(
+  strategyId: string
+): Promise<number | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  const strategy = await getStrategy(strategyId);
+  if (!strategy) return null;
+
+  const { data: invRows, error: invErr } = await supabase
+    .from("invitations")
+    .select("email")
+    .eq("strategy_id", strategyId);
+
+  if (invErr || !invRows?.length) return 0;
+
+  const emails = new Set<string>();
+  for (const r of invRows as Record<string, unknown>[]) {
+    const e = typeof r.email === "string" ? r.email.trim().toLowerCase() : "";
+    if (e) emails.add(e);
+  }
+  if (emails.size === 0) return 0;
+
+  const wallets = new Set<string>();
+  const emailList = [...emails];
+  const emailChunkSize = 100;
+  for (let i = 0; i < emailList.length; i += emailChunkSize) {
+    const chunk = emailList.slice(i, i + emailChunkSize);
+    const { data: userRows } = await supabase
+      .from("users")
+      .select("wallet_address")
+      .in("email", chunk);
+    if (!userRows?.length) continue;
+    for (const u of userRows as Record<string, unknown>[]) {
+      const w =
+        typeof u.wallet_address === "string" ? u.wallet_address.trim() : "";
+      if (w) wallets.add(w);
+    }
+  }
+  if (wallets.size === 0) return 0;
+
+  const walletList = [...wallets];
+  const walletChunkSize = 120;
+  const launchIso = strategy.created_at;
+  let total = 0;
+  for (let i = 0; i < walletList.length; i += walletChunkSize) {
+    const wchunk = walletList.slice(i, i + walletChunkSize);
+    total += await sumAuditAmountUsdForWalletsSince(
+      supabase,
+      wchunk,
+      launchIso
+    );
+  }
+  return total;
 }
 
 export async function getStrategyStats(): Promise<{
