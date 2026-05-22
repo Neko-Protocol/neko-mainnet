@@ -3,7 +3,6 @@ import {
   getDailyNewUsers,
   getCurrencyDistribution,
   getEmailVerificationStats,
-  getNetworkBreakdown,
   getOverviewStats,
   getWalletProviderBreakdown,
 } from "@/lib/queries";
@@ -12,12 +11,11 @@ import { SimpleLineChart } from "@/components/charts/SimpleLineChart";
 import { SimpleDonutChart } from "@/components/charts/SimpleDonutChart";
 
 export default async function DashboardUsersPage() {
-  const [overview, dailyUsers, providers, networks, currencies, emailStats] =
+  const [overview, dailyUsers, providers, currencies, emailStats] =
     await Promise.all([
       getOverviewStats(),
       getDailyNewUsers(30),
       getWalletProviderBreakdown(),
-      getNetworkBreakdown(),
       getCurrencyDistribution(),
       getEmailVerificationStats(),
     ]);
@@ -95,13 +93,18 @@ export default async function DashboardUsersPage() {
           />
         </section>
         <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
-          <h2 className="mb-4 text-lg font-semibold text-white">Networks</h2>
+          <h2 className="mb-4 text-lg font-semibold text-white">
+            Email verification
+          </h2>
           <SimpleDonutChart
             height={220}
-            data={networks.map((r) => ({
-              label: r.network,
-              value: r.count,
-            }))}
+            data={[
+              { label: "Verified", value: emailStats.verifiedCount },
+              {
+                label: "Unverified",
+                value: emailStats.totalCount - emailStats.verifiedCount,
+              },
+            ]}
           />
         </section>
         <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
