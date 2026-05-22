@@ -307,6 +307,7 @@ async function sumAuditAmountUsdForWalletsSince(
       .in("wallet_address", walletChunk)
       .gte("created_at", createdAtGte)
       .not("amount_in", "is", null)
+      .eq("network", "mainnet")
       .order("id", { ascending: true })
       .range(offset, offset + pageSize - 1);
 

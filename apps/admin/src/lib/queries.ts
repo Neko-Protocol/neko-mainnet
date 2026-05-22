@@ -61,6 +61,9 @@ async function fetchAllInPages(
     if (orderColumn) {
       q = q.order(orderColumn, { ascending: true });
     }
+    if (table === "audit_logs") {
+      q = q.eq("network", "mainnet");
+    }
     if (filter) {
       if ("notNullColumn" in filter) {
         q = q.not(filter.notNullColumn, "is", null);
@@ -98,7 +101,10 @@ export async function getOverviewStats(): Promise<{
         .from("users")
         .select("*", { count: "exact", head: true })
         .gte("created_at", weekAgo),
-      supabase.from("audit_logs").select("*", { count: "exact", head: true }),
+      supabase
+        .from("audit_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("network", "mainnet"),
       fetchAllInPages(supabase, "audit_logs", "amount_in", {
         notNullColumn: "amount_in",
       }),
@@ -299,6 +305,7 @@ export async function getRecentActivity(limit = 50): Promise<AuditLog[]> {
         "created_at",
       ].join(",")
     )
+    .eq("network", "mainnet")
     .order("created_at", { ascending: false })
     .limit(limit);
 

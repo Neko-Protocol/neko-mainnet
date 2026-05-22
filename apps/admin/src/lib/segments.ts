@@ -52,6 +52,7 @@ async function paginateAuditLogsMinimal(
     const { data, error } = await supabase
       .from("audit_logs")
       .select("wallet_address,action_type")
+      .eq("network", "mainnet")
       .order("id", { ascending: true })
       .range(offset, offset + pageSize - 1);
     if (error || !data?.length) break;
