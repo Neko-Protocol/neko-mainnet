@@ -1,24 +1,27 @@
 import QRCode from "qrcode";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getTOTP } from "@/lib/auth";
+import { generateTOTPSecret, getTOTPUri } from "@/lib/auth";
 
-export async function GET() {
-  if (!process.env.ADMIN_TOTP_SECRET) {
-    return NextResponse.json(
-      { error: "Set ADMIN_TOTP_SECRET in .env.local first" },
-      { status: 400 }
-    );
+const passwordHashCommand =
+  "node -e \"const b=require('bcryptjs'); b.hash('YOUR_PASSWORD',10).then(console.log)\"";
+
+export async function GET(request: NextRequest) {
+  const email = request.nextUrl.searchParams.get("email")?.trim() ?? "";
+  if (!email) {
+    return NextResponse.json({ error: "Missing email" }, { status: 400 });
   }
 
   try {
-    const totp = getTOTP();
-    const uri = totp.toString();
+    const secret = generateTOTPSecret();
+    const uri = getTOTPUri(email, secret);
     const qrDataUrl = await QRCode.toDataURL(uri);
 
     return NextResponse.json({
       qrDataUrl,
-      secret: process.env.ADMIN_TOTP_SECRET,
+      secret,
       uri,
+      passwordHashCommand,
     });
   } catch {
     return NextResponse.json(

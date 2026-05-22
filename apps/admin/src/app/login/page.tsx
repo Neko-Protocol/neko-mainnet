@@ -60,7 +60,7 @@ export default function LoginPage() {
         return;
       }
       if (res.status === 401) {
-        setError("Invalid code, try again");
+        setError(data.error ?? "Invalid code, try again");
         setCode("");
         codeInputRef.current?.focus();
         return;

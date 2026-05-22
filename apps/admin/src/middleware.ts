@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isValidSession } from "@/lib/auth";
+import { isValidSession } from "@/lib/auth-session";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

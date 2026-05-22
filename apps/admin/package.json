@@ -9,25 +9,27 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "15.3.2",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
     "@supabase/supabase-js": "^2.103.0",
+    "bcryptjs": "^2.4.3",
+    "lucide-react": "^0.511.0",
+    "next": "15.3.2",
     "otpauth": "^9.3.6",
     "qrcode": "^1.5.4",
-    "recharts": "^2.15.3",
-    "lucide-react": "^0.511.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.3"
   },
   "devDependencies": {
     "@neko/config": "0.0.0",
-    "@types/qrcode": "^1.5.5",
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "typescript": "^5",
-    "tailwindcss": "^4",
-    "@tailwindcss/postcss": "^4",
     "eslint": "^9",
-    "eslint-config-next": "15.3.2"
+    "eslint-config-next": "15.3.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
   }
 }

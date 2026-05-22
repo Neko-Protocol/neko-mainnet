@@ -1,6 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { checkCredentials, makeSessionToken, verifyTOTP } from "@/lib/auth";
+import {
+  findAdminUser,
+  makeSessionToken,
+  verifyPassword,
+  verifyTOTP,
+} from "@/lib/auth";
 
 function cookieDefaults() {
   return {
@@ -31,7 +36,7 @@ export async function POST(request: NextRequest) {
   const step = (body as { step: number }).step;
 
   if (step === 1) {
-    const email =
+    const emailRaw =
       "email" in body && typeof (body as { email: unknown }).email === "string"
         ? (body as { email: string }).email.trim()
         : "";
@@ -41,14 +46,8 @@ export async function POST(request: NextRequest) {
         ? (body as { password: string }).password
         : "";
 
-    if (!process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD) {
-      return NextResponse.json(
-        { error: "Server not configured" },
-        { status: 503 }
-      );
-    }
-
-    if (!checkCredentials(email, password)) {
+    const user = await findAdminUser(emailRaw);
+    if (!user || !(await verifyPassword(password, user.password_hash))) {
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     const res = NextResponse.json({ ok: true, step: 2 });
-    res.cookies.set("admin_step1", "1", {
+    res.cookies.set("admin_step1", encodeURIComponent(user.email), {
       ...cookieDefaults(),
       maxAge: 300,
     });
@@ -69,15 +68,33 @@ export async function POST(request: NextRequest) {
         ? (body as { code: string }).code.trim()
         : "";
 
-    const step1 = request.cookies.get("admin_step1")?.value;
-    if (!step1) {
+    const step1Raw = request.cookies.get("admin_step1")?.value;
+    if (!step1Raw) {
       return NextResponse.json(
-        { error: "Complete email and password first" },
+        { error: "Session expired, start over" },
         { status: 401 }
       );
     }
 
-    if (!verifyTOTP(code)) {
+    let email: string;
+    try {
+      email = decodeURIComponent(step1Raw);
+    } catch {
+      return NextResponse.json(
+        { error: "Session expired, start over" },
+        { status: 401 }
+      );
+    }
+
+    const user = await findAdminUser(email);
+    if (!user) {
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
+
+    if (!verifyTOTP(code, user.totp_secret)) {
       return NextResponse.json({ error: "Invalid code" }, { status: 401 });
     }
 
