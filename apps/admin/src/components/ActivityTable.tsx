@@ -19,6 +19,12 @@ function truncateWallet(addr: string): string {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
+function formatTokenAmount(n: number): string {
+  if (n >= 1000) return n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  if (n >= 1) return n.toFixed(4);
+  return n.toFixed(6);
+}
+
 function badgeClass(actionType: string): string {
   if (actionType === "swap") {
     return "bg-[#229EDF]/18 text-[#229EDF] border-[#229EDF]/35";
@@ -32,13 +38,33 @@ function badgeClass(actionType: string): string {
   return "bg-white/8 text-white/70 border-white/15";
 }
 
-function formatUsd(amount: number | null): string {
-  if (amount == null || Number.isNaN(amount)) return "—";
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(amount);
+function isPositiveNumber(n: number | null): n is number {
+  return n != null && Number.isFinite(n) && n > 0;
+}
+
+function AmountCell({ log }: { log: AuditLog }) {
+  if (isPositiveNumber(log.amount_in)) {
+    return (
+      <td className="whitespace-nowrap px-3 py-2 font-medium text-[#4ADE80]">
+        ${log.amount_in.toFixed(2)}
+      </td>
+    );
+  }
+  if (isPositiveNumber(log.token_amount_in)) {
+    return (
+      <td className="whitespace-nowrap px-3 py-2 text-white/70">
+        {formatTokenAmount(log.token_amount_in)} {log.asset_in ?? ""}
+      </td>
+    );
+  }
+  if (isPositiveNumber(log.amount_out)) {
+    return (
+      <td className="whitespace-nowrap px-3 py-2 text-white/70">
+        {formatTokenAmount(log.amount_out)} {log.asset_out ?? ""}
+      </td>
+    );
+  }
+  return <td className="whitespace-nowrap px-3 py-2 text-white/45">—</td>;
 }
 
 export function ActivityTable({ logs }: { logs: AuditLog[] }) {
@@ -52,7 +78,7 @@ export function ActivityTable({ logs }: { logs: AuditLog[] }) {
             <th className="px-3 py-2 font-medium">Action</th>
             <th className="px-3 py-2 font-medium">Asset in</th>
             <th className="px-3 py-2 font-medium">Asset out</th>
-            <th className="px-3 py-2 font-medium">Amount</th>
+            <th className="px-3 py-2 font-medium">Amount (USD equiv.)</th>
             <th className="px-3 py-2 font-medium">Network</th>
           </tr>
         </thead>
@@ -88,9 +114,7 @@ export function ActivityTable({ logs }: { logs: AuditLog[] }) {
                 <td className="max-w-[120px] truncate px-3 py-2 text-white/60">
                   {log.asset_out ?? "—"}
                 </td>
-                <td className="whitespace-nowrap px-3 py-2 text-white/85">
-                  {formatUsd(log.amount_in)}
-                </td>
+                <AmountCell log={log} />
                 <td className="px-3 py-2 text-white/60">{log.network}</td>
               </tr>
             ))
