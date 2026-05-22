@@ -1,12 +1,14 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { isValidSession } from "@/lib/auth";
 
 export function middleware(request: NextRequest) {
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  const session = request.cookies.get("admin_session")?.value;
+  const { pathname } = request.nextUrl;
 
-  if (!adminPassword || session !== adminPassword) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  if (pathname.startsWith("/dashboard")) {
+    const session = request.cookies.get("admin_session")?.value;
+    if (!isValidSession(session)) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
   }
 
   return NextResponse.next();
