@@ -88,6 +88,22 @@ function invStatusBadge(status: Invitation["status"]) {
   }
 }
 
+function truncateActivityNotes(s: string | null): string {
+  if (!s) return "—";
+  if (s.length <= 50) return s;
+  return `${s.slice(0, 50)}…`;
+}
+
+function formatVolumeUsd(amount: number | null): string {
+  if (amount === null || amount === undefined) return "—";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 async function fetchJson<T>(path: string, opts?: RequestInit): Promise<T> {
   const res = await fetch(path, { credentials: "include", ...opts });
   if (!res.ok) throw new Error(await res.text());
@@ -123,6 +139,15 @@ export default function StrategyDetailPage() {
   const [formExpiresDays, setFormExpiresDays] = useState<7 | 14 | 30>(7);
   const [submitInvite, setSubmitInvite] = useState(false);
 
+  const [acceptingInvitation, setAcceptingInvitation] =
+    useState<Invitation | null>(null);
+  const [acceptedNotes, setAcceptedNotes] = useState("");
+  const [volumeMoved, setVolumeMoved] = useState("");
+  const [acceptLoading, setAcceptLoading] = useState(false);
+  const [markedAcceptedBanner, setMarkedAcceptedBanner] = useState<
+    string | null
+  >(null);
+
   const loadAll = useCallback(async () => {
     if (!id) return;
     setLoading(true);
@@ -156,6 +181,12 @@ export default function StrategyDetailPage() {
       )
       .catch(() => setAdminEmails([]));
   }, []);
+
+  useEffect(() => {
+    if (!markedAcceptedBanner) return;
+    const t = window.setTimeout(() => setMarkedAcceptedBanner(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [markedAcceptedBanner]);
 
   const totals = useMemo(() => {
     let pending = 0;
@@ -297,6 +328,63 @@ export default function StrategyDetailPage() {
     }
   }
 
+  function openAcceptModal(inv: Invitation) {
+    setError(null);
+    setAcceptingInvitation(inv);
+    setAcceptedNotes("");
+    setVolumeMoved("");
+  }
+
+  async function handleConfirmAcceptInvitation() {
+    const inv = acceptingInvitation;
+    if (!inv) return;
+
+    let volumeNum: number | null = null;
+    const trimmedVol = volumeMoved.trim();
+    if (trimmedVol !== "") {
+      const n = Number(trimmedVol);
+      if (!Number.isFinite(n)) {
+        setError("Volume moved must be a valid number.");
+        return;
+      }
+      volumeNum = n;
+    }
+
+    setAcceptLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/invitations/${inv.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          accepted_notes: acceptedNotes.trim() || null,
+          volume_moved: volumeNum,
+        }),
+      });
+      if (!res.ok) {
+        let msg = "Could not mark invitation as accepted.";
+        try {
+          const j = (await res.json()) as { error?: string };
+          if (typeof j?.error === "string") msg = j.error;
+        } catch {
+          //
+        }
+        setError(msg);
+        return;
+      }
+      setAcceptingInvitation(null);
+      setAcceptedNotes("");
+      setVolumeMoved("");
+      setMarkedAcceptedBanner("Marked as accepted");
+      await loadAll();
+    } catch {
+      setError("Network error.");
+    } finally {
+      setAcceptLoading(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center gap-2 bg-[#121212] p-6 text-white/60 lg:p-8">
@@ -431,6 +519,11 @@ export default function StrategyDetailPage() {
             Add invitation
           </button>
         </div>
+        {markedAcceptedBanner ? (
+          <p className="mb-4 text-sm text-[#4ADE80]" role="status">
+            {markedAcceptedBanner}
+          </p>
+        ) : null}
 
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <label className="flex items-center gap-2 text-xs text-white/50">
@@ -464,6 +557,8 @@ export default function StrategyDetailPage() {
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Assigned to</th>
                   <th className="px-4 py-3 font-medium">Expires</th>
+                  <th className="px-4 py-3 font-medium">Activity</th>
+                  <th className="px-4 py-3 font-medium">Vol. (USD)</th>
                   <th className="px-4 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
@@ -485,15 +580,36 @@ export default function StrategyDetailPage() {
                     <td className="whitespace-nowrap px-4 py-3 text-white/60">
                       {relativeFromExpiry(inv.expires_at)}
                     </td>
+                    <td className="max-w-[14rem] px-4 py-3 text-white/70">
+                      {inv.status === "accepted"
+                        ? truncateActivityNotes(inv.accepted_notes)
+                        : "—"}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-white/70">
+                      {inv.status === "accepted"
+                        ? formatVolumeUsd(inv.volume_moved)
+                        : "—"}
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3">
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1 rounded-lg bg-red-500/10 px-2 py-1 text-xs font-medium text-red-300 transition hover:bg-red-500/20"
-                        onClick={() => handleDeleteInvitation(inv)}
-                      >
-                        <Trash2 className="size-3.5 shrink-0" aria-hidden />
-                        Delete
-                      </button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {inv.status === "pending" ? (
+                          <button
+                            type="button"
+                            className="inline-flex items-center rounded-lg bg-[#4ADE80]/15 px-3 py-1 text-xs font-semibold text-[#4ADE80] hover:bg-[#4ADE80]/25"
+                            onClick={() => openAcceptModal(inv)}
+                          >
+                            Accept
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded-lg bg-red-500/10 px-2 py-1 text-xs font-medium text-red-300 transition hover:bg-red-500/20"
+                          onClick={() => handleDeleteInvitation(inv)}
+                        >
+                          <Trash2 className="size-3.5 shrink-0" aria-hidden />
+                          Delete
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -811,6 +927,91 @@ export default function StrategyDetailPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ) : null}
+
+      {acceptingInvitation ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="accept-inv-title"
+        >
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#1C1C1C] p-6 shadow-xl">
+            <h2
+              id="accept-inv-title"
+              className="text-lg font-semibold text-white"
+            >
+              Mark as accepted
+            </h2>
+            <p className="mt-1 text-sm text-white/50">
+              {acceptingInvitation.email}
+            </p>
+
+            <div className="mt-5 space-y-4">
+              <div>
+                <label
+                  htmlFor="accept-notes"
+                  className="block text-xs font-medium text-white/50"
+                >
+                  What did they do?
+                </label>
+                <textarea
+                  id="accept-notes"
+                  rows={3}
+                  value={acceptedNotes}
+                  onChange={(e) => setAcceptedNotes(e.target.value)}
+                  placeholder="e.g. Deposited 500 USDC into vault, swapped XLM..."
+                  className="mt-1 w-full resize-y rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="accept-volume"
+                  className="block text-xs font-medium text-white/50"
+                >
+                  Volume moved (USD)
+                </label>
+                <input
+                  id="accept-volume"
+                  type="number"
+                  inputMode="decimal"
+                  value={volumeMoved}
+                  onChange={(e) => setVolumeMoved(e.target.value)}
+                  placeholder="0.00"
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-white/8 pt-4">
+              <button
+                type="button"
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white/70 hover:bg-white/5"
+                onClick={() => {
+                  if (!acceptLoading) setAcceptingInvitation(null);
+                }}
+                disabled={acceptLoading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={acceptLoading}
+                onClick={() => void handleConfirmAcceptInvitation()}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#4ADE80] px-5 py-2 text-sm font-semibold text-[#121212] transition hover:bg-[#6ee793] disabled:opacity-50"
+              >
+                {acceptLoading ? (
+                  <>
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                    Saving…
+                  </>
+                ) : (
+                  "Confirm acceptance"
+                )}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

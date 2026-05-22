@@ -23,6 +23,8 @@ export type Invitation = {
   created_by: string | null;
   strategy_id: string | null;
   accepted_at: string | null;
+  accepted_notes: string | null;
+  volume_moved: number | null;
   expires_at: string;
   created_at: string;
 };

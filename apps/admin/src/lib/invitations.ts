@@ -61,9 +61,42 @@ function mapRow(row: Record<string, unknown>): Invitation | null {
         : String(row.created_by),
     strategy_id,
     accepted_at: typeof row.accepted_at === "string" ? row.accepted_at : null,
+    accepted_notes:
+      row.accepted_notes === null || row.accepted_notes === undefined
+        ? null
+        : String(row.accepted_notes),
+    volume_moved:
+      row.volume_moved !== null &&
+      row.volume_moved !== undefined &&
+      Number.isFinite(Number(row.volume_moved))
+        ? Number(row.volume_moved)
+        : null,
     expires_at: String(row.expires_at ?? ""),
     created_at: String(row.created_at ?? ""),
   };
+}
+
+export async function acceptInvitation(
+  id: string,
+  data: { accepted_notes: string | null; volume_moved: number | null }
+): Promise<Invitation | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  const { data: updated, error } = await supabase
+    .from("invitations")
+    .update({
+      status: "accepted",
+      accepted_at: new Date().toISOString(),
+      accepted_notes: data.accepted_notes?.trim() || null,
+      volume_moved: data.volume_moved ?? null,
+    })
+    .eq("id", id)
+    .select("*")
+    .maybeSingle();
+
+  if (error || !updated) return null;
+  return mapRow(updated as Record<string, unknown>);
 }
 
 export async function listInvitations(filters?: {
