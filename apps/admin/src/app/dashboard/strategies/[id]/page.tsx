@@ -22,6 +22,20 @@ import {
   type StrategyType,
 } from "@/lib/strategies-schema";
 
+const ACTIVITY_OPTIONS = [
+  { value: "lend_deposit", label: "Lent / Deposited" },
+  { value: "lend_withdraw", label: "Withdrew from lending" },
+  { value: "borrow_deposit", label: "Borrowed" },
+  { value: "borrow_withdraw", label: "Repaid borrow" },
+  { value: "swap", label: "Swapped" },
+  { value: "on_ramp", label: "On-ramped (funded)" },
+  { value: "off_ramp", label: "Off-ramped" },
+  { value: "vaults_deposit", label: "Deposited into vault" },
+  { value: "vaults_withdraw", label: "Withdrew from vault" },
+  { value: "pool_repay", label: "Repaid pool" },
+  { value: "pool_claim_rewards", label: "Claimed rewards" },
+] as const;
+
 function relativeFromExpiry(iso: string): string {
   const roundedDays = Math.round(
     (new Date(iso).getTime() - Date.now()) / 86_400_000
@@ -90,8 +104,8 @@ function invStatusBadge(status: Invitation["status"]) {
 
 function truncateActivityNotes(s: string | null): string {
   if (!s) return "—";
-  if (s.length <= 50) return s;
-  return `${s.slice(0, 50)}…`;
+  const match = ACTIVITY_OPTIONS.find((o) => o.value === s);
+  return match ? match.label : s;
 }
 
 function formatVolumeUsd(amount: number | null): string {
@@ -957,14 +971,19 @@ export default function StrategyDetailPage() {
                 >
                   What did they do?
                 </label>
-                <textarea
+                <select
                   id="accept-notes"
-                  rows={3}
                   value={acceptedNotes}
                   onChange={(e) => setAcceptedNotes(e.target.value)}
-                  placeholder="e.g. Deposited 500 USDC into vault, swapped XLM..."
-                  className="mt-1 w-full resize-y rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
-                />
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                >
+                  <option value="">— Select action —</option>
+                  {ACTIVITY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label
