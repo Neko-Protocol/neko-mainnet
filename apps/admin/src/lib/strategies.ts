@@ -161,9 +161,9 @@ export async function createStrategy(data: {
   assigned_to: string | null;
   created_by: string;
   status?: StrategyStatus;
-}): Promise<Strategy | null> {
+}): Promise<{ data: Strategy | null; error: string | null }> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase) return { data: null, error: "Supabase client unavailable" };
 
   const assigned =
     (data.assigned_to?.trim()?.length ?? 0) ? data.assigned_to!.trim() : null;
@@ -194,8 +194,13 @@ export async function createStrategy(data: {
     .select("*")
     .maybeSingle();
 
-  if (error || !inserted || typeof inserted !== "object") return null;
-  return mapStrategyRow(inserted as Record<string, unknown>);
+  if (error) return { data: null, error: error.message };
+  if (!inserted || typeof inserted !== "object")
+    return { data: null, error: "Insert returned no data" };
+  return {
+    data: mapStrategyRow(inserted as Record<string, unknown>),
+    error: null,
+  };
 }
 
 export async function updateStrategy(

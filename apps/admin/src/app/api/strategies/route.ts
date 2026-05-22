@@ -76,12 +76,12 @@ export async function POST(request: NextRequest) {
     status: statusParse,
   });
 
-  if (!strategy) {
+  if (!strategy.data) {
     return NextResponse.json(
-      { error: "Failed to create strategy" },
+      { error: "Failed to create strategy", detail: strategy.error },
       { status: 500 }
     );
   }
 
-  return NextResponse.json(strategy);
+  return NextResponse.json(strategy.data);
 }
