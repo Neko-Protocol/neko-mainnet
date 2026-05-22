@@ -11,4 +11,5 @@ export type CampaignDTO = {
   sent_at: string | null;
   created_at: string;
   created_by: string | null;
+  tvl_moved: number | null;
 };

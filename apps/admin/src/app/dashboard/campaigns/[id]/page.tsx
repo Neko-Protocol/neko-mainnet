@@ -40,6 +40,9 @@ export default function CampaignDetailPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [sendMsg, setSendMsg] = useState<string | null>(null);
+  const [tvlInput, setTvlInput] = useState("");
+  const [tvlSaving, setTvlSaving] = useState(false);
+  const [tvlMsg, setTvlMsg] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
     await Promise.resolve();
@@ -56,6 +59,7 @@ export default function CampaignDetailPage() {
       }
       const cJson = (await cRes.json()) as CampaignDTO;
       setCampaign(cJson);
+      setTvlInput(cJson.tvl_moved != null ? String(cJson.tvl_moved) : "");
 
       if (pRes.ok) {
         const pJson = (await pRes.json()) as {
@@ -106,6 +110,33 @@ export default function CampaignDetailPage() {
       setSendMsg(e instanceof Error ? e.message : "Send failed");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function saveTvl() {
+    if (!campaign || tvlSaving) return;
+    const raw = tvlInput.trim();
+    const value = raw === "" ? null : Number(raw);
+    if (value !== null && !Number.isFinite(value)) {
+      setTvlMsg("Enter a valid number.");
+      return;
+    }
+    setTvlSaving(true);
+    setTvlMsg(null);
+    try {
+      const res = await fetch(`/api/campaigns/${campaign.id}/tvl`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ tvl_moved: value }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      await reload();
+      setTvlMsg("Saved");
+    } catch {
+      setTvlMsg("Could not save.");
+    } finally {
+      setTvlSaving(false);
     }
   }
 
@@ -217,6 +248,48 @@ export default function CampaignDetailPage() {
           }
         />
       </div>
+
+      <section className="mb-8 rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+        <h2 className="text-lg font-semibold text-white">TVL Moved (USD)</h2>
+        <p className="mt-1 text-sm text-white/50">
+          Record how much total value this campaign generated.
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <input
+            type="number"
+            inputMode="decimal"
+            value={tvlInput}
+            onChange={(e) => setTvlInput(e.target.value)}
+            placeholder="0.00"
+            className="w-48 rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+          />
+          <button
+            type="button"
+            disabled={tvlSaving}
+            onClick={() => void saveTvl()}
+            className="inline-flex items-center rounded-xl bg-[#229EDF] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-50"
+          >
+            {tvlSaving ? "Saving…" : "Save"}
+          </button>
+          {tvlMsg ? (
+            <span
+              className={`text-sm ${tvlMsg === "Saved" ? "text-[#4ADE80]" : "text-red-400"}`}
+            >
+              {tvlMsg}
+            </span>
+          ) : null}
+        </div>
+        {campaign.tvl_moved != null ? (
+          <p className="mt-3 text-2xl font-bold text-[#4ADE80]">
+            {new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "USD",
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            }).format(campaign.tvl_moved)}
+          </p>
+        ) : null}
+      </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">

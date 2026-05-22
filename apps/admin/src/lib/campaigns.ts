@@ -27,6 +27,12 @@ function mapRow(row: Record<string, unknown>): Campaign | null {
     sent_at: typeof row.sent_at === "string" ? row.sent_at : null,
     created_at: String(row.created_at ?? ""),
     created_by: row.created_by == null ? null : String(row.created_by),
+    tvl_moved:
+      row.tvl_moved !== null &&
+      row.tvl_moved !== undefined &&
+      Number.isFinite(Number(row.tvl_moved))
+        ? Number(row.tvl_moved)
+        : null,
   };
 }
 
@@ -34,11 +40,12 @@ export async function getCampaignStats(): Promise<{
   total: number;
   sent: number;
   draft: number;
+  tvl_moved_total: number;
 }> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return { total: 0, sent: 0, draft: 0 };
+  if (!supabase) return { total: 0, sent: 0, draft: 0, tvl_moved_total: 0 };
 
-  const [total, sent, draft] = await Promise.all([
+  const [total, sent, draft, tvlRows] = await Promise.all([
     supabase.from("campaigns").select("*", { count: "exact", head: true }),
     supabase
       .from("campaigns")
@@ -48,12 +55,19 @@ export async function getCampaignStats(): Promise<{
       .from("campaigns")
       .select("*", { count: "exact", head: true })
       .eq("status", "draft"),
+    supabase.from("campaigns").select("tvl_moved"),
   ]);
+
+  const tvl_moved_total = (tvlRows.data ?? []).reduce((acc, r) => {
+    const v = Number((r as Record<string, unknown>).tvl_moved);
+    return acc + (Number.isFinite(v) ? v : 0);
+  }, 0);
 
   return {
     total: total.count ?? 0,
     sent: sent.count ?? 0,
     draft: draft.count ?? 0,
+    tvl_moved_total,
   };
 }
 
@@ -138,6 +152,19 @@ export async function updateCampaign(
     .update(payload)
     .eq("id", id);
 
+  return !error;
+}
+
+export async function updateCampaignTvl(
+  id: string,
+  tvl_moved: number | null
+): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return false;
+  const { error } = await supabase
+    .from("campaigns")
+    .update({ tvl_moved: tvl_moved ?? null })
+    .eq("id", id);
   return !error;
 }
 

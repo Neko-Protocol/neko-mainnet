@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, FileText, Send } from "lucide-react";
+import { Mail, FileText, Send, TrendingUp } from "lucide-react";
 import {
   getCampaignStats,
   listCampaigns,
@@ -53,7 +53,7 @@ export default async function CampaignsPage() {
         </Link>
       </header>
 
-      <div className="mb-8 grid gap-4 md:grid-cols-3">
+      <div className="mb-8 grid gap-4 md:grid-cols-4">
         <MetricCard
           title="Total campaigns"
           value={stats.total.toLocaleString()}
@@ -71,6 +71,12 @@ export default async function CampaignsPage() {
           value={stats.draft.toLocaleString()}
           icon={<Mail className="size-5" />}
         />
+        <MetricCard
+          title="TVL moved"
+          value={`$${stats.tvl_moved_total.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`}
+          accent="green"
+          icon={<TrendingUp className="size-5" />}
+        />
       </div>
 
       {campaigns.length === 0 ? (
@@ -86,6 +92,7 @@ export default async function CampaignsPage() {
                 <th className="px-4 py-3 font-medium">Segment</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Recipients</th>
+                <th className="px-4 py-3 font-medium">TVL Moved</th>
                 <th className="px-4 py-3 font-medium">Sent at</th>
                 <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
@@ -105,6 +112,16 @@ export default async function CampaignsPage() {
                   <td className="px-4 py-3 text-white/70">
                     {c.recipient_count != null
                       ? c.recipient_count.toLocaleString()
+                      : "—"}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 text-white/70">
+                    {c.tvl_moved != null
+                      ? new Intl.NumberFormat("en-US", {
+                          style: "currency",
+                          currency: "USD",
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 2,
+                        }).format(c.tvl_moved)
                       : "—"}
                   </td>
                   <td className="px-4 py-3 text-white/60">
