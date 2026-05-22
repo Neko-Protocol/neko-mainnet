@@ -42,6 +42,16 @@ function mapStrategyRow(row: Record<string, unknown>): Strategy | null {
     target_count = Math.max(0, Math.floor(targetRaw));
   }
 
+  const tvRaw = row.target_volume;
+  let target_volume = 0;
+  if (typeof tvRaw === "number" && Number.isFinite(tvRaw))
+    target_volume = Math.max(0, tvRaw);
+  else if (typeof tvRaw === "string" && Number.isFinite(Number(tvRaw)))
+    target_volume = Math.max(0, Number(tvRaw));
+
+  const completed_at =
+    typeof row.completed_at === "string" ? row.completed_at : null;
+
   return {
     id,
     name: String(row.name ?? ""),
@@ -51,6 +61,7 @@ function mapStrategyRow(row: Record<string, unknown>): Strategy | null {
         : String(row.description),
     type,
     target_count,
+    target_volume,
     status,
     assigned_to:
       row.assigned_to === null || row.assigned_to === undefined
@@ -62,6 +73,7 @@ function mapStrategyRow(row: Record<string, unknown>): Strategy | null {
         : String(row.created_by),
     created_at: String(row.created_at ?? ""),
     updated_at: String(row.updated_at ?? ""),
+    completed_at,
   };
 }
 
@@ -78,7 +90,7 @@ export async function listStrategies(): Promise<StrategyWithStats[]> {
     }),
     supabase
       .from("invitations")
-      .select("strategy_id, status")
+      .select("strategy_id, status, volume_moved")
       .not("strategy_id", "is", null)
       .limit(2000),
   ]);
@@ -93,6 +105,7 @@ export async function listStrategies(): Promise<StrategyWithStats[]> {
     pending: number;
     accepted: number;
     expired: number;
+    volume_moved: number;
   };
 
   const byStrategy = new Map<string, Agg>();
@@ -103,13 +116,23 @@ export async function listStrategies(): Promise<StrategyWithStats[]> {
       const st = typeof r.status === "string" ? r.status : "pending";
       let agg = byStrategy.get(sid);
       if (!agg) {
-        agg = { total: 0, pending: 0, accepted: 0, expired: 0 };
+        agg = {
+          total: 0,
+          pending: 0,
+          accepted: 0,
+          expired: 0,
+          volume_moved: 0,
+        };
         byStrategy.set(sid, agg);
       }
       agg.total += 1;
       if (st === "pending") agg.pending += 1;
-      else if (st === "accepted") agg.accepted += 1;
-      else if (st === "expired") agg.expired += 1;
+      else if (st === "accepted") {
+        agg.accepted += 1;
+        const vm = Number((r as Record<string, unknown>).volume_moved);
+        if (r.status === "accepted" && Number.isFinite(vm))
+          agg.volume_moved = (agg.volume_moved ?? 0) + vm;
+      } else if (st === "expired") agg.expired += 1;
     }
   }
 
@@ -122,6 +145,7 @@ export async function listStrategies(): Promise<StrategyWithStats[]> {
       pending: 0,
       accepted: 0,
       expired: 0,
+      volume_moved: 0,
     };
     const acceptance_rate =
       agg.total === 0 ? 0 : Math.round((agg.accepted / agg.total) * 1000) / 10;
@@ -133,6 +157,7 @@ export async function listStrategies(): Promise<StrategyWithStats[]> {
       accepted: agg.accepted,
       expired: agg.expired,
       acceptance_rate,
+      total_volume_moved: agg.volume_moved ?? 0,
     });
   }
 
@@ -158,6 +183,7 @@ export async function createStrategy(data: {
   description: string | null;
   type: StrategyType;
   target_count: number;
+  target_volume: number;
   assigned_to: string | null;
   created_by: string;
   status?: StrategyStatus;
@@ -183,6 +209,10 @@ export async function createStrategy(data: {
     description: data.description?.trim() ? data.description.trim() : null,
     type: data.type,
     target_count: target,
+    target_volume: Math.max(
+      0,
+      Number.isFinite(data.target_volume) ? data.target_volume : 0
+    ),
     assigned_to: assigned,
     created_by: data.created_by,
     status,
@@ -210,8 +240,10 @@ export async function updateStrategy(
     description: string | null;
     type: StrategyType;
     target_count: number;
+    target_volume: number;
     status: StrategyStatus;
     assigned_to: string | null;
+    completed_at: string | null;
   }>
 ): Promise<void> {
   const supabase = getSupabaseAdmin();
@@ -234,10 +266,20 @@ export async function updateStrategy(
         ? Math.max(0, Math.floor(data.target_count))
         : 0;
   }
+  if (data.target_volume !== undefined) {
+    patch.target_volume =
+      typeof data.target_volume === "number" &&
+      Number.isFinite(data.target_volume)
+        ? Math.max(0, data.target_volume)
+        : 0;
+  }
   if (data.status !== undefined) patch.status = data.status;
   if (data.assigned_to !== undefined) {
     patch.assigned_to =
       (data.assigned_to?.trim()?.length ?? 0) ? data.assigned_to!.trim() : null;
+  }
+  if (data.completed_at !== undefined) {
+    patch.completed_at = data.completed_at ?? null;
   }
 
   await supabase.from("strategies").update(patch).eq("id", id);

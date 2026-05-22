@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Loader2, Trash2 } from "lucide-react";
+import { DollarSign, Loader2, Trash2 } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -118,6 +118,27 @@ function formatVolumeUsd(amount: number | null): string {
   }).format(amount);
 }
 
+function fmtUsd(n: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
+function strategyDuration(
+  createdAt: string,
+  completedAt: string | null
+): string {
+  const start = new Date(createdAt).getTime();
+  const end = completedAt ? new Date(completedAt).getTime() : Date.now();
+  const days = Math.max(0, Math.round((end - start) / 86_400_000));
+  if (days === 0) return "< 1 day";
+  if (days === 1) return "1 day";
+  return `${days} days`;
+}
+
 async function fetchJson<T>(path: string, opts?: RequestInit): Promise<T> {
   const res = await fetch(path, { credentials: "include", ...opts });
   if (!res.ok) throw new Error(await res.text());
@@ -142,8 +163,10 @@ export default function StrategyDetailPage() {
   const [eDesc, setEDesc] = useState("");
   const [eType, setEType] = useState<StrategyType>("acquisition");
   const [eTarget, setETarget] = useState(0);
+  const [eTargetVolume, setETargetVolume] = useState(0);
   const [eAssigned, setEAssigned] = useState("");
   const [eStatus, setEStatus] = useState<StrategyStatus>("active");
+  const [closingStrategy, setClosingStrategy] = useState(false);
 
   const [inviteOpen, setInviteOpen] = useState(false);
   const [formEmail, setFormEmail] = useState("");
@@ -228,11 +251,28 @@ export default function StrategyDetailPage() {
     return invitations.filter((i) => i.status === filterStatus);
   }, [invitations, filterStatus]);
 
+  const totalVolumeMoved = useMemo(() => {
+    return invitations.reduce((sum, inv) => {
+      if (inv.status === "accepted" && inv.volume_moved != null) {
+        return sum + inv.volume_moved;
+      }
+      return sum;
+    }, 0);
+  }, [invitations]);
+
   const pctTarget =
     strategy && strategy.target_count > 0
       ? Math.min(
           100,
           Math.round((totals.accepted / strategy.target_count) * 100)
+        )
+      : 0;
+
+  const pctVolume =
+    strategy && strategy.target_volume > 0
+      ? Math.min(
+          100,
+          Math.round((totalVolumeMoved / strategy.target_volume) * 100)
         )
       : 0;
 
@@ -261,6 +301,7 @@ export default function StrategyDetailPage() {
           description: eDesc.trim() || null,
           type: eType,
           target_count: eTarget,
+          target_volume: eTargetVolume,
           assigned_to: eAssigned.trim() || null,
           status: eStatus,
         }),
@@ -276,6 +317,35 @@ export default function StrategyDetailPage() {
       setError("Network error.");
     } finally {
       setSubmittingEdit(false);
+    }
+  }
+
+  async function handleCloseStrategy() {
+    if (!strategy) return;
+    const ok = window.confirm(
+      "Mark this strategy as completed? This will record the closing time."
+    );
+    if (!ok) return;
+    setClosingStrategy(true);
+    try {
+      const res = await fetch(`/api/strategies/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        }),
+      });
+      if (!res.ok) {
+        setError("Could not close strategy.");
+        return;
+      }
+      await loadAll();
+    } catch {
+      setError("Network error.");
+    } finally {
+      setClosingStrategy(false);
     }
   }
 
@@ -401,9 +471,16 @@ export default function StrategyDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center gap-2 bg-[#121212] p-6 text-white/60 lg:p-8">
-        <Loader2 className="size-6 animate-spin" aria-hidden />
-        Loading strategy…
+      <div className="min-h-screen bg-[#121212] p-6 lg:p-8 animate-pulse">
+        <div className="mb-2 h-4 w-24 rounded-full bg-white/10" />
+        <div className="mt-4 mb-8 h-8 w-64 rounded-xl bg-white/10" />
+        <div className="mb-6 grid gap-4 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-2xl bg-white/[0.06] h-28" />
+          ))}
+        </div>
+        <div className="mb-6 rounded-2xl bg-white/[0.06] h-32" />
+        <div className="rounded-2xl bg-white/[0.06] h-64" />
       </div>
     );
   }
@@ -441,27 +518,45 @@ export default function StrategyDetailPage() {
               {strategy.status}
             </span>
           </div>
+          <p className="mt-2 text-xs text-white/40">
+            {strategy.status === "completed" && strategy.completed_at
+              ? `Ran for ${strategyDuration(strategy.created_at, strategy.completed_at)} · closed ${new Date(strategy.completed_at).toLocaleDateString()}`
+              : `Active for ${strategyDuration(strategy.created_at, null)}`}
+          </p>
           {strategy.description ? (
             <p className="mt-2 text-sm text-white/50">{strategy.description}</p>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            if (!strategy) return;
-            setEName(strategy.name);
-            setEDesc(strategy.description ?? "");
-            setEType(strategy.type);
-            setETarget(strategy.target_count);
-            setEAssigned(strategy.assigned_to ?? "");
-            setEStatus(strategy.status);
-            setError(null);
-            setEditOpen(true);
-          }}
-          className="inline-flex items-center justify-center rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-white/[0.14]"
-        >
-          Edit
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {strategy.status === "active" || strategy.status === "paused" ? (
+            <button
+              type="button"
+              disabled={closingStrategy}
+              onClick={() => void handleCloseStrategy()}
+              className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-sm font-medium text-white/80 ring-1 ring-white/10 transition hover:bg-white/10 disabled:opacity-50"
+            >
+              {closingStrategy ? "Closing…" : "Close strategy"}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => {
+              if (!strategy) return;
+              setEName(strategy.name);
+              setEDesc(strategy.description ?? "");
+              setEType(strategy.type);
+              setETarget(strategy.target_count);
+              setETargetVolume(strategy.target_volume ?? 0);
+              setEAssigned(strategy.assigned_to ?? "");
+              setEStatus(strategy.status);
+              setError(null);
+              setEditOpen(true);
+            }}
+            className="inline-flex items-center justify-center rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white ring-1 ring-white/15 transition hover:bg-white/[0.14]"
+          >
+            Edit
+          </button>
+        </div>
       </div>
 
       {error ? (
@@ -470,7 +565,7 @@ export default function StrategyDetailPage() {
         </p>
       ) : null}
 
-      <div className="mb-6 grid gap-4 md:grid-cols-4">
+      <div className="mb-6 grid gap-4 md:grid-cols-5">
         <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
           <p className="text-sm text-white/50">Invited</p>
           <p className="mt-2 text-3xl font-bold text-white">
@@ -498,24 +593,59 @@ export default function StrategyDetailPage() {
             %
           </p>
         </div>
+        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-emerald-500/15">
+          <div className="flex items-center gap-1.5 text-sm text-white/50">
+            <DollarSign className="size-4 shrink-0 opacity-70" aria-hidden />
+            Vol. moved
+          </div>
+          <p className="mt-2 text-3xl font-bold tabular-nums text-white">
+            {fmtUsd(totalVolumeMoved)}
+          </p>
+        </div>
       </div>
 
-      <section className="mb-10 rounded-2xl border border-white/8 bg-[#1C1C1C] p-6">
-        <h2 className="text-lg font-semibold text-white">Progress</h2>
-        <div className="mt-5">
-          <div className="h-3 rounded-full bg-white/10">
-            <div
-              className={`h-3 rounded-full transition-[width] ${progressBg}`}
-              style={{ width: `${pctTarget}%` }}
-              role="presentation"
-            />
+      <section className="mb-8 rounded-2xl border border-white/8 bg-[#1C1C1C] p-6">
+        <h2 className="mb-5 text-lg font-semibold text-white">Progress</h2>
+        <div className="space-y-5">
+          <div>
+            <div className="mb-2 flex items-center justify-between text-sm">
+              <span className="font-medium text-white">Users</span>
+              <span className="text-white/50">
+                {totals.accepted} / {strategy.target_count} target
+                {strategy.target_count > 0 ? ` · ${pctTarget}%` : ""}
+              </span>
+            </div>
+            <div className="h-2 rounded-full bg-white/10">
+              <div
+                className={`h-2 rounded-full transition-[width] ${progressBg}`}
+                style={{ width: `${pctTarget}%` }}
+                role="presentation"
+              />
+            </div>
           </div>
-          <p className="mt-3 text-sm text-white/60">
-            <span className="font-medium text-white">
-              {totals.accepted} of {strategy.target_count}
-            </span>{" "}
-            target reached ({pctTarget}%)
-          </p>
+          <div>
+            <div className="mb-2 flex items-center justify-between text-sm">
+              <span className="font-medium text-white">Volume moved</span>
+              <span className="text-white/50">
+                {fmtUsd(totalVolumeMoved)}
+                {strategy.target_volume > 0
+                  ? ` / ${fmtUsd(strategy.target_volume)} · ${pctVolume}%`
+                  : ""}
+              </span>
+            </div>
+            <div className="h-2 rounded-full bg-white/10">
+              <div
+                className="h-2 rounded-full bg-[#229EDF] transition-[width]"
+                style={{ width: `${pctVolume}%` }}
+                role="presentation"
+              />
+            </div>
+            {strategy.target_volume === 0 ? (
+              <p className="mt-1.5 text-xs text-white/35">
+                No volume target set
+              </p>
+            ) : null}
+          </div>
         </div>
       </section>
 
@@ -708,21 +838,41 @@ export default function StrategyDetailPage() {
                 </div>
               </div>
 
-              <div>
-                <label
-                  htmlFor="e-target"
-                  className="block text-xs font-medium text-white/50"
-                >
-                  Target count
-                </label>
-                <input
-                  id="e-target"
-                  type="number"
-                  min={0}
-                  value={eTarget}
-                  onChange={(e) => setETarget(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    htmlFor="e-target"
+                    className="block text-xs font-medium text-white/50"
+                  >
+                    Target users
+                  </label>
+                  <input
+                    id="e-target"
+                    type="number"
+                    min={0}
+                    value={eTarget}
+                    onChange={(e) => setETarget(Number(e.target.value) || 0)}
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="e-target-vol"
+                    className="block text-xs font-medium text-white/50"
+                  >
+                    Target volume (USD)
+                  </label>
+                  <input
+                    id="e-target-vol"
+                    type="number"
+                    min={0}
+                    value={eTargetVolume}
+                    onChange={(e) =>
+                      setETargetVolume(Number(e.target.value) || 0)
+                    }
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  />
+                </div>
               </div>
 
               <div>

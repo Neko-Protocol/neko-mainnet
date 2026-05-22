@@ -72,6 +72,13 @@ export async function PATCH(
     if (!Number.isFinite(n)) n = 0;
     patch.target_count = Math.max(0, Math.floor(n));
   }
+  if (b.target_volume !== undefined) {
+    const n =
+      typeof b.target_volume === "number"
+        ? b.target_volume
+        : Number(b.target_volume);
+    patch.target_volume = Number.isFinite(n) ? n : 0;
+  }
   if (typeof b.status === "string") {
     const s = b.status.trim().toLowerCase();
     if (!isStrategyStatus(s)) {
@@ -82,6 +89,11 @@ export async function PATCH(
   if (b.assigned_to !== undefined) {
     const r = typeof b.assigned_to === "string" ? b.assigned_to.trim() : null;
     patch.assigned_to = r?.length ? r : null;
+  }
+  if (b.completed_at !== undefined) {
+    if (b.completed_at === null) patch.completed_at = null;
+    else if (typeof b.completed_at === "string")
+      patch.completed_at = b.completed_at;
   }
 
   await updateStrategy(id, patch);

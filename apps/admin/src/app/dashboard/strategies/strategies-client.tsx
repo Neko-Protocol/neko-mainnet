@@ -1,6 +1,6 @@
 "use client";
 
-import { Layers, Loader2, Target, TrendingUp } from "lucide-react";
+import { DollarSign, Layers, Loader2, Target, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
@@ -10,6 +10,39 @@ import {
   type StrategyType,
   type StrategyWithStats,
 } from "@/lib/strategies-schema";
+
+function strategyDuration(
+  createdAt: string,
+  completedAt: string | null
+): string {
+  const start = new Date(createdAt).getTime();
+  const end = completedAt ? new Date(completedAt).getTime() : Date.now();
+  const days = Math.max(0, Math.round((end - start) / 86_400_000));
+  if (days === 0) return "< 1 day";
+  if (days === 1) return "1 day";
+  return `${days} days`;
+}
+
+function fmtUsd(n: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
+function ProgressBar({ pct, color }: { pct: number; color: string }) {
+  return (
+    <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+      <div
+        className="h-1.5 rounded-full transition-[width]"
+        style={{ width: `${pct}%`, backgroundColor: color }}
+        role="presentation"
+      />
+    </div>
+  );
+}
 
 function typeBadge(strategyType: StrategyType) {
   const meta = STRATEGY_TYPES.find((x) => x.id === strategyType);
@@ -63,6 +96,9 @@ async function fetchJson<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+const CHIP =
+  "inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[11px] text-white/70";
+
 export default function StrategiesClient(props: Props) {
   const router = useRouter();
   const [, startNav] = useTransition();
@@ -73,10 +109,16 @@ export default function StrategiesClient(props: Props) {
 
   const { strategies, stratStats, aggregates } = props;
 
+  const totalVolumeMoved = strategies.reduce(
+    (acc, s) => acc + s.total_volume_moved,
+    0
+  );
+
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
   const [formType, setFormType] = useState<StrategyType>("acquisition");
   const [formTarget, setFormTarget] = useState(50);
+  const [formTargetVolume, setFormTargetVolume] = useState<number>(0);
   const [formAssigned, setFormAssigned] = useState("");
   const [formStatus, setFormStatus] = useState<StrategyStatus>("active");
 
@@ -108,6 +150,7 @@ export default function StrategiesClient(props: Props) {
           description: formDescription.trim() || null,
           type: formType,
           target_count: formTarget,
+          target_volume: formTargetVolume,
           assigned_to: formAssigned.trim() || null,
           status: formStatus,
         }),
@@ -129,6 +172,7 @@ export default function StrategiesClient(props: Props) {
       setFormDescription("");
       setFormType("acquisition");
       setFormTarget(50);
+      setFormTargetVolume(0);
       setFormAssigned("");
       setFormStatus("active");
       if (created?.id) {
@@ -163,7 +207,7 @@ export default function StrategiesClient(props: Props) {
         </button>
       </header>
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-white/5">
           <div className="flex justify-between gap-2">
             <p className="text-sm font-medium text-white/50">
@@ -208,6 +252,17 @@ export default function StrategiesClient(props: Props) {
             )}%`}
           </p>
         </div>
+        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-[#229EDF]/20 sm:col-span-2 lg:col-span-1">
+          <div className="flex justify-between gap-2">
+            <p className="text-sm font-medium text-white/50">
+              Total vol. moved
+            </p>
+            <DollarSign className="size-5 text-[#229EDF]/55" aria-hidden />
+          </div>
+          <p className="mt-2 text-3xl font-bold text-white tabular-nums">
+            {fmtUsd(totalVolumeMoved)}
+          </p>
+        </div>
       </div>
 
       {error ? (
@@ -223,33 +278,50 @@ export default function StrategiesClient(props: Props) {
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {strategies.map((s) => {
-            const pctTowardTarget =
+            const pctUsers =
               s.target_count > 0
                 ? Math.min(100, Math.round((s.accepted / s.target_count) * 100))
                 : 0;
+            const pctVolume =
+              s.target_volume > 0
+                ? Math.min(
+                    100,
+                    Math.round((s.total_volume_moved / s.target_volume) * 100)
+                  )
+                : 0;
+
+            const desc = s.description?.trim();
+
+            const rateLabel =
+              typeof s.acceptance_rate === "number" &&
+              !Number.isNaN(s.acceptance_rate)
+                ? `${s.acceptance_rate.toFixed(s.acceptance_rate % 1 === 0 ? 0 : 1)}%`
+                : "—";
+
             return (
               <div
                 key={s.id}
-                className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5"
+                className="flex flex-col gap-4 rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 transition-colors hover:border-white/[0.14]"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="truncate font-bold text-white">
-                        {s.name}
-                      </h2>
-                      {typeBadge(s.type)}
-                      <span className={statusBadgeCls(s.status)}>
-                        {s.status}
-                      </span>
-                    </div>
-                    <p className="mt-2 line-clamp-2 text-sm text-white/50">
-                      {s.description?.trim() || "—"}
-                    </p>
+                  <h2 className="min-w-0 flex-1 text-base font-bold text-white">
+                    {s.name}
+                  </h2>
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                    {typeBadge(s.type)}
+                    <span className={statusBadgeCls(s.status)}>{s.status}</span>
                   </div>
                 </div>
 
-                <div className="mt-4 flex items-center gap-2">
+                <p className="line-clamp-1 text-sm text-white/55">
+                  {desc ? (
+                    desc
+                  ) : (
+                    <span className="italic text-white/40">No description</span>
+                  )}
+                </p>
+
+                <div className="flex items-center gap-2">
                   <span
                     className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/12 text-xs font-semibold uppercase text-white/90 ring-1 ring-white/15"
                     title={s.assigned_to ?? "Unassigned"}
@@ -261,33 +333,80 @@ export default function StrategiesClient(props: Props) {
                   </span>
                 </div>
 
-                <div className="mt-4 space-y-1.5">
-                  <div className="h-1.5 rounded-full bg-white/10">
-                    <div
-                      className="h-1.5 rounded-full bg-[#4ADE80] transition-[width]"
-                      style={{ width: `${pctTowardTarget}%` }}
-                      role="presentation"
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="min-w-0 space-y-1.5">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                      <span className="text-xs font-medium text-white/85">
+                        {s.target_count > 0 ? (
+                          <>
+                            Users · {s.accepted.toLocaleString()} /{" "}
+                            {s.target_count.toLocaleString()}
+                          </>
+                        ) : (
+                          <>
+                            Users
+                            <span className="sr-only"> · no target set</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      pct={s.target_count > 0 ? pctUsers : 0}
+                      color="#4ADE80"
                     />
+                    {s.target_count === 0 ? (
+                      <p className="text-[11px] text-white/40">No target set</p>
+                    ) : null}
                   </div>
-                  <p className="text-xs text-white/45">
-                    {s.accepted} accepted vs {s.target_count} target
-                  </p>
+                  <div className="min-w-0 space-y-1.5">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                      <span className="text-xs font-medium text-white/85">
+                        {s.target_volume > 0 ? (
+                          <>
+                            Volume ·{" "}
+                            <span className="tabular-nums">
+                              {fmtUsd(s.total_volume_moved)}
+                            </span>{" "}
+                            /{" "}
+                            <span className="tabular-nums">
+                              {fmtUsd(s.target_volume)}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            Volume
+                            <span className="sr-only"> · no target set</span>
+                          </>
+                        )}
+                      </span>
+                    </div>
+                    <ProgressBar
+                      pct={s.target_volume > 0 ? pctVolume : 0}
+                      color="#229EDF"
+                    />
+                    {s.target_volume === 0 ? (
+                      <p className="text-[11px] text-white/40">No target set</p>
+                    ) : null}
+                  </div>
                 </div>
 
-                <div className="mt-4 text-xs text-white/55">
-                  <span>{s.accepted} accepted</span>
-                  {" · "}
-                  <span>{s.pending} pending</span>
-                  {" · "}
-                  <span>
-                    {s.total_invitations} invited / {s.target_count} target
-                  </span>
-                </div>
-
-                <div className="mt-4">
+                <div className="flex flex-col gap-3 border-t border-white/8 pt-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div className="flex flex-wrap gap-2">
+                    <span className={CHIP}>
+                      Total invited · {s.total_invitations.toLocaleString()}
+                    </span>
+                    <span className={CHIP}>
+                      Pending · {s.pending.toLocaleString()}
+                    </span>
+                    <span className={CHIP}>Acceptance · {rateLabel}</span>
+                    <span className={CHIP}>
+                      Duration ·{" "}
+                      {strategyDuration(s.created_at, s.completed_at)}
+                    </span>
+                  </div>
                   <Link
                     href={`/dashboard/strategies/${s.id}`}
-                    className="text-sm font-medium text-[#229EDF] hover:underline"
+                    className="shrink-0 self-end text-sm font-medium text-[#229EDF] hover:underline"
                   >
                     Manage →
                   </Link>
@@ -375,21 +494,42 @@ export default function StrategiesClient(props: Props) {
                 </div>
               </div>
 
-              <div>
-                <label
-                  htmlFor="strat-target"
-                  className="block text-xs font-medium text-white/50"
-                >
-                  Target count
-                </label>
-                <input
-                  id="strat-target"
-                  type="number"
-                  min={0}
-                  value={formTarget}
-                  onChange={(e) => setFormTarget(Number(e.target.value) || 0)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label
+                    htmlFor="strat-target-users"
+                    className="block text-xs font-medium text-white/50"
+                  >
+                    Target users
+                  </label>
+                  <input
+                    id="strat-target-users"
+                    type="number"
+                    min={0}
+                    value={formTarget}
+                    onChange={(e) => setFormTarget(Number(e.target.value) || 0)}
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="strat-target-volume"
+                    className="block text-xs font-medium text-white/50"
+                  >
+                    Target volume (USD)
+                  </label>
+                  <input
+                    id="strat-target-volume"
+                    type="number"
+                    min={0}
+                    step="1"
+                    value={formTargetVolume}
+                    onChange={(e) =>
+                      setFormTargetVolume(Number(e.target.value) || 0)
+                    }
+                    className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  />
+                </div>
               </div>
 
               <div>

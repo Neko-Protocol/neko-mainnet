@@ -18,11 +18,13 @@ export type Strategy = {
   description: string | null;
   type: StrategyType;
   target_count: number;
+  target_volume: number;
   status: StrategyStatus;
   assigned_to: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
+  completed_at: string | null;
 };
 
 export type StrategyWithStats = Strategy & {
@@ -31,6 +33,7 @@ export type StrategyWithStats = Strategy & {
   accepted: number;
   expired: number;
   acceptance_rate: number;
+  total_volume_moved: number;
 };
 
 const TYPE_SET = new Set<string>(STRATEGY_TYPES.map((t) => t.id));

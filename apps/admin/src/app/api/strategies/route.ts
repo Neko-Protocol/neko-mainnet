@@ -43,6 +43,9 @@ export async function POST(request: NextRequest) {
   if (!Number.isFinite(target_count)) target_count = 0;
   target_count = Math.max(0, Math.floor(target_count));
 
+  let target_volume = Number(b.target_volume);
+  if (!Number.isFinite(target_volume)) target_volume = 0;
+
   const assigned_raw =
     typeof b.assigned_to === "string" ? b.assigned_to.trim() : "";
   const assigned_to = assigned_raw.length > 0 ? assigned_raw : null;
@@ -71,6 +74,7 @@ export async function POST(request: NextRequest) {
     description,
     type: typeRaw,
     target_count,
+    target_volume,
     assigned_to,
     created_by: "admin",
     status: statusParse,
