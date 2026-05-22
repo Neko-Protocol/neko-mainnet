@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -25,9 +26,14 @@ export function Sidebar() {
   return (
     <aside className="flex h-screen w-56 flex-col bg-[#161616] border-r border-white/8">
       <div className="border-b border-white/8 px-4 py-5">
-        <span className="text-lg font-semibold tracking-tight text-[#229EDF]">
-          neko admin
-        </span>
+        <Image
+          src="/neko-logo.png"
+          alt="Neko"
+          width={96}
+          height={32}
+          className="h-8 w-auto object-contain"
+          priority
+        />
       </div>
       <nav className="flex flex-col gap-0.5 p-2 flex-1">
         {links.map(({ href, label, icon: Icon }) => {
