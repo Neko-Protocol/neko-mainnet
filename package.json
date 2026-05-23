@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "private": true,
-  "packageManager": "npm@10.2.3",
+  "packageManager": "npm@11.6.2",
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
