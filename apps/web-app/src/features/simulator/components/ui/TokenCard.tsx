@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { useHaptics } from "@/hooks/useHaptics";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
@@ -23,7 +22,6 @@ interface TokenCardProps {
 }
 
 export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
-  const { light } = useHaptics();
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
   const { price, isLoading: priceLoading } = useTokenPrice(token.code);
@@ -46,11 +44,10 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
     <button
       type="button"
       onClick={() => {
-        light();
         onSelect();
       }}
       className={cn(
-        "group relative flex h-full min-h-[170px] flex-col overflow-hidden rounded-2xl border bg-[#1C1C1C] p-5 text-left transition-all duration-200 sm:min-h-[210px]",
+        "group relative flex h-full min-h-[120px] flex-col overflow-hidden rounded-2xl border bg-[#1C1C1C] p-3.5 text-left transition-all duration-200 sm:min-h-[140px]",
         "hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#202020]",
         isSelected
           ? "border-[#229EDF] ring-1 ring-[#229EDF]/40"
@@ -68,15 +65,15 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
         />
       )}
 
-      <div className="relative mb-5 flex items-start justify-between gap-3">
+      <div className="relative mb-3 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#121212] ring-1 ring-white/10">
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#121212] ring-1 ring-white/10">
             {iconSrc ? (
               <Image
                 src={iconSrc}
                 alt={token.code}
-                width={44}
-                height={44}
+                width={36}
+                height={36}
                 unoptimized
                 className={getTokenIconFitClass(token.code)}
               />
@@ -88,7 +85,7 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
             <h3 className="truncate text-sm font-semibold leading-tight text-white">
               {token.code}
             </h3>
-            <p className="mt-0.5 truncate text-xs text-white/50">
+            <p className="mt-0.5 truncate text-[11px] text-white/50">
               {token.name}
             </p>
           </div>
@@ -101,9 +98,9 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
         ) : null}
       </div>
 
-      <div className="relative flex flex-1 flex-col justify-between gap-4">
+      <div className="relative flex flex-1 flex-col justify-between gap-2">
         <div>
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-white/40">
+          <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/40">
             Price ({selectedCurrency})
           </p>
           {priceLoading ? (
@@ -114,7 +111,7 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
           ) : (
             <p
               className={cn(
-                "text-3xl font-bold tabular-nums",
+                "text-xl font-bold tabular-nums",
                 price > 0 ? "text-white" : "text-white/40"
               )}
             >
@@ -123,11 +120,11 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-1">
           {taxonomy && accent ? (
             <span
               className={cn(
-                "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-semibold",
+                "inline-flex items-center rounded-md px-2 py-0.5 text-[9px] font-semibold",
                 accent.chip
               )}
             >
@@ -135,7 +132,7 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
             </span>
           ) : null}
           {showBalance ? (
-            <span className="inline-flex items-center rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/45">
+            <span className="inline-flex items-center rounded-md bg-white/[0.06] px-2 py-0.5 text-[9px] font-semibold text-white/45">
               {showBalance}
             </span>
           ) : null}
