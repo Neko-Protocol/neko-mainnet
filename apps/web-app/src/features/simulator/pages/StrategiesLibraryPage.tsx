@@ -63,7 +63,7 @@ export default function StrategiesLibraryPage() {
               Build new strategy
             </Link>
           </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable]">
+          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable] pt-4">
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
               {myStrategies.map((s) => (
                 <StrategyRow
