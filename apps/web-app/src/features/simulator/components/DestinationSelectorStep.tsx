@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { useHaptics } from "@/hooks/useHaptics";
 import { useFilteredDestinations } from "../hooks/useFilteredDestinations";
 import { DestinationCard } from "./ui/DestinationCard";
 import { VaultDestinationCard } from "./ui/VaultDestinationCard";
@@ -31,7 +30,6 @@ function EtherfuseBondCard({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const { light } = useHaptics();
   const symbol =
     destination.bondSymbol ?? destination.acceptedTokenCodes[0] ?? "";
   const symbolInitial =
@@ -43,7 +41,6 @@ function EtherfuseBondCard({
     <button
       type="button"
       onClick={() => {
-        light();
         onSelect();
       }}
       className={cn(
