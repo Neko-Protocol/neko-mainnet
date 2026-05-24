@@ -1,9 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
-import { X } from "lucide-react";
-import { useHaptics } from "@/hooks/useHaptics";
+import { useMemo } from "react";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
@@ -244,7 +242,6 @@ export function ReturnSimulatorStep({
   showSaveStrategy = false,
 }: ReturnSimulatorStepProps) {
   const { balances, address } = useWallet();
-  const { light, success } = useHaptics();
   const walletConnected = Boolean(address);
 
   const { bondHold, depositVenue, projectionDestination, amountAssetCode } =
@@ -380,12 +377,13 @@ export function ReturnSimulatorStep({
     isSwapDepositPending;
 
   const useSwapThenDeposit =
-    stableFundsBondPurchase &&
-    Boolean(depositVenue) &&
-    Boolean(onSwapAndDeposit);
+    stableFundsBondPurchase && Boolean(onSwapAndDeposit);
+
+  const isSwapOnly = useSwapThenDeposit && !depositVenue;
 
   const canDeposit =
     Boolean(depositVenue) ||
+    useSwapThenDeposit ||
     (!bondHold && projectionDestination.kind !== "yield-token");
 
   const summaryDestination: SimulatorDestination =
@@ -395,20 +393,7 @@ export function ReturnSimulatorStep({
 
   const earningsTokenLabel = bondHold?.bondSymbol ?? amountAssetCode;
 
-  const [projectionsOpen, setProjectionsOpen] = useState(false);
-  const selectedCurrencyMain = useCurrencyStore((s) => s.selectedCurrency);
-  const { rate: fxRateMain } = useFxRate({ currency: selectedCurrencyMain });
-  const oneYear = projections.find((p) => p.months === 12);
-  const oneYearLabel = useMemo(() => {
-    if (!oneYear) return null;
-    if (hasPrice) {
-      return `+${formatCurrency(convertUsdToSelected(oneYear.earningsUsd, fxRateMain), selectedCurrencyMain)}`;
-    }
-    return `+${formatAmount(oneYear.earningsToken)} ${amountAssetCode}`;
-  }, [oneYear, hasPrice, fxRateMain, selectedCurrencyMain, amountAssetCode]);
-
   const handleMax = () => {
-    light();
     if (!token.hasWallet) return;
     if (walletBalanceForAmount <= 0) return;
     onAmountChange(walletBalanceForAmount.toString());
@@ -428,7 +413,6 @@ export function ReturnSimulatorStep({
         return;
       }
       onStartDepositOrchestrator?.();
-      success();
     }
   };
 
@@ -449,241 +433,138 @@ export function ReturnSimulatorStep({
         stableAmount: amount,
         expectedBondOutHuman: outStr,
       });
-      success();
     } catch (e) {
       throw e;
     }
   };
 
   return (
-    <>
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {/* Scrollable content */}
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
-          <div className="flex flex-col gap-5 pb-2">
-            {/* Header */}
-            <header className="flex shrink-0 flex-col gap-1">
-              <h2 className="text-xl font-semibold text-white">
-                {isYieldOnlyHold
-                  ? `Watch your ${earningsTokenLabel} grow`
-                  : "See what you could earn"}
-              </h2>
-              <p className="text-sm text-white/50">
-                {stableFundsBondPurchase
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      {/* Scrollable content */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
+        <div className="flex flex-col gap-5 pb-2">
+          {/* Header */}
+          <header className="flex shrink-0 flex-col gap-1">
+            <h2 className="text-xl font-semibold text-white">
+              {isYieldOnlyHold
+                ? `Watch your ${earningsTokenLabel} grow`
+                : "See what you could earn"}
+            </h2>
+            <p className="text-sm text-white/50">
+              {stableFundsBondPurchase
+                ? depositVenue
                   ? `Enter how much ${token.code} to use. We'll swap it to ${bondSymbolResolved} and deposit it for you.`
-                  : "Enter an amount to see your projected earnings."}
-              </p>
-            </header>
+                  : `Enter how much ${token.code} to use. We'll swap it to ${bondSymbolResolved} for you.`
+                : "Enter an amount to see your projected earnings."}
+            </p>
+          </header>
 
-            {/* Strategy recap */}
-            <StrategyRecap
-              token={summaryToken}
-              destination={summaryDestination}
-              apy={apy}
-              isLoading={isWaitingForApy}
-            />
-
-            {/* Amount input */}
-            <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-4">
-              <label
-                htmlFor="simulator-amount"
-                className="text-xs font-semibold uppercase tracking-widest text-white/40"
-              >
-                {stableFundsBondPurchase
-                  ? `How much ${token.code}?`
-                  : "How much?"}
-              </label>
-              <div className="mt-2 flex items-center gap-2">
-                <input
-                  id="simulator-amount"
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => {
-                    const next = e.target.value.replace(/[^0-9.]/g, "");
-                    onAmountChange(next);
-                  }}
-                  className="w-full bg-transparent text-3xl font-semibold text-white outline-none placeholder:text-white/30"
-                />
-                <span className="flex shrink-0 items-center gap-2 text-base font-semibold text-white/80">
-                  {bondHold?.bondIcon &&
-                  isYieldOnlyHold &&
-                  !stableFundsBondPurchase ? (
-                    <Image
-                      src={bondHold.bondIcon}
-                      alt={amountAssetCode}
-                      width={24}
-                      height={24}
-                      unoptimized
-                      className="rounded-full"
-                    />
-                  ) : token.iconSrc && stableFundsBondPurchase ? (
-                    <Image
-                      src={token.iconSrc}
-                      alt={token.code}
-                      width={24}
-                      height={24}
-                      unoptimized
-                      className="rounded-full"
-                    />
-                  ) : null}
-                  {stableFundsBondPurchase ? token.code : amountAssetCode}
-                </span>
-              </div>
-
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-1 text-xs text-white/50">
-                <span>
-                  {token.hasWallet
-                    ? `Balance: ${formatAmount(walletBalanceForAmount)} ${stableFundsBondPurchase ? token.code : amountAssetCode}`
-                    : "Connect wallet to deposit"}
-                </span>
-                {token.hasWallet && walletBalanceForAmount > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleMax}
-                    className="rounded-full bg-[#229EDF]/10 px-3 py-1 text-xs font-semibold text-[#229EDF] hover:bg-[#229EDF]/20"
-                  >
-                    Max
-                  </button>
-                )}
-              </div>
-
-              {stableFundsBondPurchase && stableAmountNum > 0 && (
-                <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
-                  {swapQuote.isFetching ? (
-                    <span>Fetching swap estimate…</span>
-                  ) : swapQuote.isError ? (
-                    <span className="text-amber-200/90">
-                      Could not price {token.code} → {bondSymbolResolved}. Try a
-                      smaller amount or swap manually on the Swap page.
-                    </span>
-                  ) : swapQuote.data ? (
-                    <span>
-                      ≈{" "}
-                      <span className="font-mono font-semibold text-white">
-                        {formatAmount(swapQuote.data.bondOutHuman)}{" "}
-                        {bondSymbolResolved}
-                      </span>{" "}
-                      after swap (estimate; actual output may differ slightly).
-                    </span>
-                  ) : null}
-                </div>
-              )}
-
-              {bondHold &&
-                token.code !== amountAssetCode &&
-                bondHold.bondSymbol &&
-                !stableFundsBondPurchase && (
-                  <p className="mt-2 text-xs text-white/40">
-                    Projections are in {bondHold.bondSymbol}.
-                  </p>
-                )}
-            </div>
-          </div>
-        </div>
-
-        {/* Unified nav bar - replaces both the old CTA row and the wizard's separate WizardNav */}
-        <div className="shrink-0 border-t border-white/8 pt-4">
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {/* Left: Back + See breakdown */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  light();
-                  onBack?.();
-                }}
-                className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/5"
-              >
-                Back
-              </button>
-              {stableAmountNum > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setProjectionsOpen(true)}
-                  className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-medium text-white/60 transition-colors hover:bg-white/5 hover:text-white"
-                >
-                  See breakdown
-                </button>
-              )}
-            </div>
-
-            {/* Right: Save strategy + primary action */}
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:gap-3">
-              {showSaveStrategy && (
-                <button
-                  type="button"
-                  onClick={onSaveStrategy}
-                  className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 transition-colors hover:border-white/30 hover:text-white"
-                >
-                  Save strategy
-                </button>
-              )}
-              {!canDeposit ? (
-                <button
-                  type="button"
-                  disabled={stableAmountNum <= 0}
-                  className={cn(
-                    "rounded-full px-6 py-2.5 text-sm font-semibold transition-colors",
-                    stableAmountNum <= 0
-                      ? "cursor-not-allowed bg-white/10 text-white/40"
-                      : "border border-white/15 text-white hover:bg-white/5"
-                  )}
-                >
-                  Got it
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() =>
-                    useSwapThenDeposit
-                      ? void handleSwapAndDepositClick()
-                      : handleDepositClick()
-                  }
-                  disabled={ctaDisabled || !walletConnected}
-                  className={cn(
-                    "rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-colors",
-                    ctaDisabled || !walletConnected
-                      ? "cursor-not-allowed bg-white/10 text-white/40"
-                      : "bg-[#229EDF] hover:bg-[#1f8ec9]"
-                  )}
-                >
-                  {!walletConnected
-                    ? useSwapThenDeposit
-                      ? "Connect wallet to swap & deposit"
-                      : "Connect wallet to deposit"
-                    : isSwapDepositPending
-                      ? "Swapping…"
-                      : useSwapThenDeposit
-                        ? "Swap & deposit"
-                        : "Deposit"}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Projections modal */}
-      {projectionsOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setProjectionsOpen(false)}
+          {/* Strategy recap */}
+          <StrategyRecap
+            token={summaryToken}
+            destination={summaryDestination}
+            apy={apy}
+            isLoading={isWaitingForApy}
           />
-          <div className="relative w-full max-w-lg rounded-t-3xl border border-white/10 bg-[#1C1C1C] p-6 sm:rounded-3xl">
-            <div className="mb-5 flex items-center justify-between">
-              <h3 className="text-base font-semibold text-white">
-                Earnings breakdown
-              </h3>
-              <button
-                type="button"
-                onClick={() => setProjectionsOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </button>
+
+          {/* Amount input */}
+          <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-4">
+            <label
+              htmlFor="simulator-amount"
+              className="text-xs font-semibold uppercase tracking-widest text-white/40"
+            >
+              {stableFundsBondPurchase
+                ? `How much ${token.code}?`
+                : "How much?"}
+            </label>
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                id="simulator-amount"
+                inputMode="decimal"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => {
+                  const next = e.target.value.replace(/[^0-9.]/g, "");
+                  onAmountChange(next);
+                }}
+                className="w-full bg-transparent text-3xl font-semibold text-white outline-none placeholder:text-white/30"
+              />
+              <span className="flex shrink-0 items-center gap-2 text-base font-semibold text-white/80">
+                {bondHold?.bondIcon &&
+                isYieldOnlyHold &&
+                !stableFundsBondPurchase ? (
+                  <Image
+                    src={bondHold.bondIcon}
+                    alt={amountAssetCode}
+                    width={24}
+                    height={24}
+                    unoptimized
+                    className="rounded-full"
+                  />
+                ) : token.iconSrc && stableFundsBondPurchase ? (
+                  <Image
+                    src={token.iconSrc}
+                    alt={token.code}
+                    width={24}
+                    height={24}
+                    unoptimized
+                    className="rounded-full"
+                  />
+                ) : null}
+                {stableFundsBondPurchase ? token.code : amountAssetCode}
+              </span>
             </div>
+
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-1 text-xs text-white/50">
+              <span>
+                {token.hasWallet
+                  ? `Balance: ${formatAmount(walletBalanceForAmount)} ${stableFundsBondPurchase ? token.code : amountAssetCode}`
+                  : "Connect wallet to deposit"}
+              </span>
+              {token.hasWallet && walletBalanceForAmount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleMax}
+                  className="rounded-full bg-[#229EDF]/10 px-3 py-1 text-xs font-semibold text-[#229EDF] hover:bg-[#229EDF]/20"
+                >
+                  Max
+                </button>
+              )}
+            </div>
+
+            {stableFundsBondPurchase && stableAmountNum > 0 && (
+              <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
+                {swapQuote.isFetching ? (
+                  <span>Fetching swap estimate…</span>
+                ) : swapQuote.isError ? (
+                  <span className="text-amber-200/90">
+                    Could not price {token.code} → {bondSymbolResolved}. Try a
+                    smaller amount or swap manually on the Swap page.
+                  </span>
+                ) : swapQuote.data ? (
+                  <span>
+                    ≈{" "}
+                    <span className="font-mono font-semibold text-white">
+                      {formatAmount(swapQuote.data.bondOutHuman)}{" "}
+                      {bondSymbolResolved}
+                    </span>{" "}
+                    after swap (estimate; actual output may differ slightly).
+                  </span>
+                ) : null}
+              </div>
+            )}
+
+            {bondHold &&
+              token.code !== amountAssetCode &&
+              bondHold.bondSymbol &&
+              !stableFundsBondPurchase && (
+                <p className="mt-2 text-xs text-white/40">
+                  Projections are in {bondHold.bondSymbol}.
+                </p>
+              )}
+          </div>
+
+          {stableAmountNum > 0 ? (
             <EarningsPanel
               projections={projections}
               tokenCode={amountAssetCode}
@@ -695,9 +576,88 @@ export function ReturnSimulatorStep({
                   stableAmountNum > 0)
               }
             />
+          ) : (
+            <div className="rounded-2xl border border-white/8 bg-[#1E1E1E] px-5 py-8 text-center text-sm text-white/30">
+              Enter an amount above to see your projected earnings.
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Unified nav bar - replaces both the old CTA row and the wizard's separate WizardNav */}
+      <div className="shrink-0 border-t border-white/8 pt-4">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {/* Left: Back */}
+          <div className="flex items-center">
+            <button
+              type="button"
+              onClick={() => {
+                onBack?.();
+              }}
+              className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/5"
+            >
+              Back
+            </button>
+          </div>
+
+          {/* Right: Save strategy + primary action */}
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:gap-3">
+            {showSaveStrategy && (
+              <button
+                type="button"
+                onClick={onSaveStrategy}
+                className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 transition-colors hover:border-white/30 hover:text-white"
+              >
+                Save strategy
+              </button>
+            )}
+            {!canDeposit ? (
+              <button
+                type="button"
+                disabled={stableAmountNum <= 0}
+                className={cn(
+                  "rounded-full px-6 py-2.5 text-sm font-semibold transition-colors",
+                  stableAmountNum <= 0
+                    ? "cursor-not-allowed bg-white/10 text-white/40"
+                    : "border border-white/15 text-white hover:bg-white/5"
+                )}
+              >
+                Got it
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() =>
+                  useSwapThenDeposit
+                    ? void handleSwapAndDepositClick()
+                    : handleDepositClick()
+                }
+                disabled={ctaDisabled || !walletConnected}
+                className={cn(
+                  "rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-colors",
+                  ctaDisabled || !walletConnected
+                    ? "cursor-not-allowed bg-white/10 text-white/40"
+                    : "bg-[#229EDF] hover:bg-[#1f8ec9]"
+                )}
+              >
+                {!walletConnected
+                  ? isSwapOnly
+                    ? "Connect wallet to buy"
+                    : useSwapThenDeposit
+                      ? "Connect wallet to swap & deposit"
+                      : "Connect wallet to deposit"
+                  : isSwapDepositPending
+                    ? "Swapping…"
+                    : isSwapOnly
+                      ? `Buy ${bondHold?.bondSymbol ?? bondSymbolResolved}`
+                      : useSwapThenDeposit
+                        ? "Swap & deposit"
+                        : "Deposit"}
+              </button>
+            )}
           </div>
         </div>
-      )}
-    </>
+      </div>
+    </section>
   );
 }

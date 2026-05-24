@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { VaultActionModal } from "@/features/shared/vault/components/ui/VaultActionModal";
 import type { VaultView } from "@/features/shared/vault/types/vault";
 import { useSwapExecution } from "@/features/expert/swap/hooks/useSwapExecution";
-import { useHaptics } from "@/hooks/useHaptics";
 import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
@@ -63,7 +64,6 @@ export function SimulatorWizard() {
   const { executeSwap } = useSwapExecution();
   const { address, networkPassphrase } = useWallet();
   const { addNotification } = useToast();
-  const { success } = useHaptics();
 
   const { strategies, pendingExecuteId, setPendingExecuteId } =
     useStrategiesStore();
@@ -153,7 +153,7 @@ export function SimulatorWizard() {
     async (payload: { stableAmount: string; expectedBondOutHuman: string }) => {
       if (!state.token || !address || !networkPassphrase) return;
       const sim = resolveSimulationTargets(state);
-      if (!sim?.bondHold || !sim.depositVenue) return;
+      if (!sim?.bondHold) return;
 
       const bondSymbol =
         sim.bondHold.bondSymbol ?? sim.bondHold.acceptedTokenCodes[0] ?? "";
@@ -191,39 +191,40 @@ export function SimulatorWizard() {
         });
 
         addNotification("Swap confirmed", "success", TOAST_CONFIG.defaultOpts);
-        success();
 
         await queryClient.invalidateQueries({
           queryKey: ["stellar-balances", address],
         });
 
-        const target = sim.depositVenue;
-        const bondAmt = payload.expectedBondOutHuman;
+        if (sim.depositVenue) {
+          const target = sim.depositVenue;
+          const bondAmt = payload.expectedBondOutHuman;
 
-        if (target.kind === "vault" && target.raw) {
-          setDepositIntent({
-            kind: "vault",
-            vault: target.raw as VaultView,
-            depositAmountHuman: bondAmt,
-          });
-          return;
-        }
-        if (target.kind === "pool") {
-          if (target.lendingContractId && target.lendingAssetCode) {
+          if (target.kind === "vault" && target.raw) {
             setDepositIntent({
-              kind: "lending",
-              assetCode: target.lendingAssetCode,
-              contractId: target.lendingContractId,
+              kind: "vault",
+              vault: target.raw as VaultView,
               depositAmountHuman: bondAmt,
             });
             return;
           }
-          if (target.raw) {
-            setDepositIntent({
-              kind: "orchestrator",
-              poolInfo: target.raw as PoolInfo,
-              depositAmountHuman: bondAmt,
-            });
+          if (target.kind === "pool") {
+            if (target.lendingContractId && target.lendingAssetCode) {
+              setDepositIntent({
+                kind: "lending",
+                assetCode: target.lendingAssetCode,
+                contractId: target.lendingContractId,
+                depositAmountHuman: bondAmt,
+              });
+              return;
+            }
+            if (target.raw) {
+              setDepositIntent({
+                kind: "orchestrator",
+                poolInfo: target.raw as PoolInfo,
+                depositAmountHuman: bondAmt,
+              });
+            }
           }
         }
       } catch (e) {
@@ -249,7 +250,6 @@ export function SimulatorWizard() {
       executeSwap,
       queryClient,
       addNotification,
-      success,
     ]
   );
 
@@ -261,7 +261,16 @@ export function SimulatorWizard() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
-      <div className="shrink-0">
+      <div className="flex shrink-0 flex-col gap-4">
+        <div>
+          <Link
+            href="/strategies"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-white/60 transition-all hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
+          >
+            <ArrowLeft size={12} />
+            Strategies
+          </Link>
+        </div>
         <StepIndicator steps={stepsMeta} currentPhase={state.phase} />
       </div>
 
@@ -372,7 +381,6 @@ export function SimulatorWizard() {
               amount: depositIntent.depositAmountHuman ?? state.amount,
               contractId: depositIntent.contractId,
             });
-            success();
           }}
         />
       )}
@@ -389,7 +397,6 @@ export function SimulatorWizard() {
               depositIntent.poolInfo,
               depositIntent.depositAmountHuman ?? state.amount
             );
-            success();
           }}
         />
       )}
