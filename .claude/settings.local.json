@@ -17,7 +17,19 @@
       "Bash(git commit *)",
       "Bash(npm audit *)",
       "WebFetch(domain:mintlify.com)",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(git -C /Users/villarley/Documents/GitHub/neko-mainnet log --all --oneline -- apps/web-app/vercel.json apps/admin/vercel.json)",
+      "mcp__cursor-coder__cursor_write_code",
+      "Bash(git -C /Users/villarley/Documents/GitHub/neko-mainnet add apps/web-app/vercel.json vercel.json)",
+      "Bash(git -C /Users/villarley/Documents/GitHub/neko-mainnet commit -m ' *)",
+      "Bash(git -C /Users/villarley/Documents/GitHub/neko-mainnet push origin fix/vercel-build)",
+      "Bash(git -C /Users/villarley/Documents/GitHub/neko-mainnet add vercel.json)",
+      "Bash(xargs -r ps -p)",
+      "Bash(awk -F: '{sum+=$2} END {print sum}')",
+      "Bash(grep -n \"useHaptics\\\\|light\\(\\)\\\\|success\\(\\)\\\\|error\\(\\)\\\\|const { light\\\\|const { success\\\\|const { error\\\\|light,\\\\|success,\\\\|error,\\\\|, light\\\\|, success\\\\|, error\" /Users/villarley/Documents/GitHub/neko-mainnet/apps/web-app/src/features/simulator/components/SimulatorWizard.tsx)",
+      "Bash(git *)",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(echo \"Exit: $?\")"
     ]
   },
   "enableAllProjectMcpServers": true,
