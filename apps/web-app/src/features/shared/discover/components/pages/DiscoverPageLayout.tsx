@@ -55,11 +55,12 @@ export function DiscoverPageLayout({ renderCard }: DiscoverPageLayoutProps) {
     <PageContainer maxWidth="7xl">
       <BannerPage
         title="Discover Assets"
-        subtitle="Live spot prices and background on every supported asset"
+        subtitle="Explore assets, prices and market data"
         badge="Market data"
         imageSrc="/banners/discover.png"
         imageAlt="Discover assets"
         imageSize="large"
+        imageLayoutClassName="-right-[116px] top-2 h-[115%] w-[118%] opacity-60 sm:-right-116 sm:-top-15 sm:h-[155%] sm:w-[120%] sm:opacity-100"
         className="mb-8"
       />
 
