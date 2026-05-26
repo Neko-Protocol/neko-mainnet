@@ -62,7 +62,7 @@ export function BannerPage({
         </h2>
 
         {subtitle && (
-          <p className="w-full max-w-full min-w-0 text-xs sm:text-sm leading-relaxed text-white/90 wrap-break-word">
+          <p className="w-full max-w-full min-w-0 font-bold sm:font-normal text-xs sm:text-sm leading-relaxed text-white wrap-break-word">
             {subtitle}
           </p>
         )}

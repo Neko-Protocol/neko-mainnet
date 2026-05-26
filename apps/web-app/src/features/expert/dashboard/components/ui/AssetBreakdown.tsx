@@ -18,22 +18,20 @@ const AssetBreakdown: React.FC = () => {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between mb-5">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
-            Top Pools
-          </h2>
+      <div className="flex flex-col gap-1 mb-5">
+        <h2 className="text-xl sm:text-2xl font-bold text-white">Top Pools</h2>
+        <div className="flex items-center justify-between">
           <p className="text-white/40 text-sm">
             Overview of the most active pools
           </p>
+          <Link
+            href="/lending"
+            className="flex items-center gap-1.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
+          >
+            View all pools
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
-        <Link
-          href="/lending"
-          className="flex items-center gap-1.5 text-sm font-semibold text-white/40 hover:text-white transition-colors self-end"
-        >
-          View all pools
-          <ArrowRight className="h-4 w-4" />
-        </Link>
       </div>
 
       <LendTable

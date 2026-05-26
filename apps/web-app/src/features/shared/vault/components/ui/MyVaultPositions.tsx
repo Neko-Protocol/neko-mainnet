@@ -181,42 +181,46 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
         </span>
       </div>
 
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-white/5">
-            <th className="px-4 py-3 text-left">
-              <span className="text-white/30 text-xs font-medium">Vault</span>
-            </th>
-            <th className="px-4 py-3 text-left">
-              <span className="text-white/30 text-xs font-medium">Asset</span>
-            </th>
-            <th className="px-4 py-3 text-center">
-              <span className="text-white/30 text-xs font-medium">
-                Deposited
-              </span>
-            </th>
-            <th className="px-4 py-3 text-center">
-              <span className="text-white/30 text-xs font-medium">Value</span>
-            </th>
-            <th className="px-4 py-3 text-center">
-              <span className="text-white/30 text-xs font-medium">APY</span>
-            </th>
-            <th className="px-4 py-3 text-center">
-              <span className="text-white/30 text-xs font-medium">Status</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {positionVaults.map((vault) => (
-            <VaultPositionRow
-              key={vault.id}
-              vault={vault}
-              rawBalance={userBalances[vault.id] ?? 0n}
-              onOpen={openVault}
-            />
-          ))}
-        </tbody>
-      </table>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[560px]">
+          <thead>
+            <tr className="border-b border-white/5">
+              <th className="px-4 py-3 text-left">
+                <span className="text-white/30 text-xs font-medium">Vault</span>
+              </th>
+              <th className="px-4 py-3 text-left">
+                <span className="text-white/30 text-xs font-medium">Asset</span>
+              </th>
+              <th className="px-4 py-3 text-center">
+                <span className="text-white/30 text-xs font-medium">
+                  Deposited
+                </span>
+              </th>
+              <th className="px-4 py-3 text-center">
+                <span className="text-white/30 text-xs font-medium">Value</span>
+              </th>
+              <th className="px-4 py-3 text-center">
+                <span className="text-white/30 text-xs font-medium">APY</span>
+              </th>
+              <th className="px-4 py-3 text-center">
+                <span className="text-white/30 text-xs font-medium">
+                  Status
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {positionVaults.map((vault) => (
+              <VaultPositionRow
+                key={vault.id}
+                vault={vault}
+                rawBalance={userBalances[vault.id] ?? 0n}
+                onOpen={openVault}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

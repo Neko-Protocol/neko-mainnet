@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import type { VaultAsset } from "../../types/vault";
 import { resolveAssetIcon } from "../../utils/vault";
@@ -12,19 +14,32 @@ interface VaultAssetIllustrationsProps {
 const DROP_SHADOW = "drop-shadow(0 10px 20px rgba(0,0,0,0.28))";
 const DROP_SHADOW_SECONDARY = "drop-shadow(0 10px 20px rgba(0,0,0,0.22))";
 
-// Two collateral assets (e.g. USDC + CETES)
-const DUAL_LEFT = { width: 128, height: 150, top: -10, right: 88 } as const;
-const DUAL_RIGHT = { width: 108, height: 128, top: 14, right: -10 } as const;
+// Desktop sizes (original)
+const DUAL_LEFT_D = { width: 128, height: 150, top: -10, right: 88 } as const;
+const DUAL_RIGHT_D = { width: 108, height: 128, top: 14, right: -10 } as const;
+const ISSUER_TOKEN_D = {
+  width: 108,
+  height: 128,
+  top: 14,
+  right: 112,
+} as const;
+const ISSUER_BRAND_D = {
+  width: 128,
+  height: 150,
+  top: -10,
+  right: 14,
+} as const;
+const SINGLE_D = { width: 138, height: 160, top: -8, right: -8 } as const;
 
-// Token + issuer/brand: token on left (small), issuer on right (large)
-const ISSUER_TOKEN = { width: 108, height: 128, top: 14, right: 112 } as const;
-const ISSUER_BRAND = { width: 128, height: 150, top: -10, right: 14 } as const;
+// Mobile sizes (smaller)
+const DUAL_LEFT_M = { width: 96, height: 114, top: 4, right: 68 } as const;
+const DUAL_RIGHT_M = { width: 80, height: 94, top: 22, right: -8 } as const;
+const ISSUER_TOKEN_M = { width: 80, height: 94, top: 22, right: 86 } as const;
+const ISSUER_BRAND_M = { width: 96, height: 114, top: 4, right: 2 } as const;
+const SINGLE_M = { width: 104, height: 122, top: 8, right: -4 } as const;
 
-// Single asset with no paired image
-const SINGLE = { width: 138, height: 160, top: -8, right: -8 } as const;
-
-const WRAPPER_CLASS =
-  "absolute right-0 top-0 h-full w-[46%] pointer-events-none select-none";
+const WRAPPER_BASE =
+  "absolute right-0 top-0 h-full pointer-events-none select-none";
 
 interface IllustrationSlotProps {
   src: string;
@@ -43,6 +58,23 @@ function IllustrationSlot({ src, alt, style }: IllustrationSlotProps) {
 export const VaultAssetIllustrations: React.FC<
   VaultAssetIllustrationsProps
 > = ({ collateralAssets, isLight, issuerIconSrc }) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const DUAL_LEFT = isMobile ? DUAL_LEFT_M : DUAL_LEFT_D;
+  const DUAL_RIGHT = isMobile ? DUAL_RIGHT_M : DUAL_RIGHT_D;
+  const ISSUER_TOKEN = isMobile ? ISSUER_TOKEN_M : ISSUER_TOKEN_D;
+  const ISSUER_BRAND = isMobile ? ISSUER_BRAND_M : ISSUER_BRAND_D;
+  const SINGLE = isMobile ? SINGLE_M : SINGLE_D;
+  const wrapperClass = `${WRAPPER_BASE} ${isMobile ? "w-[44%]" : "w-[46%]"}`;
+
   const first = collateralAssets[0];
   const second = collateralAssets[1];
 
@@ -50,7 +82,7 @@ export const VaultAssetIllustrations: React.FC<
 
   if (second) {
     return (
-      <div className={WRAPPER_CLASS}>
+      <div className={wrapperClass}>
         <IllustrationSlot
           src={resolveAssetIcon(first, isLight)}
           alt={first.symbol}
@@ -75,7 +107,7 @@ export const VaultAssetIllustrations: React.FC<
 
   if (issuerIconSrc) {
     return (
-      <div className={WRAPPER_CLASS}>
+      <div className={wrapperClass}>
         <IllustrationSlot
           src={resolveAssetIcon(first, isLight)}
           alt={first.symbol}
@@ -99,15 +131,11 @@ export const VaultAssetIllustrations: React.FC<
   }
 
   return (
-    <div className={WRAPPER_CLASS}>
+    <div className={wrapperClass}>
       <IllustrationSlot
         src={resolveAssetIcon(first, isLight)}
         alt={first.symbol}
-        style={{
-          ...SINGLE,
-          transform: "rotate(-8deg)",
-          filter: DROP_SHADOW,
-        }}
+        style={{ ...SINGLE, transform: "rotate(-8deg)", filter: DROP_SHADOW }}
       />
     </div>
   );

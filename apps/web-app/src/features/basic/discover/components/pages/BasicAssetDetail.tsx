@@ -9,7 +9,7 @@ export function BasicAssetDetail() {
       renderRightPanel={({ symbolUpper }) => (
         <BasicBuyForm symbol={symbolUpper} />
       )}
-      rightPanelAlwaysVisible
+      renderMobilePanelLabel={({ symbolUpper }) => `Buy ${symbolUpper}`}
     />
   );
 }

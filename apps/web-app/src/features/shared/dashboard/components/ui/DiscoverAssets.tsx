@@ -15,22 +15,22 @@ const DiscoverAssets: React.FC = () => {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
-            Discover Assets
-          </h2>
+      <div className="flex flex-col gap-1 mb-5">
+        <h2 className="text-xl sm:text-2xl font-bold text-white">
+          Discover Assets
+        </h2>
+        <div className="flex items-center justify-between">
           <p className="text-white/40 text-sm">
             Spot {selectedCurrency} via Reflector
           </p>
+          <Link
+            href="/discover"
+            className="flex items-center gap-1.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
+          >
+            View all
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
-        <Link
-          href="/discover"
-          className="flex items-center gap-1.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
-        >
-          View all
-          <ArrowRight className="h-4 w-4" />
-        </Link>
       </div>
 
       {tokenCodes.length === 0 ? (

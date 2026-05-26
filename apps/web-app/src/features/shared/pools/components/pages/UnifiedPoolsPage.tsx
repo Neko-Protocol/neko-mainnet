@@ -151,13 +151,14 @@ function SubTabs<T extends string>({
 
 export default function UnifiedPoolsPage() {
   return (
-    <PageContainer maxWidth="6xl">
+    <PageContainer maxWidth="7xl">
       <BannerPage
         title="Lend to Pools"
-        subtitle="Supply liquidity to pools and earn interest on your assets"
-        badge="Use your actives"
+        subtitle="Lend your assets and earn interest"
+        badge="Earn yield"
         imageSrc="/banners/lend.svg"
         imageAlt="lending illustration"
+        imageLayoutClassName="right-0 top-3 h-full w-[75%] opacity-60 sm:top-0 sm:w-[55%] sm:opacity-100"
         className="mb-8"
       />
 

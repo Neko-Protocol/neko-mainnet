@@ -226,13 +226,14 @@ const Vault: React.FC = () => {
   };
 
   return (
-    <PageContainer maxWidth="6xl">
+    <PageContainer maxWidth="7xl">
       <BannerPage
         title="Vaults"
-        subtitle="Deposit assets into yield-generating vaults backed by real-world collateral on Stellar"
+        subtitle="Put your assets to work and earn yield on Stellar"
         badge="Earn yield"
         imageSrc="/banners/vault.svg"
         imageAlt="Vault illustration"
+        imageLayoutClassName="-right-10 top-5 h-[96%] w-[70%] opacity-60 sm:right-0 sm:top-0 sm:h-full sm:w-[55%] sm:opacity-100"
         className="mb-8"
       />
 
