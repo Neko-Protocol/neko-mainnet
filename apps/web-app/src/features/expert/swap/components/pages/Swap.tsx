@@ -340,6 +340,7 @@ const Swap: React.FC = () => {
         badge="Conversion"
         imageSrc="/banners/swap.svg"
         imageAlt="Swap illustration"
+        imageLayoutClassName="-right-12 -top-[15px] h-[120%] w-[96%] opacity-60 sm:right-0 sm:top-0 sm:h-full sm:w-[55%] sm:opacity-100"
         className="mb-6"
       />
 

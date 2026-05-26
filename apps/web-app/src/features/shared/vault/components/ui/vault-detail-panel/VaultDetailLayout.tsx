@@ -34,6 +34,7 @@ export function VaultDetailLayout({
   const [tab, setTab] = useState<VaultActionTab>(initialTab);
   const [amount, setAmount] = useState("");
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"about" | "action">("about");
 
   const { address } = useWallet();
   const vaultContractId = vault.detail?.contracts?.vault ?? null;
@@ -131,9 +132,41 @@ export function VaultDetailLayout({
           onClose={() => setSuccessModalOpen(false)}
         />
       )}
+      {/* Mobile tab bar */}
+      <div className="lg:hidden shrink-0 flex border-b border-white/10">
+        <button
+          type="button"
+          onClick={() => setMobileTab("about")}
+          className={`relative flex-1 py-3 text-sm font-medium transition-colors ${
+            mobileTab === "about"
+              ? "text-white"
+              : "text-white/40 hover:text-white/70"
+          }`}
+        >
+          About the Vault
+          {mobileTab === "about" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-white" />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileTab("action")}
+          className={`relative flex-1 py-3 text-sm font-medium transition-colors ${
+            mobileTab === "action"
+              ? "text-white"
+              : "text-white/40 hover:text-white/70"
+          }`}
+        >
+          Actions
+          {mobileTab === "action" && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-white" />
+          )}
+        </button>
+      </div>
+
       {/* Fixed right action panel */}
       <aside
-        className="z-30 w-full min-w-0 shrink-0 lg:fixed lg:right-8 lg:top-28 lg:z-40 lg:w-[min(24rem,calc(100vw-4rem))] lg:max-w-[calc(100vw-4rem)] lg:p-0"
+        className={`${mobileTab === "action" ? "block" : "hidden"} lg:block z-30 w-full min-w-0 shrink-0 lg:fixed lg:right-8 lg:top-28 lg:z-40 lg:w-[min(24rem,calc(100vw-4rem))] lg:max-w-[calc(100vw-4rem)] lg:p-0`}
         aria-label="Vault actions"
       >
         <div className={PANEL_SCROLL_CLASS}>
@@ -158,7 +191,9 @@ export function VaultDetailLayout({
       </aside>
 
       {/* Scrollable left content */}
-      <section className="pool-detail-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-8 pb-8 pt-0 lg:pr-6 lg:mr-104">
+      <section
+        className={`${mobileTab === "about" ? "block" : "hidden"} lg:block pool-detail-scroll min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-8 pb-8 pt-0 lg:pr-6 lg:mr-104`}
+      >
         <div className="pt-8">
           <VaultDetailHero vault={vault} />
           <div className="border-t border-white/5 mb-8" />

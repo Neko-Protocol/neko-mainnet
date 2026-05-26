@@ -39,13 +39,14 @@ const Borrow: React.FC = () => {
     !showLiquidations && activeTab === "liquidations" ? "pools" : activeTab;
 
   return (
-    <PageContainer maxWidth="6xl">
+    <PageContainer maxWidth="7xl">
       <BannerPage
         title="Borrow assets"
         subtitle="Select an option and start borrowing assets from liquidity pools"
         badge="Need a hand?"
         imageSrc="/banners/borrow.svg"
         imageAlt="Borrow illustration"
+        imageLayoutClassName="right-0 top-2 h-full w-[75%] opacity-60 sm:top-0 sm:w-[55%] sm:opacity-100"
         className="mb-8"
       />
 

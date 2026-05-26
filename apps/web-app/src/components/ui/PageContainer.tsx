@@ -27,7 +27,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        "w-full min-w-0 mx-auto",
+        "w-full min-w-0 mx-auto sm:px-4",
         MAX_WIDTH_CLASS[maxWidth],
         className
       )}

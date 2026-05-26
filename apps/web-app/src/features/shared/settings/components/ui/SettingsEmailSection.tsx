@@ -85,18 +85,9 @@ export function SettingsEmailSection({
       const res = await usersService.startEmailVerification(address, email);
       if (res.ok) {
         addNotification("Verification link sent. Check your inbox.", "success");
-        setUser((prev) =>
-          prev
-            ? { ...prev, email, email_verified_at: null }
-            : {
-                wallet_address: address,
-                wallet_provider: null,
-                email,
-                email_verified_at: null,
-                created_at: new Date().toISOString(),
-                preferences: {},
-              }
-        );
+        const fresh = await usersService.get(address);
+        setUser(fresh);
+        setDraft(fresh?.email ?? email);
       } else {
         addNotification(
           res.error ? `Could not send: ${res.error}` : "Could not send link",

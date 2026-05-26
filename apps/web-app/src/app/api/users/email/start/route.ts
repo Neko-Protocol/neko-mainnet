@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "not_configured" }, { status: 500 });
     }
 
-    await admin.from("users").upsert(
+    const { error: upsertError } = await admin.from("users").upsert(
       {
         wallet_address: wallet,
         network: NETWORK,
@@ -42,6 +42,13 @@ export async function POST(request: NextRequest) {
       },
       { onConflict: "wallet_address" }
     );
+
+    if (upsertError) {
+      return NextResponse.json(
+        { error: upsertError.message ?? "db_error" },
+        { status: 500 }
+      );
+    }
 
     const origin = getAppOrigin(new URL(request.url).origin);
     const redirectTo = `${origin}/auth/email-confirmed?wallet=${encodeURIComponent(wallet)}`;

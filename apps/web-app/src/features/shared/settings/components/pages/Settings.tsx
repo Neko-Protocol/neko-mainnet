@@ -54,7 +54,7 @@ export default function Settings() {
   }
 
   return (
-    <PageContainer maxWidth="4xl">
+    <PageContainer maxWidth="7xl">
       <BannerPage
         title="Settings"
         subtitle="Manage preferences and configuration."
@@ -62,7 +62,8 @@ export default function Settings() {
         imageSrc="/banners/settings.svg"
         imageAlt="Settings  illustration"
         imagePosition="bottom-right"
-        className="mb-6"
+        imageLayoutClassName="-right-[52px] -top-[51px] h-[132%] w-[97%] opacity-60 sm:right-0 sm:top-0 sm:h-full sm:w-[55%] sm:opacity-100"
+        className="mb-8"
       />
 
       <div className="mb-4 flex justify-center">

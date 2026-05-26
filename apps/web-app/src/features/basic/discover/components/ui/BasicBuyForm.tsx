@@ -163,7 +163,7 @@ export function BasicBuyForm({
           type="button"
           onClick={handleConfirmClick}
           disabled={!canConfirm}
-          className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl bg-[#229EDF] text-white font-semibold text-base hover:bg-[#1a8bc7] transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {buttonLabel}
         </button>
