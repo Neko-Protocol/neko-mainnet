@@ -20,7 +20,7 @@ const Dashboard: React.FC = () => {
           badge="Welcome back"
           imageSrc="/banners/oracle.svg"
           imageAlt="Dashboard illustration"
-          imageLayoutClassName="-right-6 -bottom-10 h-[120%] w-[86%] opacity-60 sm:bottom-auto sm:right-0 sm:top-0 sm:h-full sm:w-[55%] sm:opacity-100"
+          imageLayoutClassName="-right-16 -bottom-[240px] h-[126%] w-[92%] opacity-60 sm:bottom-auto sm:right-0 sm:top-0 sm:h-full sm:w-[55%] sm:opacity-100"
         />
         <EmailNudgeBanner />
         <MainStats />

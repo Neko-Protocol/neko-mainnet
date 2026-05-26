@@ -95,7 +95,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div>
+      <div className="mx-auto max-w-4xl">
         {active === "wallet" && (
           <SettingsWalletSection
             copy={copy}
