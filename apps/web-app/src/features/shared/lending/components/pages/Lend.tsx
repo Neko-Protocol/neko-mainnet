@@ -3,17 +3,13 @@
 import { useState } from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
-import { stellarNetwork } from "@/lib/constants/network";
 import { useLend } from "../../hooks/useLend";
 import { LendTable } from "../ui/LendTable";
 import { LendProtocolFilter } from "../ui/LendProtocolFilter";
 import { LendModal } from "../ui/LendModal";
 import MyLendingPositions from "../ui/MyLendingPositions";
-import { BackstopPanel } from "../ui/BackstopPanel";
 
-type PageTab = "pools" | "positions" | "backstop";
-
-const showBackstop = stellarNetwork !== "PUBLIC";
+type PageTab = "pools" | "positions";
 
 const Lend: React.FC = () => {
   const [activeTab, setActiveTab] = useState<PageTab>("pools");
@@ -44,9 +40,6 @@ const Lend: React.FC = () => {
     refreshBalance,
   } = useLend();
 
-  const effectiveTab =
-    !showBackstop && activeTab === "backstop" ? "pools" : activeTab;
-
   return (
     <PageContainer maxWidth="6xl">
       <BannerPage
@@ -63,29 +56,17 @@ const Lend: React.FC = () => {
           <button
             onClick={() => setActiveTab("pools")}
             className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-              effectiveTab === "pools"
+              activeTab === "pools"
                 ? "bg-[#229EDF] text-white"
                 : "text-white/40 hover:text-white/70"
             }`}
           >
             Pools
           </button>
-          {showBackstop && (
-            <button
-              onClick={() => setActiveTab("backstop")}
-              className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-                effectiveTab === "backstop"
-                  ? "bg-[#229EDF] text-white"
-                  : "text-white/40 hover:text-white/70"
-              }`}
-            >
-              Backstop
-            </button>
-          )}
           <button
             onClick={() => setActiveTab("positions")}
             className={`rounded-lg px-5 py-2 text-sm font-semibold transition-colors ${
-              effectiveTab === "positions"
+              activeTab === "positions"
                 ? "bg-[#229EDF] text-white"
                 : "text-white/40 hover:text-white/70"
             }`}
@@ -93,7 +74,7 @@ const Lend: React.FC = () => {
             My Positions
           </button>
         </div>
-        {effectiveTab === "pools" && protocolOptions.length > 0 && (
+        {activeTab === "pools" && protocolOptions.length > 0 && (
           <div className="ml-auto shrink-0">
             <LendProtocolFilter
               value={protocolFilter}
@@ -105,7 +86,7 @@ const Lend: React.FC = () => {
         )}
       </div>
 
-      {effectiveTab === "pools" && (
+      {activeTab === "pools" && (
         <LendTable
           pools={pools}
           isLoading={isLoadingPools}
@@ -128,9 +109,7 @@ const Lend: React.FC = () => {
         />
       )}
 
-      {effectiveTab === "positions" && <MyLendingPositions />}
-
-      {showBackstop && effectiveTab === "backstop" && <BackstopPanel />}
+      {activeTab === "positions" && <MyLendingPositions />}
     </PageContainer>
   );
 };

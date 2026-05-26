@@ -4,19 +4,14 @@ import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
-import { stellarNetwork } from "@/lib/constants/network";
-
 import { useLend } from "@/features/shared/lending/hooks/useLend";
 import { LendTable } from "@/features/shared/lending/components/ui/LendTable";
 import { LendModal } from "@/features/shared/lending/components/ui/LendModal";
 import MyLendingPositions from "@/features/shared/lending/components/ui/MyLendingPositions";
-import { BackstopPanel } from "@/features/shared/lending/components/ui/BackstopPanel";
 
-type LendTab = "pools" | "backstop" | "positions";
+type LendTab = "pools" | "positions";
 
-const showBackstop = stellarNetwork !== "PUBLIC";
-
-const VALID_TABS: LendTab[] = ["pools", "backstop", "positions"];
+const VALID_TABS: LendTab[] = ["pools", "positions"];
 
 function LendingPanel() {
   const router = useRouter();
@@ -42,12 +37,9 @@ function LendingPanel() {
     () =>
       [
         { key: "pools" as const, label: "Pools" },
-        ...(showBackstop
-          ? [{ key: "backstop" as const, label: "Backstop" }]
-          : []),
         { key: "positions" as const, label: "My Positions" },
       ] as const,
-    [showBackstop]
+    []
   );
   const {
     pools,
@@ -71,8 +63,7 @@ function LendingPanel() {
     setSearchQuery,
   } = useLend();
 
-  const effectiveTab =
-    !showBackstop && activeTab === "backstop" ? "pools" : activeTab;
+  const effectiveTab = activeTab;
 
   return (
     <>
@@ -110,7 +101,6 @@ function LendingPanel() {
         />
       )}
 
-      {showBackstop && effectiveTab === "backstop" && <BackstopPanel />}
       {effectiveTab === "positions" && <MyLendingPositions />}
     </>
   );

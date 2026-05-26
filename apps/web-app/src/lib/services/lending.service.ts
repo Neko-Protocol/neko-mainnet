@@ -33,8 +33,6 @@ import { toSmallestUnit } from "../helpers/tokenUtils";
 import {
   addCollateral as addCollateralHelper,
   removeCollateral,
-  depositToBackstop,
-  withdrawFromBackstop,
   borrowFromPool as borrowFromPoolHelper,
   hasBadDebt as hasBadDebtHelper,
   createBadDebtAuction as createBadDebtAuctionHelper,
@@ -515,50 +513,6 @@ export class LendingService {
         borrowXdr: "",
         error: friendlyError,
       };
-    }
-  }
-
-  /**
-   * Deposit tokens to the backstop (first-loss capital)
-   */
-  async backstopDeposit(
-    amount: string,
-    walletAddress: string,
-    backstopContractId?: string
-  ): Promise<LendingOperationResult> {
-    try {
-      const xdrResult = await depositToBackstop(
-        amount,
-        walletAddress,
-        backstopContractId
-      );
-      return { xdr: xdrResult };
-    } catch (error) {
-      console.error("Error building backstop deposit transaction:", error);
-      const friendlyError = extractContractError(error, "rwa-lending");
-      return { xdr: "", error: friendlyError };
-    }
-  }
-
-  /**
-   * Withdraw tokens from the backstop (after queue period expires)
-   */
-  async backstopWithdraw(
-    amount: string,
-    walletAddress: string,
-    backstopContractId?: string
-  ): Promise<LendingOperationResult> {
-    try {
-      const xdrResult = await withdrawFromBackstop(
-        amount,
-        walletAddress,
-        backstopContractId
-      );
-      return { xdr: xdrResult };
-    } catch (error) {
-      console.error("Error building backstop withdraw transaction:", error);
-      const friendlyError = extractContractError(error, "rwa-lending");
-      return { xdr: "", error: friendlyError };
     }
   }
 
