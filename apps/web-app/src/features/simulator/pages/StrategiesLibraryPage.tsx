@@ -54,7 +54,7 @@ export default function StrategiesLibraryPage() {
             </p>
             <Link
               href="/strategies/new"
-              className="group/cta inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-[#2BA9E5] to-[#1a8ac9] px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-inset ring-white/15 transition-all hover:from-[#3AB4EA] hover:to-[#229EDF] active:scale-[0.98]"
+              className="group/cta inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-gradient-to-b from-[#2BA9E5] to-[#1a8ac9] px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-inset ring-white/15 transition-all hover:from-[#3AB4EA] hover:to-[#229EDF] active:scale-[0.98]"
             >
               <Plus
                 size={14}

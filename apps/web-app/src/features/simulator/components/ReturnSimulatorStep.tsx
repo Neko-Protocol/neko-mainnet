@@ -155,15 +155,15 @@ function EarningsPanel({
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             {hasPrice ? (
               <>
-                <span className="text-4xl font-bold tabular-nums text-[#4ADE80]">
+                <span className="text-xl font-bold tabular-nums text-[#4ADE80]">
                   +{fmtFiat(oneYear.earningsUsd)}
                 </span>
-                <span className="text-base font-medium text-white/40">
+                <span className="text-xl font-bold tabular-nums text-white/40">
                   +{formatAmount(oneYear.earningsToken)} {tokenCode}
                 </span>
               </>
             ) : (
-              <span className="text-4xl font-bold tabular-nums text-[#4ADE80]">
+              <span className="text-xl font-bold tabular-nums text-[#4ADE80]">
                 +{formatAmount(oneYear.earningsToken)} {tokenCode}
               </span>
             )}
@@ -188,7 +188,7 @@ function EarningsPanel({
               <div className="h-5 w-20 rounded bg-white/10" />
             ) : (
               <>
-                <p className="text-base font-bold tabular-nums text-white">
+                <p className="text-xl font-bold tabular-nums text-white">
                   {hasPrice
                     ? `+${fmtFiat(p.earningsUsd)}`
                     : `+${formatAmount(p.earningsToken)} ${tokenCode}`}
