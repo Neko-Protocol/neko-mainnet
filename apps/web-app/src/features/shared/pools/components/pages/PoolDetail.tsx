@@ -34,8 +34,15 @@ import { reserveStroopsFromApiString } from "@/lib/helpers/stellar/aquaDeposit";
 import { ensureTrustlineForSAC } from "@/lib/helpers/stellar/trustline";
 import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
-import { calculateBorrowLimit } from "@/features/shared/borrowing/utils/borrowUtils";
 import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
+
+function calculateBorrowLimit(
+  collateralAmount: number,
+  collateralFactorPct: number
+): number {
+  if (!Number.isFinite(collateralAmount) || collateralAmount <= 0) return 0;
+  return collateralAmount * (collateralFactorPct / 100);
+}
 import { rpcUrl } from "@/lib/constants/network";
 import { useToast } from "@/hooks/useToast";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
