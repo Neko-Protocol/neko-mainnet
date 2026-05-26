@@ -70,7 +70,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
         )}
 
         {/* icon + name + badge */}
-        <div className="relative z-10 flex items-center gap-3 px-5 py-4 pr-[46%]">
+        <div className="relative z-10 flex items-center gap-3 px-5 py-4 pr-[44%] sm:pr-[46%]">
           <div className="w-12 h-12 shrink-0 ml-1">
             <Image
               src={cardHeaderIconSrc}
@@ -174,7 +174,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
           </div>
         </div>
 
-        <div className="w-px bg-white/8 mx-4 shrink-0" />
+        <div className="w-px bg-white/8 mx-2 sm:mx-4 shrink-0" />
 
         <div className="flex flex-col justify-center gap-0.5 shrink-0">
           <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
@@ -183,13 +183,13 @@ export const VaultCard: React.FC<VaultCardProps> = ({
           {isLoading ? (
             <div className="h-5 w-16 rounded bg-white/10" />
           ) : (
-            <span className="text-white text-base font-bold">
+            <span className="text-white text-sm sm:text-base font-bold">
               {squeezeSummaryDecimals(vault.tvl)}
             </span>
           )}
         </div>
 
-        <div className="w-px bg-white/8 mx-4 shrink-0" />
+        <div className="w-px bg-white/8 mx-2 sm:mx-4 shrink-0" />
 
         <div className="flex flex-col justify-center gap-0.5 shrink-0">
           <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
@@ -198,7 +198,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
           {isLoading ? (
             <div className="h-5 w-14 rounded bg-white/10" />
           ) : (
-            <span className="text-[#4ADE80] text-base font-bold">
+            <span className="text-[#4ADE80] text-sm sm:text-base font-bold">
               {squeezeSummaryDecimals(vault.apy7d)}
             </span>
           )}
