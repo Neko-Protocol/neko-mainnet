@@ -44,16 +44,16 @@ export function CartPage() {
   const tokenIconMap = getTokenIconMap();
 
   return (
-    <PageContainer maxWidth="4xl">
+    <PageContainer maxWidth="7xl">
       <BannerPage
         title="Your Cart"
         subtitle="Review your pending purchases and confirm them all at once."
         badge="Checkout"
         imageSrc="/banners/cart.png"
         imageAlt="Cart illustration"
-        imageLayoutClassName="-right-95 -top-9 h-[174%] w-[125%]"
+        imageLayoutClassName="-right-16 -top-4 h-[130%] w-[80%] opacity-60 sm:-right-[28rem] sm:-top-9 sm:h-[145%] sm:w-[100%] sm:opacity-100"
         imageObjectClassName="object-contain object-right object-top"
-        className="mb-6"
+        className="mb-8"
       />
 
       {items.length === 0 ? (
