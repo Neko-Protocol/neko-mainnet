@@ -1,20 +1,16 @@
-import { networks } from "@neko/lending";
-import { stellarNetwork } from "@/lib/constants/network";
+import {
+  LENDING_CONTRACT_ID,
+  LENDING_POOL2_CONTRACT_ID,
+} from "@/lib/constants/contracts";
 
 type LendingContracts = {
   pool1ContractId: string;
   pool2ContractId: string;
 };
 
-function resolveNetworkKey(): "mainnet" | "testnet" {
-  const hasMainnet = "mainnet" in (networks as Record<string, unknown>);
-  if (stellarNetwork === "PUBLIC" && hasMainnet) {
-    return "mainnet";
-  }
-  return "testnet";
-}
-
 export function getLendingContracts(): LendingContracts {
-  const key = resolveNetworkKey();
-  return (networks as Record<string, LendingContracts>)[key];
+  return {
+    pool1ContractId: LENDING_CONTRACT_ID,
+    pool2ContractId: LENDING_POOL2_CONTRACT_ID,
+  };
 }

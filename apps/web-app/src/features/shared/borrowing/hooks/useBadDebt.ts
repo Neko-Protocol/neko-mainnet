@@ -15,7 +15,7 @@ import {
   type SignTransactionFn,
 } from "@/lib/helpers/stellar/transaction";
 import { rpcUrl, stellarNetwork } from "@/lib/constants/network";
-import { networks } from "@neko/lending";
+import { LENDING_CONTRACT_ID } from "@/lib/constants/contracts";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
@@ -48,8 +48,8 @@ export function useBadDebt() {
     isLoading: isLoadingAuctions,
     refetch: refetchAuctions,
   } = useQuery({
-    queryKey: ["bad-debt-auctions", networks.testnet.contractId],
-    queryFn: () => getActiveBadDebtAuctions(networks.testnet.contractId),
+    queryKey: ["bad-debt-auctions", LENDING_CONTRACT_ID],
+    queryFn: () => getActiveBadDebtAuctions(LENDING_CONTRACT_ID),
     enabled: stellarNetwork !== "PUBLIC",
     staleTime: 30_000,
     refetchInterval: 60_000,
@@ -93,7 +93,7 @@ export function useBadDebt() {
           debtAsset,
           7,
           address,
-          networks.testnet.contractId
+          LENDING_CONTRACT_ID
         );
 
         await signAndSend(fillXdr);
