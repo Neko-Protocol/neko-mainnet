@@ -26,20 +26,20 @@ export function WalletHoldingsCard({
 
   return (
     <div className="w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
-            Your Holdings
-          </h2>
+      <div className="flex flex-col gap-1 mb-5">
+        <h2 className="text-xl sm:text-2xl font-bold text-white">
+          Your Holdings
+        </h2>
+        <div className="flex items-center justify-between">
           <p className="text-white/40 text-sm">Assets in your wallet</p>
+          <Link
+            href="/discover"
+            className="flex items-center gap-1.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
+          >
+            Explore assets
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
-        <Link
-          href="/discover"
-          className="flex items-center gap-1.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
-        >
-          Explore assets
-          <ArrowRight className="h-4 w-4" />
-        </Link>
       </div>
 
       {isLoading ? (
