@@ -55,7 +55,7 @@ export function BannerPage({
       )}
     >
       {}
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center gap-2 sm:gap-2.5 px-4 sm:px-8 py-4 sm:py-6">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center gap-2 sm:gap-2.5 pl-4 pr-[42%] sm:px-8 py-4 sm:py-6">
         {badge && <Badge label={badge} />}
 
         <h2 className="text-xl sm:text-[2rem] font-bold leading-tight tracking-tight text-white wrap-break-word">
@@ -63,7 +63,7 @@ export function BannerPage({
         </h2>
 
         {subtitle && (
-          <p className="w-full max-w-full min-w-0 text-xs sm:text-sm leading-relaxed text-white/90 wrap-break-word">
+          <p className="w-full max-w-full min-w-0 font-bold sm:font-normal text-xs sm:text-sm leading-relaxed text-white wrap-break-word">
             {subtitle}
           </p>
         )}
