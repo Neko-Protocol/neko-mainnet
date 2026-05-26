@@ -145,17 +145,17 @@ export function BasicAssetPriceCard({
         >
           <Link
             href={detailHref}
-            className="flex items-center justify-center rounded-xl border border-[#229EDF]/20 bg-[#229EDF]/10 px-3 py-2.5 text-sm font-semibold text-[#229EDF] transition-colors hover:bg-[#229EDF]/20"
+            className="flex items-center justify-center rounded-xl border border-[#229EDF]/20 bg-[#229EDF]/10 px-2 py-1.5 text-xs font-semibold text-[#229EDF] transition-colors hover:bg-[#229EDF]/20 sm:px-3 sm:py-2.5 sm:text-sm"
             onClick={(e) => e.stopPropagation()}
           >
-            Buy
+            Buy Asset
           </Link>
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="flex items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm font-semibold text-white/60 transition-colors hover:bg-white/10 hover:text-white/90"
+            className="flex items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-xs font-semibold text-white/60 transition-colors hover:bg-white/10 hover:text-white/90 sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
           >
-            <ShoppingBag className="h-3.5 w-3.5 shrink-0" />
+            <ShoppingBag className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
             Shopping Cart
           </button>
         </div>

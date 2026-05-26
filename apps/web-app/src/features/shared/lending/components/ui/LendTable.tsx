@@ -1172,7 +1172,9 @@ export function LendTable({
                     <ProtocolNameCell pool={pool} />
                     <PoolPairCell pool={pool} />
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div
+                    className={`grid gap-2 ${pool.borrowApy ? "grid-cols-2" : "grid-cols-3"}`}
+                  >
                     <StatCell
                       label="Supply APY"
                       value={pool.roi}
@@ -1183,11 +1185,26 @@ export function LendTable({
                       value={pool.liquidity}
                       icon={Droplets}
                     />
-                    <StatCell
-                      label="Borrowed"
-                      value={pool.totalBorrowed ?? ""}
-                      icon={ArrowDownUp}
-                    />
+                    {pool.borrowApy ? (
+                      <>
+                        <StatCell
+                          label="Borrow APY"
+                          value={pool.borrowApy}
+                          icon={TrendingUp}
+                        />
+                        <StatCell
+                          label="Borrowed"
+                          value={pool.totalBorrowed ?? "—"}
+                          icon={ArrowDownUp}
+                        />
+                      </>
+                    ) : (
+                      <StatCell
+                        label="Borrowed"
+                        value={pool.totalBorrowed ?? "—"}
+                        icon={ArrowDownUp}
+                      />
+                    )}
                   </div>
                 </li>
               ))}
