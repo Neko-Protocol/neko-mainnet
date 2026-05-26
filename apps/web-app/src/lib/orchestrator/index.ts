@@ -1,11 +1,7 @@
 export { orchestrator, Orchestrator } from "./core";
 export { poolRegistry, PoolRegistry } from "./core";
 
-export {
-  NekoLendingAdapter,
-  BlendPoolAdapter,
-  SoroswapPoolAdapter,
-} from "./adapters";
+export { BlendPoolAdapter, SoroswapPoolAdapter } from "./adapters";
 
 export {
   usePools,
