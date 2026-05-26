@@ -9,7 +9,7 @@ import { signAndSendTransaction } from "@/lib/helpers/stellar/transaction";
 import { rpcUrl } from "@/lib/constants/network";
 import { Networks } from "@stellar/stellar-sdk";
 import { POOLS } from "../constants";
-import type { PoolState } from "@neko/lending";
+import type { PoolState } from "@/features/shared/lending/types/lending";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 

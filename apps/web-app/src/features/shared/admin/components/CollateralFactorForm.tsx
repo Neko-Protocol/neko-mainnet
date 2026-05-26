@@ -11,8 +11,6 @@ import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { POOLS, POOL2_COLLATERAL_ASSETS } from "../constants";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
-import type { AssetType } from "@neko/lending";
-
 const SCALAR_7 = 10_000_000;
 
 /** Pool 1 collateral is RWA (USTRY, etc.), Pool 2 collateral is USDC/XLM */
@@ -23,13 +21,13 @@ const ALL_COLLATERAL = [
     code,
     poolId: "pool1",
     contractId: POOLS[0].contractId,
-    assetType: { tag: "Rwa" as const, values: undefined } as AssetType,
+    assetType: { tag: "Rwa" as const, values: undefined },
   })),
   ...POOL2_COLLATERAL_ASSETS.map((code) => ({
     code,
     poolId: "pool2",
     contractId: POOLS[1].contractId,
-    assetType: { tag: "Crypto" as const, values: undefined } as AssetType,
+    assetType: { tag: "Crypto" as const, values: undefined },
   })),
 ];
 

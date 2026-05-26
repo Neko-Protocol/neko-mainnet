@@ -10,7 +10,7 @@ import { POOLS } from "../constants";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { Networks } from "@stellar/stellar-sdk";
-import type { InterestRateParams } from "@neko/lending";
+import type { InterestRateParams } from "@/features/shared/lending/types/lending";
 
 const SCALAR_7 = 10_000_000;
 

@@ -1,3 +1,21 @@
+export type PoolState =
+  | { tag: "Active"; values: undefined }
+  | { tag: "OnIce"; values: undefined }
+  | { tag: "Frozen"; values: undefined };
+
+export interface InterestRateParams {
+  enabled: boolean;
+  l_factor: number;
+  max_util: number;
+  r_base: number;
+  r_one: number;
+  r_two: number;
+  r_three: number;
+  reactivity: number;
+  supply_cap: bigint;
+  target_util: number;
+}
+
 export interface PoolData {
   id: string;
   /** Source: native lending (`neko`) or orchestrator `PoolInfo.type` (e.g. aqua). */
