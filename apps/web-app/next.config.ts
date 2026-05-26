@@ -11,9 +11,7 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: [
     "@defindex/sdk",
-    "@neko/backstop",
     "@neko/defindex-vault",
-    "@neko/lending",
     "@neko/reflector",
   ],
 };
