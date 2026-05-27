@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { TransactionBuilder, rpc } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useQueryClient } from "@tanstack/react-query";
 import { depositToPool } from "@/lib/helpers/stellar/lending";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { POOLS_QUERY_KEY } from "@/lib/orchestrator";
 import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
+import { pollTransactionStatus, txApi } from "@/lib/services/transaction.api";
 
 export function useLendingDepositSubmit() {
   const { address, signTransaction, networkPassphrase } = useWallet();
@@ -35,30 +34,38 @@ export function useLendingDepositSubmit() {
 
       setIsPending(true);
       try {
-        const depositXdr = await depositToPool(
+        const depositXdr = (await depositToPool(
           assetCode,
           amount,
           decimals,
           address,
           contractId
-        );
-        const signedDeposit = await signTransaction(depositXdr as string, {
+        )) as string;
+
+        await txApi.prepare({ unsignedXdr: depositXdr });
+
+        const signedDeposit = await signTransaction(depositXdr, {
           networkPassphrase,
           address,
         });
-        const sorobanServer = new rpc.Server(rpcUrl, {
-          allowHttp: stellarNetwork === "LOCAL",
-        });
-        const sendResult = await sorobanServer.sendTransaction(
-          TransactionBuilder.fromXDR(
-            extractSignedTxXdr(signedDeposit),
-            networkPassphrase
-          )
-        );
+        const signedXdr = extractSignedTxXdr(signedDeposit);
+
+        const submitResult = await txApi.submit({ signedXdr });
+        const final =
+          submitResult.status === "PENDING"
+            ? await pollTransactionStatus(submitResult.hash)
+            : submitResult;
+
+        if (final.status !== "SUCCESS") {
+          const errMsg =
+            final.error?.message ?? final.error?.code ?? final.status;
+          throw new Error(`Lending deposit failed (${errMsg})`);
+        }
+
         await queryClient.invalidateQueries({ queryKey: ["lendingPools"] });
         await queryClient.invalidateQueries({ queryKey: ["stellar-balances"] });
         await queryClient.invalidateQueries({ queryKey: [...POOLS_QUERY_KEY] });
-        return sendResult.hash;
+        return final.hash;
       } finally {
         setIsPending(false);
       }
