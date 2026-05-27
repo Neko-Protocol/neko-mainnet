@@ -25,14 +25,14 @@ export interface TransactionStatusResponse {
 
 export const txApi = {
   prepare: (req: PrepareTransactionRequest) =>
-    backendClient.post<PrepareTransactionResponse>("/tx/prepare", req),
+    backendClient.post<PrepareTransactionResponse>("/v1/tx/prepare", req),
 
   submit: (req: SubmitTransactionRequest) =>
-    backendClient.post<TransactionStatusResponse>("/tx/submit", req),
+    backendClient.post<TransactionStatusResponse>("/v1/tx/submit", req),
 
   status: (hash: string) =>
     backendClient.get<TransactionStatusResponse>(
-      `/tx/${encodeURIComponent(hash)}`
+      `/v1/tx/${encodeURIComponent(hash)}`
     ),
 };
 
