@@ -8,18 +8,15 @@ import {
   Coins,
   Layers,
   TrendingUp,
-  ChevronDown,
   Shield,
   Zap,
   Sparkles,
   DollarSign,
 } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
-import { useUserLendingPositions } from "../../hooks/useUserLendingPositions";
 import { useUserPositions } from "@/features/expert/dashboard/hooks/useUserPositions";
 import { usePoolAction } from "@/lib/orchestrator";
 import { ColHeader } from "./ColHeader";
-import MyBorrowPositions from "@/features/shared/borrowing/components/ui/MyBorrowPositions";
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
@@ -49,10 +46,6 @@ interface UnifiedPosition {
   orchestratorId?: string;
   detailId: string;
   hasEmissions?: boolean;
-}
-
-interface MyPositionsProps {
-  defaultTab?: "lend" | "borrow";
 }
 
 function PoolIcon({ assetCode }: { assetCode: string }) {
@@ -110,45 +103,17 @@ function formatPositionAmount(amount: string, assetCode: string): string {
   return `${safeParseFloat(amount).toFixed(2)} ${assetCode}`;
 }
 
-function PositionTypeFilter({
-  value,
-  onChange,
-}: {
-  value: "lend" | "borrow";
-  onChange: (v: "lend" | "borrow") => void;
-}) {
-  return (
-    <div className="relative inline-flex items-center">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as "lend" | "borrow")}
-        className="appearance-none rounded-lg border border-white/10 bg-[#1C1C1C] py-1.5 pl-3 pr-7 text-xs text-white/90 outline-none cursor-pointer"
-      >
-        <option value="lend">Lending</option>
-        <option value="borrow">Borrowing</option>
-      </select>
-      <ChevronDown
-        className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/45"
-        aria-hidden
-      />
-    </div>
-  );
-}
-
-const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
+const MyPositions: React.FC = () => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"lend" | "borrow">(defaultTab);
   const { mutate: executePoolAction, isPending: isClaimPending } =
     usePoolAction();
   const [claimingPoolId, setClaimingPoolId] = useState<string | null>(null);
 
   const {
-    positions: nekoPositions,
-    isLoading: isLoadingNeko,
+    positions: allPositions,
+    isLoading: isLoadingAggregated,
     hasWallet,
-  } = useUserLendingPositions();
-  const { positions: allPositions, isLoading: isLoadingAggregated } =
-    useUserPositions();
+  } = useUserPositions();
 
   const aggregatedPositions = allPositions.filter(
     (p) =>
@@ -157,22 +122,7 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
       !p.pool.tokens.some((t) => BLEND_VAULT_ONLY_RESERVES.has(t.address))
   );
 
-  const isLoading = isLoadingNeko || isLoadingAggregated;
-
-  const nekoUnified: UnifiedPosition[] = nekoPositions.map((pos) => ({
-    key: `neko-${pos.assetCode}`,
-    protocolId: "neko",
-    assetCode: pos.assetCode,
-    poolName: `${pos.assetCode} Pool`,
-    depositedFormatted: formatPositionAmount(
-      pos.depositedFormatted,
-      pos.assetCode
-    ),
-    depositedRaw: safeParseFloat(pos.depositedFormatted),
-    apy: `${pos.interestRate.toFixed(2)}%`,
-    orchestratorId: `neko:${pos.assetCode}`,
-    detailId: `neko:${pos.assetCode}`,
-  }));
+  const isLoading = isLoadingAggregated;
 
   const aggUnified: UnifiedPosition[] = aggregatedPositions.map((pos) => {
     const withdrawUnit =
@@ -216,7 +166,7 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
     };
   });
 
-  const unified = [...nekoUnified, ...aggUnified];
+  const unified = [...aggUnified];
 
   // ── USD prices for all unique asset codes ──────────────────────────────────
   const allCodes = useMemo(
@@ -375,23 +325,12 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
     );
   }
 
-  if (activeTab === "borrow") {
-    return (
-      <MyBorrowPositions
-        headerAction={
-          <PositionTypeFilter value={activeTab} onChange={setActiveTab} />
-        }
-      />
-    );
-  }
-
   return (
     <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
         <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
           Your Lending Positions
         </span>
-        <PositionTypeFilter value={activeTab} onChange={setActiveTab} />
       </div>
 
       <table className="w-full">
@@ -421,10 +360,7 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
           </tr>
         </thead>
         <tbody>
-          {isLoadingNeko &&
-          isLoadingAggregated &&
-          nekoUnified.length === 0 &&
-          aggUnified.length === 0 ? (
+          {isLoadingAggregated && aggUnified.length === 0 ? (
             <tr>
               <td colSpan={colSpan} className="px-4 py-12 text-center">
                 <div className="flex items-center justify-center gap-2">
@@ -446,19 +382,6 @@ const MyPositions: React.FC<MyPositionsProps> = ({ defaultTab = "lend" }) => {
             </tr>
           ) : (
             <>
-              {nekoUnified.map(renderRow)}
-              {isLoadingNeko && (
-                <tr>
-                  <td colSpan={colSpan} className="px-4 py-3 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/20 border-t-white/40" />
-                      <span className="text-white/30 text-xs">
-                        Loading positions…
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              )}
               {aggUnified.map(renderRow)}
               {isLoadingAggregated && aggUnified.length === 0 && (
                 <tr>

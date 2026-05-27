@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { usePools } from "@/lib/orchestrator/hooks/usePools";
-import { useLendingPools } from "@/features/shared/lending/hooks/useLendingPools";
 import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { getAssetTaxonomy } from "@/features/shared/discover/utils/assetClass";
@@ -102,7 +101,6 @@ export function resolveEtherfuseBondApy(
  */
 export function useFilteredDestinations(token: SimulatorToken | null) {
   const pools = usePools(Boolean(token));
-  const lendingPoolsQuery = useLendingPools();
   const vaults = useDefindexVaults();
   const yieldsQuery = useEtherfuseYields();
   const yieldsData = yieldsQuery.data;
@@ -146,38 +144,7 @@ export function useFilteredDestinations(token: SimulatorToken | null) {
         };
       });
 
-    const lendingAsPools: SimulatorDestination[] = (
-      lendingPoolsQuery.data ?? []
-    )
-      .filter((lp) => lp.assetCode === token.code && lp.isActive)
-      .map((lp) => {
-        const deposited = parseFloat(lp.poolBalance);
-        const tvlUsd = Number.isFinite(deposited) ? deposited : null;
-        const tvlLabel = Number.isFinite(deposited)
-          ? `${deposited.toLocaleString("en-US", {
-              maximumFractionDigits: 2,
-            })} ${lp.assetCode}`
-          : "";
-        const apy = Number.isFinite(lp.interestRate) ? lp.interestRate : null;
-        return {
-          kind: "pool" as const,
-          id: `lending:${lp.contractId}:${lp.assetCode}`,
-          name: `${lp.assetCode} Pool`,
-          apy,
-          tvlUsd,
-          tvlLabel,
-          protocol: "Neko Lending",
-          strategyLabels: [
-            "Supply to Neko on-chain lending and earn interest on deposits",
-          ],
-          acceptedTokenCodes: [lp.assetCode],
-          raw: null,
-          lendingContractId: lp.contractId,
-          lendingAssetCode: lp.assetCode,
-        };
-      });
-
-    const matchingPools = [...orchestratorPools, ...lendingAsPools];
+    const matchingPools = orchestratorPools;
 
     const matchingVaults: SimulatorDestination[] = (vaults.data?.vaults ?? [])
       .filter((vault) => vault.supplyAsset.symbol === token.code)
@@ -230,14 +197,10 @@ export function useFilteredDestinations(token: SimulatorToken | null) {
     }
 
     return { pools: matchingPools, vaults: matchingVaults, yieldTokens };
-  }, [token, pools.data, lendingPoolsQuery.data, vaults.data, yieldsData]);
+  }, [token, pools.data, vaults.data, yieldsData]);
 
   return {
     ...result,
-    isLoading:
-      pools.isLoading ||
-      vaults.isLoading ||
-      yieldsQuery.isPending ||
-      lendingPoolsQuery.isPending,
+    isLoading: pools.isLoading || vaults.isLoading || yieldsQuery.isPending,
   };
 }

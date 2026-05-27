@@ -2,21 +2,10 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { TransactionBuilder } from "@stellar/stellar-sdk";
-import { rpc } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
-import { useLendingPools } from "./useLendingPools";
-import {
-  depositToPool,
-  withdrawFromPool,
-  getBTokenBalance,
-} from "@/lib/helpers/stellar/lending";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
-import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 import { usePools, usePoolAction } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
@@ -30,24 +19,11 @@ import {
 } from "../constants/protocols";
 import { auditService } from "@/lib/services/audit.service";
 
-function toBTokens(tokensAmount: string, bTokenRate: string): string {
-  if (
-    !tokensAmount ||
-    parseFloat(tokensAmount) <= 0 ||
-    !bTokenRate ||
-    parseFloat(bTokenRate) <= 0
-  )
-    return "0";
-  return (parseFloat(tokensAmount) / parseFloat(bTokenRate)).toFixed(4);
-}
-
 export function useLend() {
   const searchParams = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeposit, setIsDeposit] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const [bTokenBalance, setBTokenBalance] = useState<string | null>(null);
-  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
   const [selectedPool, setSelectedPool] = useState<PoolData | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -59,7 +35,7 @@ export function useLend() {
     if (q) setSearchQuery(q);
   }, [searchParams]);
 
-  const { address, signTransaction, networkPassphrase } = useWallet();
+  const { address } = useWallet();
   const { addNotification } = useToast();
 
   const showError = useCallback(
@@ -80,61 +56,22 @@ export function useLend() {
   );
 
   const {
-    data: lendingPools = [],
-    isLoading: isLoadingNekoPools,
-    isFetching: isFetchingNekoPools,
-    error: nekoPoolsError,
-    refetch: refetchPools,
-  } = useLendingPools();
-
-  const {
     data: orchestratorPools = [],
     isLoading: isLoadingOrchestratorPools,
     isFetching: isFetchingOrchestratorPools,
     error: orchestratorPoolsError,
+    refetch: refetchPools,
   } = usePools();
 
   const { mutateAsync: executePoolAction } = usePoolAction();
 
-  const hasAnyPools = lendingPools.length > 0 || orchestratorPools.length > 0;
-  const isLoadingPools = isLoadingNekoPools && !hasAnyPools;
-  const isFetchingPools = isFetchingNekoPools || isFetchingOrchestratorPools;
-  const poolsError = nekoPoolsError || orchestratorPoolsError;
+  const isLoadingPools = isLoadingOrchestratorPools;
+  const isFetchingPools = isFetchingOrchestratorPools;
+  const poolsError = orchestratorPoolsError;
 
   const pools: PoolData[] = useMemo(() => {
-    const nekoPools: PoolData[] = lendingPools.map((pool, index) => {
-      const balanceNum = parseFloat(pool.poolBalance);
-      const liquidity =
-        balanceNum >= 1000
-          ? `$${(balanceNum / 1000).toFixed(SUMMARY_DISPLAY_DECIMALS)}k`
-          : `$${balanceNum.toFixed(SUMMARY_DISPLAY_DECIMALS)}`;
-      return {
-        id: `pool-${index}`,
-        protocolId: "neko",
-        name: `${pool.assetCode} Pool`,
-        token1: pool.assetCode,
-        token2: "",
-        fee: "0%",
-        roi: `${pool.interestRate.toFixed(SUMMARY_DISPLAY_DECIMALS)}%`,
-        feeApy: `${pool.interestRate.toFixed(SUMMARY_DISPLAY_DECIMALS)}%`,
-        liquidity,
-        isActive: pool.isActive,
-        assetCode: pool.assetCode,
-        asset: pool.asset,
-        assetDecimals: 7,
-        bTokenRate: pool.bTokenRate,
-        bTokenRateRaw: pool.bTokenRateRaw,
-        contractId: pool.contractId,
-        isAggregated: true,
-        orchestratorId: `neko:${pool.assetCode}`,
-      };
-    });
-
-    const aggregated: PoolData[] = orchestratorPools
-      .filter(
-        (p: PoolInfo) =>
-          p.type !== "neko" && p.supportedActions.includes("deposit")
-      )
+    return orchestratorPools
+      .filter((p: PoolInfo) => p.supportedActions.includes("deposit"))
       .map((p: PoolInfo) => {
         const token = p.tokens[0];
         const decimals = token?.decimals ?? 7;
@@ -151,7 +88,6 @@ export function useLend() {
         const contractId = p.id.split(":")[1] ?? p.id;
         const canInteract = p.supportedActions.includes("deposit");
 
-        // Total borrowed for Blend pools (totalLiabilities in stroops)
         let totalBorrowed: string | undefined;
         let liquidityTokenAmount: string | undefined;
         let liquidityTokenCode: string | undefined;
@@ -198,9 +134,7 @@ export function useLend() {
           hideRowActions: !canInteract,
         };
       });
-
-    return [...nekoPools, ...aggregated];
-  }, [lendingPools, orchestratorPools]);
+  }, [orchestratorPools]);
 
   const protocolOptions = useMemo(() => {
     const ids = new Set(pools.map((p) => p.protocolId));
@@ -255,41 +189,11 @@ export function useLend() {
     setPage(0);
   }, []);
 
-  const loadBTokenBalance = useCallback(async () => {
-    if (!selectedPool || !address) {
-      setBTokenBalance(null);
-      return;
-    }
-    if (selectedPool.isAggregated) {
-      setBTokenBalance(null);
-      return;
-    }
-    setIsLoadingBalance(true);
-    try {
-      const balance = await getBTokenBalance(
-        selectedPool.assetCode,
-        address,
-        7,
-        selectedPool.contractId
-      );
-      setBTokenBalance(balance);
-    } catch {
-      setBTokenBalance("0");
-    } finally {
-      setIsLoadingBalance(false);
-    }
-  }, [selectedPool, address]);
-
-  const openModal = useCallback(
-    (pool: PoolData, deposit: boolean) => {
-      setSelectedPool(pool);
-      setIsDeposit(deposit);
-      setBTokenBalance(null);
-      setIsModalOpen(true);
-      if (address) void loadBTokenBalance();
-    },
-    [address, loadBTokenBalance]
-  );
+  const openModal = useCallback((pool: PoolData, deposit: boolean) => {
+    setSelectedPool(pool);
+    setIsDeposit(deposit);
+    setIsModalOpen(true);
+  }, []);
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
@@ -299,133 +203,47 @@ export function useLend() {
     async (amount: string) => {
       if (!selectedPool || !address || !amount || parseFloat(amount) <= 0)
         return;
+      if (!selectedPool.orchestratorId) return;
 
       setIsLoading(true);
 
-      const logAction = (poolId: string, txHash?: string) => {
-        const tokenAmt = parseFloat(amount);
+      try {
+        const decimals = selectedPool.assetDecimals ?? 7;
+        const rawAmount = decimalToAtomic(amount, decimals);
+        const depositedRaw =
+          selectedPool.depositedRaw != null
+            ? BigInt(selectedPool.depositedRaw)
+            : null;
+        const isWithdrawAll =
+          !isDeposit && depositedRaw != null && rawAmount >= depositedRaw;
+
+        const txHash = await executePoolAction({
+          poolId: selectedPool.orchestratorId,
+          action: isDeposit
+            ? "deposit"
+            : (selectedPool.withdrawAction ?? "withdraw"),
+          amount: rawAmount,
+          withdrawAll: isWithdrawAll,
+          withdrawUnit: selectedPool.withdrawUnit,
+        });
+
         auditService.log({
           wallet_address: address,
           action_type: isDeposit ? "lend_deposit" : "lend_withdraw",
           asset_in: isDeposit ? selectedPool.assetCode : undefined,
           asset_out: isDeposit ? undefined : selectedPool.assetCode,
-          token_amount_in: isDeposit ? tokenAmt : undefined,
-          amount_out: isDeposit ? undefined : tokenAmt,
-          pool_id: poolId,
+          token_amount_in: isDeposit ? parseFloat(amount) : undefined,
+          amount_out: isDeposit ? undefined : parseFloat(amount),
+          pool_id: selectedPool.orchestratorId,
           tx_hash: txHash,
         });
-      };
 
-      try {
-        if (selectedPool.isAggregated && selectedPool.orchestratorId) {
-          const decimals = selectedPool.assetDecimals ?? 7;
-          const rawAmount = decimalToAtomic(amount, decimals);
-          const depositedRaw =
-            selectedPool.depositedRaw != null
-              ? BigInt(selectedPool.depositedRaw)
-              : null;
-          const isWithdrawAll =
-            !isDeposit && depositedRaw != null && rawAmount >= depositedRaw;
-
-          const txHash = await executePoolAction({
-            poolId: selectedPool.orchestratorId,
-            action: isDeposit
-              ? "deposit"
-              : (selectedPool.withdrawAction ?? "withdraw"),
-            amount: rawAmount,
-            withdrawAll: isWithdrawAll,
-            withdrawUnit: selectedPool.withdrawUnit,
-          });
-
-          logAction(selectedPool.orchestratorId, txHash);
-
-          await refetchPools();
-          showSuccess(
-            isDeposit
-              ? `Successfully deposited ${amount} ${selectedPool.assetCode}`
-              : `Successfully withdrew ${amount} ${selectedPool.assetCode}`
-          );
-          closeModal();
-          return;
-        }
-
-        const availableTokens = getAvailableTokens();
-        const token = availableTokens[selectedPool.assetCode];
-        if (!token?.contract)
-          throw new Error(`Token ${selectedPool.assetCode} not found`);
-
-        const decimals = token.decimals || 7;
-        if (!networkPassphrase)
-          throw new Error("Network passphrase not available");
-        const passphrase = networkPassphrase;
-        const sorobanServer = new rpc.Server(rpcUrl, {
-          allowHttp: stellarNetwork === "LOCAL",
-        });
-
-        const lendingContractId = selectedPool.contractId;
-        let txHash: string | undefined;
-
-        if (isDeposit) {
-          const depositXdr = await depositToPool(
-            selectedPool.assetCode,
-            amount,
-            decimals,
-            address,
-            lendingContractId
-          );
-
-          const signedDeposit = await signTransaction(depositXdr as string, {
-            networkPassphrase: passphrase,
-            address,
-          });
-          const signedDepositXdr = extractSignedTxXdr(signedDeposit);
-          const sendResult = await sorobanServer.sendTransaction(
-            TransactionBuilder.fromXDR(signedDepositXdr, passphrase)
-          );
-          if (sendResult.status === "ERROR")
-            throw new Error("Transaction rejected by network");
-          txHash = sendResult.hash;
-        } else {
-          if (!selectedPool.bTokenRate)
-            throw new Error("Unable to calculate bTokens. Please try again.");
-          const bTokensAmount = toBTokens(amount, selectedPool.bTokenRate);
-          const withdrawXdr = await withdrawFromPool(
-            selectedPool.assetCode,
-            bTokensAmount,
-            decimals,
-            address,
-            lendingContractId
-          );
-
-          const signedWithdraw = await signTransaction(withdrawXdr as string, {
-            networkPassphrase: passphrase,
-            address,
-          });
-          const signedWithdrawXdr = extractSignedTxXdr(signedWithdraw);
-          const sendResult = await sorobanServer.sendTransaction(
-            TransactionBuilder.fromXDR(signedWithdrawXdr, passphrase)
-          );
-          if (sendResult.status === "ERROR")
-            throw new Error("Transaction rejected by network");
-          txHash = sendResult.hash;
-        }
-
-        if (!txHash) throw new Error("Transaction was not submitted");
-        const confirmed = await sorobanServer.pollTransaction(txHash, {
-          attempts: 30,
-        });
-        if (confirmed.status !== "SUCCESS")
-          throw new Error(
-            `Transaction failed on-chain (status: ${confirmed.status})`
-          );
-        await loadBTokenBalance();
         await refetchPools();
         showSuccess(
           isDeposit
             ? `Successfully deposited ${amount} ${selectedPool.assetCode}`
             : `Successfully withdrew ${amount} ${selectedPool.assetCode}`
         );
-        logAction(selectedPool.id, txHash);
         closeModal();
       } catch (err) {
         const msg = extractContractErrorOrNull(err);
@@ -440,10 +258,7 @@ export function useLend() {
       selectedPool,
       address,
       isDeposit,
-      networkPassphrase,
-      signTransaction,
       executePoolAction,
-      loadBTokenBalance,
       refetchPools,
       closeModal,
       showError,
@@ -470,13 +285,13 @@ export function useLend() {
     isModalOpen,
     isDeposit,
     isLoading,
-    bTokenBalance,
-    isLoadingBalance,
+    bTokenBalance: null as string | null,
+    isLoadingBalance: false,
     hasWallet: !!address,
     openModal,
     closeModal,
     handleConfirm,
-    refreshBalance: loadBTokenBalance,
+    refreshBalance: () => Promise.resolve(),
     searchQuery,
     setSearchQuery: handleSetSearchQuery,
   };
