@@ -1,8 +1,5 @@
 import { backendClient } from "./backend-client";
 
-// DTOs mirrored by hand from apps/backend (D15).
-// Keep in sync with apps/backend/src/modules/transaction/dto/*.
-
 export interface PrepareTransactionRequest {
   unsignedXdr: string;
 }
