@@ -53,7 +53,7 @@ export async function pollTransactionStatus(
       throw new DOMException("Aborted", "AbortError");
     }
     const status = await txApi.status(hash);
-    if (status.status !== "PENDING") {
+    if (status.status === "SUCCESS" || status.status === "FAILED") {
       return status;
     }
     if (Date.now() + intervalMs > deadline) {
