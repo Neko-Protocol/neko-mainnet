@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { useHaptics } from "@/hooks/useHaptics";
 import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import type { SimulatorDestination } from "../../types/simulator.types";
 
@@ -22,8 +21,6 @@ export function VaultDestinationCard({
   isSelected,
   onSelect,
 }: VaultDestinationCardProps) {
-  const { light } = useHaptics();
-
   const codes = destination.acceptedTokenCodes;
   const primaryCode = codes[0];
   const primaryIconSrc = primaryCode ? getTokenIcon(primaryCode) : null;
@@ -37,7 +34,6 @@ export function VaultDestinationCard({
   return (
     <div
       onClick={() => {
-        light();
         onSelect(destination);
       }}
       className={cn(
@@ -178,25 +174,29 @@ export function VaultDestinationCard({
 
         {tvlLabel ? (
           <div className="flex flex-col justify-center gap-0.5 shrink-0">
-            <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
+            <span className="text-white/40 text-[10px] font-semibold uppercase tracking-widest">
               TVL
             </span>
-            <span className="text-white text-base font-bold">{tvlLabel}</span>
+            <span className="text-white text-xl font-bold tabular-nums">
+              {tvlLabel}
+            </span>
           </div>
         ) : null}
 
         <div className="w-px bg-white/8 mx-4 shrink-0" />
 
         <div className="flex flex-col justify-center gap-0.5 shrink-0">
-          <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
+          <span className="text-white/40 text-[10px] font-semibold uppercase tracking-widest">
             APY
           </span>
           {hasPositiveApy ? (
-            <span className="text-[#4ADE80] text-base font-bold">
+            <span className="text-[#4ADE80] text-xl font-bold tabular-nums">
               {apy!.toFixed(2)}%
             </span>
           ) : (
-            <span className="text-white/30 text-base font-bold">—</span>
+            <span className="text-white/30 text-xl font-bold tabular-nums">
+              —
+            </span>
           )}
         </div>
       </div>

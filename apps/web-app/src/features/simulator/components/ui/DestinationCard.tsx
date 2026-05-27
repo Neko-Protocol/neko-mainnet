@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { useHaptics } from "@/hooks/useHaptics";
 import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import type { SimulatorDestination } from "../../types/simulator.types";
 
@@ -17,8 +16,6 @@ export function DestinationCard({
   isSelected,
   onSelect,
 }: DestinationCardProps) {
-  const { light } = useHaptics();
-
   const apy = destination.apy;
   const hasPositiveApy =
     apy !== null && apy !== undefined && !Number.isNaN(apy) && apy > 0;
@@ -29,7 +26,6 @@ export function DestinationCard({
       : null;
 
   const handleClick = () => {
-    light();
     onSelect(destination);
   };
 

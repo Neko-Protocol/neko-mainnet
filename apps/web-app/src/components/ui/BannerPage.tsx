@@ -54,8 +54,7 @@ export function BannerPage({
         className
       )}
     >
-      {}
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center gap-2 sm:gap-2.5 pl-4 pr-[42%] sm:px-8 py-4 sm:py-6">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col justify-center gap-2 sm:gap-2.5 px-4 sm:px-8 py-4 sm:py-6">
         {badge && <Badge label={badge} />}
 
         <h2 className="text-xl sm:text-[2rem] font-bold leading-tight tracking-tight text-white wrap-break-word">
@@ -73,14 +72,25 @@ export function BannerPage({
         )}
       </div>
 
-      {}
+      {imageSrc && !hideImageOnMobile && (
+        <div className="pointer-events-none absolute inset-0 z-0 select-none sm:hidden">
+          <Image
+            src={imageSrc}
+            alt={imageAlt}
+            fill
+            unoptimized
+            priority
+            className="object-cover object-right"
+          />
+          <div
+            className="absolute inset-0 z-10 bg-gradient-to-r from-[#229EDF] via-[#229EDF]/90 to-[#229EDF]/30"
+            aria-hidden
+          />
+        </div>
+      )}
+
       {imageSrc && (
-        <div
-          className={cn(
-            hideImageOnMobile ? "hidden sm:block" : "block",
-            imageWrapperClassName
-          )}
-        >
+        <div className={cn("hidden sm:block", imageWrapperClassName)}>
           <Illustration
             src={imageSrc}
             alt={imageAlt}

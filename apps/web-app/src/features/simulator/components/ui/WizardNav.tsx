@@ -1,6 +1,5 @@
 "use client";
 
-import { useHaptics } from "@/hooks/useHaptics";
 import { cn } from "@/lib/utils";
 
 interface WizardNavProps {
@@ -24,11 +23,10 @@ export function WizardNav({
   rightSlot,
   className,
 }: WizardNavProps) {
-  const { light } = useHaptics();
   return (
     <div
       className={cn(
-        "mt-6 flex flex-col-reverse items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between",
+        "mt-6 flex flex-col-reverse items-stretch gap-3 px-2 pb-10 sm:flex-row sm:items-center sm:justify-between",
         className
       )}
     >
@@ -37,10 +35,9 @@ export function WizardNav({
           <button
             type="button"
             onClick={() => {
-              light();
               onBack?.();
             }}
-            className="rounded-full border border-white/10 bg-transparent px-5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/5"
+            className="rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-sm font-medium text-white/70 transition-all hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
           >
             Back
           </button>
@@ -53,16 +50,15 @@ export function WizardNav({
             type="button"
             onClick={() => {
               if (!continueDisabled) {
-                light();
                 onContinue?.();
               }
             }}
             disabled={continueDisabled}
             className={cn(
-              "rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-colors",
+              "rounded-full px-7 py-3 text-sm font-semibold transition-all",
               continueDisabled
-                ? "cursor-not-allowed bg-white/10 text-white/40"
-                : "bg-[#229EDF] hover:bg-[#1f8ec9]"
+                ? "cursor-not-allowed bg-white/[0.06] text-white/30"
+                : "bg-[#229EDF] text-white shadow-[0_4px_20px_rgba(34,158,223,0.3)] hover:bg-[#1a8ac9] hover:shadow-[0_4px_25px_rgba(34,158,223,0.45)] active:scale-[0.98]"
             )}
           >
             {continueLabel}

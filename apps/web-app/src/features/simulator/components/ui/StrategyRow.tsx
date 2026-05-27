@@ -9,6 +9,7 @@ import {
   getAssetTaxonomy,
 } from "@/features/shared/discover/utils/assetClass";
 import type { SavedStrategy } from "@/stores/strategies.store";
+import { useLiveStrategyApy } from "../../hooks/useLiveStrategyApy";
 
 interface StrategyRowProps {
   strategy: SavedStrategy;
@@ -31,6 +32,10 @@ export function StrategyRow({
     createdAt,
   } = strategy;
 
+  const { apy: liveApy, isLoading: apyLoading } = useLiveStrategyApy(strategy);
+  const effectiveApy = snapshotApy ?? liveApy;
+  const hasApy = effectiveApy !== null && effectiveApy !== undefined;
+
   const destinationLabel = stackVenue
     ? `${destination.name} + ${stackVenue.name}`
     : destination.name;
@@ -47,10 +52,7 @@ export function StrategyRow({
         ? "Auto-invest"
         : "Pool";
 
-  const apyLabel =
-    snapshotApy !== null && snapshotApy !== undefined
-      ? `${snapshotApy.toFixed(2)}%`
-      : "No data";
+  const apyLabel = hasApy ? `${effectiveApy!.toFixed(2)}%` : null;
 
   const amountNum = parseFloat(amount);
   const hasAmount = Number.isFinite(amountNum) && amountNum > 0;
@@ -76,16 +78,23 @@ export function StrategyRow({
   const visibleLabels = Array.from(new Set(labels.filter(Boolean))).slice(0, 3);
 
   return (
-    <div className="group flex h-full min-h-[270px] flex-col overflow-hidden rounded-2xl border border-white/5 bg-[#1C1C1C] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#202020]">
-      <div className="flex items-start justify-between gap-3">
+    <div className="group relative flex h-full min-h-[260px] flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-[#161616] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#1A1A1A]">
+      {/* Soft accent glow in corner */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-20 -top-20 h-44 w-44 rounded-full bg-[#229EDF]/[0.07] blur-3xl"
+      />
+
+      {/* Header */}
+      <div className="relative flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#121212] ring-1 ring-white/10">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#121212] ring-1 ring-white/10">
             {iconSrc ? (
               <Image
                 src={iconSrc}
                 alt={token.code}
-                width={44}
-                height={44}
+                width={40}
+                height={40}
                 unoptimized
                 className={getTokenIconFitClass(token.code)}
               />
@@ -97,7 +106,7 @@ export function StrategyRow({
             <h3 className="truncate text-sm font-semibold leading-tight text-white">
               {name}
             </h3>
-            <p className="mt-0.5 truncate text-xs text-white/50">
+            <p className="mt-0.5 truncate text-[11px] text-white/45">
               {token.code}
               {token.name && token.name !== token.code
                 ? ` · ${token.name}`
@@ -109,84 +118,78 @@ export function StrategyRow({
         <span
           className={cn(
             "shrink-0 rounded-md px-2 py-0.5 text-[10px] font-semibold",
-            accent?.chip ?? "bg-white/8 text-white/50"
+            accent?.chip ?? "bg-white/[0.06] text-white/50"
           )}
         >
           {taxonomy?.classLabel ?? typeLabel}
         </span>
       </div>
 
-      <div className="mt-5 flex flex-1 flex-col justify-between gap-4">
-        <div>
-          <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-white/40">
-            Strategy APY
-          </p>
-          <p
-            className={cn(
-              "text-3xl font-bold tabular-nums",
-              snapshotApy !== null && snapshotApy !== undefined
-                ? "text-white"
-                : "text-white/40"
-            )}
-          >
-            {apyLabel}
-            {snapshotApy !== null && snapshotApy !== undefined ? (
-              <span className="text-sm font-medium text-white/35"> /yr</span>
-            ) : null}
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2 text-xs">
-          <div className="flex items-start justify-between gap-3 border-t border-white/8 pt-3">
-            <span className="shrink-0 text-white/35">Route</span>
-            <span className="min-w-0 truncate text-right font-medium text-white/70">
-              {destinationLabel}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-white/35">Protocol</span>
-            <span className="min-w-0 truncate text-right text-white/55">
-              {protocolLabel}
-            </span>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-white/35">Amount</span>
-            <span className="font-mono text-white/55">{amountLabel}</span>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-white/35">Saved</span>
-            <span className="text-white/45">{dateLabel}</span>
-          </div>
-        </div>
-
-        {visibleLabels.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
-            {visibleLabels.map((label) => (
-              <span
-                key={label}
-                className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-white/45"
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-        ) : null}
+      {/* APY hero */}
+      <div className="relative mt-4">
+        {hasApy ? (
+          <>
+            <p className="bg-gradient-to-r from-white to-[#5BB8E8] bg-clip-text text-4xl font-bold leading-none tracking-tight tabular-nums text-transparent">
+              {apyLabel}
+            </p>
+            <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
+              APY · per year
+            </p>
+          </>
+        ) : apyLoading ? (
+          <>
+            <div className="h-9 w-32 animate-pulse rounded-md bg-white/[0.06]" />
+            <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
+              Loading APY…
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-4xl font-bold leading-none tracking-tight tabular-nums text-white/30">
+              No data
+            </p>
+            <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
+              APY unavailable
+            </p>
+          </>
+        )}
       </div>
 
-      <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
+      {/* Metadata */}
+      <div className="relative mt-4 flex flex-1 flex-col gap-2 border-t border-white/[0.06] pt-4 text-xs">
+        <div className="flex items-start justify-between gap-3">
+          <span className="shrink-0 text-white/40">Route</span>
+          <span className="min-w-0 truncate text-right font-medium text-white/80">
+            {destinationLabel}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-white/40">Amount</span>
+          <span className="font-mono text-white/65 tabular-nums">
+            {amountLabel}
+          </span>
+        </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-white/40">Saved</span>
+          <span className="text-white/55">{dateLabel}</span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="relative mt-5 grid grid-cols-[1fr_auto] gap-2">
         <button
           type="button"
           onClick={onExecute}
-          className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-[#229EDF]/20 bg-[#229EDF]/10 px-3 text-sm font-semibold text-[#229EDF] transition-colors hover:bg-[#229EDF]/20"
+          className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-[#229EDF] px-3 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(34,158,223,0.3)] transition-all hover:bg-[#1a8ac9] hover:shadow-[0_4px_25px_rgba(34,158,223,0.45)] active:scale-[0.98]"
         >
           <Play className="h-3.5 w-3.5 fill-current" />
-          Execute
+          Execute strategy
         </button>
         <button
           type="button"
           onClick={onDelete}
           aria-label={`Delete ${name}`}
-          className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/35 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-white/40 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
