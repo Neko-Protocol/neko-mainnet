@@ -17,6 +17,7 @@
     "@hookform/resolvers": "^5.2.2",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
+    "@neko/api-contracts": "*",
     "@neko/config": "0.0.0",
     "@neko/defindex-vault": "0.0.0",
     "@neko/reflector": "0.0.0",
