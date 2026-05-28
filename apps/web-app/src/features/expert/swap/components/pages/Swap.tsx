@@ -35,7 +35,6 @@ import { useSwapExecution } from "../../hooks/useSwapExecution";
 import { useSwapPrices } from "../../hooks/useSwapPrices";
 
 import { SwapButton } from "../ui/SwapButton";
-import { SwapValueWarning } from "../ui/SwapValueWarning";
 import { OrderTypeTabs } from "../ui/OrderTypeTabs";
 
 interface TokenSelectorBtnProps {
@@ -212,13 +211,8 @@ const Swap: React.FC = () => {
     }
   }, [quoteAmountOut, swapState]);
 
-  const {
-    fiatValue,
-    fiatValueOut,
-    isLoadingPrice,
-    isLoadingOutPrice,
-    swapValueAnalysis,
-  } = useSwapPrices(amountIn, amountOut, tokenIn, tokenOut);
+  const { fiatValue, fiatValueOut, isLoadingPrice, isLoadingOutPrice } =
+    useSwapPrices(amountIn, amountOut, tokenIn, tokenOut);
 
   const { executeSwap } = useSwapExecution();
 
@@ -429,12 +423,6 @@ const Swap: React.FC = () => {
                       ? formatAmount(amountOut)
                       : "0.00"}
                   </span>
-                )}
-                {swapValueAnalysis?.isSuspiciouslyLow && (
-                  <SwapValueWarning
-                    analysis={swapValueAnalysis}
-                    isLoadingPrice={isLoadingOutPrice}
-                  />
                 )}
               </div>
               {quoteError && !isLoadingQuote && (

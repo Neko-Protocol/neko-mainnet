@@ -3,7 +3,6 @@ import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
-import { SUSPICIOUS_VALUE_THRESHOLD_PCT } from "@/features/expert/swap/constants/swapConfig";
 import type { SupportedCurrency } from "@/stores/currency.store";
 
 export interface SwapPrices {
@@ -14,12 +13,6 @@ export interface SwapPrices {
   fiatValue: string;
   fiatValueOut: string;
   selectedCurrency: SupportedCurrency;
-  swapValueAnalysis: {
-    expectedOutput: number;
-    actualOutput: number;
-    differencePercent: number;
-    isSuspiciouslyLow: boolean;
-  } | null;
 }
 
 export function useSwapPrices(
@@ -60,42 +53,6 @@ export function useSwapPrices(
     return formatCurrency(0, selectedCurrency, 2);
   }, [amountOut, tokenOutPrice, fxRate, selectedCurrency]);
 
-  const swapValueAnalysis = useMemo(() => {
-    if (
-      !amountIn ||
-      !amountOut ||
-      parseFloat(amountIn) <= 0 ||
-      parseFloat(amountOut) <= 0
-    ) {
-      return null;
-    }
-
-    if (
-      !tokenInPrice ||
-      !tokenOutPrice ||
-      tokenInPrice <= 0 ||
-      tokenOutPrice <= 0
-    ) {
-      return null;
-    }
-
-    const inputAmount = parseFloat(amountIn);
-    const outputAmount = parseFloat(amountOut);
-    const inputUsdValue = inputAmount * tokenInPrice;
-    const expectedOutput = inputUsdValue / tokenOutPrice;
-    const differencePercent =
-      ((expectedOutput - outputAmount) / expectedOutput) * 100;
-    const isSuspiciouslyLow =
-      differencePercent > SUSPICIOUS_VALUE_THRESHOLD_PCT;
-
-    return {
-      expectedOutput,
-      actualOutput: outputAmount,
-      differencePercent,
-      isSuspiciouslyLow,
-    };
-  }, [amountIn, amountOut, tokenInPrice, tokenOutPrice]);
-
   return {
     tokenInPrice,
     tokenOutPrice,
@@ -104,6 +61,5 @@ export function useSwapPrices(
     fiatValue,
     fiatValueOut,
     selectedCurrency,
-    swapValueAnalysis,
   };
 }
