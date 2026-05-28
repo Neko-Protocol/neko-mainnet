@@ -395,7 +395,7 @@ export function VaultActionPanel({
       {multisigInfo?.isMultisig && (
         <MultisigBanner
           signersCount={multisigInfo.signersCount}
-          threshold={multisigInfo.medThreshold}
+          signersRequired={multisigInfo.signersRequired}
         />
       )}
       <ModeTabs tab={tab} onTabChange={onTabChange} />

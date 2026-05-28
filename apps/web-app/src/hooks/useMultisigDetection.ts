@@ -9,6 +9,7 @@ export interface MultisigInfo {
   isMultisig: boolean;
   signersCount: number;
   medThreshold: number;
+  signersRequired: number;
   signers: Array<{ key: string; weight: number; type: string }>;
 }
 
@@ -16,6 +17,7 @@ const EMPTY_MULTISIG_INFO: MultisigInfo = {
   isMultisig: false,
   signersCount: 0,
   medThreshold: 0,
+  signersRequired: 0,
   signers: [],
 };
 
@@ -40,14 +42,29 @@ export function useMultisigDetection() {
         type: s.type,
       }));
       const medThreshold = acc.thresholds.med_threshold;
-      // A wallet is "multisig" when more than one signer can authorize tx and
-      // the medium threshold requires more than one signer's weight to clear.
       const isMultisig = signers.length > 1 && medThreshold > 1;
+
+      // Stellar uses signature weights, not signer counts. Compute the minimum
+      // number of signers needed to reach the medium threshold by greedily
+      // adding the heaviest weights first.
+      const sortedWeights = signers
+        .map((s) => s.weight)
+        .filter((w) => w > 0)
+        .sort((a, b) => b - a);
+      let cumulativeWeight = 0;
+      let signersRequired = 0;
+      for (const w of sortedWeights) {
+        if (cumulativeWeight >= medThreshold) break;
+        cumulativeWeight += w;
+        signersRequired++;
+      }
+      if (signersRequired === 0) signersRequired = 1;
 
       return {
         isMultisig,
         signersCount: signers.length,
         medThreshold,
+        signersRequired,
         signers,
       };
     },
