@@ -1,13 +1,12 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
-import { rpcUrl } from "@/lib/constants/network";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
 import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 import { auditService } from "@/lib/services/audit.service";
+import { pollTransactionStatus, txApi } from "@/lib/services/transaction.api";
 import { orchestrator } from "../core/Orchestrator";
 import { buildPoolAuditPayload } from "../utils/buildPoolAuditPayload";
 import { POOLS_QUERY_KEY } from "./usePools";
@@ -61,6 +60,23 @@ export function usePoolAction() {
         case "borrow":
           result = await orchestrator.borrow(poolId, address, amount);
           break;
+        case "borrowWithCollateral":
+          if (
+            !params.collateralAssetAddress ||
+            params.collateralAmount === undefined
+          ) {
+            throw new Error(
+              "borrowWithCollateral requires collateralAssetAddress and collateralAmount"
+            );
+          }
+          result = await orchestrator.borrowWithCollateral(
+            poolId,
+            address,
+            amount,
+            params.collateralAssetAddress,
+            params.collateralAmount
+          );
+          break;
         case "repay":
           result = await orchestrator.repay(poolId, address, amount);
           break;
@@ -71,37 +87,34 @@ export function usePoolAction() {
           throw new Error(`Unsupported action: ${action}`);
       }
 
+      await txApi.prepare({ unsignedXdr: result.xdr });
+
       const signed = await signTransaction(result.xdr, {
         networkPassphrase: result.networkPassphrase,
       });
 
       const signedXdr = extractSignedTxXdr(signed);
 
-      const server = new rpc.Server(rpcUrl, { allowHttp: true });
-      const tx = TransactionBuilder.fromXDR(
-        signedXdr,
-        result.networkPassphrase
-      );
-      const txResult = await server.sendTransaction(tx);
+      const submitResult = await txApi.submit({ signedXdr });
 
-      if (txResult.status === "ERROR") {
-        throw new Error(`Transaction failed: ${txResult.status}`);
+      const final =
+        submitResult.status === "PENDING"
+          ? await pollTransactionStatus(submitResult.hash)
+          : submitResult;
+
+      if (final.status !== "SUCCESS") {
+        const errMsg =
+          final.error?.message ?? final.error?.code ?? final.status;
+        throw new Error(`Transaction failed on-chain (${errMsg})`);
       }
 
+      const hash = final.hash;
+
       if (address && params.audit) {
-        const payload = buildPoolAuditPayload(params, txResult.hash, address);
+        const payload = buildPoolAuditPayload(params, hash, address);
         if (payload) {
           void auditService.log(payload);
         }
-      }
-
-      const hash = txResult.hash;
-      const confirmed = await server.pollTransaction(hash, { attempts: 30 });
-
-      if (confirmed.status !== "SUCCESS") {
-        throw new Error(
-          `Transaction failed on-chain (status: ${confirmed.status})`
-        );
       }
 
       return hash;

@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { TransactionBuilder } from "@stellar/stellar-sdk";
-import { rpc } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
@@ -13,10 +11,6 @@ import {
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
-import {
-  rpcUrl as configRpcUrl,
-  stellarNetwork,
-} from "@/lib/config/stellar.config";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import {
@@ -28,6 +22,8 @@ import {
 import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 import { resolveDecimalsForAuditAssetKey } from "@/lib/helpers/auditAssetAmounts";
 import { auditService } from "@/lib/services/audit.service";
+import { pollTransactionStatus, txApi } from "@/lib/services/transaction.api";
+import type { TransactionStatusResponse } from "@/lib/services/transaction.api";
 
 const VAULT_SHARE_DECIMALS = 7;
 const WITHDRAW_SLIPPAGE_BPS = 100;
@@ -72,14 +68,6 @@ function vaultWithdrawUnderlyingOut(
   }
 }
 
-/**
- * Signs and submits a simulated AssembledTransaction by:
- * 1. Getting the XDR (already includes simulation auth entries)
- * 2. Signing with the user's wallet (Freighter handles Soroban auth in the XDR)
- * 3. Submitting via rpc.Server
- *
- * Bypasses SDK's signAndSend() which crashes on .switch() in some v14 builds.
- */
 async function signAndSubmit(
   xdr: string,
   passphrase: string,
@@ -88,15 +76,11 @@ async function signAndSubmit(
     opts: { networkPassphrase: string; address?: string }
   ) => Promise<string | { signedTxXdr?: string }>,
   address: string
-) {
-  const server = new rpc.Server(configRpcUrl, {
-    allowHttp: stellarNetwork === "LOCAL",
-  });
+): Promise<TransactionStatusResponse> {
+  await txApi.prepare({ unsignedXdr: xdr });
   const signed = await signFn(xdr, { networkPassphrase: passphrase, address });
   const signedTxXdr = extractSignedTxXdr(signed);
-  return server.sendTransaction(
-    TransactionBuilder.fromXDR(signedTxXdr, passphrase)
-  );
+  return txApi.submit({ signedXdr: signedTxXdr });
 }
 
 function readBigintResult(result: unknown): bigint {
@@ -113,34 +97,13 @@ function readSingleAssetTotalManaged(result: unknown): bigint {
   return BigInt(String(funds[0].total_amount));
 }
 
-/**
- * Polls getTransaction(hash) until the tx is included in a ledger (SUCCESS / FAILED)
- * or we time out. sendTransaction only enqueues the tx and returns PENDING immediately,
- * so we MUST wait here to know the real on-chain outcome.
- */
-async function waitForTx(
-  hash: string,
-  {
-    timeoutMs = 30_000,
-    intervalMs = 1_000,
-  }: { timeoutMs?: number; intervalMs?: number } = {}
-) {
-  const server = new rpc.Server(configRpcUrl, {
-    allowHttp: stellarNetwork === "LOCAL",
-  });
-  const start = Date.now();
-
-  while (Date.now() - start < timeoutMs) {
-    const res = await server.getTransaction(hash);
-    if (res.status !== "NOT_FOUND") {
-      return res;
-    }
-    await new Promise((r) => setTimeout(r, intervalMs));
+async function finalizeSubmit(
+  submitResult: TransactionStatusResponse
+): Promise<TransactionStatusResponse> {
+  if (submitResult.status === "PENDING") {
+    return pollTransactionStatus(submitResult.hash);
   }
-
-  throw new Error(
-    `Timed out waiting for transaction ${hash} to be included in a ledger`
-  );
+  return submitResult;
 }
 
 export function useVaultAction(
@@ -222,34 +185,22 @@ export function useVaultAction(
           invest: false,
         });
 
-        const sendResult = await signAndSubmit(
+        const submitResult = await signAndSubmit(
           depositTx.toXDR(),
           passphrase,
           signTransaction,
           address
         );
 
-        if (sendResult.status === "ERROR") {
-          throw new Error(
-            `Transaction rejected by network: ${
-              sendResult.errorResult?.result().switch().name ?? "unknown"
-            }`
-          );
-        }
-
-        if (sendResult.status === "TRY_AGAIN_LATER") {
-          throw new Error(
-            "Network is congested. Please try again in a moment."
-          );
-        }
-
         setIsConfirming(true);
-        const finalResult = await waitForTx(sendResult.hash);
+        const finalResult = await finalizeSubmit(submitResult);
 
         if (finalResult.status !== "SUCCESS") {
-          throw new Error(
-            "Transaction failed on-chain. Please refresh your balance."
-          );
+          const reason =
+            finalResult.error?.message ??
+            finalResult.error?.code ??
+            finalResult.status;
+          throw new Error(`Vault deposit failed (${reason})`);
         }
 
         const minted = vaultDepositMintedShares(depositTx.result);
@@ -270,7 +221,7 @@ export function useVaultAction(
             ? { amount_out: mintedSharesHuman }
             : {}),
           pool_id: vaultContractId,
-          tx_hash: sendResult.hash,
+          tx_hash: finalResult.hash,
         });
 
         void invalidateAfterTx();
@@ -375,34 +326,22 @@ export function useVaultAction(
           from: address,
         });
 
-        const sendResult = await signAndSubmit(
+        const submitResult = await signAndSubmit(
           withdrawTx.toXDR(),
           passphrase,
           signTransaction,
           address
         );
 
-        if (sendResult.status === "ERROR") {
-          throw new Error(
-            `Transaction rejected by network: ${
-              sendResult.errorResult?.result().switch().name ?? "unknown"
-            }`
-          );
-        }
-
-        if (sendResult.status === "TRY_AGAIN_LATER") {
-          throw new Error(
-            "Network is congested. Please try again in a moment."
-          );
-        }
-
         setIsConfirming(true);
-        const finalResult = await waitForTx(sendResult.hash);
+        const finalResult = await finalizeSubmit(submitResult);
 
         if (finalResult.status !== "SUCCESS") {
-          throw new Error(
-            "Transaction failed on-chain. Please refresh your balance."
-          );
+          const reason =
+            finalResult.error?.message ??
+            finalResult.error?.code ??
+            finalResult.status;
+          throw new Error(`Vault withdraw failed (${reason})`);
         }
 
         const underlyingBi = vaultWithdrawUnderlyingOut(withdrawTx.result);
@@ -428,7 +367,7 @@ export function useVaultAction(
           asset_out: supplyAssetSymbol,
           amount_out: underlyingHuman,
           pool_id: vaultContractId,
-          tx_hash: sendResult.hash,
+          tx_hash: finalResult.hash,
         });
 
         showSuccess(

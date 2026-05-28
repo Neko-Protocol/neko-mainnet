@@ -7,7 +7,6 @@ import {
   rpc,
   xdr,
 } from "@stellar/stellar-sdk";
-import { LENDING_CONTRACT_ID } from "@/lib/constants/contracts";
 import {
   rpcUrl,
   networkPassphrase,
@@ -20,9 +19,9 @@ import { extractContractError } from "./contractErrors";
 export const depositToPool = async (
   assetCode: string,
   amount: string,
-  decimals: number = 7,
+  decimals: number,
   walletAddress: string,
-  contractId: string = LENDING_CONTRACT_ID
+  contractId: string
 ): Promise<string> => {
   try {
     const sorobanServer = new rpc.Server(rpcUrl, {
