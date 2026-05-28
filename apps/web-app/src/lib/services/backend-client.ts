@@ -1,7 +1,4 @@
-const DEFAULT_BACKEND_URL = "http://localhost:4000";
-
-export const backendBaseUrl =
-  process.env.NEXT_PUBLIC_BACKEND_URL ?? DEFAULT_BACKEND_URL;
+export const backendBaseUrl = "/api/backend-proxy";
 
 export interface BackendErrorBody {
   code?: string;
