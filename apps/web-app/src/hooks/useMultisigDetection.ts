@@ -42,14 +42,17 @@ export function useMultisigDetection() {
         type: s.type,
       }));
       const medThreshold = acc.thresholds.med_threshold;
-      const isMultisig = signers.length > 1 && medThreshold > 1;
+      // Only signers with weight > 0 can actually authorize. Stellar's
+      // signers array can include a disabled master key with weight 0, so we
+      // exclude those from the active count.
+      const activeSigners = signers.filter((s) => s.weight > 0);
+      const isMultisig = activeSigners.length > 1 && medThreshold > 1;
 
       // Stellar uses signature weights, not signer counts. Compute the minimum
       // number of signers needed to reach the medium threshold by greedily
       // adding the heaviest weights first.
-      const sortedWeights = signers
+      const sortedWeights = activeSigners
         .map((s) => s.weight)
-        .filter((w) => w > 0)
         .sort((a, b) => b - a);
       let cumulativeWeight = 0;
       let signersRequired = 0;
@@ -62,10 +65,10 @@ export function useMultisigDetection() {
 
       return {
         isMultisig,
-        signersCount: signers.length,
+        signersCount: activeSigners.length,
         medThreshold,
         signersRequired,
-        signers,
+        signers: activeSigners,
       };
     },
     enabled: Boolean(address),
