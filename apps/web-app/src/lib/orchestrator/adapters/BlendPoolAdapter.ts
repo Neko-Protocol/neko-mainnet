@@ -5,9 +5,9 @@ import {
   TokenMetadata,
   type Request,
 } from "@blend-capital/blend-sdk";
-import { TransactionBuilder, rpc, xdr, Horizon } from "@stellar/stellar-sdk";
+import { TransactionBuilder, rpc, xdr } from "@stellar/stellar-sdk";
 
-import { rpcUrl, networkPassphrase, horizonUrl } from "@/lib/constants/network";
+import { rpcUrl, networkPassphrase } from "@/lib/constants/network";
 import {
   applySlippageBps,
   mulDivCeil,
@@ -838,8 +838,8 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     userAddress: string
   ): Promise<TransactionResult> {
     const operation = xdr.Operation.fromXDR(opXdrBase64, "base64");
-    const horizon = new Horizon.Server(horizonUrl);
-    const account = await horizon.loadAccount(userAddress);
+    const server = new rpc.Server(rpcUrl, { allowHttp: true });
+    const account = await server.getAccount(userAddress);
 
     const tx = new TransactionBuilder(account, {
       fee: "100",
@@ -849,7 +849,6 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       .setTimeout(300)
       .build();
 
-    const server = new rpc.Server(rpcUrl, { allowHttp: true });
     const prepared = await server.prepareTransaction(tx);
 
     return {
