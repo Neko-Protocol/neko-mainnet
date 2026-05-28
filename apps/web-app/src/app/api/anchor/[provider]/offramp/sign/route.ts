@@ -34,8 +34,7 @@ export async function POST(
     }
 
     const rpcUrl =
-      process.env.NEXT_PUBLIC_STELLAR_RPC_URL ||
-      "https://soroban-testnet.stellar.org";
+      process.env.STELLAR_RPC_URL || "https://soroban-testnet.stellar.org";
     const networkPassphrase =
       process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE ||
       "Test SDF Network ; September 2015";

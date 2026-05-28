@@ -8,6 +8,7 @@ import { InternalApiKeyGuard } from "./common/guards/internal-api-key.guard";
 import { RequestIdMiddleware } from "./common/middleware/request-id.middleware";
 import { envValidationSchema } from "./config/env.validation";
 import { HealthModule } from "./modules/health/health.module";
+import { RpcModule } from "./modules/rpc/rpc.module";
 import { SupabaseModule } from "./modules/supabase/supabase.module";
 import { StellarModule } from "./modules/stellar/stellar.module";
 import { TransactionModule } from "./modules/transaction/transaction.module";
@@ -52,6 +53,7 @@ import { TransactionModule } from "./modules/transaction/transaction.module";
     StellarModule,
     SupabaseModule,
     HealthModule,
+    RpcModule,
     TransactionModule,
   ],
   providers: [

@@ -19,7 +19,6 @@ const envSchema = z.object({
     "STANDALONE", // deprecated in favor of LOCAL
   ] as const),
   PUBLIC_STELLAR_NETWORK_PASSPHRASE: z.nativeEnum(WalletNetwork),
-  PUBLIC_STELLAR_RPC_URL: z.string(),
   PUBLIC_STELLAR_HORIZON_URL: z.string(),
 });
 
@@ -32,7 +31,6 @@ const envVars = {
   PUBLIC_STELLAR_NETWORK: stellarNetworkEnv,
   PUBLIC_STELLAR_NETWORK_PASSPHRASE:
     process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE,
-  PUBLIC_STELLAR_RPC_URL: process.env.NEXT_PUBLIC_STELLAR_RPC_URL,
   PUBLIC_STELLAR_HORIZON_URL: process.env.NEXT_PUBLIC_STELLAR_HORIZON_URL,
 };
 const parsed = envSchema.safeParse(envVars);
@@ -42,9 +40,16 @@ const env: z.infer<typeof envSchema> = parsed.success
   : {
       PUBLIC_STELLAR_NETWORK: "LOCAL",
       PUBLIC_STELLAR_NETWORK_PASSPHRASE: WalletNetwork.STANDALONE,
-      PUBLIC_STELLAR_RPC_URL: "http://localhost:8000/rpc",
       PUBLIC_STELLAR_HORIZON_URL: "http://localhost:8000",
     };
+
+const LAB_RPC_URL: Record<string, string> = {
+  PUBLIC: "https://mainnet.sorobanrpc.com",
+  TESTNET: "https://soroban-testnet.stellar.org",
+  FUTURENET: "https://rpc-futurenet.stellar.org",
+  LOCAL: "http://localhost:8000/rpc",
+  STANDALONE: "http://localhost:8000/rpc",
+};
 
 export const stellarNetwork =
   env.PUBLIC_STELLAR_NETWORK === "STANDALONE"
@@ -56,22 +61,30 @@ const stellarEncode = (str: string) => {
   return str.replace(/\//g, "//").replace(/;/g, "/;");
 };
 
+const labRpcUrl = LAB_RPC_URL[env.PUBLIC_STELLAR_NETWORK] ?? LAB_RPC_URL.PUBLIC;
+
 export const labPrefix = () => {
   switch (stellarNetwork) {
     case "LOCAL":
-      return `http://localhost:8000/lab/transaction-dashboard?$=network$id=custom&label=Custom&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(rpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
+      return `http://localhost:8000/lab/transaction-dashboard?$=network$id=custom&label=Custom&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(labRpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
     case "PUBLIC":
-      return `https://lab.stellar.org/transaction-dashboard?$=network$id=mainnet&label=Mainnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(rpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
+      return `https://lab.stellar.org/transaction-dashboard?$=network$id=mainnet&label=Mainnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(labRpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
     case "TESTNET":
-      return `https://lab.stellar.org/transaction-dashboard?$=network$id=testnet&label=Testnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(rpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
+      return `https://lab.stellar.org/transaction-dashboard?$=network$id=testnet&label=Testnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(labRpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
     case "FUTURENET":
-      return `https://lab.stellar.org/transaction-dashboard?$=network$id=futurenet&label=Futurenet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(rpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
+      return `https://lab.stellar.org/transaction-dashboard?$=network$id=futurenet&label=Futurenet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(labRpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
     default:
-      return `https://lab.stellar.org/transaction-dashboard?$=network$id=testnet&label=Testnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(rpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
+      return `https://lab.stellar.org/transaction-dashboard?$=network$id=testnet&label=Testnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(labRpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
   }
 };
 
-export const rpcUrl = env.PUBLIC_STELLAR_RPC_URL;
+// Browser-side RPC traffic is proxied through the Next.js → backend chain so
+// the upstream Stellar RPC URL + credentials never reach the bundle.
+const RPC_PROXY_PATH = "/api/backend-proxy/v1/rpc";
+export const rpcUrl =
+  typeof window !== "undefined"
+    ? `${window.location.origin}${RPC_PROXY_PATH}`
+    : RPC_PROXY_PATH;
 
 export const horizonUrl = env.PUBLIC_STELLAR_HORIZON_URL;
 

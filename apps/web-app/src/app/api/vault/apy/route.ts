@@ -69,8 +69,7 @@ const SCALAR_7 = 10_000_000;
 function getRpcConfig() {
   return {
     rpcUrl:
-      process.env.NEXT_PUBLIC_STELLAR_RPC_URL ??
-      "https://soroban-testnet.stellar.org",
+      process.env.STELLAR_RPC_URL ?? "https://soroban-testnet.stellar.org",
     networkPassphrase:
       process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE ??
       "Test SDF Network ; September 2015",
