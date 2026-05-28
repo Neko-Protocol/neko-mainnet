@@ -1,9 +1,11 @@
 {
   "$schema": "https://v2-9-6.turborepo.dev/schema.json",
+  "ui": "tui",
   "tasks": {
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "interactive": true
     },
     "build": {
       "dependsOn": ["^build"],
@@ -11,7 +13,8 @@
     },
     "start": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "interactive": true
     },
     "lint": {
       "outputs": []
