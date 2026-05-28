@@ -60,6 +60,23 @@ export function usePoolAction() {
         case "borrow":
           result = await orchestrator.borrow(poolId, address, amount);
           break;
+        case "borrowWithCollateral":
+          if (
+            !params.collateralAssetAddress ||
+            params.collateralAmount === undefined
+          ) {
+            throw new Error(
+              "borrowWithCollateral requires collateralAssetAddress and collateralAmount"
+            );
+          }
+          result = await orchestrator.borrowWithCollateral(
+            poolId,
+            address,
+            amount,
+            params.collateralAssetAddress,
+            params.collateralAmount
+          );
+          break;
         case "repay":
           result = await orchestrator.repay(poolId, address, amount);
           break;

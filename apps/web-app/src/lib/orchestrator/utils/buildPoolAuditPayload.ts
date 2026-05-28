@@ -12,6 +12,7 @@ function poolActionToAuditType(action: PoolAction): AuditActionType {
     case "withdrawCollateral":
       return "lend_withdraw";
     case "borrow":
+    case "borrowWithCollateral":
       return "borrow_deposit";
     case "repay":
       return "pool_repay";
@@ -99,6 +100,23 @@ export function buildPoolAuditPayload(
         asset_out: code0,
         amount_out: parseHuman(amount, d0),
       };
+    case "borrowWithCollateral": {
+      const collateral = tokens.find(
+        (t) => t.address === params.collateralAssetAddress
+      );
+      const cDec = collateral?.decimals ?? 7;
+      const cCode = collateral?.code ?? params.collateralAssetAddress ?? "?";
+      return {
+        ...base,
+        asset_in: cCode,
+        amount_in:
+          params.collateralAmount !== undefined
+            ? parseHuman(params.collateralAmount, cDec)
+            : undefined,
+        asset_out: code0,
+        amount_out: parseHuman(amount, d0),
+      };
+    }
     case "repay":
       return {
         ...base,

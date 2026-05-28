@@ -7,6 +7,7 @@ export type PoolAction =
   | "withdraw"
   | "claimRewards"
   | "borrow"
+  | "borrowWithCollateral"
   | "repay"
   | "supplyCollateral"
   | "withdrawCollateral";
@@ -81,4 +82,6 @@ export interface PoolActionParams {
   withdrawAll?: boolean;
   withdrawUnit?: "underlying" | "lp_shares";
   audit?: PoolActionAuditContext;
+  collateralAssetAddress?: string;
+  collateralAmount?: bigint;
 }

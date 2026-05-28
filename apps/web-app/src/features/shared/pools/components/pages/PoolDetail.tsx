@@ -32,9 +32,7 @@ import {
 import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
 import { reserveStroopsFromApiString } from "@/lib/helpers/stellar/aquaDeposit";
 import { ensureTrustlineForSAC } from "@/lib/helpers/stellar/trustline";
-import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
-import { rpc, TransactionBuilder } from "@stellar/stellar-sdk";
 
 function calculateBorrowLimit(
   collateralAmount: number,
@@ -43,10 +41,8 @@ function calculateBorrowLimit(
   if (!Number.isFinite(collateralAmount) || collateralAmount <= 0) return 0;
   return collateralAmount * (collateralFactorPct / 100);
 }
-import { rpcUrl } from "@/lib/constants/network";
 import { useToast } from "@/hooks/useToast";
 import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
-import { auditService } from "@/lib/services/audit.service";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
@@ -437,13 +433,18 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   }, [queryClient, contractid, address, refetchBalances]);
 
   const runPoolAction = useCallback(
-    async (action: PoolAction, amount: bigint) => {
+    async (
+      action: PoolAction,
+      amount: bigint,
+      extras?: { collateralAssetAddress?: string; collateralAmount?: bigint }
+    ) => {
       if (!pool) return;
       await executePoolAction({
         poolId: contractid,
         action,
         amount,
         tokenIndex: 0,
+        ...extras,
         audit: {
           tokens: pool.tokens,
           poolType: pool.type,
@@ -690,69 +691,17 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
         setIsBorrowWithCollateralPending(true);
         try {
-          const result = await orchestrator.borrowWithCollateral(
-            contractid,
-            address,
-            borrowBigInt,
+          await runPoolAction("borrowWithCollateral", borrowBigInt, {
             collateralAssetAddress,
-            collateralBigInt
-          );
-
-          const signed = await signTransaction(result.xdr, {
-            networkPassphrase: result.networkPassphrase,
+            collateralAmount: collateralBigInt,
           });
-          const signedXdr = extractSignedTxXdr(signed);
-
-          const server = new rpc.Server(rpcUrl, { allowHttp: true });
-          const tx = TransactionBuilder.fromXDR(
-            signedXdr,
-            result.networkPassphrase
-          );
-          const txResult = await server.sendTransaction(tx);
-          if (txResult.status === "ERROR") {
-            throw new Error("Transaction failed");
-          }
-          const confirmed = await server.pollTransaction(txResult.hash, {
-            attempts: 30,
-          });
-          if (confirmed.status !== "SUCCESS") {
-            throw new Error(
-              confirmed.status === "FAILED"
-                ? "Transaction failed on-chain"
-                : "Transaction confirmation timeout"
-            );
-          }
-          const borrowedCode = pool?.tokens[0]?.code ?? "?";
-          const borrowedHuman = parseFloat(borrowAmount);
-          const collateralCode = collateralOption?.symbol ?? "?";
-          const collateralHuman = parseFloat(collateralAmt);
-          void auditService.log({
-            wallet_address: address,
-            action_type: "borrow_deposit",
-            pool_id: contractid,
-            asset_in: collateralCode,
-            amount_in: collateralHuman,
-            asset_out: borrowedCode,
-            amount_out: borrowedHuman,
-            tx_hash: txResult.hash,
-          });
-          addNotification("Borrow successful", "success");
-          await refetchAfterTx();
-        } catch (error) {
-          if (!isUserCancellationError(error)) {
-            const msg =
-              error instanceof Error ? error.message : "Transaction failed";
-            addNotification(`Borrow failed: ${msg}`, "error");
-          }
         } finally {
           setIsBorrowWithCollateralPending(false);
         }
         return;
-      } else {
-        await runPoolAction("borrow", borrowBigInt);
       }
 
-      await refetchAfterTx();
+      await runPoolAction("borrow", borrowBigInt);
     },
     [
       address,
