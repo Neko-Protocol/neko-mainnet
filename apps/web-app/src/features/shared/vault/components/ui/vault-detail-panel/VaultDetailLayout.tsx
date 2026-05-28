@@ -22,6 +22,7 @@ import { VaultDetailMetrics } from "./VaultDetailMetrics";
 import { VaultDetailInfo } from "./VaultDetailInfo";
 import { VaultActionPanel } from "./VaultActionPanel";
 import { FirstVaultDepositSuccessModal } from "@/features/shared/vault/components/ui/FirstVaultDepositSuccessModal";
+import { MultisigPendingModal } from "@/features/shared/vault/components/ui/MultisigPendingModal";
 import type { VaultDetailLayoutProps, VaultActionTab } from "./types";
 
 const PANEL_SCROLL_CLASS =
@@ -34,6 +35,11 @@ export function VaultDetailLayout({
   const [tab, setTab] = useState<VaultActionTab>(initialTab);
   const [amount, setAmount] = useState("");
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [multisigPending, setMultisigPending] = useState<{
+    hash: string;
+    action: "deposit" | "withdraw";
+    amount: string;
+  } | null>(null);
   const [mobileTab, setMobileTab] = useState<"about" | "action">("about");
 
   const { address } = useWallet();
@@ -91,7 +97,20 @@ export function VaultDetailLayout({
     if (!amount || parseFloat(amount) <= 0) return;
 
     if (tab === "deposit") {
-      const { success, isFirstVaultDeposit } = await handleDeposit(amount);
+      const {
+        success,
+        isFirstVaultDeposit,
+        multisigPending: pendingDeposit,
+      } = await handleDeposit(amount);
+      if (pendingDeposit) {
+        setMultisigPending({
+          hash: pendingDeposit.hash,
+          action: "deposit",
+          amount,
+        });
+        setAmount("");
+        return;
+      }
       if (success) {
         setAmount("");
         if (isFirstVaultDeposit) {
@@ -105,10 +124,19 @@ export function VaultDetailLayout({
     } else {
       const withdrawRaw = decimalToAtomic(amount, 7);
       const maxWithdrawRaw = decimalToAtomic(withdrawBalance, 7);
-      const success = await handleWithdraw(amount, {
+      const result = await handleWithdraw(amount, {
         withdrawAll: maxWithdrawRaw > 0n && withdrawRaw >= maxWithdrawRaw,
       });
-      if (success) setAmount("");
+      if (result.multisigPending) {
+        setMultisigPending({
+          hash: result.multisigPending.hash,
+          action: "withdraw",
+          amount,
+        });
+        setAmount("");
+        return;
+      }
+      if (result.success) setAmount("");
     }
   }, [
     tab,
@@ -130,6 +158,16 @@ export function VaultDetailLayout({
           vaultName={vault.name}
           apy={liveApy7d ?? vault.apy7d ?? "—"}
           onClose={() => setSuccessModalOpen(false)}
+        />
+      )}
+      {multisigPending && (
+        <MultisigPendingModal
+          open
+          onClose={() => setMultisigPending(null)}
+          hash={multisigPending.hash}
+          action={multisigPending.action}
+          amount={multisigPending.amount}
+          assetSymbol={vault.supplyAsset.symbol}
         />
       )}
       {/* Mobile tab bar */}

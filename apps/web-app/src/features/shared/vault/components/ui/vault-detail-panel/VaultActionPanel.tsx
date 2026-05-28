@@ -6,6 +6,8 @@ import { Loader2 } from "lucide-react";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
 import { formatCurrency } from "@/lib/helpers/currency";
 import type { SupportedCurrency } from "@/stores/currency.store";
+import { useMultisigDetection } from "@/hooks/useMultisigDetection";
+import { MultisigBanner } from "@/features/shared/vault/components/ui/MultisigBanner";
 import type { VaultActionPanelProps } from "./types";
 
 function formatBalance(n: number): string {
@@ -338,6 +340,7 @@ export function VaultActionPanel({
   tokenPriceInCurrency,
   selectedCurrency = "USD",
 }: VaultActionPanelProps) {
+  const { data: multisigInfo } = useMultisigDetection();
   const supplyLabel = vault.supplyAsset.symbol;
   const hasAmount = !!amount && parseFloat(amount) > 0;
   const depositAmt = parseFloat(amount) || 0;
@@ -380,8 +383,21 @@ export function VaultActionPanel({
       ? `${formatBalance(parseFloat(supplyBalance))} ${supplyLabel}`
       : `${formatBalance(parseFloat(withdrawBalance))} ${supplyLabel}`;
 
+  const ctaLabel =
+    multisigInfo?.isMultisig && isWalletConnected
+      ? "Send to Lobstr Vault"
+      : tab === "deposit"
+        ? `Deposit ${supplyLabel}`
+        : `Withdraw ${supplyLabel}`;
+
   return (
     <div className="flex flex-col gap-3">
+      {multisigInfo?.isMultisig && (
+        <MultisigBanner
+          signersCount={multisigInfo.signersCount}
+          threshold={multisigInfo.medThreshold}
+        />
+      )}
       <ModeTabs tab={tab} onTabChange={onTabChange} />
 
       <AmountInputCard
@@ -430,10 +446,8 @@ export function VaultActionPanel({
           </>
         ) : !isWalletConnected ? (
           "Connect wallet"
-        ) : tab === "deposit" ? (
-          `Deposit ${supplyLabel}`
         ) : (
-          `Withdraw ${supplyLabel}`
+          ctaLabel
         )}
       </button>
 
