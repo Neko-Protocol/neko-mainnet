@@ -78,13 +78,14 @@ export const labPrefix = () => {
   }
 };
 
-// Browser-side RPC traffic is proxied through the Next.js → backend chain so
-// the upstream Stellar RPC URL + credentials never reach the bundle.
+// Browser uses a same-origin proxy so the upstream URL + apikey never reach
+// the bundle. Server-side (Next.js API routes, SSR) bypasses the proxy and
+// hits the real RPC directly via STELLAR_RPC_URL — that env stays server-only.
 const RPC_PROXY_PATH = "/api/backend-proxy/v1/rpc";
 export const rpcUrl =
   typeof window !== "undefined"
     ? `${window.location.origin}${RPC_PROXY_PATH}`
-    : RPC_PROXY_PATH;
+    : (process.env.STELLAR_RPC_URL ?? RPC_PROXY_PATH);
 
 export const allowHttpForSoroban =
   typeof rpcUrl === "string" && rpcUrl.startsWith("http://");
