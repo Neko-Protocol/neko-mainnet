@@ -18,7 +18,6 @@ import type { Token } from "@/lib/types/soroswapTypes";
 import { useStrategiesStore } from "@/stores/strategies.store";
 import { useSimulatorState } from "../hooks/useSimulatorState";
 import { useOrchestratorSupplyDeposit } from "../hooks/useOrchestratorSupplyDeposit";
-import { useLendingDepositSubmit } from "../hooks/useLendingDepositSubmit";
 import {
   resolveSimulationTargets,
   wizardStepsMeta,
@@ -34,12 +33,6 @@ import { SaveStrategyDialog } from "./SaveStrategyDialog";
 
 type DepositIntent =
   | { kind: "vault"; vault: VaultView; depositAmountHuman?: string }
-  | {
-      kind: "lending";
-      assetCode: string;
-      contractId: string;
-      depositAmountHuman?: string;
-    }
   | { kind: "orchestrator"; poolInfo: PoolInfo; depositAmountHuman?: string }
   | null;
 
@@ -91,8 +84,6 @@ export function SimulatorWizard() {
 
   const { submit: submitOrchestrator, isPending: orchestratorPending } =
     useOrchestratorSupplyDeposit();
-  const { submit: submitLending, isPending: lendingPending } =
-    useLendingDepositSubmit();
 
   const stepsMeta = useMemo(
     () => wizardStepsMeta(state.token, state.destination),
@@ -122,26 +113,10 @@ export function SimulatorWizard() {
     setDepositIntent({ kind: "vault", vault });
   }, []);
 
-  const handleStartDepositLending = useCallback(() => {
-    const sim = resolveSimulationTargets(state);
-    const target = sim?.depositVenue ?? sim?.projectionDestination;
-    if (
-      target?.kind === "pool" &&
-      target.lendingContractId &&
-      target.lendingAssetCode
-    ) {
-      setDepositIntent({
-        kind: "lending",
-        assetCode: target.lendingAssetCode,
-        contractId: target.lendingContractId,
-      });
-    }
-  }, [state]);
-
   const handleStartDepositOrchestrator = useCallback(() => {
     const sim = resolveSimulationTargets(state);
     const target = sim?.depositVenue ?? sim?.projectionDestination;
-    if (target?.kind === "pool" && target.raw && !target.lendingContractId) {
+    if (target?.kind === "pool" && target.raw) {
       setDepositIntent({
         kind: "orchestrator",
         poolInfo: target.raw as PoolInfo,
@@ -208,23 +183,12 @@ export function SimulatorWizard() {
             });
             return;
           }
-          if (target.kind === "pool") {
-            if (target.lendingContractId && target.lendingAssetCode) {
-              setDepositIntent({
-                kind: "lending",
-                assetCode: target.lendingAssetCode,
-                contractId: target.lendingContractId,
-                depositAmountHuman: bondAmt,
-              });
-              return;
-            }
-            if (target.raw) {
-              setDepositIntent({
-                kind: "orchestrator",
-                poolInfo: target.raw as PoolInfo,
-                depositAmountHuman: bondAmt,
-              });
-            }
+          if (target.kind === "pool" && target.raw) {
+            setDepositIntent({
+              kind: "orchestrator",
+              poolInfo: target.raw as PoolInfo,
+              depositAmountHuman: bondAmt,
+            });
           }
         }
       } catch (e) {
@@ -312,7 +276,6 @@ export function SimulatorWizard() {
             amount={state.amount}
             onAmountChange={setAmount}
             onStartDepositVault={handleStartDepositVault}
-            onStartDepositLending={handleStartDepositLending}
             onStartDepositOrchestrator={handleStartDepositOrchestrator}
             onSwapAndDeposit={handleSwapAndDeposit}
             isSwapDepositPending={swapDepositBusy}
@@ -365,23 +328,6 @@ export function SimulatorWizard() {
           vaultName={depositIntent.vault.name}
           initialAmount={depositIntent.depositAmountHuman ?? state.amount}
           onClose={() => setDepositIntent(null)}
-        />
-      )}
-
-      {depositIntent?.kind === "lending" && (
-        <SimulatorDepositConfirmModal
-          title="Confirm lending deposit"
-          description="Sign the transaction in your wallet to supply liquidity to this lending pool."
-          amountLabel={`${depositIntent.depositAmountHuman ?? state.amount} ${depositIntent.assetCode}`}
-          isPending={lendingPending}
-          onClose={() => setDepositIntent(null)}
-          onConfirm={async () => {
-            await submitLending({
-              assetCode: depositIntent.assetCode,
-              amount: depositIntent.depositAmountHuman ?? state.amount,
-              contractId: depositIntent.contractId,
-            });
-          }}
         />
       )}
 

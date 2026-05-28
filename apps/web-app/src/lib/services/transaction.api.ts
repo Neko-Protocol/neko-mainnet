@@ -1,27 +1,18 @@
+import type {
+  PrepareTransactionRequest,
+  PrepareTransactionResponse,
+  SubmitTransactionRequest,
+  TransactionStatusResponse,
+} from "@neko/api-contracts";
 import { backendClient } from "./backend-client";
 
-export interface PrepareTransactionRequest {
-  unsignedXdr: string;
-}
-
-export interface PrepareTransactionResponse {
-  ok: true;
-  hash: string;
-}
-
-export interface SubmitTransactionRequest {
-  signedXdr: string;
-}
-
-export type TransactionStatus = "SUCCESS" | "PENDING" | "FAILED" | "NOT_FOUND";
-
-export interface TransactionStatusResponse {
-  status: TransactionStatus;
-  hash: string;
-  returnValue?: string;
-  error?: { code: string; message?: string };
-  traceId?: string;
-}
+export type {
+  PrepareTransactionRequest,
+  PrepareTransactionResponse,
+  SubmitTransactionRequest,
+  TransactionStatus,
+  TransactionStatusResponse,
+} from "@neko/api-contracts";
 
 export const txApi = {
   prepare: (req: PrepareTransactionRequest) =>
