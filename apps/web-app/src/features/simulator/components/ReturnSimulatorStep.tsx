@@ -215,7 +215,6 @@ interface ReturnSimulatorStepProps {
   amount: string;
   onAmountChange: (next: string) => void;
   onStartDepositVault?: (vault: VaultView) => void;
-  onStartDepositLending?: () => void;
   onStartDepositOrchestrator?: () => void;
   onSwapAndDeposit?: (payload: {
     stableAmount: string;
@@ -233,7 +232,6 @@ export function ReturnSimulatorStep({
   amount,
   onAmountChange,
   onStartDepositVault,
-  onStartDepositLending,
   onStartDepositOrchestrator,
   onSwapAndDeposit,
   isSwapDepositPending = false,
@@ -408,10 +406,6 @@ export function ReturnSimulatorStep({
       return;
     }
     if (target.kind === "pool") {
-      if (target.lendingContractId && target.lendingAssetCode) {
-        onStartDepositLending?.();
-        return;
-      }
       onStartDepositOrchestrator?.();
     }
   };

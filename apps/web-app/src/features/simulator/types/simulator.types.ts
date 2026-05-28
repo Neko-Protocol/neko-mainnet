@@ -26,9 +26,6 @@ export interface SimulatorDestination {
   strategyLabels: string[];
   acceptedTokenCodes: string[];
   raw: PoolInfo | VaultView | null;
-  /** Neko RWA lending supply row - deep-links to /pools?supply= (not orchestrator PoolDetail). */
-  lendingContractId?: string;
-  lendingAssetCode?: string;
   bondCurrency?: string;
   bondIcon?: string;
   bondSymbol?: string;
