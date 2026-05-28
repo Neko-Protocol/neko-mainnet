@@ -41,7 +41,7 @@ export function useDashboardVaultPositions() {
       staleTime: 30_000,
       refetchInterval: 30_000,
       gcTime: 5 * 60_000,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
       retry: 2,
       retryDelay: (attempt: number) => attempt * 800,
       throwOnError: false,

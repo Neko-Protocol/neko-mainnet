@@ -29,7 +29,7 @@ export function useDefindexVaults() {
     staleTime: 30_000,
     gcTime: 15 * 60_000,
     refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
     retry: 1,
   });

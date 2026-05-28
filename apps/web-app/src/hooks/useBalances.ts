@@ -20,7 +20,7 @@ export const useBalances = (
 ) => {
   const {
     enabled = true,
-    refetchInterval = 10000, // 10 seconds default polling
+    refetchInterval = 30000, // 30 seconds default polling
     refetchOnWindowFocus = false,
     keepPreviousData = true,
     retry = 2,
@@ -54,7 +54,7 @@ export const useBalances = (
       return true;
     },
     retryOnMount: true,
-    staleTime: 5000, // Consider data stale after 5 seconds
+    staleTime: 15000, // Consider data stale after 15 seconds
     gcTime: 60000, // Keep unused data in cache for 60 seconds
 
     throwOnError: false,
