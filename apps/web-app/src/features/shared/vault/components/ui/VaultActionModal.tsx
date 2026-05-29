@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { X, Loader2 } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { FirstVaultDepositSuccessModal } from "./FirstVaultDepositSuccessModal";
+import { MultisigPendingModal } from "./MultisigPendingModal";
 import { useVaultBalance } from "../../hooks/useVaultBalance";
 import { useVaultAction } from "../../hooks/useVaultAction";
 import { useVaultData } from "../../hooks/useVaultData";
@@ -43,6 +44,11 @@ export function VaultActionModal({
   const [visible, setVisible] = useState(false);
   const [amount, setAmount] = useState(initialAmount);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [multisigPending, setMultisigPending] = useState<{
+    hash: string;
+    action: "deposit" | "withdraw";
+    amount: string;
+  } | null>(null);
   const [mode, setMode] = useState<"deposit" | "withdraw">(
     isDeposit ? "deposit" : "withdraw"
   );
@@ -98,7 +104,19 @@ export function VaultActionModal({
   const handleConfirm = async () => {
     if (!amount || parseFloat(amount) <= 0) return;
     if (mode === "deposit") {
-      const { success, isFirstVaultDeposit } = await handleDeposit(amount);
+      const {
+        success,
+        isFirstVaultDeposit,
+        multisigPending: pendingDeposit,
+      } = await handleDeposit(amount);
+      if (pendingDeposit) {
+        setMultisigPending({
+          hash: pendingDeposit.hash,
+          action: "deposit",
+          amount,
+        });
+        return;
+      }
       if (success && isFirstVaultDeposit) {
         setShowSuccess(true);
       } else if (success) {
@@ -108,10 +126,18 @@ export function VaultActionModal({
       }
     } else {
       const withdrawRaw = decimalToAtomic(amount, 7);
-      await handleWithdraw(amount, {
+      const result = await handleWithdraw(amount, {
         withdrawAll:
           withdrawUnderlying > 0n && withdrawRaw >= withdrawUnderlying,
       });
+      if (result.multisigPending) {
+        setMultisigPending({
+          hash: result.multisigPending.hash,
+          action: "withdraw",
+          amount,
+        });
+        return;
+      }
       handleClose();
     }
   };
@@ -291,6 +317,19 @@ export function VaultActionModal({
           )}
         </div>
       </div>
+      {multisigPending && (
+        <MultisigPendingModal
+          open
+          onClose={() => {
+            setMultisigPending(null);
+            handleClose();
+          }}
+          hash={multisigPending.hash}
+          action={multisigPending.action}
+          amount={multisigPending.amount}
+          assetSymbol={supplyAssetSymbol ?? ""}
+        />
+      )}
     </ModalPortal>
   );
 }
