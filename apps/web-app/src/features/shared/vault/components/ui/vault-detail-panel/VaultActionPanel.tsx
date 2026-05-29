@@ -322,6 +322,84 @@ function DepositSummary({
   );
 }
 
+function PositionSummaryCard({
+  netDeposited,
+  currentValue,
+  earnings,
+  assetSymbol,
+  selectedCurrency,
+  tokenPrice,
+}: {
+  netDeposited: number;
+  currentValue: number;
+  earnings: number;
+  assetSymbol: string;
+  selectedCurrency: string;
+  tokenPrice: number;
+}) {
+  const fmt = (n: number) =>
+    n.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  const currency = selectedCurrency as Parameters<typeof formatCurrency>[1];
+
+  return (
+    <div
+      className="rounded-2xl border border-white/5 px-4 py-3.5 space-y-3"
+      style={{ background: "#1a1a1a" }}
+    >
+      <div className="flex items-center">
+        <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
+          Your Position
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-white/50 text-sm">Deposited</span>
+        <span className="text-white font-semibold text-sm tabular-nums">
+          {fmt(netDeposited)}{" "}
+          <span className="text-white/50 font-normal">{assetSymbol}</span>
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-white/50 text-sm">Earnings</span>
+        <div className="text-right">
+          {tokenPrice > 0 ? (
+            <p className="text-green-400 font-semibold text-sm tabular-nums">
+              +{formatCurrency(Math.max(0, earnings) * tokenPrice, currency, 2)}
+            </p>
+          ) : (
+            <p className="text-green-400 font-semibold text-sm tabular-nums">
+              +{fmt(Math.max(0, earnings))}{" "}
+              <span className="text-green-400/60 font-normal">
+                {assetSymbol}
+              </span>
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-white/5">
+        <span className="text-white/50 text-sm">Current Value</span>
+        <div className="text-right">
+          <p className="text-sm tabular-nums font-semibold">
+            <span className="text-green-400">{fmt(currentValue)}</span>
+            <span className="text-white/50 font-normal"> {assetSymbol}</span>
+          </p>
+          {tokenPrice > 0 && (
+            <p className="text-white/35 text-xs tabular-nums">
+              {formatCurrency(currentValue * tokenPrice, currency, 2)}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function VaultActionPanel({
   vault,
   tab,
@@ -337,6 +415,7 @@ export function VaultActionPanel({
   apy,
   tokenPriceInCurrency,
   selectedCurrency = "USD",
+  positionSummary,
 }: VaultActionPanelProps) {
   const supplyLabel = vault.supplyAsset.symbol;
   const hasAmount = !!amount && parseFloat(amount) > 0;
@@ -414,6 +493,17 @@ export function VaultActionPanel({
           projectedMonthly={projectedMonthly}
           projectedYearly={projectedYearly}
           selectedCurrency={selectedCurrency}
+        />
+      )}
+
+      {positionSummary && (
+        <PositionSummaryCard
+          netDeposited={positionSummary.netDeposited}
+          currentValue={positionSummary.currentValue}
+          earnings={positionSummary.earnings}
+          assetSymbol={positionSummary.assetSymbol}
+          selectedCurrency={selectedCurrency}
+          tokenPrice={tokenPriceInCurrency ?? 1}
         />
       )}
 
