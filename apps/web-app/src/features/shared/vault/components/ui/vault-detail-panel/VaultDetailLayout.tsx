@@ -23,6 +23,8 @@ import { VaultDetailInfo } from "./VaultDetailInfo";
 import { VaultActionPanel } from "./VaultActionPanel";
 import { FirstVaultDepositSuccessModal } from "@/features/shared/vault/components/ui/FirstVaultDepositSuccessModal";
 import { MultisigPendingModal } from "@/features/shared/vault/components/ui/MultisigPendingModal";
+import { auditService } from "@/lib/services/audit.service";
+import { computeCurrentVaultSession } from "@/features/shared/vault/hooks/useVaultEarningsCard";
 import type { VaultDetailLayoutProps, VaultActionTab } from "./types";
 
 const PANEL_SCROLL_CLASS =
@@ -92,6 +94,35 @@ export function VaultDetailLayout({
       ? mulDivFloor(userShares, vaultData.tvl, vaultData.totalShares)
       : 0n;
   const withdrawBalance = atomicToDecimal(withdrawUnderlying, 7);
+
+  const { data: auditLogs } = useQuery({
+    queryKey: ["vaultAuditActivity", address],
+    queryFn: () => auditService.getActivity(address!, 50),
+    enabled: !!address,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const positionSummary = (() => {
+    if (!auditLogs || !vaultContractId) return undefined;
+    const vaultLogs = auditLogs.filter(
+      (l) =>
+        l.pool_id === vaultContractId &&
+        (l.action_type === "vaults_deposit" ||
+          l.action_type === "vaults_withdraw")
+    );
+    const { netDeposited, hasData } = computeCurrentVaultSession(vaultLogs);
+    if (!hasData || netDeposited <= 0) return undefined;
+    const currentValue = parseFloat(withdrawBalance) || 0;
+    if (currentValue <= 0) return undefined;
+    return {
+      netDeposited,
+      currentValue,
+      earnings: currentValue - netDeposited,
+      assetSymbol: vault.supplyAsset.symbol,
+    };
+  })();
 
   const handleSubmit = useCallback(async () => {
     if (!amount || parseFloat(amount) <= 0) return;
@@ -224,6 +255,7 @@ export function VaultDetailLayout({
             apy={liveApy7d}
             tokenPriceInCurrency={tokenPriceInCurrency}
             selectedCurrency={selectedCurrency}
+            positionSummary={positionSummary}
           />
         </div>
       </aside>
