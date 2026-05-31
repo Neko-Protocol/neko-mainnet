@@ -18,3 +18,10 @@ export type {
 } from "./assets/assets.config.js";
 
 export { defindexNetworkFromString } from "./defindex/network.js";
+
+export { StellarPriceService } from "./prices/stellar-price.service.js";
+export type {
+  PriceSource,
+  PricedResult,
+  StellarPriceServiceDeps,
+} from "./prices/stellar-price.service.js";

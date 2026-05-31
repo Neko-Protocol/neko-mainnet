@@ -20,7 +20,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@defindex/sdk": "^0.3.0"
+    "@defindex/sdk": "^0.3.0",
+    "@neko/reflector": "0.0.0",
+    "@soroswap/sdk": "^0.3.8"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
