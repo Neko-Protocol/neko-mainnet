@@ -4,6 +4,8 @@ export * from "./config.js";
 export { PoolRegistry } from "./core/PoolRegistry.js";
 export { BlendPoolAdapter } from "./adapters/BlendPoolAdapter.js";
 export { SoroswapPoolAdapter } from "./adapters/SoroswapPoolAdapter.js";
+export { AquaPoolAdapter } from "./adapters/AquaPoolAdapter.js";
+export * from "./adapters/aqua-config.js";
 export {
   getBlendNetwork,
   getBlendPoolIds,
