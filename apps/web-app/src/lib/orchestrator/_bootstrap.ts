@@ -16,7 +16,6 @@ import {
 } from "@/lib/constants/assets.config";
 import { extractContractError } from "@/lib/helpers/stellar/contractErrors";
 
-// Map the web-app's stellarNetwork string to the package's StellarNetworkId.
 export function mapNetworkId(raw: string): StellarNetworkId {
   const n = raw.toUpperCase();
   if (n === "MAINNET" || n === "PUBLIC" || n === "PUBNET") return "PUBLIC";
@@ -26,7 +25,6 @@ export function mapNetworkId(raw: string): StellarNetworkId {
   return "PUBLIC";
 }
 
-// Inject the rich friendly error extractor so AdapterError messages match the legacy behaviour.
 setContractErrorExtractor((cause, hint) => extractContractError(cause, hint));
 
 function buildTokens(): Record<string, OrchestratorTokenInfo> {

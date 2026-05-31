@@ -310,8 +310,6 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     }
   }
 
-  /**
-   */
   async getAllVaultUserPositions(userAddress: string): Promise<PoolPosition[]> {
     const vaultEntries = Object.entries(BLEND_POOL_VAULTS).filter(([key]) =>
       key.startsWith(`${this.poolContractId}:`)
