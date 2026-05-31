@@ -197,7 +197,8 @@ function formatTvl(
   }
   if (sum <= 0) return "-";
   if (sum >= 1_000_000) return `$${formatAmount(sum / 1_000_000)}M`;
-  if (sum >= 1_000) return `$${formatAmount(sum / 1_000)}k`;
+  if (sum >= 1_000)
+    return `$${sum.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   return `$${formatAmount(sum)}`;
 }
 
