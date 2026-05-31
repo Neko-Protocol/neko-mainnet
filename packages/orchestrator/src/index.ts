@@ -2,10 +2,9 @@ export const PACKAGE_NAME = "@neko/orchestrator";
 export * from "./types/index.js";
 export * from "./config.js";
 export { PoolRegistry } from "./core/PoolRegistry.js";
+export { Orchestrator } from "./core/Orchestrator.js";
+export { createOrchestrator, type CreatedOrchestrator } from "./factory.js";
 export { BlendPoolAdapter } from "./adapters/BlendPoolAdapter.js";
-export { SoroswapPoolAdapter } from "./adapters/SoroswapPoolAdapter.js";
-export { AquaPoolAdapter } from "./adapters/AquaPoolAdapter.js";
-export * from "./adapters/aqua-config.js";
 export {
   getBlendNetwork,
   getBlendPoolIds,
@@ -19,3 +18,11 @@ export {
   computeBlendEmissionsApy,
   type PoolReserve,
 } from "./adapters/blend-emissions.js";
+export { SoroswapPoolAdapter } from "./adapters/SoroswapPoolAdapter.js";
+export { AquaPoolAdapter } from "./adapters/AquaPoolAdapter.js";
+export * from "./adapters/aqua-config.js";
+export {
+  buildPoolAuditPayload,
+  type AuditEvent,
+  type AuditActionType,
+} from "./utils/buildPoolAuditPayload.js";
