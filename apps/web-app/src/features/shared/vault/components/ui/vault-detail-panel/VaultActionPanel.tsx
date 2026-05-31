@@ -331,6 +331,8 @@ function PositionSummaryCard({
   assetSymbol,
   selectedCurrency,
   tokenPrice,
+  onClaimEarnings,
+  isClaimingEarnings,
 }: {
   netDeposited: number;
   currentValue: number;
@@ -338,6 +340,8 @@ function PositionSummaryCard({
   assetSymbol: string;
   selectedCurrency: string;
   tokenPrice: number;
+  onClaimEarnings?: () => Promise<void>;
+  isClaimingEarnings?: boolean;
 }) {
   const fmt = (n: number) =>
     n.toLocaleString("en-US", {
@@ -366,20 +370,44 @@ function PositionSummaryCard({
         </span>
       </div>
 
-      <div className="flex items-center justify-between">
-        <span className="text-white/50 text-sm">Earnings</span>
-        <div className="text-right">
-          {tokenPrice > 0 ? (
-            <p className="text-green-400 font-semibold text-sm tabular-nums">
-              +{formatCurrency(Math.max(0, earnings) * tokenPrice, currency, 2)}
-            </p>
-          ) : (
-            <p className="text-green-400 font-semibold text-sm tabular-nums">
-              +{fmt(Math.max(0, earnings))}{" "}
-              <span className="text-green-400/60 font-normal">
-                {assetSymbol}
-              </span>
-            </p>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-white/50 text-sm shrink-0">Earnings</span>
+        <div className="flex items-center gap-2">
+          <div className="text-right">
+            {tokenPrice > 0 ? (
+              <p className="text-green-400 font-semibold text-sm tabular-nums">
+                +
+                {formatCurrency(
+                  Math.max(0, earnings) * tokenPrice,
+                  currency,
+                  2
+                )}
+              </p>
+            ) : (
+              <p className="text-green-400 font-semibold text-sm tabular-nums">
+                +{fmt(Math.max(0, earnings))}{" "}
+                <span className="text-green-400/60 font-normal">
+                  {assetSymbol}
+                </span>
+              </p>
+            )}
+          </div>
+          {onClaimEarnings && earnings > 0.001 && (
+            <button
+              type="button"
+              onClick={() => void onClaimEarnings()}
+              disabled={isClaimingEarnings}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#229EDF] hover:bg-[#1a8bc7] text-white text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              {isClaimingEarnings ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Claiming…
+                </>
+              ) : (
+                "Claim"
+              )}
+            </button>
           )}
         </div>
       </div>
@@ -418,6 +446,8 @@ export function VaultActionPanel({
   tokenPriceInCurrency,
   selectedCurrency = "USD",
   positionSummary,
+  onClaimEarnings,
+  isClaimingEarnings,
 }: VaultActionPanelProps) {
   const { data: multisigInfo } = useMultisigDetection();
   const supplyLabel = vault.supplyAsset.symbol;
@@ -520,6 +550,8 @@ export function VaultActionPanel({
           assetSymbol={positionSummary.assetSymbol}
           selectedCurrency={selectedCurrency}
           tokenPrice={tokenPriceInCurrency ?? 1}
+          onClaimEarnings={tab === "withdraw" ? onClaimEarnings : undefined}
+          isClaimingEarnings={isClaimingEarnings}
         />
       )}
 
