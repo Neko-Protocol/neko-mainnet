@@ -9,7 +9,7 @@
     },
     {
       "path": "/api/pool-rates/record",
-      "schedule": "0 * * * *"
+      "schedule": "*/30 * * * *"
     },
     {
       "path": "/api/asset-prices/record",
