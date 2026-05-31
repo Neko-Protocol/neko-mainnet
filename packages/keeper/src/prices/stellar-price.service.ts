@@ -19,21 +19,13 @@ export interface PricedResult {
   source: PriceSource | null;
 }
 
-/**
- * Dependency surface for {@link StellarPriceService}. All resolvers are
- * invoked lazily so the host application controls construction order of
- * networked clients (SDKs, oracles, …) and can hot-swap them per request.
- */
+// Resolvers are lazy so the host controls construction order of networked
+// clients (SDKs, oracles) and can swap them between calls.
 export interface StellarPriceServiceDeps {
-  /** Resolves a configured SoroswapSDK instance, or null when unavailable. */
   getSoroswapSDK: () => SoroswapSDK | null;
-  /** Returns the Soroswap API key, or null/undefined when not configured. */
   getSoroswapApiKey: () => string | null | undefined;
-  /** Network identifier expected by `SoroswapSDK.getPrice(asset, network)`. */
   getSoroswapNetwork: () => SupportedNetworks;
-  /** Reflector oracle client, or null on networks where it isn't deployed. */
   getReflectorClient: () => ReflectorClient | null;
-  /** Asset config lookup by token code (e.g. "XLM" → AssetConfig). */
   getAssetConfig: (tokenCode: string) => AssetConfig | undefined;
 }
 
@@ -268,7 +260,6 @@ export class StellarPriceService {
     const coinGeckoId = config?.coinGeckoId;
     const preferredSource: AssetPriceSource | undefined = config?.priceSource;
 
-    // All three fetchers as lazy thunks (only called when needed)
     const sources: { key: AssetPriceSource; fetch: () => Promise<number> }[] = [
       {
         key: "reflector",
@@ -293,7 +284,6 @@ export class StellarPriceService {
       },
     ];
 
-    // Preferred source (from assets.config) goes first; others follow as fallback
     const ordered = preferredSource
       ? [
           ...sources.filter((s) => s.key === preferredSource),
