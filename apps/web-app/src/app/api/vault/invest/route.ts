@@ -545,6 +545,12 @@ async function executeKeeper(
 export async function GET(request: NextRequest) {
   try {
     if (isCronRequest(request)) {
+      if (process.env.KEEPER_BACKEND_ENABLED === "true") {
+        return NextResponse.json(
+          { skipped: "handled by NestJS backend cron" },
+          { status: 200 }
+        );
+      }
       return executeKeeper(configuredBatchVaults(), "batch", true);
     }
 
@@ -640,6 +646,12 @@ export async function POST(request: NextRequest) {
     }
 
     const isCron = isCronRequest(request);
+    if (isCron && process.env.KEEPER_BACKEND_ENABLED === "true") {
+      return NextResponse.json(
+        { skipped: "handled by NestJS backend cron" },
+        { status: 200 }
+      );
+    }
     const mode: KeeperMode = bodyVault ? "single" : "batch";
     const configs =
       mode === "single"

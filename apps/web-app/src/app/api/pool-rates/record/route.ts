@@ -10,6 +10,13 @@ function getSupabase() {
 }
 
 export async function GET(req: NextRequest) {
+  if (process.env.KEEPER_BACKEND_ENABLED === "true") {
+    return NextResponse.json(
+      { skipped: "handled by NestJS backend cron" },
+      { status: 200 }
+    );
+  }
+
   const authHeader = req.headers.get("authorization");
   const secret = authHeader?.replace("Bearer ", "");
   if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
