@@ -48,6 +48,8 @@ export function computeCurrentVaultSession(logs: AuditLog[]): {
         pendingReset = true;
       }
     }
+    // vaults_claim_earnings: only earnings are taken out — principal stays intact
+    // (no changes to sessionDeposited/sessionWithdrawn)
   }
 
   return {
@@ -170,7 +172,8 @@ export function useVaultEarningsCard(
         (l) =>
           l.pool_id === vault.id &&
           (l.action_type === "vaults_deposit" ||
-            l.action_type === "vaults_withdraw")
+            l.action_type === "vaults_withdraw" ||
+            l.action_type === "vaults_claim_earnings")
       );
 
       const { netDeposited: netDepositedTokens, hasData } =
