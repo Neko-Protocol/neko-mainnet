@@ -3,6 +3,7 @@ export * from "./types/index.js";
 export * from "./config.js";
 export { PoolRegistry } from "./core/PoolRegistry.js";
 export { BlendPoolAdapter } from "./adapters/BlendPoolAdapter.js";
+export { SoroswapPoolAdapter } from "./adapters/SoroswapPoolAdapter.js";
 export {
   getBlendNetwork,
   getBlendPoolIds,

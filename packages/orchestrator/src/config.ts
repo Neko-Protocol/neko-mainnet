@@ -4,6 +4,22 @@ export interface OrchestratorNetwork {
   rpcUrl: string;
   passphrase: string;
   allowHttp?: boolean;
+  /**
+   * Optional Horizon REST endpoint. Required by integrations that need to
+   * submit classic transactions (e.g. Soroswap trustline flow).
+   */
+  horizonUrl?: string;
+}
+/**
+ * Rich token metadata used by adapters that need decimals / icon / display
+ * names beyond the address↔code mapping in `contractToCodeMap`.
+ */
+export interface OrchestratorTokenInfo {
+  name: string;
+  contract: string;
+  code: string;
+  decimals: number;
+  icon?: string;
 }
 export interface AuditSink {
   log(event: unknown): Promise<void>;
@@ -18,6 +34,12 @@ export interface TransactionSubmitter {
 export interface OrchestratorConfig {
   network: OrchestratorNetwork;
   contractToCodeMap: Record<string, string>;
+  /**
+   * Optional rich token metadata keyed by token code (e.g. "XLM"). Adapters
+   * that need decimals (Soroswap, Aqua) consume this when present, falling
+   * back to defaults derived from `contractToCodeMap` otherwise.
+   */
+  tokens?: Record<string, OrchestratorTokenInfo>;
   auditSink?: AuditSink;
   transactionSubmitter?: TransactionSubmitter;
 }
