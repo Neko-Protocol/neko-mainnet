@@ -1,7 +1,15 @@
-export { orchestrator, Orchestrator } from "./core";
-export { poolRegistry, PoolRegistry } from "./core";
-
-export { BlendPoolAdapter, SoroswapPoolAdapter } from "./adapters";
+export { orchestrator, poolRegistry } from "./_bootstrap";
+export {
+  Orchestrator,
+  PoolRegistry,
+  BlendPoolAdapter,
+  SoroswapPoolAdapter,
+  AquaPoolAdapter,
+  OrchestratorError,
+  PoolNotFoundError,
+  AdapterError,
+  UnsupportedActionError,
+} from "@neko/orchestrator";
 
 export {
   usePools,
@@ -22,12 +30,6 @@ export type {
   PoolPosition,
   TransactionResult,
   PoolActionResult,
+  PoolActionOptions,
   BasePoolAdapter,
-} from "./types";
-
-export {
-  OrchestratorError,
-  PoolNotFoundError,
-  AdapterError,
-  UnsupportedActionError,
-} from "./types";
+} from "@neko/orchestrator";
