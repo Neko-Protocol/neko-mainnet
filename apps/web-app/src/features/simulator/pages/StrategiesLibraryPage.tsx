@@ -10,6 +10,7 @@ import {
   type SavedStrategy,
 } from "@/stores/strategies.store";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
+import { StrategiesNavTabs } from "../components/ui/StrategiesNavTabs";
 import { StrategyRow } from "../components/ui/StrategyRow";
 
 export default function StrategiesLibraryPage() {
@@ -28,7 +29,7 @@ export default function StrategiesLibraryPage() {
 
   return (
     <PageContainer
-      maxWidth="5xl"
+      maxWidth="7xl"
       className="flex h-full min-h-0 w-full flex-col"
     >
       <BannerPage
@@ -42,42 +43,64 @@ export default function StrategiesLibraryPage() {
         imageObjectClassName="object-contain object-right object-bottom"
       />
 
-      {!address ? (
-        <NoWalletState />
-      ) : myStrategies.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-4">
-          <div className="flex shrink-0 items-center justify-between gap-3">
-            <p className="text-xs font-medium uppercase tracking-[0.14em] text-white/40">
-              Your strategies · {myStrategies.length} saved
-            </p>
-            <Link
-              href="/strategies/new"
-              className="group/cta inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-gradient-to-b from-[#2BA9E5] to-[#1a8ac9] px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-inset ring-white/15 transition-all hover:from-[#3AB4EA] hover:to-[#229EDF] active:scale-[0.98]"
-            >
-              <Plus
-                size={14}
-                className="transition-transform group-hover/cta:rotate-90"
-              />
-              Build new strategy
-            </Link>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable] pt-4">
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {myStrategies.map((s) => (
-                <StrategyRow
-                  key={s.id}
-                  strategy={s}
-                  onExecute={() => handleExecute(s)}
-                  onDelete={() => remove(s.id, address)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <StrategiesNavTabs active="saved" />
+
+      <div className="flex min-h-0 flex-1 flex-col gap-8">
+        {!address ? (
+          <NoWalletState />
+        ) : myStrategies.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <SavedStrategiesSection
+            strategies={myStrategies}
+            onExecute={handleExecute}
+            onDelete={(id) => remove(id, address)}
+          />
+        )}
+      </div>
     </PageContainer>
+  );
+}
+
+function SavedStrategiesSection({
+  strategies,
+  onExecute,
+  onDelete,
+}: {
+  strategies: SavedStrategy[];
+  onExecute: (strategy: SavedStrategy) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex shrink-0 items-center justify-between gap-3">
+        <p className="text-xs font-medium uppercase tracking-[0.14em] text-white/40">
+          Your strategies · {strategies.length} saved
+        </p>
+        <Link
+          href="/strategies/new"
+          className="group/cta inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-gradient-to-b from-[#2BA9E5] to-[#1a8ac9] px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-inset ring-white/15 transition-all hover:from-[#3AB4EA] hover:to-[#229EDF] active:scale-[0.98]"
+        >
+          <Plus
+            size={14}
+            className="transition-transform group-hover/cta:rotate-90"
+          />
+          Build new strategy
+        </Link>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable] pt-4">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {strategies.map((s) => (
+            <StrategyRow
+              key={s.id}
+              strategy={s}
+              onExecute={() => onExecute(s)}
+              onDelete={() => onDelete(s.id)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 

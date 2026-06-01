@@ -12,6 +12,10 @@
       "schedule": "0 * * * *"
     },
     {
+      "path": "/api/strategies/catalog/refresh",
+      "schedule": "30 * * * *"
+    },
+    {
       "path": "/api/asset-prices/record",
       "schedule": "0 2 * * *"
     }
