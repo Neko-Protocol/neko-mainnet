@@ -65,7 +65,8 @@ export function useUserPositions() {
     queryKey: [...POOLS_QUERY_KEY, "blend"],
     queryFn: () => orchestrator.getPoolsByType("blend"),
     staleTime: 3 * 60_000,
-    retry: 2,
+    retry: 4,
+    retryDelay: (attempt) => Math.min(15_000, 1000 * 2 ** attempt),
     throwOnError: false,
   });
 
@@ -83,8 +84,8 @@ export function useUserPositions() {
     queryFn: () => orchestrator.getAllBlendVaultUserPositions(address!),
     enabled: Boolean(address),
     staleTime: POSITION_STALE_TIME,
-    retry: 3,
-    retryDelay: (attempt) => attempt * 1000,
+    retry: 5,
+    retryDelay: (attempt) => Math.min(15_000, 1000 * 2 ** attempt),
     refetchOnWindowFocus: false,
   });
 
@@ -93,8 +94,8 @@ export function useUserPositions() {
     queryFn: () => orchestrator.getAllBlendDirectUserPositions(address!),
     enabled: Boolean(address) && !blendListQuery.isLoading,
     staleTime: POSITION_STALE_TIME,
-    retry: 2,
-    retryDelay: (attempt) => attempt * 1000,
+    retry: 5,
+    retryDelay: (attempt) => Math.min(15_000, 1000 * 2 ** attempt),
     refetchOnWindowFocus: false,
   });
 
@@ -109,8 +110,8 @@ export function useUserPositions() {
     queryFn: () => batchCheckLpBalances(nonBlendPools, address!),
     enabled: Boolean(address) && nonBlendPools.length > 0,
     staleTime: POSITION_STALE_TIME,
-    retry: 2,
-    retryDelay: (attempt) => attempt * 800,
+    retry: 4,
+    retryDelay: (attempt) => Math.min(15_000, 1000 * 2 ** attempt),
   });
 
   const poolsWithBalance = lpScreenQuery.data ?? null;
@@ -128,8 +129,8 @@ export function useUserPositions() {
       },
       enabled: Boolean(address),
       staleTime: POSITION_STALE_TIME,
-      retry: 2,
-      retryDelay: (attempt: number) => attempt * 1000,
+      retry: 4,
+      retryDelay: (attempt: number) => Math.min(15_000, 1000 * 2 ** attempt),
     })),
   });
 

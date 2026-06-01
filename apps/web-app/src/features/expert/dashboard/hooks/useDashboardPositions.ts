@@ -52,8 +52,8 @@ export function useDashboardPositions() {
     queryFn: () => orchestrator.getAllBlendUserPositions(address!),
     enabled: Boolean(address) && poolsReady,
     staleTime: 5 * 60_000,
-    retry: 3,
-    retryDelay: (attempt) => attempt * 1000,
+    retry: 5,
+    retryDelay: (attempt) => Math.min(15_000, 1000 * 2 ** attempt),
     refetchOnWindowFocus: false,
   });
 
@@ -67,7 +67,8 @@ export function useDashboardPositions() {
     queryFn: () => batchCheckLpBalances(nonBlendPools, address!),
     enabled: Boolean(address) && poolsReady && nonBlendPools.length > 0,
     staleTime: 60_000,
-    retry: 1,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(15_000, 1000 * 2 ** attempt),
   });
 
   const poolsWithLpBalance = lpScreenQuery.data ?? null;
@@ -84,7 +85,8 @@ export function useDashboardPositions() {
       queryFn: () => orchestrator.getUserPosition(pool.id, address!),
       enabled: Boolean(address),
       staleTime: 60_000,
-      retry: 1,
+      retry: 3,
+      retryDelay: (attempt: number) => Math.min(15_000, 1000 * 2 ** attempt),
     })),
   });
 
