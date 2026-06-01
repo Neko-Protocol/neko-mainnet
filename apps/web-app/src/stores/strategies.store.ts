@@ -17,15 +17,25 @@ export interface SavedStrategy {
   stackVenue: SimulatorDestination | null;
   amount: string;
   snapshotApy: number | null;
+  sourceRecommendationId?: string;
 }
+
+export type PendingRecommendedPayload = {
+  token: SimulatorToken;
+  destination: SimulatorDestination;
+  stackVenue: SimulatorDestination | null;
+  amount: string;
+};
 
 interface StrategiesState {
   strategies: SavedStrategy[];
   pendingExecuteId: string | null;
+  pendingRecommended: PendingRecommendedPayload | null;
   save: (s: Omit<SavedStrategy, "id" | "createdAt">) => string;
   remove: (id: string, walletAddress: string) => void;
   rename: (id: string, walletAddress: string, name: string) => void;
   setPendingExecuteId: (id: string | null) => void;
+  setPendingRecommended: (payload: PendingRecommendedPayload | null) => void;
 }
 
 function stripRaw(d: SimulatorDestination): SimulatorDestination {
@@ -37,6 +47,7 @@ export const useStrategiesStore = create<StrategiesState>()(
     (set) => ({
       strategies: [],
       pendingExecuteId: null,
+      pendingRecommended: null,
       save: (s) => {
         const id = crypto.randomUUID();
         const entry: SavedStrategy = {
@@ -64,6 +75,7 @@ export const useStrategiesStore = create<StrategiesState>()(
           ),
         })),
       setPendingExecuteId: (id) => set({ pendingExecuteId: id }),
+      setPendingRecommended: (payload) => set({ pendingRecommended: payload }),
     }),
     {
       name: "neko_strategies",

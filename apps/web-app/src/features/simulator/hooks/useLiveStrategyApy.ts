@@ -3,6 +3,11 @@
 import { useMemo } from "react";
 import type { SavedStrategy } from "@/stores/strategies.store";
 import type { SimulatorDestination } from "../types/simulator.types";
+
+export type LiveApyInput = Pick<
+  SavedStrategy,
+  "token" | "destination" | "stackVenue"
+>;
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
 import { useFilteredDestinations } from "./useFilteredDestinations";
 
@@ -29,7 +34,7 @@ function pickApy(
   return typeof v === "number" && Number.isFinite(v) ? v : null;
 }
 
-export function useLiveStrategyApy(strategy: SavedStrategy): LiveStrategyApy {
+export function useLiveStrategyApy(strategy: LiveApyInput): LiveStrategyApy {
   const {
     pools,
     vaults,

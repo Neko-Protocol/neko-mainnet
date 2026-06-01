@@ -27,6 +27,8 @@ export interface VaultActionPanelProps {
   tokenPriceInCurrency?: number;
   selectedCurrency?: SupportedCurrency;
   positionSummary?: VaultPositionSummary;
+  onClaimEarnings?: () => Promise<void>;
+  isClaimingEarnings?: boolean;
 }
 
 export interface VaultDetailLayoutProps {

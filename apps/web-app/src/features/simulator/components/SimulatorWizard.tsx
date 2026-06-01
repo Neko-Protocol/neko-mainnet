@@ -58,8 +58,13 @@ export function SimulatorWizard() {
   const { address, networkPassphrase } = useWallet();
   const { addNotification } = useToast();
 
-  const { strategies, pendingExecuteId, setPendingExecuteId } =
-    useStrategiesStore();
+  const {
+    strategies,
+    pendingExecuteId,
+    setPendingExecuteId,
+    pendingRecommended,
+    setPendingRecommended,
+  } = useStrategiesStore();
 
   useEffect(() => {
     if (!pendingExecuteId) return;
@@ -81,6 +86,13 @@ export function SimulatorWizard() {
     setPendingExecuteId,
     loadFromSaved,
   ]);
+
+  useEffect(() => {
+    if (!pendingRecommended) return;
+    const payload = pendingRecommended;
+    setPendingRecommended(null);
+    loadFromSaved(payload);
+  }, [pendingRecommended, setPendingRecommended, loadFromSaved]);
 
   const { submit: submitOrchestrator, isPending: orchestratorPending } =
     useOrchestratorSupplyDeposit();

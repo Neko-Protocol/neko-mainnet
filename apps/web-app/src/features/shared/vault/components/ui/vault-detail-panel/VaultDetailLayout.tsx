@@ -64,6 +64,7 @@ export function VaultDetailLayout({
     isConfirming,
     handleDeposit,
     handleWithdraw,
+    handleClaimEarnings: claimEarnings,
     showSuccess,
   } = useVaultAction(vaultContractId, vault.supplyAsset.symbol, vault.name);
 
@@ -110,7 +111,8 @@ export function VaultDetailLayout({
       (l) =>
         l.pool_id === vaultContractId &&
         (l.action_type === "vaults_deposit" ||
-          l.action_type === "vaults_withdraw")
+          l.action_type === "vaults_withdraw" ||
+          l.action_type === "vaults_claim_earnings")
     );
     const { netDeposited, hasData } = computeCurrentVaultSession(vaultLogs);
     if (!hasData || netDeposited <= 0) return undefined;
@@ -123,6 +125,13 @@ export function VaultDetailLayout({
       assetSymbol: vault.supplyAsset.symbol,
     };
   })();
+
+  const positionNetDeposited = positionSummary?.netDeposited ?? 0;
+  const positionEarnings = positionSummary?.earnings ?? 0;
+  const handleClaimEarnings = useCallback(async () => {
+    if (positionEarnings < 0.001 || positionNetDeposited <= 0) return;
+    await claimEarnings(positionNetDeposited);
+  }, [positionEarnings, positionNetDeposited, claimEarnings]);
 
   const handleSubmit = useCallback(async () => {
     if (!amount || parseFloat(amount) <= 0) return;
@@ -256,6 +265,8 @@ export function VaultDetailLayout({
             tokenPriceInCurrency={tokenPriceInCurrency}
             selectedCurrency={selectedCurrency}
             positionSummary={positionSummary}
+            onClaimEarnings={positionSummary ? handleClaimEarnings : undefined}
+            isClaimingEarnings={isLoading || isConfirming}
           />
         </div>
       </aside>

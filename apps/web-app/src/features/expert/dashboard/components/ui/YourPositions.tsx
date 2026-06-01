@@ -8,7 +8,7 @@ import { useDashboardVaultPositions } from "@/features/expert/dashboard/hooks/us
 import { useBearingYieldPositions } from "@/features/expert/dashboard/hooks/useBearingYieldPositions";
 import { useEtherfuseYields } from "@/features/simulator/hooks/useEtherfuseYields";
 import { YourPositionsTable } from "./YourPositionsTable";
-import { VaultPositionsTable } from "./VaultPositionsTable";
+import MyVaultPositions from "@/features/shared/vault/components/ui/MyVaultPositions";
 import { BearingYieldTable } from "./BearingYieldTable";
 
 function SectionSkeleton({ label }: { label: string }) {
@@ -34,6 +34,21 @@ const YourPositions: React.FC = () => {
     useDashboardPositions();
   const { positions: vaultPositions, isLoading: vaultLoading } =
     useDashboardVaultPositions();
+
+  const vaultViews = useMemo(
+    () => vaultPositions.map((p) => p.vault),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [vaultPositions.map((p) => p.vault.id).join(",")]
+  );
+
+  const vaultBalances = useMemo(() => {
+    const map: Record<string, bigint> = {};
+    for (const { vault, userShares } of vaultPositions) {
+      map[vault.id] = userShares;
+    }
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vaultPositions.map((p) => `${p.vault.id}:${p.userShares}`).join(",")]);
   const { positions: bearingYieldPositions, isLoading: bearingLoading } =
     useBearingYieldPositions(vaultPositions);
   const { data: etherfuseYields } = useEtherfuseYields();
@@ -113,7 +128,12 @@ const YourPositions: React.FC = () => {
             </div>
           )}
 
-          {hasVaultData && <VaultPositionsTable positions={vaultPositions} />}
+          {hasVaultData && (
+            <MyVaultPositions
+              vaults={vaultViews}
+              userBalances={vaultBalances}
+            />
+          )}
           {vaultLoading && !hasVaultData && <SectionSkeleton label="Vaults" />}
 
           {hasBearingData && (

@@ -15,6 +15,7 @@ import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { useVaultEarningsCard } from "../../hooks/useVaultEarningsCard";
+import { ClaimEarningsButton } from "./ClaimEarningsButton";
 import type { VaultView } from "../../types/vault";
 
 const ONE_SHARE = 1_000_000_000_000n;
@@ -199,21 +200,17 @@ function VaultPositionRow({
       </td>
 
       <td className="px-4 py-4 text-center">
-        {vault.status === "active" ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-green-500/15 px-2.5 py-1 text-xs font-medium text-green-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-green-400" />
-            Active
-          </span>
-        ) : vault.status === "paused" ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/15 px-2.5 py-1 text-xs font-medium text-yellow-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
-            Paused
-          </span>
+        {earningsTokens !== null &&
+        netDepositedTokens !== null &&
+        Math.max(0, earningsTokens) > 0.001 ? (
+          <ClaimEarningsButton
+            vaultContractId={vault.id}
+            earningsTokens={Math.max(0, earningsTokens)}
+            netDepositedTokens={netDepositedTokens}
+            supplyAssetSymbol={sym}
+          />
         ) : (
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-white/40">
-            <span className="h-1.5 w-1.5 rounded-full bg-white/40" />
-            {vault.status}
-          </span>
+          <span className="text-white/20 text-xs">—</span>
         )}
       </td>
     </tr>
@@ -330,7 +327,7 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
               </th>
               <th className="px-4 py-3 text-center">
                 <span className="text-white/40 text-sm font-semibold">
-                  Status
+                  Claim Earnings
                 </span>
               </th>
             </tr>

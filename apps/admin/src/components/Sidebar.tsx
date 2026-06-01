@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  Sparkles,
   Target,
   Users,
 } from "lucide-react";
@@ -18,6 +19,7 @@ const links = [
   { href: "/dashboard/activity", label: "Activity", icon: Activity },
   { href: "/dashboard/campaigns", label: "Campaigns", icon: Mail },
   { href: "/dashboard/strategies", label: "Strategies", icon: Target },
+  { href: "/dashboard/recommended", label: "Recommended", icon: Sparkles },
 ] as const;
 
 export function Sidebar() {
