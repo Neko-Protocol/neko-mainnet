@@ -95,6 +95,36 @@ export type Database = {
           },
         ];
       };
+      destination_catalog: {
+        Row: {
+          kind: string;
+          id: string;
+          name: string;
+          protocol: string;
+          apy: number | null;
+          accepted_token_codes: string[];
+          updated_at: string;
+        };
+        Insert: {
+          kind: string;
+          id: string;
+          name: string;
+          protocol: string;
+          apy?: number | null;
+          accepted_token_codes?: string[];
+          updated_at?: string;
+        };
+        Update: Partial<{
+          kind: string;
+          id: string;
+          name: string;
+          protocol: string;
+          apy: number | null;
+          accepted_token_codes: string[];
+          updated_at: string;
+        }>;
+        Relationships: [];
+      };
       users: {
         Row: UserRow;
         Insert: UserInsert;
