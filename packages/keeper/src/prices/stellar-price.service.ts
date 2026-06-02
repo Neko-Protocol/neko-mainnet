@@ -146,10 +146,27 @@ function parseSoroswapPricePayload(
  * On testnet/standalone the Reflector client is null, so the chain falls
  * through to Soroswap → CoinGecko as before.
  */
+const DEFAULT_CACHE_TTL_MS = 60_000;
+
+export interface StellarPriceServiceOptions {
+  /** TTL for successful price lookups. Defaults to 60s. Failed lookups are not cached. */
+  cacheTtlMs?: number;
+}
+
 export class StellarPriceService {
   private readonly inflight = new Map<string, Promise<PricedResult>>();
+  private readonly cache = new Map<
+    string,
+    { result: PricedResult; expiresAt: number }
+  >();
+  private readonly cacheTtlMs: number;
 
-  constructor(private readonly deps: StellarPriceServiceDeps) {}
+  constructor(
+    private readonly deps: StellarPriceServiceDeps,
+    options: StellarPriceServiceOptions = {}
+  ) {
+    this.cacheTtlMs = options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS;
+  }
 
   async getCoinGeckoSimpleUsd(coinGeckoId: string): Promise<number> {
     const id = coinGeckoId.trim();
@@ -234,11 +251,30 @@ export class StellarPriceService {
       return { price: 0, source: null };
     }
     const key = `${tokenCode}:${contractAddress ?? ""}`;
+    const cached = this.cache.get(key);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.result;
+    }
     const existing = this.inflight.get(key);
     if (existing) return existing;
-    const promise = this._fetchPriceWithSource(tokenCode, contractAddress);
+    const promise = (async () => {
+      try {
+        const result = await this._fetchPriceWithSource(
+          tokenCode,
+          contractAddress
+        );
+        if (result.price > 0) {
+          this.cache.set(key, {
+            result,
+            expiresAt: Date.now() + this.cacheTtlMs,
+          });
+        }
+        return result;
+      } finally {
+        this.inflight.delete(key);
+      }
+    })();
     this.inflight.set(key, promise);
-    promise.finally(() => this.inflight.delete(key));
     return promise;
   }
 
