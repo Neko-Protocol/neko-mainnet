@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Play, Trash2 } from "lucide-react";
+import { Play, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import {
@@ -30,6 +30,7 @@ export function StrategyRow({
     amount,
     snapshotApy,
     createdAt,
+    sourceRecommendationId,
   } = strategy;
 
   const { apy: liveApy, isLoading: apyLoading } = useLiveStrategyApy(strategy);
@@ -40,7 +41,7 @@ export function StrategyRow({
     ? `${destination.name} + ${stackVenue.name}`
     : destination.name;
 
-  const protocolLabel = stackVenue
+  const _protocolLabel = stackVenue
     ? `${destination.protocol} + ${stackVenue.protocol}`
     : destination.protocol;
 
@@ -75,7 +76,10 @@ export function StrategyRow({
     ...destination.strategyLabels,
     ...(stackVenue ? [stackVenue.protocol, ...stackVenue.strategyLabels] : []),
   ];
-  const visibleLabels = Array.from(new Set(labels.filter(Boolean))).slice(0, 3);
+  const _visibleLabels = Array.from(new Set(labels.filter(Boolean))).slice(
+    0,
+    3
+  );
 
   return (
     <div className="group relative flex h-full min-h-[260px] flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-[#161616] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#1A1A1A]">
@@ -115,14 +119,22 @@ export function StrategyRow({
           </div>
         </div>
 
-        <span
-          className={cn(
-            "shrink-0 rounded-md px-2 py-0.5 text-[10px] font-semibold",
-            accent?.chip ?? "bg-white/[0.06] text-white/50"
-          )}
-        >
-          {taxonomy?.classLabel ?? typeLabel}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          {sourceRecommendationId ? (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#5BB8E8]">
+              <Sparkles className="h-2.5 w-2.5" />
+              Curated by Neko
+            </span>
+          ) : null}
+          <span
+            className={cn(
+              "rounded-md px-2 py-0.5 text-[10px] font-semibold",
+              accent?.chip ?? "bg-white/[0.06] text-white/50"
+            )}
+          >
+            {taxonomy?.classLabel ?? typeLabel}
+          </span>
+        </div>
       </div>
 
       {/* APY hero */}

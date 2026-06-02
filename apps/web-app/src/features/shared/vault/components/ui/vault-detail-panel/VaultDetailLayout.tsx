@@ -22,6 +22,9 @@ import { VaultDetailMetrics } from "./VaultDetailMetrics";
 import { VaultDetailInfo } from "./VaultDetailInfo";
 import { VaultActionPanel } from "./VaultActionPanel";
 import { FirstVaultDepositSuccessModal } from "@/features/shared/vault/components/ui/FirstVaultDepositSuccessModal";
+import { MultisigPendingModal } from "@/features/shared/vault/components/ui/MultisigPendingModal";
+import { auditService } from "@/lib/services/audit.service";
+import { computeCurrentVaultSession } from "@/features/shared/vault/hooks/useVaultEarningsCard";
 import type { VaultDetailLayoutProps, VaultActionTab } from "./types";
 
 const PANEL_SCROLL_CLASS =
@@ -34,6 +37,11 @@ export function VaultDetailLayout({
   const [tab, setTab] = useState<VaultActionTab>(initialTab);
   const [amount, setAmount] = useState("");
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [multisigPending, setMultisigPending] = useState<{
+    hash: string;
+    action: "deposit" | "withdraw";
+    amount: string;
+  } | null>(null);
   const [mobileTab, setMobileTab] = useState<"about" | "action">("about");
 
   const { address } = useWallet();
@@ -56,6 +64,7 @@ export function VaultDetailLayout({
     isConfirming,
     handleDeposit,
     handleWithdraw,
+    handleClaimEarnings: claimEarnings,
     showSuccess,
   } = useVaultAction(vaultContractId, vault.supplyAsset.symbol, vault.name);
 
@@ -87,11 +96,61 @@ export function VaultDetailLayout({
       : 0n;
   const withdrawBalance = atomicToDecimal(withdrawUnderlying, 7);
 
+  const { data: auditLogs } = useQuery({
+    queryKey: ["vaultAuditActivity", address],
+    queryFn: () => auditService.getActivity(address!, 50),
+    enabled: !!address,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+
+  const positionSummary = (() => {
+    if (!auditLogs || !vaultContractId) return undefined;
+    const vaultLogs = auditLogs.filter(
+      (l) =>
+        l.pool_id === vaultContractId &&
+        (l.action_type === "vaults_deposit" ||
+          l.action_type === "vaults_withdraw" ||
+          l.action_type === "vaults_claim_earnings")
+    );
+    const { netDeposited, hasData } = computeCurrentVaultSession(vaultLogs);
+    if (!hasData || netDeposited <= 0) return undefined;
+    const currentValue = parseFloat(withdrawBalance) || 0;
+    if (currentValue <= 0) return undefined;
+    return {
+      netDeposited,
+      currentValue,
+      earnings: currentValue - netDeposited,
+      assetSymbol: vault.supplyAsset.symbol,
+    };
+  })();
+
+  const positionNetDeposited = positionSummary?.netDeposited ?? 0;
+  const positionEarnings = positionSummary?.earnings ?? 0;
+  const handleClaimEarnings = useCallback(async () => {
+    if (positionEarnings < 0.001 || positionNetDeposited <= 0) return;
+    await claimEarnings(positionNetDeposited);
+  }, [positionEarnings, positionNetDeposited, claimEarnings]);
+
   const handleSubmit = useCallback(async () => {
     if (!amount || parseFloat(amount) <= 0) return;
 
     if (tab === "deposit") {
-      const { success, isFirstVaultDeposit } = await handleDeposit(amount);
+      const {
+        success,
+        isFirstVaultDeposit,
+        multisigPending: pendingDeposit,
+      } = await handleDeposit(amount);
+      if (pendingDeposit) {
+        setMultisigPending({
+          hash: pendingDeposit.hash,
+          action: "deposit",
+          amount,
+        });
+        setAmount("");
+        return;
+      }
       if (success) {
         setAmount("");
         if (isFirstVaultDeposit) {
@@ -105,10 +164,19 @@ export function VaultDetailLayout({
     } else {
       const withdrawRaw = decimalToAtomic(amount, 7);
       const maxWithdrawRaw = decimalToAtomic(withdrawBalance, 7);
-      const success = await handleWithdraw(amount, {
+      const result = await handleWithdraw(amount, {
         withdrawAll: maxWithdrawRaw > 0n && withdrawRaw >= maxWithdrawRaw,
       });
-      if (success) setAmount("");
+      if (result.multisigPending) {
+        setMultisigPending({
+          hash: result.multisigPending.hash,
+          action: "withdraw",
+          amount,
+        });
+        setAmount("");
+        return;
+      }
+      if (result.success) setAmount("");
     }
   }, [
     tab,
@@ -130,6 +198,16 @@ export function VaultDetailLayout({
           vaultName={vault.name}
           apy={liveApy7d ?? vault.apy7d ?? "—"}
           onClose={() => setSuccessModalOpen(false)}
+        />
+      )}
+      {multisigPending && (
+        <MultisigPendingModal
+          open
+          onClose={() => setMultisigPending(null)}
+          hash={multisigPending.hash}
+          action={multisigPending.action}
+          amount={multisigPending.amount}
+          assetSymbol={vault.supplyAsset.symbol}
         />
       )}
       {/* Mobile tab bar */}
@@ -186,6 +264,9 @@ export function VaultDetailLayout({
             apy={liveApy7d}
             tokenPriceInCurrency={tokenPriceInCurrency}
             selectedCurrency={selectedCurrency}
+            positionSummary={positionSummary}
+            onClaimEarnings={positionSummary ? handleClaimEarnings : undefined}
+            isClaimingEarnings={isLoading || isConfirming}
           />
         </div>
       </aside>

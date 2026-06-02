@@ -8,6 +8,7 @@ export type AuditActionType =
   | "off_ramp"
   | "vaults_deposit"
   | "vaults_withdraw"
+  | "vaults_claim_earnings"
   | "pool_repay"
   | "pool_claim_rewards";
 

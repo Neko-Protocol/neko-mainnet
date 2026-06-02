@@ -19,25 +19,14 @@ import type {
   SimulatorToken,
 } from "../types/simulator.types";
 import {
-  useEtherfuseYields,
-  type EtherfuseYieldEntry,
-} from "./useEtherfuseYields";
+  ETHERFUSE_BOND_SYMBOLS,
+  type EtherfuseBondSymbol,
+} from "../constants/etherfuseBonds";
+import { resolveEtherfuseBondApy } from "../utils/etherfuseBondApy";
+import { useEtherfuseYields } from "./useEtherfuseYields";
 
-export const ETHERFUSE_BOND_SYMBOLS = ["CETES", "USTRY", "TESOURO"] as const;
-
-type EtherfuseBondSymbol = (typeof ETHERFUSE_BOND_SYMBOLS)[number];
-
-const FALLBACK_APY: Record<EtherfuseBondSymbol, number> = {
-  CETES: 9.5,
-  USTRY: 4.8,
-  TESOURO: 13.5,
-};
-
-const FALLBACK_CURRENCY: Record<EtherfuseBondSymbol, string> = {
-  CETES: "MXN",
-  USTRY: "USD",
-  TESOURO: "BRL",
-};
+export { ETHERFUSE_BOND_SYMBOLS } from "../constants/etherfuseBonds";
+export { resolveEtherfuseBondApy } from "../utils/etherfuseBondApy";
 
 function safeNumber(value: number | string | undefined | null): number {
   if (value === null || value === undefined) return 0;
@@ -63,33 +52,6 @@ export function isEtherfuseBondToken(code: string): boolean {
   return (ETHERFUSE_BOND_SYMBOLS as readonly string[]).includes(
     code.toUpperCase()
   );
-}
-
-/**
- * Resolved sovereign-bond APR and denomination for a bond symbol (CETES,
- * USTRY, etc.). Returns null if `symbol` is not an Etherfuse bond code.
- */
-export function resolveEtherfuseBondApy(
-  symbol: string,
-  yieldsData: EtherfuseYieldEntry[] | undefined
-): { apy: number; isFallback: boolean; bondCurrency: string } | null {
-  const upper = symbol.toUpperCase();
-  if (!(ETHERFUSE_BOND_SYMBOLS as readonly string[]).includes(upper)) {
-    return null;
-  }
-  const bond = upper as EtherfuseBondSymbol;
-  const entry = yieldsData?.find(
-    (y) => y.symbol.toUpperCase() === bond.toUpperCase()
-  );
-  const apy =
-    entry && typeof entry.apy === "number" && Number.isFinite(entry.apy)
-      ? entry.apy
-      : FALLBACK_APY[bond];
-  const bondCurrency = entry?.currency?.trim() || FALLBACK_CURRENCY[bond];
-  const isFallback = Boolean(
-    !entry || typeof entry.apy !== "number" || !Number.isFinite(entry.apy)
-  );
-  return { apy, isFallback, bondCurrency };
 }
 
 /**

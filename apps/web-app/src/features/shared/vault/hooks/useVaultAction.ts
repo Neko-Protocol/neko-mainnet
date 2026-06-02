@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { TransactionBuilder, rpc } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
@@ -11,6 +12,13 @@ import {
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
+import {
+  rpcUrl as configRpcUrl,
+  stellarNetwork,
+} from "@/lib/config/stellar.config";
+import { useMultisigDetection } from "@/hooks/useMultisigDetection";
+import { lobstrVaultService } from "@/lib/services/lobstr-vault.service";
+import { usePendingMultisigTxsStore } from "@/stores/pendingMultisigTxs.store";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import {
@@ -22,8 +30,6 @@ import {
 import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
 import { resolveDecimalsForAuditAssetKey } from "@/lib/helpers/auditAssetAmounts";
 import { auditService } from "@/lib/services/audit.service";
-import { pollTransactionStatus, txApi } from "@/lib/services/transaction.api";
-import type { TransactionStatusResponse } from "@/lib/services/transaction.api";
 
 const VAULT_SHARE_DECIMALS = 7;
 const WITHDRAW_SLIPPAGE_BPS = 100;
@@ -68,6 +74,14 @@ function vaultWithdrawUnderlyingOut(
   }
 }
 
+type SignAndSubmitResult =
+  | {
+      kind: "submitted";
+      hash: string;
+      sendResult: Awaited<ReturnType<rpc.Server["sendTransaction"]>>;
+    }
+  | { kind: "multisig_pending"; hash: string };
+
 async function signAndSubmit(
   xdr: string,
   passphrase: string,
@@ -75,12 +89,27 @@ async function signAndSubmit(
     xdr: string,
     opts: { networkPassphrase: string; address?: string }
   ) => Promise<string | { signedTxXdr?: string }>,
-  address: string
-): Promise<TransactionStatusResponse> {
-  await txApi.prepare({ unsignedXdr: xdr });
+  address: string,
+  isMultisig: boolean
+): Promise<SignAndSubmitResult> {
+  const server = new rpc.Server(configRpcUrl, {
+    allowHttp: stellarNetwork === "LOCAL",
+  });
   const signed = await signFn(xdr, { networkPassphrase: passphrase, address });
   const signedTxXdr = extractSignedTxXdr(signed);
-  return txApi.submit({ signedXdr: signedTxXdr });
+  const tx = TransactionBuilder.fromXDR(signedTxXdr, passphrase);
+  const hash = tx.hash().toString("hex");
+
+  if (isMultisig) {
+    const result = await lobstrVaultService.submitForCosigning(signedTxXdr);
+    if (!result.ok) {
+      throw new Error(`Lobstr Vault rejected the transaction: ${result.error}`);
+    }
+    return { kind: "multisig_pending", hash };
+  }
+
+  const sendResult = await server.sendTransaction(tx);
+  return { kind: "submitted", hash, sendResult };
 }
 
 function readBigintResult(result: unknown): bigint {
@@ -97,13 +126,33 @@ function readSingleAssetTotalManaged(result: unknown): bigint {
   return BigInt(String(funds[0].total_amount));
 }
 
-async function finalizeSubmit(
-  submitResult: TransactionStatusResponse
-): Promise<TransactionStatusResponse> {
-  if (submitResult.status === "PENDING") {
-    return pollTransactionStatus(submitResult.hash);
+/**
+ * Polls getTransaction(hash) until the tx is included in a ledger (SUCCESS / FAILED)
+ * or we time out.
+ */
+async function waitForTx(
+  hash: string,
+  {
+    timeoutMs = 30_000,
+    intervalMs = 1_000,
+  }: { timeoutMs?: number; intervalMs?: number } = {}
+) {
+  const server = new rpc.Server(configRpcUrl, {
+    allowHttp: stellarNetwork === "LOCAL",
+  });
+  const start = Date.now();
+
+  while (Date.now() - start < timeoutMs) {
+    const res = await server.getTransaction(hash);
+    if (res.status !== "NOT_FOUND") {
+      return res;
+    }
+    await new Promise((r) => setTimeout(r, intervalMs));
   }
-  return submitResult;
+
+  throw new Error(
+    `Timed out waiting for transaction ${hash} to be included in a ledger`
+  );
 }
 
 export function useVaultAction(
@@ -121,6 +170,8 @@ export function useVaultAction(
   } = useWallet();
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
+  const { data: multisigInfo } = useMultisigDetection();
+  const addPendingMultisig = usePendingMultisigTxsStore((s) => s.add);
 
   const invalidateAfterTx = useCallback(
     () =>
@@ -130,6 +181,7 @@ export function useVaultAction(
         queryClient.invalidateQueries({ queryKey: ["vaultData"] }),
         queryClient.invalidateQueries({ queryKey: ["bearingYieldBalance"] }),
         queryClient.invalidateQueries({ queryKey: ["defindex-vaults"] }),
+        queryClient.invalidateQueries({ queryKey: ["vaultAuditActivity"] }),
       ]),
     [queryClient]
   );
@@ -154,7 +206,11 @@ export function useVaultAction(
   const handleDeposit = useCallback(
     async (
       amount: string
-    ): Promise<{ success: boolean; isFirstVaultDeposit: boolean }> => {
+    ): Promise<{
+      success: boolean;
+      isFirstVaultDeposit: boolean;
+      multisigPending?: { hash: string };
+    }> => {
       if (!address || !amount || parseFloat(amount) <= 0)
         return { success: false, isFirstVaultDeposit: false };
       if (!vaultContractId)
@@ -177,30 +233,68 @@ export function useVaultAction(
 
         const amountBigInt = BigInt(toSmallestUnit(amount, 7));
 
-        // Simulate  the resulting XDR already includes Soroban auth entries
-        const depositTx = await client.deposit({
-          amounts_desired: [amountBigInt],
-          amounts_min: [0n],
-          from: address,
-          invest: false,
-        });
+        const depositTx = await client.deposit(
+          {
+            amounts_desired: [amountBigInt],
+            amounts_min: [0n],
+            from: address,
+            invest: false,
+          },
+          { timeoutInSeconds: 7200 }
+        );
 
-        const submitResult = await signAndSubmit(
+        console.log("[VaultAction] unsigned XDR:", depositTx.toXDR());
+
+        const result = await signAndSubmit(
           depositTx.toXDR(),
           passphrase,
           signTransaction,
-          address
+          address,
+          multisigInfo?.isMultisig ?? false
         );
 
+        if (result.kind === "multisig_pending") {
+          const { hash } = result;
+          addPendingMultisig({
+            hash,
+            walletAddress: address,
+            vaultContractId,
+            vaultLabel: vaultShareSymbol ?? supplyAssetSymbol,
+            amount,
+            assetSymbol: supplyAssetSymbol,
+            action: "deposit",
+            submittedAt: Date.now(),
+          });
+          return {
+            success: false,
+            isFirstVaultDeposit: false,
+            multisigPending: { hash },
+          };
+        }
+
+        const { sendResult } = result;
+
+        if (sendResult.status === "ERROR") {
+          throw new Error(
+            `Transaction rejected by network: ${
+              sendResult.errorResult?.result().switch().name ?? "unknown"
+            }`
+          );
+        }
+
+        if (sendResult.status === "TRY_AGAIN_LATER") {
+          throw new Error(
+            "Network is congested. Please try again in a moment."
+          );
+        }
+
         setIsConfirming(true);
-        const finalResult = await finalizeSubmit(submitResult);
+        const finalResult = await waitForTx(sendResult.hash);
 
         if (finalResult.status !== "SUCCESS") {
-          const reason =
-            finalResult.error?.message ??
-            finalResult.error?.code ??
-            finalResult.status;
-          throw new Error(`Vault deposit failed (${reason})`);
+          throw new Error(
+            "Transaction failed on-chain. Please refresh your balance."
+          );
         }
 
         const minted = vaultDepositMintedShares(depositTx.result);
@@ -221,7 +315,7 @@ export function useVaultAction(
             ? { amount_out: mintedSharesHuman }
             : {}),
           pool_id: vaultContractId,
-          tx_hash: finalResult.hash,
+          tx_hash: sendResult.hash,
         });
 
         void invalidateAfterTx();
@@ -255,16 +349,19 @@ export function useVaultAction(
       supplyAssetSymbol,
       vaultContractId,
       vaultShareSymbol,
+      multisigInfo,
+      addPendingMultisig,
     ]
   );
 
   const handleWithdraw = useCallback(
     async (
       amount: string,
-      options?: { withdrawAll?: boolean }
-    ): Promise<boolean> => {
-      if (!address || !amount || parseFloat(amount) <= 0) return false;
-      if (!vaultContractId) return false;
+      options?: { withdrawAll?: boolean; isEarningsClaim?: boolean }
+    ): Promise<{ success: boolean; multisigPending?: { hash: string } }> => {
+      if (!address || !amount || parseFloat(amount) <= 0)
+        return { success: false };
+      if (!vaultContractId) return { success: false };
       setIsLoading(true);
 
       try {
@@ -301,7 +398,9 @@ export function useVaultAction(
 
         let sharesBigInt = options?.withdrawAll
           ? userShares
-          : mulDivCeil(amountUnderlying, totalSupply, totalManaged);
+          : options?.isEarningsClaim
+            ? mulDivFloor(amountUnderlying, totalSupply, totalManaged)
+            : mulDivCeil(amountUnderlying, totalSupply, totalManaged);
         if (sharesBigInt <= 0n) {
           throw new Error("Withdrawal amount is too small");
         }
@@ -318,30 +417,63 @@ export function useVaultAction(
           totalSupply
         );
 
-        const withdrawTx = await client.withdraw({
-          withdraw_shares: sharesBigInt,
-          min_amounts_out: [
-            applySlippageBps(expectedUnderlying, WITHDRAW_SLIPPAGE_BPS),
-          ],
-          from: address,
-        });
+        const withdrawTx = await client.withdraw(
+          {
+            withdraw_shares: sharesBigInt,
+            min_amounts_out: [
+              applySlippageBps(expectedUnderlying, WITHDRAW_SLIPPAGE_BPS),
+            ],
+            from: address,
+          },
+          { timeoutInSeconds: 7200 }
+        );
 
-        const submitResult = await signAndSubmit(
+        const result = await signAndSubmit(
           withdrawTx.toXDR(),
           passphrase,
           signTransaction,
-          address
+          address,
+          multisigInfo?.isMultisig ?? false
         );
 
+        if (result.kind === "multisig_pending") {
+          const { hash } = result;
+          addPendingMultisig({
+            hash,
+            walletAddress: address,
+            vaultContractId,
+            vaultLabel: vaultShareSymbol ?? supplyAssetSymbol,
+            amount,
+            assetSymbol: supplyAssetSymbol,
+            action: "withdraw",
+            submittedAt: Date.now(),
+          });
+          return { success: false, multisigPending: { hash } };
+        }
+
+        const { sendResult } = result;
+
+        if (sendResult.status === "ERROR") {
+          throw new Error(
+            `Transaction rejected by network: ${
+              sendResult.errorResult?.result().switch().name ?? "unknown"
+            }`
+          );
+        }
+
+        if (sendResult.status === "TRY_AGAIN_LATER") {
+          throw new Error(
+            "Network is congested. Please try again in a moment."
+          );
+        }
+
         setIsConfirming(true);
-        const finalResult = await finalizeSubmit(submitResult);
+        const finalResult = await waitForTx(sendResult.hash);
 
         if (finalResult.status !== "SUCCESS") {
-          const reason =
-            finalResult.error?.message ??
-            finalResult.error?.code ??
-            finalResult.status;
-          throw new Error(`Vault withdraw failed (${reason})`);
+          throw new Error(
+            "Transaction failed on-chain. Please refresh your balance."
+          );
         }
 
         const underlyingBi = vaultWithdrawUnderlyingOut(withdrawTx.result);
@@ -359,25 +491,27 @@ export function useVaultAction(
             ? fromSmallestUnit(underlyingBi.toString(), decimals)
             : fromSmallestUnit(expectedUnderlying.toString(), decimals);
 
-        auditService.log({
+        await auditService.log({
           wallet_address: address,
-          action_type: "vaults_withdraw",
+          action_type: options?.isEarningsClaim
+            ? "vaults_claim_earnings"
+            : "vaults_withdraw",
           asset_in: vaultShareSymbol ?? "vault_shares",
           token_amount_in: sharesHuman,
           asset_out: supplyAssetSymbol,
           amount_out: underlyingHuman,
           pool_id: vaultContractId,
-          tx_hash: finalResult.hash,
+          tx_hash: sendResult.hash,
         });
 
         showSuccess(
           `Successfully withdrew ${displayAmount} ${supplyAssetSymbol}`
         );
         void invalidateAfterTx();
-        return true;
+        return { success: true };
       } catch (err) {
         if (err instanceof Error && err.message === "USER_REJECTED")
-          return false;
+          return { success: false };
         const contractMsg = extractContractErrorOrNull(err);
         showError(
           typeof contractMsg === "string"
@@ -386,7 +520,7 @@ export function useVaultAction(
               ? err.message
               : "An unexpected error occurred."
         );
-        return false;
+        return { success: false };
       } finally {
         setIsLoading(false);
         setIsConfirming(false);
@@ -402,6 +536,188 @@ export function useVaultAction(
       supplyAssetSymbol,
       vaultContractId,
       vaultShareSymbol,
+      multisigInfo,
+      addPendingMultisig,
+    ]
+  );
+
+  const handleClaimEarnings = useCallback(
+    async (
+      netDepositedTokens: number
+    ): Promise<{ success: boolean; multisigPending?: { hash: string } }> => {
+      if (!address || !vaultContractId || netDepositedTokens <= 0)
+        return { success: false };
+      setIsLoading(true);
+
+      try {
+        if (!walletPassphrase)
+          throw new Error("Wallet passphrase not available");
+        const passphrase = walletPassphrase;
+
+        const client = new DefindexVaultClient({
+          contractId: vaultContractId,
+          rpcUrl,
+          networkPassphrase,
+          publicKey: address,
+          ...(allowHttpForSoroban && { allowHttp: true }),
+        });
+
+        const decimals =
+          resolveDecimalsForAuditAssetKey(supplyAssetSymbol) ??
+          VAULT_SHARE_DECIMALS;
+
+        const [balanceTx, totalSupplyTx, fundsTx] = await Promise.all([
+          client.balance({ id: address }, { simulate: true }),
+          client.total_supply({ simulate: true }),
+          client.fetch_total_managed_funds({ simulate: true }),
+        ]);
+        const userShares = readBigintResult(balanceTx.result);
+        const totalSupply = readBigintResult(totalSupplyTx.result);
+        const totalManaged = readSingleAssetTotalManaged(fundsTx.result);
+
+        if (userShares <= 0n || totalSupply <= 0n || totalManaged <= 0n) {
+          throw new Error("No vault balance available to withdraw");
+        }
+
+        // Round UP principal shares so the remaining balance is always >= deposit
+        const principalAtomic = decimalToAtomic(
+          netDepositedTokens.toFixed(decimals),
+          decimals
+        );
+        const principalShares = mulDivCeil(
+          principalAtomic,
+          totalSupply,
+          totalManaged
+        );
+        const claimShares = userShares - principalShares;
+
+        if (claimShares <= 0n) {
+          throw new Error("No earnings to claim yet");
+        }
+
+        const expectedUnderlying = mulDivFloor(
+          claimShares,
+          totalManaged,
+          totalSupply
+        );
+
+        const withdrawTx = await client.withdraw(
+          {
+            withdraw_shares: claimShares,
+            min_amounts_out: [
+              applySlippageBps(expectedUnderlying, WITHDRAW_SLIPPAGE_BPS),
+            ],
+            from: address,
+          },
+          { timeoutInSeconds: 7200 }
+        );
+
+        const result = await signAndSubmit(
+          withdrawTx.toXDR(),
+          passphrase,
+          signTransaction,
+          address,
+          multisigInfo?.isMultisig ?? false
+        );
+
+        if (result.kind === "multisig_pending") {
+          const { hash } = result;
+          addPendingMultisig({
+            hash,
+            walletAddress: address,
+            vaultContractId,
+            vaultLabel: vaultShareSymbol ?? supplyAssetSymbol,
+            amount: expectedUnderlying.toString(),
+            assetSymbol: supplyAssetSymbol,
+            action: "withdraw",
+            submittedAt: Date.now(),
+          });
+          return { success: false, multisigPending: { hash } };
+        }
+
+        const { sendResult } = result;
+
+        if (sendResult.status === "ERROR") {
+          throw new Error(
+            `Transaction rejected by network: ${
+              sendResult.errorResult?.result().switch().name ?? "unknown"
+            }`
+          );
+        }
+        if (sendResult.status === "TRY_AGAIN_LATER") {
+          throw new Error(
+            "Network is congested. Please try again in a moment."
+          );
+        }
+
+        setIsConfirming(true);
+        const finalResult = await waitForTx(sendResult.hash);
+        if (finalResult.status !== "SUCCESS") {
+          throw new Error(
+            "Transaction failed on-chain. Please refresh your balance."
+          );
+        }
+
+        const underlyingBi = vaultWithdrawUnderlyingOut(withdrawTx.result);
+        const underlyingHuman =
+          underlyingBi != null
+            ? parseFloat(fromSmallestUnit(underlyingBi.toString(), decimals))
+            : parseFloat(
+                fromSmallestUnit(expectedUnderlying.toString(), decimals)
+              );
+        const sharesHuman = parseFloat(
+          fromSmallestUnit(claimShares.toString(), VAULT_SHARE_DECIMALS)
+        );
+        const displayAmount =
+          underlyingBi != null
+            ? fromSmallestUnit(underlyingBi.toString(), decimals)
+            : fromSmallestUnit(expectedUnderlying.toString(), decimals);
+
+        await auditService.log({
+          wallet_address: address,
+          action_type: "vaults_claim_earnings",
+          asset_in: vaultShareSymbol ?? "vault_shares",
+          token_amount_in: sharesHuman,
+          asset_out: supplyAssetSymbol,
+          amount_out: underlyingHuman,
+          pool_id: vaultContractId,
+          tx_hash: sendResult.hash,
+        });
+
+        showSuccess(
+          `Successfully claimed ${displayAmount} ${supplyAssetSymbol}`
+        );
+        void invalidateAfterTx();
+        return { success: true };
+      } catch (err) {
+        if (err instanceof Error && err.message === "USER_REJECTED")
+          return { success: false };
+        const contractMsg = extractContractErrorOrNull(err);
+        showError(
+          typeof contractMsg === "string"
+            ? contractMsg
+            : err instanceof Error
+              ? err.message
+              : "An unexpected error occurred."
+        );
+        return { success: false };
+      } finally {
+        setIsLoading(false);
+        setIsConfirming(false);
+      }
+    },
+    [
+      address,
+      walletPassphrase,
+      signTransaction,
+      invalidateAfterTx,
+      showError,
+      showSuccess,
+      supplyAssetSymbol,
+      vaultContractId,
+      vaultShareSymbol,
+      multisigInfo,
+      addPendingMultisig,
     ]
   );
 
@@ -411,6 +727,7 @@ export function useVaultAction(
     hasWallet: !!address,
     handleDeposit,
     handleWithdraw,
+    handleClaimEarnings,
     showSuccess,
   };
 }

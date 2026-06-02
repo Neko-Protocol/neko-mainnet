@@ -6,6 +6,8 @@ import { Loader2 } from "lucide-react";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
 import { formatCurrency } from "@/lib/helpers/currency";
 import type { SupportedCurrency } from "@/stores/currency.store";
+import { useMultisigDetection } from "@/hooks/useMultisigDetection";
+import { MultisigBanner } from "@/features/shared/vault/components/ui/MultisigBanner";
 import type { VaultActionPanelProps } from "./types";
 
 function formatBalance(n: number): string {
@@ -322,6 +324,112 @@ function DepositSummary({
   );
 }
 
+function PositionSummaryCard({
+  netDeposited,
+  currentValue,
+  earnings,
+  assetSymbol,
+  selectedCurrency,
+  tokenPrice,
+  onClaimEarnings,
+  isClaimingEarnings,
+}: {
+  netDeposited: number;
+  currentValue: number;
+  earnings: number;
+  assetSymbol: string;
+  selectedCurrency: string;
+  tokenPrice: number;
+  onClaimEarnings?: () => Promise<void>;
+  isClaimingEarnings?: boolean;
+}) {
+  const fmt = (n: number) =>
+    n.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+  const currency = selectedCurrency as Parameters<typeof formatCurrency>[1];
+
+  return (
+    <div
+      className="rounded-2xl border border-white/5 px-4 py-3.5 space-y-3"
+      style={{ background: "#1a1a1a" }}
+    >
+      <div className="flex items-center">
+        <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
+          Your Position
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <span className="text-white/50 text-sm">Deposited</span>
+        <span className="text-white font-semibold text-sm tabular-nums">
+          {fmt(netDeposited)}{" "}
+          <span className="text-white/50 font-normal">{assetSymbol}</span>
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-white/50 text-sm shrink-0">Earnings</span>
+        <div className="flex items-center gap-2">
+          <div className="text-right">
+            {tokenPrice > 0 ? (
+              <p className="text-green-400 font-semibold text-sm tabular-nums">
+                +
+                {formatCurrency(
+                  Math.max(0, earnings) * tokenPrice,
+                  currency,
+                  2
+                )}
+              </p>
+            ) : (
+              <p className="text-green-400 font-semibold text-sm tabular-nums">
+                +{fmt(Math.max(0, earnings))}{" "}
+                <span className="text-green-400/60 font-normal">
+                  {assetSymbol}
+                </span>
+              </p>
+            )}
+          </div>
+          {onClaimEarnings && earnings > 0.001 && (
+            <button
+              type="button"
+              onClick={() => void onClaimEarnings()}
+              disabled={isClaimingEarnings}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#229EDF] hover:bg-[#1a8bc7] text-white text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              {isClaimingEarnings ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Claiming…
+                </>
+              ) : (
+                "Claim"
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-white/5">
+        <span className="text-white/50 text-sm">Current Value</span>
+        <div className="text-right">
+          <p className="text-sm tabular-nums font-semibold">
+            <span className="text-green-400">{fmt(currentValue)}</span>
+            <span className="text-white/50 font-normal"> {assetSymbol}</span>
+          </p>
+          {tokenPrice > 0 && (
+            <p className="text-white/35 text-xs tabular-nums">
+              {formatCurrency(currentValue * tokenPrice, currency, 2)}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function VaultActionPanel({
   vault,
   tab,
@@ -337,7 +445,11 @@ export function VaultActionPanel({
   apy,
   tokenPriceInCurrency,
   selectedCurrency = "USD",
+  positionSummary,
+  onClaimEarnings,
+  isClaimingEarnings,
 }: VaultActionPanelProps) {
+  const { data: multisigInfo } = useMultisigDetection();
   const supplyLabel = vault.supplyAsset.symbol;
   const hasAmount = !!amount && parseFloat(amount) > 0;
   const depositAmt = parseFloat(amount) || 0;
@@ -380,8 +492,21 @@ export function VaultActionPanel({
       ? `${formatBalance(parseFloat(supplyBalance))} ${supplyLabel}`
       : `${formatBalance(parseFloat(withdrawBalance))} ${supplyLabel}`;
 
+  const ctaLabel =
+    multisigInfo?.isMultisig && isWalletConnected
+      ? "Send to Lobstr Vault"
+      : tab === "deposit"
+        ? `Deposit ${supplyLabel}`
+        : `Withdraw ${supplyLabel}`;
+
   return (
     <div className="flex flex-col gap-3">
+      {multisigInfo?.isMultisig && (
+        <MultisigBanner
+          signersCount={multisigInfo.signersCount}
+          signersRequired={multisigInfo.signersRequired}
+        />
+      )}
       <ModeTabs tab={tab} onTabChange={onTabChange} />
 
       <AmountInputCard
@@ -417,6 +542,19 @@ export function VaultActionPanel({
         />
       )}
 
+      {positionSummary && (
+        <PositionSummaryCard
+          netDeposited={positionSummary.netDeposited}
+          currentValue={positionSummary.currentValue}
+          earnings={positionSummary.earnings}
+          assetSymbol={positionSummary.assetSymbol}
+          selectedCurrency={selectedCurrency}
+          tokenPrice={tokenPriceInCurrency ?? 1}
+          onClaimEarnings={tab === "withdraw" ? onClaimEarnings : undefined}
+          isClaimingEarnings={isClaimingEarnings}
+        />
+      )}
+
       <button
         type="button"
         onClick={() => void onSubmit()}
@@ -430,10 +568,8 @@ export function VaultActionPanel({
           </>
         ) : !isWalletConnected ? (
           "Connect wallet"
-        ) : tab === "deposit" ? (
-          `Deposit ${supplyLabel}`
         ) : (
-          `Withdraw ${supplyLabel}`
+          ctaLabel
         )}
       </button>
 

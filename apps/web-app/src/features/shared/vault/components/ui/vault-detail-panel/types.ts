@@ -3,6 +3,13 @@ import type { SupportedCurrency } from "@/stores/currency.store";
 
 export type VaultActionTab = "deposit" | "withdraw";
 
+export interface VaultPositionSummary {
+  netDeposited: number;
+  currentValue: number;
+  earnings: number;
+  assetSymbol: string;
+}
+
 export interface VaultActionPanelProps {
   vault: VaultView;
   tab: VaultActionTab;
@@ -19,6 +26,9 @@ export interface VaultActionPanelProps {
   apy?: string;
   tokenPriceInCurrency?: number;
   selectedCurrency?: SupportedCurrency;
+  positionSummary?: VaultPositionSummary;
+  onClaimEarnings?: () => Promise<void>;
+  isClaimingEarnings?: boolean;
 }
 
 export interface VaultDetailLayoutProps {
