@@ -26,3 +26,4 @@ export {
   type AuditEvent,
   type AuditActionType,
 } from "./utils/buildPoolAuditPayload.js";
+export { throttledRpc } from "./stellar/rpcThrottle.js";
