@@ -424,7 +424,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         : Promise.resolve(),
       address
         ? queryClient.refetchQueries({
-            queryKey: ["stellar-balances", address],
+            queryKey: ["balances", address],
           })
         : Promise.resolve(),
       queryClient.refetchQueries({ queryKey: ["tokenBalance"] }),

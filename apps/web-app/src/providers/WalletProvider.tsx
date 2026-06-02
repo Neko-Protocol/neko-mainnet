@@ -71,7 +71,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     refetch: refetchBalances,
   } = useBalances(address, {
     enabled: Boolean(address),
-    refetchInterval: 10000, // Poll every 10 seconds
+    refetchInterval: 60_000, // Poll every 60s (was 10s — too aggressive)
     refetchOnWindowFocus: false,
     keepPreviousData: true, // Keep previous data while fetching to prevent flickering
     retry: 2,

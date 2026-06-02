@@ -278,7 +278,7 @@ const Swap: React.FC = () => {
         });
         // Also invalidate Horizon-sourced balances used by useWallet
         void queryClient.invalidateQueries({
-          queryKey: ["stellar-balances", address],
+          queryKey: ["balances", address],
         });
 
         resetSwap();

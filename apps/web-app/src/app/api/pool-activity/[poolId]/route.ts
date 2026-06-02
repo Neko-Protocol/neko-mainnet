@@ -85,5 +85,12 @@ export async function GET(
     };
   });
 
-  return NextResponse.json({ events });
+  return NextResponse.json(
+    { events },
+    {
+      headers: {
+        "Cache-Control": "public, max-age=60, stale-while-revalidate=120",
+      },
+    }
+  );
 }
