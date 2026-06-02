@@ -107,8 +107,15 @@ const MainStats: React.FC = () => {
   }, [positions, walletPriceByCode, missingPriceMap]);
 
   const portfolioTotalUsd = positionsNetUsd + vaultsTotalUsd;
-  const isLoading =
-    isLoadingPositions || isLoadingMissingPrices || isLoadingVaults;
+  // Per-stat loading: don't block cheap stats (Assets Held) behind the heavy
+  // positions/vaults queries that drive the portfolio total.
+  const isLoadingTotal =
+    isLoadingPortfolio ||
+    isLoadingPositions ||
+    isLoadingMissingPrices ||
+    isLoadingVaults;
+  const isLoadingAssetsHeld = isFetchingBalances || isLoadingPortfolio;
+  const isLoadingApy = isLoadingPositions;
   const totalInSelected = convertUsdToSelected(portfolioTotalUsd, fxRate);
   const formattedTotal = formatCurrency(
     totalInSelected,
@@ -128,21 +135,21 @@ const MainStats: React.FC = () => {
           icon={<DollarSign className="h-5 w-5" />}
           label="Total Portfolio Value"
           value={address ? formattedTotal : formattedZero}
-          isLoading={isLoading && !!address}
+          isLoading={isLoadingTotal && !!address}
           tooltip="Sum of pool positions + vault positions in USD."
         />
         <StatCard
           icon={<Coins className="h-5 w-5" />}
           label="Assets Held"
           value={address ? holdings.length : 0}
-          isLoading={isLoading && !!address}
+          isLoading={isLoadingAssetsHeld && !!address}
         />
         <StatCard
           icon={<TrendingUp className="h-5 w-5" />}
           label="Avg. Pool APY"
           tooltip="Average APY across your active pool positions."
           value={avgPoolApy !== null ? `${avgPoolApy}%` : "-"}
-          isLoading={isLoading && !!address}
+          isLoading={isLoadingApy && !!address}
         />
       </div>
     </div>

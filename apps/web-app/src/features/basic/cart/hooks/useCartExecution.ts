@@ -98,7 +98,7 @@ export function useCartExecution() {
 
     void refetchBalances();
     void queryClient.invalidateQueries({
-      queryKey: ["stellar-balances", address],
+      queryKey: ["balances", address],
     });
 
     setIsExecuting(false);

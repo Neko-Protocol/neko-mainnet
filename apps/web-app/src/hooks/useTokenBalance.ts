@@ -59,7 +59,8 @@ export const useTokenBalance = (
     | { type: "native" | "contract"; code?: string; contract?: string }
     | undefined
 ) => {
-  const { address, balances, subentryCount, nativeBalanceStroops } = useWallet();
+  const { address, balances, subentryCount, nativeBalanceStroops } =
+    useWallet();
 
   const tokenAddress = token ? getTokenAddress(token) : null;
 
@@ -87,8 +88,8 @@ export const useTokenBalance = (
       return await getTokenBalanceFromContract(tokenAddress, address, decimals);
     },
     enabled: Boolean(tokenAddress && address && !isXlm),
-    refetchInterval: 10000, // Poll every 10 seconds
-    staleTime: 5000, // Consider stale after 5 seconds
+    refetchInterval: 60_000, // Poll every 60s (was 10s)
+    staleTime: 30_000, // Stale after 30s (was 5s)
     retry: 2,
     throwOnError: false,
   });
@@ -101,7 +102,10 @@ export const useTokenBalance = (
     const spendable =
       nativeBalanceStroops > 0n
         ? fromSmallestUnit(
-            spendableNativeStroops(nativeBalanceStroops, subentryCount).toString(),
+            spendableNativeStroops(
+              nativeBalanceStroops,
+              subentryCount
+            ).toString(),
             7
           )
         : getSpendableXlm(balances, subentryCount);

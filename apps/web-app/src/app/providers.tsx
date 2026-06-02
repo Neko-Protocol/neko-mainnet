@@ -1,8 +1,26 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import {
+  PersistQueryClientProvider,
+  type Persister,
+} from "@tanstack/react-query-persist-client";
+import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { ToastProvider } from "@/providers/ToastProvider";
 import { ReactNode, useState } from "react";
+
+// Bumping this evicts ALL persisted cache for users on next load. Bump when
+// query shapes change in incompatible ways or to force a hard refresh.
+const CACHE_BUSTER = "v1";
+
+// Used server-side where localStorage is unavailable. PersistQueryClientProvider
+// initialises isRestoring:true on both server and client, so queries start in
+// loading state on both sides — ensuring hydration consistency.
+const noopPersister: Persister = {
+  persistClient: async () => {},
+  restoreClient: async () => undefined,
+  removeClient: async () => {},
+};
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -11,16 +29,38 @@ export function Providers({ children }: { children: ReactNode }) {
         defaultOptions: {
           queries: {
             staleTime: 60_000, // 1 min global default
-            gcTime: 10 * 60_000, // Cache survives 10 min after unmount
-            refetchOnWindowFocus: false, // Don't refetch just by tabbing back
+            gcTime: 24 * 60 * 60_000, // 24h — must be >= persister maxAge
+            refetchOnWindowFocus: false,
           },
         },
       })
   );
 
+  const [persister] = useState<Persister>(() =>
+    typeof window === "undefined"
+      ? noopPersister
+      : createSyncStoragePersister({
+          storage: window.localStorage,
+          key: "neko-tanstack-cache",
+          throttleTime: 1000,
+        })
+  );
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister,
+        maxAge: 24 * 60 * 60_000, // 24h persisted
+        buster: CACHE_BUSTER,
+        dehydrateOptions: {
+          // Only persist successful queries — avoid replaying errors on restore.
+          shouldDehydrateQuery: (query) =>
+            query.state.status === "success" && query.state.data !== undefined,
+        },
+      }}
+    >
       <ToastProvider>{children}</ToastProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }

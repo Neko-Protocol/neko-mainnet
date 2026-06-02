@@ -9,7 +9,7 @@ export function useAuditLog(wallet?: string) {
     queryKey: ["audit", wallet ?? "global"],
     queryFn: () => auditService.getActivity(wallet),
     enabled: wallet !== "",
-    refetchInterval: 15000,
-    staleTime: 10000,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 }
