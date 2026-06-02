@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { stellarPriceService } from "@/lib/services/stellar-price.service";
@@ -26,63 +27,70 @@ function getContractForToken(code: string): string | undefined {
 export function usePortfolioValue(): PortfolioValue {
   const { balances, address, isFetchingBalances } = useWallet();
 
-  const balanceEntries = Object.entries(balances)
-    .map(([key, bal]) => {
-      let code: string | null = null;
-      if (bal.asset_type === "native") {
-        code = "XLM";
-      } else if (bal.asset_type === "liquidity_pool_shares") {
-        code = null;
-      } else if ("asset_code" in bal && bal.asset_code) {
-        code = bal.asset_code;
-      }
-      return { key, code, rawBalance: bal.balance };
-    })
-    .filter(
-      (e): e is { key: string; code: string; rawBalance: string } =>
-        e.code !== null && parseBalance(e.rawBalance) > 0
-    );
+  const balanceEntries = useMemo(() => {
+    return Object.entries(balances)
+      .map(([key, bal]) => {
+        let code: string | null = null;
+        if (bal.asset_type === "native") {
+          code = "XLM";
+        } else if (bal.asset_type === "liquidity_pool_shares") {
+          code = null;
+        } else if ("asset_code" in bal && bal.asset_code) {
+          code = bal.asset_code;
+        }
+        return { key, code, rawBalance: bal.balance };
+      })
+      .filter(
+        (e): e is { key: string; code: string; rawBalance: string } =>
+          e.code !== null && parseBalance(e.rawBalance) > 0
+      );
+  }, [balances]);
 
-  const balanceKey = balanceEntries
-    .map((e) => `${e.code}:${e.rawBalance}`)
-    .sort()
-    .join("|");
+  // Prices are keyed by the SET of held tokens only — value (balance × price)
+  // is derived in-render so balance polling doesn't invalidate the price cache.
+  const tokenCodes = useMemo(
+    () => [...new Set(balanceEntries.map((e) => e.code))].sort(),
+    [balanceEntries]
+  );
+  const priceKey = tokenCodes.join("|");
 
   const {
-    data: holdings = [],
+    data: priceMap = {},
     isLoading: isLoadingPrices,
     error,
-  } = useQuery<PortfolioHolding[]>({
-    queryKey: ["portfolio-value", address, balanceKey],
+  } = useQuery<Record<string, number>>({
+    queryKey: ["portfolio-prices", priceKey],
     queryFn: async () => {
-      const results = await Promise.allSettled(
-        balanceEntries.map(async (entry) => {
-          const balance = parseBalance(entry.rawBalance);
-          const priceUsd = await stellarPriceService.getPrice(
-            entry.code,
-            getContractForToken(entry.code)
+      const entries = await Promise.all(
+        tokenCodes.map(async (code) => {
+          const price = await stellarPriceService.getPrice(
+            code,
+            getContractForToken(code)
           );
-          return {
-            code: entry.code,
-            balance,
-            priceUsd,
-            valueUsd: balance * priceUsd,
-          };
+          return [code, price] as const;
         })
       );
-
-      return results
-        .filter(
-          (r): r is PromiseFulfilledResult<PortfolioHolding> =>
-            r.status === "fulfilled"
-        )
-        .map((r) => r.value)
-        .sort((a, b) => b.valueUsd - a.valueUsd);
+      return Object.fromEntries(entries);
     },
-    enabled: Boolean(address) && balanceEntries.length > 0,
+    enabled: tokenCodes.length > 0,
     refetchInterval: 120_000,
     staleTime: 60_000,
   });
+
+  const holdings = useMemo<PortfolioHolding[]>(() => {
+    return balanceEntries
+      .map((entry) => {
+        const balance = parseBalance(entry.rawBalance);
+        const priceUsd = priceMap[entry.code] ?? 0;
+        return {
+          code: entry.code,
+          balance,
+          priceUsd,
+          valueUsd: balance * priceUsd,
+        };
+      })
+      .sort((a, b) => b.valueUsd - a.valueUsd);
+  }, [balanceEntries, priceMap]);
 
   const totalUsd = holdings.reduce((sum, h) => sum + h.valueUsd, 0);
 
