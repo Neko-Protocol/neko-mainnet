@@ -6,7 +6,8 @@ import { useWallet } from "@/hooks/useWallet";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
-import { usePortfolioValue } from "@/features/shared/dashboard/hooks/usePortfolioValue";
+import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
+import { useTotalPortfolioUsd } from "@/features/shared/dashboard/hooks/useTotalPortfolioUsd";
 import { StatCard } from "@/features/shared/discover/components/ui/StatCard";
 
 const BasicMainStats: React.FC = () => {
@@ -15,14 +16,14 @@ const BasicMainStats: React.FC = () => {
     totalUsd,
     holdings,
     isLoading: isLoadingPortfolio,
-  } = usePortfolioValue();
+  } = useTotalPortfolioUsd();
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate();
 
   const isLoading = isFetchingBalances || isLoadingPortfolio;
   const totalInSelected = convertUsdToSelected(totalUsd, fxRate);
-  const formattedTotal = formatCurrency(totalInSelected, selectedCurrency);
-  const formattedZero = formatCurrency(0, selectedCurrency);
+  const formattedTotal = formatCurrency(totalInSelected, selectedCurrency, SUMMARY_DISPLAY_DECIMALS);
+  const formattedZero = formatCurrency(0, selectedCurrency, SUMMARY_DISPLAY_DECIMALS);
 
   return (
     <div className="space-y-4 sm:space-y-5">
