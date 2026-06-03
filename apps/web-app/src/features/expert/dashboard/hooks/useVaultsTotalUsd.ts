@@ -104,8 +104,8 @@ export function useVaultsTotalUsd() {
       return Object.fromEntries(entries);
     },
     enabled: uniqueSymbols.length > 0,
-    staleTime: 60_000,
-    refetchInterval: 120_000,
+    staleTime: 3 * 60_000,
+    refetchInterval: 5 * 60_000,
   });
 
   const priceMap = priceQuery.data ?? {};
