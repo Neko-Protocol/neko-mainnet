@@ -28,10 +28,7 @@ export function resolveEtherfuseBondApy(
       : FALLBACK_APY[bond];
   const bondCurrency = entry?.currency?.trim() || FALLBACK_CURRENCY[bond];
   const isFallback = Boolean(
-    entry?.isFallback ||
-    !entry ||
-    typeof entry.apy !== "number" ||
-    !Number.isFinite(entry.apy)
+    !entry || typeof entry.apy !== "number" || !Number.isFinite(entry.apy)
   );
   return { apy, isFallback, bondCurrency };
 }
