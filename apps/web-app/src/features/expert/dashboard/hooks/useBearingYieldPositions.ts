@@ -30,9 +30,9 @@ export function useBearingYieldPositions(
       queryFn: () =>
         getTokenBalanceFromContract(asset.contract, address!, asset.decimals),
       enabled: Boolean(address),
-      staleTime: 120_000,
-      refetchInterval: 120_000,
-      gcTime: 5 * 60_000,
+      staleTime: 2 * 60_000,
+      refetchInterval: 3 * 60_000,
+      gcTime: 10 * 60_000,
       refetchOnWindowFocus: false,
       retry: 1,
       throwOnError: false,

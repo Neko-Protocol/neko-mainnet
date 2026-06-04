@@ -1,7 +1,10 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
-import { stellarPriceService } from "@/lib/services/stellar-price.service";
+import {
+  stellarPriceService,
+  type PricedResult,
+} from "@/lib/services/stellar-price.service";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { parseBalance } from "@/lib/helpers/formatUtils";
 
@@ -27,61 +30,57 @@ function getContractForToken(code: string): string | undefined {
 export function usePortfolioValue(): PortfolioValue {
   const { balances, address, isFetchingBalances } = useWallet();
 
-  const balanceEntries = useMemo(() => {
-    return Object.entries(balances)
-      .map(([key, bal]) => {
-        let code: string | null = null;
-        if (bal.asset_type === "native") {
-          code = "XLM";
-        } else if (bal.asset_type === "liquidity_pool_shares") {
-          code = null;
-        } else if ("asset_code" in bal && bal.asset_code) {
-          code = bal.asset_code;
-        }
-        return { key, code, rawBalance: bal.balance };
-      })
-      .filter(
-        (e): e is { key: string; code: string; rawBalance: string } =>
-          e.code !== null && parseBalance(e.rawBalance) > 0
-      );
-  }, [balances]);
-
-  // Prices are keyed by the SET of held tokens only — value (balance × price)
-  // is derived in-render so balance polling doesn't invalidate the price cache.
-  const tokenCodes = useMemo(
-    () => [...new Set(balanceEntries.map((e) => e.code))].sort(),
-    [balanceEntries]
-  );
-  const priceKey = tokenCodes.join("|");
-
-  const {
-    data: priceMap = {},
-    isLoading: isLoadingPrices,
-    error,
-  } = useQuery<Record<string, number>>({
-    queryKey: ["portfolio-prices", priceKey],
-    queryFn: async () => {
-      const entries = await Promise.all(
-        tokenCodes.map(async (code) => {
-          const price = await stellarPriceService.getPrice(
-            code,
-            getContractForToken(code)
-          );
-          return [code, price] as const;
+  const balanceEntries = useMemo(
+    () =>
+      Object.entries(balances)
+        .map(([key, bal]) => {
+          let code: string | null = null;
+          if (bal.asset_type === "native") {
+            code = "XLM";
+          } else if (bal.asset_type === "liquidity_pool_shares") {
+            code = null;
+          } else if ("asset_code" in bal && bal.asset_code) {
+            code = bal.asset_code;
+          }
+          return { key, code, rawBalance: bal.balance };
         })
-      );
-      return Object.fromEntries(entries);
-    },
-    enabled: tokenCodes.length > 0,
-    refetchInterval: 120_000,
-    staleTime: 60_000,
+        .filter(
+          (e): e is { key: string; code: string; rawBalance: string } =>
+            e.code !== null && parseBalance(e.rawBalance) > 0
+        ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [balances]
+  );
+
+  // Per-token queries keyed by ["tokenPrice", code] — shared cache with
+  // useTokenPrice. Value (balance × price) is derived in-render so balance
+  // polling never invalidates the price cache.
+  const priceQueries = useQueries({
+    queries: balanceEntries.map((entry) => ({
+      queryKey: ["tokenPrice", entry.code] as const,
+      queryFn: (): Promise<PricedResult> =>
+        stellarPriceService.getPriceWithSource(
+          entry.code,
+          getContractForToken(entry.code)
+        ),
+      enabled: Boolean(address) && balanceEntries.length > 0,
+      refetchInterval: 3 * 60_000,
+      staleTime: 2 * 60_000,
+      gcTime: 10 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 2,
+      throwOnError: false,
+    })),
   });
+
+  const isLoadingPrices = priceQueries.some((q) => q.isLoading);
+  const error = priceQueries.find((q) => q.isError)?.error ?? null;
 
   const holdings = useMemo<PortfolioHolding[]>(() => {
     return balanceEntries
-      .map((entry) => {
+      .map((entry, i) => {
         const balance = parseBalance(entry.rawBalance);
-        const priceUsd = priceMap[entry.code] ?? 0;
+        const priceUsd = priceQueries[i]?.data?.price ?? 0;
         return {
           code: entry.code,
           balance,
@@ -90,9 +89,13 @@ export function usePortfolioValue(): PortfolioValue {
         };
       })
       .sort((a, b) => b.valueUsd - a.valueUsd);
-  }, [balanceEntries, priceMap]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [balanceEntries, priceQueries]);
 
-  const totalUsd = holdings.reduce((sum, h) => sum + h.valueUsd, 0);
+  const totalUsd = useMemo(
+    () => holdings.reduce((sum, h) => sum + h.valueUsd, 0),
+    [holdings]
+  );
 
   return {
     totalUsd,

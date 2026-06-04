@@ -96,7 +96,9 @@ export const fetchBalances = async (
   try {
     const availableTokens = getAvailableTokens();
     const tokens = Object.entries(availableTokens)
-      .filter(([code]) => code !== "XLM")
+      .filter(
+        ([code]) => code !== "XLM" && !classicAssetCodesWithNonZero.has(code)
+      )
       .map(([code, info]) => ({
         code,
         contract: info.contract ?? "",

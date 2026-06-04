@@ -63,7 +63,7 @@ export function BasicAssetPriceCard({
   return (
     <>
       <div
-        className="relative rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 h-full flex flex-col transition-all duration-200 hover:border-white/15 hover:bg-[#202020] hover:-translate-y-0.5 cursor-pointer overflow-hidden group"
+        className="relative rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 h-full flex flex-col transition-all duration-200 hover:border-white/15 hover:bg-[#202020] hover:-translate-y-0.5 cursor-pointer group"
         onClick={() => router.push(detailHref)}
         role="button"
         tabIndex={0}
@@ -71,14 +71,7 @@ export function BasicAssetPriceCard({
           if (e.key === "Enter" || e.key === " ") router.push(detailHref);
         }}
       >
-        {accent && (
-          <div
-            aria-hidden
-            className={`pointer-events-none absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl opacity-50 ${accent.bg}`}
-          />
-        )}
-
-        <div className="relative flex items-start justify-between mb-5">
+        <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3 min-w-0">
             {logoSrc && (
               <div className="relative w-11 h-11 rounded-full bg-white overflow-hidden shrink-0 ring-1 ring-white/10 flex items-center justify-center">
@@ -102,7 +95,7 @@ export function BasicAssetPriceCard({
           </div>
         </div>
 
-        <div className="relative flex-1 flex flex-col justify-between gap-4">
+        <div className="flex-1 flex flex-col justify-between gap-4">
           {isLoading ? (
             <div className="flex items-center gap-2">
               <LoadingSpinner variant="dots" size="sm" />
@@ -139,7 +132,7 @@ export function BasicAssetPriceCard({
 
         {/* Two-button CTA  stopPropagation so clicks don't navigate the card */}
         <div
-          className="relative mt-4 grid grid-cols-2 gap-2"
+          className="mt-4 grid grid-cols-2 gap-2"
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >

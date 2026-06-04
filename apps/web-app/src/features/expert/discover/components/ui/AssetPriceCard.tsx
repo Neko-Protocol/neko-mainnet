@@ -58,15 +58,8 @@ export function AssetPriceCard({
       href={ROUTES.assetDetail(codeUpper)}
       className="block h-full group focus:outline-none"
     >
-      <div className="relative rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 h-full flex flex-col transition-all duration-200 hover:border-white/15 hover:bg-[#202020] hover:-translate-y-0.5 cursor-pointer overflow-hidden">
-        {accent && (
-          <div
-            aria-hidden
-            className={`pointer-events-none absolute -top-16 -right-16 w-40 h-40 rounded-full blur-3xl opacity-50 ${accent.bg}`}
-          />
-        )}
-
-        <div className="relative flex items-start justify-between mb-5">
+      <div className="relative rounded-2xl bg-[#1C1C1C] border border-white/5 p-5 h-full flex flex-col transition-all duration-200 hover:border-white/15 hover:bg-[#202020] hover:-translate-y-0.5 cursor-pointer">
+        <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-3 min-w-0">
             {logoSrc && (
               <div className="relative w-11 h-11 rounded-full bg-white overflow-hidden shrink-0 ring-1 ring-white/10 flex items-center justify-center">
@@ -94,7 +87,7 @@ export function AssetPriceCard({
           <ArrowUpRight className="h-4 w-4 text-white/20 group-hover:text-white/60 transition-colors shrink-0" />
         </div>
 
-        <div className="relative flex-1 flex flex-col justify-between gap-4">
+        <div className="flex-1 flex flex-col justify-between gap-4">
           {isLoading ? (
             <div className="flex items-center gap-2">
               <LoadingSpinner variant="dots" size="sm" />

@@ -45,9 +45,9 @@ export function useDashboardVaultPositions() {
         return BigInt(tx.result?.toString() ?? "0");
       },
       enabled: legacyEnabled && Boolean(address) && vaults.length > 0,
-      staleTime: 120_000,
-      refetchInterval: 120_000,
-      gcTime: 5 * 60_000,
+      staleTime: 2 * 60_000,
+      refetchInterval: 3 * 60_000,
+      gcTime: 10 * 60_000,
       refetchOnWindowFocus: false,
       retry: 2,
       retryDelay: (attempt: number) => attempt * 800,

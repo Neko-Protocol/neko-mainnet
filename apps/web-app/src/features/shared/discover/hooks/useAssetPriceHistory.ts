@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 
 export interface PricePoint {
+  /** Display label (date) — kept for backwards compatibility. */
   date: string;
+  /** Epoch milliseconds of when the price was recorded. */
+  timestamp: number;
   price: number;
   source: string | null;
 }
@@ -28,6 +31,7 @@ async function fetchAssetPriceHistory(symbol: string): Promise<PricePoint[]> {
       typeof row.price === "number" ? row.price : Number(row.price ?? 0);
     return {
       date: label,
+      timestamp: d.getTime(),
       price: Number.isFinite(parsedPrice) ? parsedPrice : 0,
       source: row.source ?? null,
     };

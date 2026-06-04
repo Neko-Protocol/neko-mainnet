@@ -33,9 +33,15 @@ export function RecommendedStrategyCard({
     destination,
     stackVenue,
   });
-  const effectiveApy =
-    dto.snapshotApy ?? liveApy ?? destination.apy ?? stackVenue?.apy ?? null;
+  const effectiveApy = apyLoading
+    ? null
+    : (liveApy ??
+      dto.snapshotApy ??
+      destination.apy ??
+      stackVenue?.apy ??
+      null);
   const hasApy =
+    !apyLoading &&
     effectiveApy !== null &&
     effectiveApy !== undefined &&
     Number.isFinite(effectiveApy);
@@ -128,12 +134,11 @@ export function RecommendedStrategyCard({
               {apyLabel}
             </p>
             <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
-              APY · per year
+              APY - per year
             </p>
           </>
         ) : apyLoading ? (
           <>
-            <div className="h-9 w-32 animate-pulse rounded-md bg-white/[0.06]" />
             <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
               Loading APY…
             </p>

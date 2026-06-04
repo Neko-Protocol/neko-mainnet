@@ -1,29 +1,22 @@
 "use client";
 
+import type { EtherfuseYieldEntry } from "@neko/api-contracts";
 import { useQuery } from "@tanstack/react-query";
+import { getBondYields } from "@/lib/services/etherfuse.api";
 
-export interface EtherfuseYieldEntry {
-  symbol: string;
-  apy: number;
-  currency: string;
-  lastUpdated: string;
-  isFallback?: boolean;
-}
+export type { EtherfuseYieldEntry };
 
 export function useEtherfuseYields() {
   return useQuery({
     queryKey: ["etherfuse-bond-yields"],
     queryFn: async (): Promise<EtherfuseYieldEntry[]> => {
-      const res = await fetch("/api/etherfuse/bond-yields");
-      if (!res.ok) throw new Error("Failed to fetch bond yields");
-      const data = (await res.json()) as EtherfuseYieldEntry[];
+      const data = await getBondYields();
       if (process.env.NODE_ENV === "development") {
         console.log(
-          "[useEtherfuseYields] entries from /api/etherfuse/bond-yields",
+          "[useEtherfuseYields] entries from backend endpoint: /v1/etherfuse/bond-yields",
           data?.map((e) => ({
             symbol: e.symbol,
             apy: e.apy,
-            isFallback: e.isFallback,
           }))
         );
       }

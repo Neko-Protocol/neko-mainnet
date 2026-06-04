@@ -124,6 +124,32 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     return this.config.network.allowHttp ?? false;
   }
 
+  private static readonly POOL_CACHE_TTL_MS = 20_000;
+  private poolCache?: { pool: PoolV2; loadedAt: number };
+  private poolCacheInFlight?: Promise<PoolV2>;
+
+  private async loadPool(): Promise<PoolV2> {
+    const now = Date.now();
+    if (
+      this.poolCache &&
+      now - this.poolCache.loadedAt < BlendPoolAdapter.POOL_CACHE_TTL_MS
+    ) {
+      return this.poolCache.pool;
+    }
+    if (this.poolCacheInFlight) return this.poolCacheInFlight;
+
+    const network = getBlendNetwork(this.config.network);
+    this.poolCacheInFlight = PoolV2.load(network, this.poolContractId)
+      .then((pool) => {
+        this.poolCache = { pool, loadedAt: Date.now() };
+        return pool;
+      })
+      .finally(() => {
+        this.poolCacheInFlight = undefined;
+      });
+    return this.poolCacheInFlight;
+  }
+
   async getPoolInfo(rawId: string): Promise<PoolInfo> {
     const { poolContractId, assetAddress } = parseRawId(rawId);
     const network = getBlendNetwork(this.config.network);
@@ -224,9 +250,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     const network = getBlendNetwork(this.config.network);
 
     try {
-      const pool = await throttledRpc(() =>
-        PoolV2.load(network, this.poolContractId)
-      );
+      const pool = await this.loadPool();
       let blndPrice = 0;
       try {
         blndPrice = await getBlndPriceUsd(pool.metadata.backstop, network);
@@ -380,10 +404,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
   }
 
   async getDirectUserPositions(userAddress: string): Promise<PoolPosition[]> {
-    const network = getBlendNetwork(this.config.network);
-    const pool = await throttledRpc(() =>
-      PoolV2.load(network, this.poolContractId)
-    );
+    const pool = await this.loadPool();
     const directReserves = Array.from(pool.reserves.entries()).filter(
       ([assetAddress]) =>
         !BLEND_POOL_VAULTS[`${this.poolContractId}:${assetAddress}`]

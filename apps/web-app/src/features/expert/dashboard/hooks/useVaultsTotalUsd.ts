@@ -10,7 +10,10 @@ import {
 } from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
-import { stellarPriceService } from "@/lib/services/stellar-price.service";
+import {
+  stellarPriceService,
+  type PricedResult,
+} from "@/lib/services/stellar-price.service";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { useDashboardVaultPositions } from "./useDashboardVaultPositions";
 import { USE_BACKEND_DASHBOARD } from "./useBackendDashboardPositions";
@@ -113,17 +116,18 @@ export function useVaultsTotalUsd() {
     })),
   });
 
-  // Per-symbol queries using the same queryKey as useTokenPrice so the cache is shared.
-  // If the vault table already fetched TESOURO's price, we read it for free here.
+  // Per-symbol queries using the same queryKey as useTokenPrice so the cache is
+  // shared. Pass the canonical contractAddress so Soroswap can price assets like
+  // CETES/USTRY even when DeFindex leaves contractAddress empty.
   const priceQueries = useQueries({
     queries: uniqueAssets.map(([symbol, contractAddress]) => ({
-      queryKey: ["tokenPrice", symbol, contractAddress ?? ""],
-      queryFn: () =>
+      queryKey: ["tokenPrice", symbol] as const,
+      queryFn: (): Promise<PricedResult> =>
         stellarPriceService.getPriceWithSource(symbol, contractAddress),
       enabled: uniqueSymbols.length > 0,
       staleTime: 2 * 60_000,
-      gcTime: 10 * 60_000,
       refetchInterval: 3 * 60_000,
+      gcTime: 10 * 60_000,
       refetchOnWindowFocus: false,
       retry: 2,
       throwOnError: false,

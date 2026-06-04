@@ -45,7 +45,7 @@ export const useTokenPrice = (token: Token | string | undefined) => {
   );
 
   const { data, isLoading, error, isFetched } = useQuery<PricedResult, Error>({
-    queryKey: ["tokenPrice", tokenCode, contractAddress],
+    queryKey: ["tokenPrice", tokenCode],
     queryFn: async () => {
       if (!tokenCode || typeof tokenCode !== "string") {
         return { price: 0, source: null };

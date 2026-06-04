@@ -59,13 +59,17 @@ export function useDashboardPositions() {
   const poolsReady =
     !blendQuery.isLoading && !aquaQuery.isLoading && !soroswapQuery.isLoading;
 
-  // Doesn't need pool list — asks Blend directly for the user's positions.
-  // Pool list is only consulted later to attach pool metadata to each position.
-  // Ungated so we can answer "do you have any blend positions" without waiting
-  // for the (slower) pool-list fetches.
+  // Direct (non-vault) Blend reserves only. Vault reserves are owned by the
+  // vault hooks (useDashboardVaultPositions / useVaultsTotalUsd) and counted in
+  // vaultsTotalUsd, so fetching them here too would duplicate ~15 RPC calls and
+  // double-count those balances in the portfolio total.
+  // Doesn't need the pool list — asks Blend directly — so it's ungated from
+  // poolsReady to answer "do you have any blend positions" without waiting for
+  // the (slower) pool-list fetches. Pool list is only consulted later to attach
+  // metadata.
   const blendPositionsQuery = useQuery<PoolPosition[]>({
-    queryKey: ["orchestrator", "blend-all-positions", address],
-    queryFn: () => orchestrator.getAllBlendUserPositions(address!),
+    queryKey: ["orchestrator", "blend-direct-positions", address],
+    queryFn: () => orchestrator.getAllBlendDirectUserPositions(address!),
     enabled: legacyEnabled && Boolean(address),
     staleTime: 5 * 60_000,
     retry: 3,
@@ -118,11 +122,7 @@ export function useDashboardPositions() {
       const hasDeposit = pos.deposited > 0n;
       const hasLiabilities =
         parseFloat(String(pos.metadata?.liabilities ?? "0")) > 0;
-      if (!hasDeposit && !hasLiabilities) return false;
-      // Exclude vault-only reserves — they're already counted in vaultsTotalUsd
-      const parts = pos.poolId.split(":");
-      const assetAddress = parts[2];
-      return !assetAddress || !BLEND_VAULT_ONLY_RESERVES.has(assetAddress);
+      return hasDeposit || hasLiabilities;
     })
     .map((pos) => {
       const pool = allBlendPools.find((p) => p.id === pos.poolId);
