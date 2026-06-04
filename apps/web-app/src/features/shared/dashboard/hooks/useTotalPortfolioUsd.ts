@@ -1,8 +1,11 @@
 "use client";
 
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { stellarPriceService } from "@/lib/services/stellar-price.service";
+import { useQueries } from "@tanstack/react-query";
+import {
+  stellarPriceService,
+  type PricedResult,
+} from "@/lib/services/stellar-price.service";
 import { parseBalance } from "@/lib/helpers/formatUtils";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { usePortfolioValue } from "./usePortfolioValue";
@@ -43,27 +46,30 @@ export function useTotalPortfolioUsd() {
     );
   }, [positions, walletPriceByCode]);
 
-  const { data: missingPriceMap = {}, isLoading: isLoadingMissingPrices } =
-    useQuery<Record<string, number>>({
-      queryKey: [
-        "dashboard-missing-position-prices",
-        missingPositionAssets
-          .map((asset) => `${asset.code}:${asset.contract ?? ""}`)
-          .join("|"),
-      ],
-      queryFn: async () => {
-        const entries = await Promise.all(
-          missingPositionAssets.map(async ({ code, contract }) => {
-            const price = await stellarPriceService.getPrice(code, contract);
-            return [code, price] as const;
-          })
-        );
-        return Object.fromEntries(entries);
-      },
-      enabled: missingPositionAssets.length > 0,
+  // Per-token queries keyed by ["tokenPrice", code] — shared cache with useTokenPrice.
+  const missingPriceQueries = useQueries({
+    queries: missingPositionAssets.map(({ code, contract }) => ({
+      queryKey: ["tokenPrice", code] as const,
+      queryFn: (): Promise<PricedResult> =>
+        stellarPriceService.getPriceWithSource(code, contract),
       staleTime: 3 * 60_000,
       refetchInterval: 5 * 60_000,
-    });
+      gcTime: 10 * 60_000,
+      refetchOnWindowFocus: false,
+    })),
+  });
+
+  const missingPriceMap = React.useMemo(
+    () =>
+      Object.fromEntries(
+        missingPositionAssets.map(({ code }, i) => [
+          code,
+          missingPriceQueries[i]?.data?.price ?? 0,
+        ])
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [missingPositionAssets, missingPriceQueries]
+  );
 
   const positionsNetUsd = React.useMemo(() => {
     return positions.reduce((sum, item) => {

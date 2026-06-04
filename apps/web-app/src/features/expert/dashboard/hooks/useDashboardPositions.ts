@@ -13,7 +13,6 @@ import {
   DASHBOARD_POOL_QUERY_OPTS,
 } from "./useDashboardPools";
 import { batchCheckLpBalances } from "@/lib/services/positionScanner";
-import { BLEND_VAULT_ONLY_RESERVES } from "@/lib/orchestrator/adapters/blend-config";
 
 export function useDashboardPositions() {
   const { address } = useWallet();
@@ -47,9 +46,13 @@ export function useDashboardPositions() {
   const poolsReady =
     !blendQuery.isLoading && !aquaQuery.isLoading && !soroswapQuery.isLoading;
 
+  // Direct (non-vault) Blend reserves only. Vault reserves are owned by the
+  // vault hooks (useDashboardVaultPositions / useVaultsTotalUsd) and counted in
+  // vaultsTotalUsd, so fetching them here too would duplicate ~15 RPC calls and
+  // double-count those balances in the portfolio total.
   const blendPositionsQuery = useQuery<PoolPosition[]>({
-    queryKey: ["orchestrator", "blend-all-positions", address],
-    queryFn: () => orchestrator.getAllBlendUserPositions(address!),
+    queryKey: ["orchestrator", "blend-direct-positions", address],
+    queryFn: () => orchestrator.getAllBlendDirectUserPositions(address!),
     enabled: Boolean(address) && poolsReady,
     staleTime: 5 * 60_000,
     retry: 3,
@@ -98,11 +101,7 @@ export function useDashboardPositions() {
       const hasDeposit = pos.deposited > 0n;
       const hasLiabilities =
         parseFloat(String(pos.metadata?.liabilities ?? "0")) > 0;
-      if (!hasDeposit && !hasLiabilities) return false;
-      // Exclude vault-only reserves — they're already counted in vaultsTotalUsd
-      const parts = pos.poolId.split(":");
-      const assetAddress = parts[2];
-      return !assetAddress || !BLEND_VAULT_ONLY_RESERVES.has(assetAddress);
+      return hasDeposit || hasLiabilities;
     })
     .map((pos) => {
       const pool = allBlendPools.find((p) => p.id === pos.poolId);

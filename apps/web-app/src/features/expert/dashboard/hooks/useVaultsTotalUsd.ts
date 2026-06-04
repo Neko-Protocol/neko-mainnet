@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery, useQueries } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import {
   rpcUrl,
@@ -10,7 +10,10 @@ import {
 } from "@/lib/constants/network";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
-import { stellarPriceService } from "@/lib/services/stellar-price.service";
+import {
+  stellarPriceService,
+  type PricedResult,
+} from "@/lib/services/stellar-price.service";
 import { useDashboardVaultPositions } from "./useDashboardVaultPositions";
 import type { VaultLiveStats } from "@/features/shared/vault/types/vault";
 
@@ -92,23 +95,29 @@ export function useVaultsTotalUsd() {
     [positions]
   );
 
-  const priceQuery = useQuery<Record<string, number>>({
-    queryKey: ["vault-asset-prices-total", uniqueSymbols.join(",")],
-    queryFn: async () => {
-      const entries = await Promise.all(
-        uniqueSymbols.map(async (symbol) => {
-          const price = await stellarPriceService.getPrice(symbol);
-          return [symbol, price] as const;
-        })
-      );
-      return Object.fromEntries(entries);
-    },
-    enabled: uniqueSymbols.length > 0,
-    staleTime: 3 * 60_000,
-    refetchInterval: 5 * 60_000,
+  // Per-token queries keyed by ["tokenPrice", symbol] — shared cache with useTokenPrice.
+  const priceQueries = useQueries({
+    queries: uniqueSymbols.map((symbol) => ({
+      queryKey: ["tokenPrice", symbol] as const,
+      queryFn: (): Promise<PricedResult> =>
+        stellarPriceService.getPriceWithSource(symbol),
+      staleTime: 3 * 60_000,
+      refetchInterval: 5 * 60_000,
+      gcTime: 10 * 60_000,
+      refetchOnWindowFocus: false,
+    })),
   });
 
-  const priceMap = priceQuery.data ?? {};
+  const priceMap = useMemo(
+    () =>
+      Object.fromEntries(
+        uniqueSymbols.map((symbol, i) => [
+          symbol,
+          priceQueries[i]?.data?.price ?? 0,
+        ])
+      ),
+    [uniqueSymbols, priceQueries]
+  );
 
   const totalUsd = useMemo(() => {
     return positions.reduce((sum, { vault, userShares }, i) => {
@@ -127,7 +136,7 @@ export function useVaultsTotalUsd() {
   const isLoading =
     isLoadingPositions ||
     (positions.length > 0 && vaultDataQueries.some((q) => q.isLoading)) ||
-    (uniqueSymbols.length > 0 && priceQuery.isLoading);
+    (uniqueSymbols.length > 0 && priceQueries.some((q) => q.isLoading));
 
   return { totalUsd, isLoading };
 }
