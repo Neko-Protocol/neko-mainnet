@@ -2,6 +2,7 @@
 
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { orchestrator } from "@/lib/orchestrator/core/Orchestrator";
+import { POOLS_QUERY_KEY } from "@/lib/orchestrator/hooks/usePools";
 import { useWallet } from "@/hooks/useWallet";
 import type {
   PoolInfo,
@@ -13,34 +14,46 @@ import {
   DASHBOARD_POOL_QUERY_OPTS,
 } from "./useDashboardPools";
 import { batchCheckLpBalances } from "@/lib/services/positionScanner";
+import { BLEND_VAULT_ONLY_RESERVES } from "@/lib/orchestrator/adapters/blend-config";
+import {
+  USE_BACKEND_DASHBOARD,
+  useBackendDashboardPositions,
+} from "./useBackendDashboardPositions";
 
 export function useDashboardPositions() {
   const { address } = useWallet();
+  const backendQuery = useBackendDashboardPositions();
 
   // ── Pool lists ─────────────────────────────────────────────────────────────
-  // Same keys as useDashboardPools → React Query serves from cache, no extra requests.
+  // Blend: keep the LIMIT in the query (real RPC cost — BlendAdapter iterates
+  // every reserve, each doing TokenMetadata + emissions APY calls). Aqua and
+  // Soroswap: share cache with usePools — `limit` for them is just an in-memory
+  // slice of an already-fetched list, no extra network.
+  const legacyEnabled = !USE_BACKEND_DASHBOARD;
   const blendQuery = useQuery<PoolInfo[]>({
     queryKey: ["orchestrator", "pools", "blend", DASHBOARD_LIMITS.blend],
     queryFn: () => orchestrator.getPoolsByType("blend", DASHBOARD_LIMITS.blend),
     ...DASHBOARD_POOL_QUERY_OPTS,
+    enabled: legacyEnabled,
   });
 
   const aquaQuery = useQuery<PoolInfo[]>({
-    queryKey: ["orchestrator", "pools", "aqua", DASHBOARD_LIMITS.aqua],
-    queryFn: () => orchestrator.getPoolsByType("aqua", DASHBOARD_LIMITS.aqua),
+    queryKey: [...POOLS_QUERY_KEY, "aqua"],
+    queryFn: () => orchestrator.getPoolsByType("aqua"),
     ...DASHBOARD_POOL_QUERY_OPTS,
+    enabled: legacyEnabled,
   });
 
   const soroswapQuery = useQuery<PoolInfo[]>({
-    queryKey: ["orchestrator", "pools", "soroswap", DASHBOARD_LIMITS.soroswap],
-    queryFn: () =>
-      orchestrator.getPoolsByType("soroswap", DASHBOARD_LIMITS.soroswap),
+    queryKey: [...POOLS_QUERY_KEY, "soroswap"],
+    queryFn: () => orchestrator.getPoolsByType("soroswap"),
     ...DASHBOARD_POOL_QUERY_OPTS,
+    enabled: legacyEnabled,
   });
 
   const nonBlendPools: PoolInfo[] = [
-    ...(aquaQuery.data ?? []),
-    ...(soroswapQuery.data ?? []),
+    ...(aquaQuery.data ?? []).slice(0, DASHBOARD_LIMITS.aqua),
+    ...(soroswapQuery.data ?? []).slice(0, DASHBOARD_LIMITS.soroswap),
   ];
 
   const poolsReady =
@@ -50,10 +63,14 @@ export function useDashboardPositions() {
   // vault hooks (useDashboardVaultPositions / useVaultsTotalUsd) and counted in
   // vaultsTotalUsd, so fetching them here too would duplicate ~15 RPC calls and
   // double-count those balances in the portfolio total.
+  // Doesn't need the pool list — asks Blend directly — so it's ungated from
+  // poolsReady to answer "do you have any blend positions" without waiting for
+  // the (slower) pool-list fetches. Pool list is only consulted later to attach
+  // metadata.
   const blendPositionsQuery = useQuery<PoolPosition[]>({
     queryKey: ["orchestrator", "blend-direct-positions", address],
     queryFn: () => orchestrator.getAllBlendDirectUserPositions(address!),
-    enabled: Boolean(address) && poolsReady,
+    enabled: legacyEnabled && Boolean(address),
     staleTime: 5 * 60_000,
     retry: 3,
     retryDelay: (attempt) => attempt * 1000,
@@ -68,7 +85,11 @@ export function useDashboardPositions() {
       nonBlendPools.map((p) => p.id).join(","),
     ],
     queryFn: () => batchCheckLpBalances(nonBlendPools, address!),
-    enabled: Boolean(address) && poolsReady && nonBlendPools.length > 0,
+    enabled:
+      legacyEnabled &&
+      Boolean(address) &&
+      poolsReady &&
+      nonBlendPools.length > 0,
     staleTime: 60_000,
     retry: 1,
   });
@@ -85,7 +106,7 @@ export function useDashboardPositions() {
     queries: filteredNonBlendPools.map((pool) => ({
       queryKey: ["orchestrator", "position", pool.id, address],
       queryFn: () => orchestrator.getUserPosition(pool.id, address!),
-      enabled: Boolean(address),
+      enabled: legacyEnabled && Boolean(address),
       staleTime: 60_000,
       retry: 1,
     })),
@@ -123,17 +144,51 @@ export function useDashboardPositions() {
 
   const positions = [...blendPositions, ...nonBlendPositions];
 
+  // Once both position-detection queries return empty, we KNOW there are no
+  // positions — hide the "Loading pools..." skeleton even if pool LISTS are
+  // still loading (the lists are only needed to attach metadata to positions,
+  // and there are no positions to attach metadata to).
+  const blendKnownEmpty =
+    !blendPositionsQuery.isLoading &&
+    (blendPositionsQuery.data ?? []).length === 0;
+  const lpScreenKnownEmpty =
+    !lpScreenQuery.isLoading && (lpScreenQuery.data?.size ?? 0) === 0;
+  const positionsKnownEmpty =
+    blendKnownEmpty && (nonBlendPools.length === 0 || lpScreenKnownEmpty);
+
   const isLoading =
-    !poolsReady ||
-    blendPositionsQuery.isLoading ||
-    (nonBlendPools.length > 0 && lpScreenQuery.isLoading);
+    !positionsKnownEmpty &&
+    (!poolsReady ||
+      blendPositionsQuery.isLoading ||
+      (nonBlendPools.length > 0 && lpScreenQuery.isLoading));
 
   const poolsLoadFailed =
     blendQuery.isError && !blendQuery.isLoading && !blendQuery.data;
   const isError = blendPositionsQuery.isError || poolsLoadFailed;
 
   async function refetch() {
+    if (USE_BACKEND_DASHBOARD) {
+      await backendQuery.refetch();
+      return;
+    }
     await Promise.all([blendQuery.refetch(), blendPositionsQuery.refetch()]);
+  }
+
+  if (USE_BACKEND_DASHBOARD) {
+    const backendPositions: UserPositionWithPool[] = (
+      backendQuery.data?.poolPositions ?? []
+    ).filter((entry) => {
+      const parts = entry.position.poolId.split(":");
+      const assetAddress = parts[2];
+      return !assetAddress || !BLEND_VAULT_ONLY_RESERVES.has(assetAddress);
+    });
+    return {
+      positions: backendPositions,
+      isLoading: backendQuery.isLoading && Boolean(address),
+      isError: backendQuery.isError,
+      hasWallet: Boolean(address),
+      refetch,
+    };
   }
 
   return {

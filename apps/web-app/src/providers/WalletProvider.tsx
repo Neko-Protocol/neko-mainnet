@@ -68,6 +68,8 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const popupLock = useRef(false);
   const queryClient = useQueryClient();
 
+  // Balance fetching now lives in the useWallet hook (keyed ["stellar-balances",
+  // address]); the provider just exposes a default + an invalidation helper.
   const balances = EMPTY_BALANCES;
   const isFetchingBalances = false;
 

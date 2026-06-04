@@ -41,7 +41,7 @@ export function useOrchestratorSupplyDeposit() {
         tokenIndex: 0,
       });
       await queryClient.invalidateQueries({ queryKey: ["lendingPools"] });
-      await queryClient.invalidateQueries({ queryKey: ["stellar-balances"] });
+      await queryClient.invalidateQueries({ queryKey: ["balances"] });
       await queryClient.invalidateQueries({ queryKey: [...POOLS_QUERY_KEY] });
       return hash;
     },

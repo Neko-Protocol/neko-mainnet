@@ -10,17 +10,24 @@ import {
 import { useWallet } from "@/hooks/useWallet";
 import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
 import type { VaultView } from "@/features/shared/vault/types/vault";
+import {
+  USE_BACKEND_DASHBOARD,
+  useBackendDashboardPositions,
+} from "./useBackendDashboardPositions";
 
 export interface VaultPositionEntry {
   vault: VaultView;
   userShares: bigint;
+  pricePerShare?: bigint;
 }
 
 export function useDashboardVaultPositions() {
   const { address } = useWallet();
   const { data: vaultsPayload, isLoading: vaultsLoading } = useDefindexVaults();
   const vaults = vaultsPayload?.vaults ?? [];
+  const backendQuery = useBackendDashboardPositions();
 
+  const legacyEnabled = !USE_BACKEND_DASHBOARD;
   const balanceQueries = useQueries({
     queries: vaults.map((vault, i) => ({
       queryKey: ["vaultBalance", vault.id, address],
@@ -37,7 +44,7 @@ export function useDashboardVaultPositions() {
         const tx = await client.balance({ id: address }, { simulate: true });
         return BigInt(tx.result?.toString() ?? "0");
       },
-      enabled: Boolean(address) && vaults.length > 0,
+      enabled: legacyEnabled && Boolean(address) && vaults.length > 0,
       staleTime: 2 * 60_000,
       refetchInterval: 3 * 60_000,
       gcTime: 10 * 60_000,
@@ -47,6 +54,26 @@ export function useDashboardVaultPositions() {
       throwOnError: false,
     })),
   });
+
+  if (USE_BACKEND_DASHBOARD) {
+    const backendVaultPositions = backendQuery.data?.vaultPositions ?? [];
+    const positions: VaultPositionEntry[] = [];
+    for (const vault of vaults) {
+      const vp = backendVaultPositions.find((v) => v.vaultId === vault.id);
+      if (vp !== undefined && vp.userShares > 0n) {
+        positions.push({
+          vault,
+          userShares: vp.userShares,
+          pricePerShare: vp.pricePerShare,
+        });
+      }
+    }
+    return {
+      positions,
+      isLoading: vaultsLoading || (backendQuery.isLoading && Boolean(address)),
+      hasWallet: Boolean(address),
+    };
+  }
 
   const positions: VaultPositionEntry[] = [];
   balanceQueries.forEach((q, i) => {

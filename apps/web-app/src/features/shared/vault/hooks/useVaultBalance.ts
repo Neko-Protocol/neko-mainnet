@@ -36,9 +36,9 @@ export function useVaultBalance(contractId: string | null | undefined) {
       return BigInt(tx.result?.toString() ?? "0");
     },
     enabled: !!address && !!contractId && !!client,
-    staleTime: 30_000,
+    staleTime: 120_000,
     gcTime: 5 * 60_000,
-    refetchInterval: 30_000,
+    refetchInterval: 120_000,
     refetchOnWindowFocus: false,
     retry: false,
     throwOnError: false,

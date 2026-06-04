@@ -180,7 +180,7 @@ export function SimulatorWizard() {
         addNotification("Swap confirmed", "success", TOAST_CONFIG.defaultOpts);
 
         await queryClient.invalidateQueries({
-          queryKey: ["stellar-balances", address],
+          queryKey: ["balances", address],
         });
 
         if (sim.depositVenue) {

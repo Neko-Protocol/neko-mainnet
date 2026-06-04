@@ -14,7 +14,9 @@ import {
   stellarPriceService,
   type PricedResult,
 } from "@/lib/services/stellar-price.service";
+import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { useDashboardVaultPositions } from "./useDashboardVaultPositions";
+import { USE_BACKEND_DASHBOARD } from "./useBackendDashboardPositions";
 import type { VaultLiveStats } from "@/features/shared/vault/types/vault";
 
 const ONE_SHARE = 1_000_000_000_000n;
@@ -73,7 +75,30 @@ export function useVaultsTotalUsd() {
   const { positions, isLoading: isLoadingPositions } =
     useDashboardVaultPositions();
 
-  // Same queryKey as useVaultData → cache hit when VaultPositionsTable already loaded them.
+  // Build a stable symbol→contractAddress map using the canonical assets config
+  // as the primary source (same as useTokenPrice), so Soroswap can price
+  // assets like CETES/USTRY even when DeFindex leaves contractAddress empty.
+  const uniqueAssets = useMemo(() => {
+    const assetsConfig = getAssetsConfig();
+    const map = new Map<string, string | undefined>();
+    for (const { vault } of positions) {
+      const { symbol, contractAddress } = vault.supplyAsset;
+      if (!map.has(symbol)) {
+        const canonicalContract =
+          assetsConfig[symbol]?.contract || contractAddress || undefined;
+        map.set(symbol, canonicalContract);
+      }
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [positions]);
+
+  const uniqueSymbols = useMemo(
+    () => uniqueAssets.map(([s]) => s),
+    [uniqueAssets]
+  );
+
+  // Shares ["vaultData", id] with useVaultData (vault table), so this reads from a
+  // populated cache. Acts as fallback when backend pricePerShare comes back 0n.
   const vaultDataQueries = useQueries({
     queries: positions.map(({ vault }, i) => ({
       queryKey: ["vaultData", vault.id],
@@ -81,6 +106,7 @@ export function useVaultsTotalUsd() {
         if (i > 0) await new Promise((r) => setTimeout(r, i * 400));
         return fetchVaultLiveStats(vault.id);
       },
+      enabled: true,
       staleTime: 5 * 60_000,
       gcTime: 15 * 60_000,
       refetchInterval: 5 * 60_000,
@@ -90,48 +116,53 @@ export function useVaultsTotalUsd() {
     })),
   });
 
-  const uniqueSymbols = useMemo(
-    () => [...new Set(positions.map((p) => p.vault.supplyAsset.symbol))].sort(),
-    [positions]
-  );
-
-  // Per-token queries keyed by ["tokenPrice", symbol] — shared cache with useTokenPrice.
+  // Per-symbol queries using the same queryKey as useTokenPrice so the cache is
+  // shared. Pass the canonical contractAddress so Soroswap can price assets like
+  // CETES/USTRY even when DeFindex leaves contractAddress empty.
   const priceQueries = useQueries({
-    queries: uniqueSymbols.map((symbol) => ({
+    queries: uniqueAssets.map(([symbol, contractAddress]) => ({
       queryKey: ["tokenPrice", symbol] as const,
       queryFn: (): Promise<PricedResult> =>
-        stellarPriceService.getPriceWithSource(symbol),
-      staleTime: 3 * 60_000,
-      refetchInterval: 5 * 60_000,
+        stellarPriceService.getPriceWithSource(symbol, contractAddress),
+      enabled: uniqueSymbols.length > 0,
+      staleTime: 2 * 60_000,
+      refetchInterval: 3 * 60_000,
       gcTime: 10 * 60_000,
       refetchOnWindowFocus: false,
+      retry: 2,
+      throwOnError: false,
     })),
   });
 
-  const priceMap = useMemo(
-    () =>
-      Object.fromEntries(
-        uniqueSymbols.map((symbol, i) => [
-          symbol,
-          priceQueries[i]?.data?.price ?? 0,
-        ])
-      ),
-    [uniqueSymbols, priceQueries]
-  );
+  const priceMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    uniqueAssets.forEach(([symbol], i) => {
+      const price = priceQueries[i]?.data?.price ?? 0;
+      if (price > 0) map[symbol] = price;
+    });
+    return map;
+  }, [uniqueAssets, priceQueries]);
 
   const totalUsd = useMemo(() => {
-    return positions.reduce((sum, { vault, userShares }, i) => {
-      const pricePerShare = vaultDataQueries[i]?.data?.pricePerShare;
-      if (!pricePerShare || userShares === 0n) return sum;
-      const underlyingStroops = (userShares * pricePerShare) / ONE_SHARE;
-      const underlyingAmount = parseFloat(
-        fromSmallestUnit(underlyingStroops.toString(), 7)
-      );
-      const price = priceMap[vault.supplyAsset.symbol] ?? 0;
-      const vaultUsd = underlyingAmount * price;
-      return sum + vaultUsd;
-    }, 0);
-  }, [positions, vaultDataQueries, priceMap]);
+    return positions.reduce(
+      (sum, { vault, userShares, pricePerShare: backendPPS }, i) => {
+        const backendPPSValue = USE_BACKEND_DASHBOARD ? (backendPPS ?? 0n) : 0n;
+        const pricePerShare =
+          USE_BACKEND_DASHBOARD && backendPPSValue > 0n
+            ? backendPPSValue
+            : vaultDataQueries[i]?.data?.pricePerShare;
+        if (!pricePerShare || userShares === 0n) return sum;
+        const underlyingStroops = (userShares * pricePerShare) / ONE_SHARE;
+        const underlyingAmount = parseFloat(
+          fromSmallestUnit(underlyingStroops.toString(), 7)
+        );
+        const price = priceMap[vault.supplyAsset.symbol] ?? 0;
+        const vaultUsd = underlyingAmount * price;
+        return sum + vaultUsd;
+      },
+      0
+    );
+  }, [positions, vaultDataQueries, priceMap]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isLoading =
     isLoadingPositions ||

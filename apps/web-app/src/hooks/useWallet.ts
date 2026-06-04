@@ -22,7 +22,7 @@ export function useWallet() {
     isFetching: isFetchingBalances,
     refetch: refetchBalances,
   } = useQuery({
-    queryKey: ["stellar-balances", address],
+    queryKey: ["balances", address],
     queryFn: () => fetchBalances(address!),
     enabled: Boolean(address),
     staleTime: 60_000,

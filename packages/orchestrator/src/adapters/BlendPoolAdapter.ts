@@ -12,6 +12,7 @@ import {
   mulDivCeil,
   mulDivFloor,
 } from "../stellar/amount.js";
+import { throttledRpc } from "../stellar/rpcThrottle.js";
 import type { OrchestratorConfig } from "../config.js";
 import type { BasePoolAdapter } from "../types/adapter.types.js";
 import type {
@@ -154,7 +155,9 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     const network = getBlendNetwork(this.config.network);
 
     try {
-      const pool = await PoolV2.load(network, poolContractId);
+      const pool = await throttledRpc(() =>
+        PoolV2.load(network, poolContractId)
+      );
       let blndPrice = 0;
       try {
         blndPrice = await getBlndPriceUsd(pool.metadata.backstop, network);
@@ -341,6 +344,9 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       key.startsWith(`${this.poolContractId}:`)
     );
 
+    // Sequential with 200ms inter-vault stagger — load-shedding against the
+    // public RPC's per-burst rate limit. Parallelizing all 5 vaults × 3 RPCs
+    // simultaneously triggers 429s on gateway.fm.
     const results: PoolPosition[] = [];
     for (let vi = 0; vi < vaultEntries.length; vi++) {
       const [key, vaultId] = vaultEntries[vi];
@@ -355,9 +361,13 @@ export class BlendPoolAdapter implements BasePoolAdapter {
           publicKey: userAddress,
         });
         const [balanceTx, fundsTx, supplyTx] = await Promise.all([
-          vault.balance({ id: userAddress }, { simulate: true }),
-          vault.fetch_total_managed_funds({ simulate: true }),
-          vault.total_supply({ simulate: true }),
+          throttledRpc(() =>
+            vault.balance({ id: userAddress }, { simulate: true })
+          ),
+          throttledRpc(() =>
+            vault.fetch_total_managed_funds({ simulate: true })
+          ),
+          throttledRpc(() => vault.total_supply({ simulate: true })),
         ]);
         const sharesBig = readBigintResult(balanceTx.result);
         if (sharesBig === 0n) {
@@ -403,7 +413,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     if (directReserves.length === 0) return [];
 
     try {
-      const poolUser = await pool.loadUser(userAddress);
+      const poolUser = await throttledRpc(() => pool.loadUser(userAddress));
       const { claimedTokens } = poolUser.estimateEmissions(
         Array.from(pool.reserves.values())
       );
@@ -457,9 +467,13 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         });
 
         const [balanceTx, fundsTx, supplyTx] = await Promise.all([
-          vault.balance({ id: userAddress }, { simulate: true }),
-          vault.fetch_total_managed_funds({ simulate: true }),
-          vault.total_supply({ simulate: true }),
+          throttledRpc(() =>
+            vault.balance({ id: userAddress }, { simulate: true })
+          ),
+          throttledRpc(() =>
+            vault.fetch_total_managed_funds({ simulate: true })
+          ),
+          throttledRpc(() => vault.total_supply({ simulate: true })),
         ]);
 
         const sharesBig = readBigintResult(balanceTx.result);
@@ -497,14 +511,16 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     const network = getBlendNetwork(this.config.network);
 
     try {
-      const pool = await PoolV2.load(network, poolContractId);
+      const pool = await throttledRpc(() =>
+        PoolV2.load(network, poolContractId)
+      );
       const reserve = pool.reserves.get(assetAddress);
 
       if (!reserve) {
         return emptyPosition(fullId);
       }
 
-      const poolUser = await pool.loadUser(userAddress);
+      const poolUser = await throttledRpc(() => pool.loadUser(userAddress));
       const supplied = poolUser.getSupply(reserve);
       const collateral = poolUser.getCollateral(reserve);
       const liabilities = poolUser.getLiabilities(reserve);
@@ -580,9 +596,11 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       });
 
       const [fundsTx, supplyTx, balanceTx] = await Promise.all([
-        vault.fetch_total_managed_funds({ simulate: true }),
-        vault.total_supply({ simulate: true }),
-        vault.balance({ id: userAddress }, { simulate: true }),
+        throttledRpc(() => vault.fetch_total_managed_funds({ simulate: true })),
+        throttledRpc(() => vault.total_supply({ simulate: true })),
+        throttledRpc(() =>
+          vault.balance({ id: userAddress }, { simulate: true })
+        ),
       ]);
 
       const totalUnderlying = readSingleVaultFund(fundsTx.result);
@@ -619,7 +637,9 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     const network = getBlendNetwork(this.config.network);
 
     try {
-      const pool = await PoolV2.load(network, poolContractId);
+      const pool = await throttledRpc(() =>
+        PoolV2.load(network, poolContractId)
+      );
       const reserve = pool.reserves.get(assetAddress);
 
       if (!reserve) {
@@ -630,7 +650,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         );
       }
 
-      const poolUser = await pool.loadUser(userAddress);
+      const poolUser = await throttledRpc(() => pool.loadUser(userAddress));
       const supplied = poolUser.getSupply(reserve);
       const effectiveAmount =
         options?.withdrawAll || amount > supplied ? supplied : amount;
@@ -741,7 +761,9 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     const network = getBlendNetwork(this.config.network);
 
     try {
-      const pool = await PoolV2.load(network, poolContractId);
+      const pool = await throttledRpc(() =>
+        PoolV2.load(network, poolContractId)
+      );
       const reserve = pool.reserves.get(assetAddress);
       if (!reserve) {
         throw new AdapterError(
@@ -751,7 +773,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         );
       }
 
-      const poolUser = await pool.loadUser(userAddress);
+      const poolUser = await throttledRpc(() => pool.loadUser(userAddress));
       const collateral = poolUser.getCollateral(reserve);
       const effectiveAmount =
         options?.withdrawAll || amount > collateral ? collateral : amount;
@@ -788,7 +810,9 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     const network = getBlendNetwork(this.config.network);
 
     try {
-      const pool = await PoolV2.load(network, poolContractId);
+      const pool = await throttledRpc(() =>
+        PoolV2.load(network, poolContractId)
+      );
       const reserve = pool.reserves.get(assetAddress);
 
       if (!reserve) {

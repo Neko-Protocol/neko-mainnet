@@ -43,7 +43,8 @@ async function forward(
   const requestId = req.headers.get("x-request-id");
   if (requestId) headers["X-Request-Id"] = requestId;
 
-  const hasBody = req.method !== "GET" && req.method !== "HEAD";
+  const isReadOnly = req.method === "GET" || req.method === "HEAD";
+  const hasBody = !isReadOnly;
 
   let upstream: Response;
   try {
@@ -52,7 +53,8 @@ async function forward(
       headers,
       body: hasBody ? await req.arrayBuffer() : undefined,
       redirect: "manual",
-      cache: "no-store",
+      // GET/HEAD: respect upstream Cache-Control. Mutations: never cache.
+      cache: isReadOnly ? "default" : "no-store",
     });
   } catch {
     return NextResponse.json({ code: "BACKEND_UNREACHABLE" }, { status: 502 });

@@ -52,7 +52,9 @@ export function usePortfolioValue(): PortfolioValue {
     [balances]
   );
 
-  // Per-token queries keyed by ["tokenPrice", code] — shared cache with useTokenPrice.
+  // Per-token queries keyed by ["tokenPrice", code] — shared cache with
+  // useTokenPrice. Value (balance × price) is derived in-render so balance
+  // polling never invalidates the price cache.
   const priceQueries = useQueries({
     queries: balanceEntries.map((entry) => ({
       queryKey: ["tokenPrice", entry.code] as const,
@@ -62,8 +64,8 @@ export function usePortfolioValue(): PortfolioValue {
           getContractForToken(entry.code)
         ),
       enabled: Boolean(address) && balanceEntries.length > 0,
-      refetchInterval: 5 * 60_000,
-      staleTime: 3 * 60_000,
+      refetchInterval: 3 * 60_000,
+      staleTime: 2 * 60_000,
       gcTime: 10 * 60_000,
       refetchOnWindowFocus: false,
       retry: 2,

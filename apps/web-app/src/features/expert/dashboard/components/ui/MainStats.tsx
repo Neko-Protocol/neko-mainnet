@@ -58,6 +58,13 @@ const MainStats: React.FC = () => {
           value={address ? holdings.length : 0}
           isLoading={isLoading && !!address}
         />
+        <StatCard
+          icon={<TrendingUp className="h-5 w-5" />}
+          label="Avg. Pool APY"
+          tooltip="Average APY across your active pool positions."
+          value={avgPoolApy !== null ? `${avgPoolApy}%` : "-"}
+          isLoading={isLoading && !!address}
+        />
       </div>
     </div>
   );

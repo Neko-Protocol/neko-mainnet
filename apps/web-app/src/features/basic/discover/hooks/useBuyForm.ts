@@ -99,7 +99,7 @@ export function useBuyForm(
           queryKey: ["tokenBalance", tokenInAddress, address],
         });
         void queryClient.invalidateQueries({
-          queryKey: ["stellar-balances", address],
+          queryKey: ["balances", address],
         });
       }
     } catch (err) {
