@@ -15,12 +15,12 @@ interface StellarSignOptions {
   submitUrl?: string;
   [key: string]: unknown;
 }
+import { useQueryClient } from "@tanstack/react-query";
 import {
   getStellarWalletKit,
   type MappedBalances,
 } from "@/lib/helpers/stellar/wallet";
 import storage from "@/lib/helpers/storage";
-import { useBalances } from "@/hooks/useBalances";
 import { POLL_INTERVAL, STORAGE_KEYS } from "@/lib/constants/wallet";
 
 const getWalletInstance = async () => {
@@ -50,10 +50,12 @@ export interface WalletContextType {
   refetchBalances: () => Promise<void>;
 }
 
+const EMPTY_BALANCES: MappedBalances = {};
+
 export const WalletContext = createContext<WalletContextType>({
   isPending: true,
   isFetchingBalances: false,
-  balances: {},
+  balances: EMPTY_BALANCES,
   refetchBalances: async () => {},
   signTransaction,
 });
@@ -64,18 +66,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const [networkPassphrase, setNetworkPassphrase] = useState<string>();
   const [isPending, startTransition] = useTransition();
   const popupLock = useRef(false);
+  const queryClient = useQueryClient();
 
-  const {
-    data: balances = {},
-    isFetching: isFetchingBalances,
-    refetch: refetchBalances,
-  } = useBalances(address, {
-    enabled: Boolean(address),
-    refetchInterval: 10000, // Poll every 10 seconds
-    refetchOnWindowFocus: false,
-    keepPreviousData: true, // Keep previous data while fetching to prevent flickering
-    retry: 2,
-  });
+  const balances = EMPTY_BALANCES;
+  const isFetchingBalances = false;
 
   const nullify = () => {
     setAddress(undefined);
@@ -158,8 +152,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- it SHOULD only run once per component mount
 
   const handleRefetchBalances = useCallback(async () => {
-    await refetchBalances();
-  }, [refetchBalances]);
+    await queryClient.invalidateQueries({
+      queryKey: ["stellar-balances", address],
+    });
+  }, [queryClient, address]);
 
   const contextValue = useMemo(
     () => ({
