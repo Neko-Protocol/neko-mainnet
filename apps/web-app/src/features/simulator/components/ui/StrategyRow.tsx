@@ -34,8 +34,12 @@ export function StrategyRow({
   } = strategy;
 
   const { apy: liveApy, isLoading: apyLoading } = useLiveStrategyApy(strategy);
-  const effectiveApy = snapshotApy ?? liveApy;
-  const hasApy = effectiveApy !== null && effectiveApy !== undefined;
+  const effectiveApy = apyLoading ? null : (liveApy ?? snapshotApy);
+  const hasApy =
+    !apyLoading &&
+    effectiveApy !== null &&
+    effectiveApy !== undefined &&
+    Number.isFinite(effectiveApy);
 
   const destinationLabel = stackVenue
     ? `${destination.name} + ${stackVenue.name}`
@@ -150,7 +154,6 @@ export function StrategyRow({
           </>
         ) : apyLoading ? (
           <>
-            <div className="h-9 w-32 animate-pulse rounded-md bg-white/[0.06]" />
             <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
               Loading APY…
             </p>

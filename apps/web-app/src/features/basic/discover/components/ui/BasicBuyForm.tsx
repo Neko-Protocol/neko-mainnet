@@ -136,9 +136,7 @@ export function BasicBuyForm({
         </span>
         <div className="rounded-xl bg-[#252525] p-3 min-h-[48px] flex items-center">
           {isLoadingQuote ? (
-            <span className="text-white/40 text-sm animate-pulse">
-              Calculating…
-            </span>
+            <span className="text-white/40 text-sm">Calculating…</span>
           ) : hasOutput ? (
             <span className="text-white text-xl font-bold tabular-nums">
               {formatAmount(amountOut, 6)}{" "}
