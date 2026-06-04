@@ -19,16 +19,59 @@ import { useVaultPpsHistory } from "@/features/shared/vault/hooks/useVaultPpsHis
 const ONE_SHARE = 1_000_000_000_000n;
 const MS_PER_YEAR = 365 * 24 * 60 * 60 * 1000;
 const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
+const INTRO_DURATION_MS = 1200;
 
 function formatChartLabel(t: number): string {
   const d = new Date(t);
   return `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
 }
 
+function easeOutCubic(p: number): number {
+  return 1 - Math.pow(1 - p, 3);
+}
+
+function useCountUp(target: number, durationMs = 1000, enabled = true): number {
+  const prefersReduced =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const skipAnimation = prefersReduced || !enabled;
+  const [value, setValue] = useState(skipAnimation ? target : 0);
+
+  useEffect(() => {
+    if (skipAnimation) {
+      setValue(target);
+      return;
+    }
+
+    let rafId = 0;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / durationMs);
+      setValue(target * easeOutCubic(p));
+      if (p < 1) {
+        rafId = requestAnimationFrame(tick);
+      }
+    };
+
+    setValue(0);
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [target, durationMs, skipAnimation]);
+
+  if (skipAnimation) {
+    return target;
+  }
+
+  return value;
+}
+
 export function LiveEarningsCard({
   vaultId,
   userShares,
   assetSymbol,
+  sharesFormatted,
   currentValue,
   netDeposited,
   firstDepositMs,
@@ -39,6 +82,7 @@ export function LiveEarningsCard({
   vaultId: string;
   userShares: bigint;
   assetSymbol: string;
+  sharesFormatted: string;
   currentValue: number;
   netDeposited: number;
   firstDepositMs: number | null;
@@ -46,37 +90,66 @@ export function LiveEarningsCard({
   tokenPriceInCurrency?: number;
   selectedCurrency?: SupportedCurrency;
 }) {
+  const prefersReduced =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   const apyDecimal = Math.max(0, apyPercent) / 100;
   const perSecond = apyDecimal / SECONDS_PER_YEAR;
 
-  const baseValueRef = useRef(currentValue);
-  const mountTsRef = useRef(Date.now());
-  const [liveValue, setLiveValue] = useState(currentValue);
+  const liveBaseRef = useRef(currentValue);
+  const liveStartRef = useRef(Date.now());
+  const introDoneRef = useRef(prefersReduced);
+  const [displayValue, setDisplayValue] = useState(currentValue);
+
+  const depositedAnim = useCountUp(netDeposited);
+  const apyAnim = useCountUp(apyPercent, 1000, apyPercent > 0);
 
   const { data } = useVaultPpsHistory(vaultId);
   const points = data?.points ?? [];
 
   useEffect(() => {
-    baseValueRef.current = currentValue;
-    mountTsRef.current = Date.now();
-    setLiveValue(currentValue);
-  }, [currentValue]);
+    if (prefersReduced) {
+      setDisplayValue(currentValue);
+      liveBaseRef.current = currentValue;
+      liveStartRef.current = Date.now();
+      introDoneRef.current = true;
+      return;
+    }
+
+    introDoneRef.current = false;
+    let rafId = 0;
+    const start = performance.now();
+
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / INTRO_DURATION_MS);
+      setDisplayValue(currentValue * easeOutCubic(p));
+      if (p < 1) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        liveBaseRef.current = currentValue;
+        liveStartRef.current = Date.now();
+        introDoneRef.current = true;
+        setDisplayValue(currentValue);
+      }
+    };
+
+    setDisplayValue(0);
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [currentValue, prefersReduced]);
 
   useEffect(() => {
-    if (apyDecimal === 0) return;
-
-    const prefersReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-    if (prefersReduced) return;
+    if (prefersReduced || apyDecimal === 0) return;
 
     const id = window.setInterval(() => {
-      const elapsedSec = (Date.now() - mountTsRef.current) / 1000;
-      setLiveValue(baseValueRef.current * (1 + perSecond * elapsedSec));
+      if (!introDoneRef.current) return;
+      const elapsedSec = (Date.now() - liveStartRef.current) / 1000;
+      setDisplayValue(liveBaseRef.current * (1 + perSecond * elapsedSec));
     }, 50);
 
     return () => window.clearInterval(id);
-  }, [apyDecimal, perSecond]);
+  }, [apyDecimal, perSecond, prefersReduced]);
 
   const { chartData, isModeled } = useMemo(() => {
     const now = Date.now();
@@ -205,11 +278,15 @@ export function LiveEarningsCard({
 
   if (currentValue <= 0) return null;
 
-  const liveEarnings = Math.max(0, liveValue - netDeposited);
+  const liveEarnings = Math.max(0, displayValue - netDeposited);
   const showLiveIndicator = apyDecimal > 0;
+  const showEarningsPulse = showLiveIndicator && !prefersReduced;
+  const statEnterClass = prefersReduced
+    ? ""
+    : "animate-in fade-in slide-in-from-bottom-1";
 
   return (
-    <div>
+    <div className="animate-in fade-in">
       <div className="flex items-center gap-2 mb-4">
         <h3 className="text-white/70 text-sm font-medium">
           Your earnings, live
@@ -224,20 +301,26 @@ export function LiveEarningsCard({
       </div>
 
       <div
-        className="rounded-xl border border-white/7 p-5"
+        className="rounded-xl border border-white/7 p-5 animate-in fade-in slide-in-from-bottom-2 duration-500"
         style={{ background: "#0e0e0e" }}
       >
         <div className="mb-5">
           <p className="text-white/40 text-xs mb-1">Current value</p>
-          <p className="text-white text-3xl sm:text-4xl font-bold tabular-nums leading-none [font-variant-numeric:tabular-nums]">
-            {liveValue.toFixed(6)} {assetSymbol}
-          </p>
+          <div className="relative">
+            <div
+              className="pointer-events-none absolute -inset-x-6 -top-6 -bottom-2 bg-[radial-gradient(60%_60%_at_30%_40%,rgba(34,197,94,0.10),transparent_70%)] blur-xl"
+              aria-hidden
+            />
+            <p className="relative text-white text-3xl sm:text-4xl font-bold tabular-nums leading-none [font-variant-numeric:tabular-nums]">
+              {displayValue.toFixed(6)} {assetSymbol}
+            </p>
+          </div>
           {tokenPriceInCurrency != null &&
             tokenPriceInCurrency > 0 &&
             selectedCurrency != null && (
               <p className="text-white/40 text-sm mt-1.5 tabular-nums">
                 {formatCurrency(
-                  liveValue * tokenPriceInCurrency,
+                  displayValue * tokenPriceInCurrency,
                   selectedCurrency,
                   4
                 )}
@@ -246,7 +329,16 @@ export function LiveEarningsCard({
           <div className="mt-3 flex items-center gap-1.5">
             <TrendingUp size={14} className="text-emerald-400 shrink-0" />
             <span className="text-emerald-400 text-sm font-semibold tabular-nums">
-              +{liveEarnings.toFixed(6)} {assetSymbol}
+              <span
+                className={
+                  showEarningsPulse
+                    ? "animate-pulse [animation-duration:2.5s]"
+                    : undefined
+                }
+              >
+                +{liveEarnings.toFixed(6)}
+              </span>{" "}
+              {assetSymbol}
             </span>
             <span className="text-white/30 text-xs">
               earned since first deposit
@@ -340,6 +432,42 @@ export function LiveEarningsCard({
               Estimated from APY until live history accumulates.
             </span>
           )}
+        </div>
+
+        <div className="border-t border-white/5 my-4" />
+
+        <div className="grid grid-cols-3 gap-4">
+          <div
+            className={statEnterClass}
+            style={prefersReduced ? undefined : { animationDelay: "60ms" }}
+          >
+            <p className="text-white/40 text-xs mb-1">Deposited</p>
+            <p className="text-white font-bold text-sm tabular-nums">
+              {depositedAnim.toFixed(2)} {assetSymbol}
+            </p>
+          </div>
+          <div
+            className={statEnterClass}
+            style={prefersReduced ? undefined : { animationDelay: "120ms" }}
+          >
+            <p className="text-white/40 text-xs mb-1">Effective APY</p>
+            <p
+              className={`font-bold text-sm tabular-nums ${
+                apyPercent > 0 ? "text-emerald-400" : "text-white"
+              }`}
+            >
+              {apyPercent > 0 ? `${apyAnim.toFixed(2)}%` : "—"}
+            </p>
+          </div>
+          <div
+            className={statEnterClass}
+            style={prefersReduced ? undefined : { animationDelay: "180ms" }}
+          >
+            <p className="text-white/40 text-xs mb-1">Your shares</p>
+            <p className="text-white font-bold text-sm tabular-nums">
+              {sharesFormatted}
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -21,7 +21,6 @@ import { VaultDetailHero } from "./VaultDetailHero";
 import { VaultDetailMetrics } from "./VaultDetailMetrics";
 import { VaultDetailInfo } from "./VaultDetailInfo";
 import { VaultActionPanel } from "./VaultActionPanel";
-import { YourPositionPanel } from "./YourPositionPanel";
 import { LiveEarningsCard } from "./LiveEarningsCard";
 import { YourActivityFeed } from "./YourActivityFeed";
 import { FirstVaultDepositSuccessModal } from "@/features/shared/vault/components/ui/FirstVaultDepositSuccessModal";
@@ -325,27 +324,18 @@ export function VaultDetailLayout({
           <div className="border-t border-white/5 mb-8" />
           {address && vaultContractId && positionSummary && (
             <>
-              <YourPositionPanel
+              <LiveEarningsCard
+                vaultId={vaultContractId}
+                userShares={userShares}
+                assetSymbol={vault.supplyAsset.symbol}
                 sharesFormatted={sharesFormatted}
-                positionSummary={positionSummary}
-                effectiveApy={effectiveApy}
+                currentValue={positionSummary.currentValue}
+                netDeposited={positionSummary.netDeposited}
+                firstDepositMs={firstDepositMs}
+                apyPercent={apyForLive}
                 tokenPriceInCurrency={tokenPriceInCurrency}
                 selectedCurrency={selectedCurrency}
-                isWalletConnected={!!address}
               />
-              <div className="mt-8">
-                <LiveEarningsCard
-                  vaultId={vaultContractId}
-                  userShares={userShares}
-                  assetSymbol={vault.supplyAsset.symbol}
-                  currentValue={positionSummary.currentValue}
-                  netDeposited={positionSummary.netDeposited}
-                  firstDepositMs={firstDepositMs}
-                  apyPercent={apyForLive}
-                  tokenPriceInCurrency={tokenPriceInCurrency}
-                  selectedCurrency={selectedCurrency}
-                />
-              </div>
               <div className="mt-8">
                 <YourActivityFeed
                   logs={auditLogs}
