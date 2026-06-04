@@ -125,6 +125,27 @@ export type Database = {
         }>;
         Relationships: [];
       };
+      vault_pps_history: {
+        Row: {
+          vault_id: string;
+          pps: string;
+          apy: number | null;
+          recorded_at: string;
+        };
+        Insert: {
+          vault_id: string;
+          pps: string;
+          apy?: number | null;
+          recorded_at?: string;
+        };
+        Update: Partial<{
+          vault_id: string;
+          pps: string;
+          apy: number | null;
+          recorded_at: string;
+        }>;
+        Relationships: [];
+      };
       users: {
         Row: UserRow;
         Insert: UserInsert;

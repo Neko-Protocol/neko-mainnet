@@ -21,6 +21,8 @@ import { VaultDetailHero } from "./VaultDetailHero";
 import { VaultDetailMetrics } from "./VaultDetailMetrics";
 import { VaultDetailInfo } from "./VaultDetailInfo";
 import { VaultActionPanel } from "./VaultActionPanel";
+import { LiveEarningsCard } from "./LiveEarningsCard";
+import { YourActivityFeed } from "./YourActivityFeed";
 import { FirstVaultDepositSuccessModal } from "@/features/shared/vault/components/ui/FirstVaultDepositSuccessModal";
 import { MultisigPendingModal } from "@/features/shared/vault/components/ui/MultisigPendingModal";
 import { auditService } from "@/lib/services/audit.service";
@@ -125,6 +127,41 @@ export function VaultDetailLayout({
       assetSymbol: vault.supplyAsset.symbol,
     };
   })();
+
+  const firstDepositMs = (() => {
+    if (!auditLogs || !vaultContractId) return null;
+    const vaultLogs = auditLogs.filter(
+      (l) =>
+        l.pool_id === vaultContractId &&
+        (l.action_type === "vaults_deposit" ||
+          l.action_type === "vaults_withdraw" ||
+          l.action_type === "vaults_claim_earnings")
+    );
+    const deposits = vaultLogs.filter(
+      (l) => l.action_type === "vaults_deposit"
+    );
+    if (deposits.length === 0) return null;
+    return deposits.reduce((earliest, l) => {
+      const ts = new Date(l.created_at).getTime();
+      return ts < earliest ? ts : earliest;
+    }, new Date(deposits[0].created_at).getTime());
+  })();
+
+  const effectiveApy = (() => {
+    if (!positionSummary || firstDepositMs == null) return null;
+    const holdingDays = (Date.now() - firstDepositMs) / 86400000;
+    if (positionSummary.netDeposited <= 0 || holdingDays < 1) {
+      return null;
+    }
+    return (
+      (Math.max(0, positionSummary.earnings) / positionSummary.netDeposited) *
+      (365 / holdingDays) *
+      100
+    );
+  })();
+
+  const apyForLive =
+    effectiveApy ?? (parseFloat((liveApy7d ?? "").replace(/[^\d.]/g, "")) || 0);
 
   const positionNetDeposited = positionSummary?.netDeposited ?? 0;
   const positionEarnings = positionSummary?.earnings ?? 0;
@@ -285,6 +322,29 @@ export function VaultDetailLayout({
             selectedCurrency={selectedCurrency}
           />
           <div className="border-t border-white/5 mb-8" />
+          {address && vaultContractId && positionSummary && (
+            <>
+              <LiveEarningsCard
+                vaultId={vaultContractId}
+                userShares={userShares}
+                assetSymbol={vault.supplyAsset.symbol}
+                currentValue={positionSummary.currentValue}
+                netDeposited={positionSummary.netDeposited}
+                firstDepositMs={firstDepositMs}
+                apyPercent={apyForLive}
+                tokenPriceInCurrency={tokenPriceInCurrency}
+                selectedCurrency={selectedCurrency}
+              />
+              <div className="mt-8">
+                <YourActivityFeed
+                  logs={auditLogs}
+                  vaultId={vaultContractId}
+                  assetSymbol={vault.supplyAsset.symbol}
+                />
+              </div>
+              <div className="border-t border-white/5 my-8" />
+            </>
+          )}
           <VaultDetailInfo vault={vault} />
         </div>
       </section>

@@ -11,6 +11,7 @@ import { PageContainer } from "@/components/ui/PageContainer";
 import { VaultGrid } from "../ui/VaultGrid";
 import { VaultTabs, type VaultTabKey } from "../ui/VaultTabs";
 import MyVaultPositions from "../ui/MyVaultPositions";
+import PortfolioSummaryCard from "../ui/PortfolioSummaryCard";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useDefindexVaults } from "../../hooks/useDefindexVaults";
 import {
@@ -319,7 +320,10 @@ const Vault: React.FC = () => {
           emptySubtitle={emptyVaultSubtitle}
         />
       ) : (
-        <MyVaultPositions vaults={vaults} userBalances={userBalances} />
+        <div className="space-y-6">
+          <PortfolioSummaryCard vaults={vaults} userBalances={userBalances} />
+          <MyVaultPositions vaults={vaults} userBalances={userBalances} />
+        </div>
       )}
     </PageContainer>
   );
