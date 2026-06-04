@@ -328,7 +328,6 @@ export function VaultDetailLayout({
                 vaultId={vaultContractId}
                 userShares={userShares}
                 assetSymbol={vault.supplyAsset.symbol}
-                sharesFormatted={sharesFormatted}
                 currentValue={positionSummary.currentValue}
                 netDeposited={positionSummary.netDeposited}
                 firstDepositMs={firstDepositMs}

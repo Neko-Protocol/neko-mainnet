@@ -71,7 +71,6 @@ export function LiveEarningsCard({
   vaultId,
   userShares,
   assetSymbol,
-  sharesFormatted,
   currentValue,
   netDeposited,
   firstDepositMs,
@@ -82,7 +81,6 @@ export function LiveEarningsCard({
   vaultId: string;
   userShares: bigint;
   assetSymbol: string;
-  sharesFormatted: string;
   currentValue: number;
   netDeposited: number;
   firstDepositMs: number | null;
@@ -427,7 +425,7 @@ export function LiveEarningsCard({
 
         <div className="border-t border-white/5 my-4" />
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div
             className={statEnterClass}
             style={prefersReduced ? undefined : { animationDelay: "60ms" }}
@@ -448,15 +446,6 @@ export function LiveEarningsCard({
               }`}
             >
               {apyPercent > 0 ? `${apyAnim.toFixed(2)}%` : "—"}
-            </p>
-          </div>
-          <div
-            className={statEnterClass}
-            style={prefersReduced ? undefined : { animationDelay: "180ms" }}
-          >
-            <p className="text-white/40 text-xs mb-1">Your shares</p>
-            <p className="text-white font-bold text-sm tabular-nums">
-              {sharesFormatted}
             </p>
           </div>
         </div>
