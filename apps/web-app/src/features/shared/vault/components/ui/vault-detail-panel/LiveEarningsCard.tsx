@@ -291,19 +291,13 @@ export function LiveEarningsCard({
 
       <div
         className="rounded-xl border border-white/7 p-5 animate-in fade-in slide-in-from-bottom-2 duration-500"
-        style={{ background: "#0e0e0e" }}
+        style={{ background: "#1a1a1a" }}
       >
         <div className="mb-5">
           <p className="text-white/40 text-xs mb-1">Current value</p>
-          <div className="relative">
-            <div
-              className="pointer-events-none absolute -inset-x-6 -top-6 -bottom-2 bg-[radial-gradient(60%_60%_at_30%_40%,rgba(34,197,94,0.10),transparent_70%)] blur-xl"
-              aria-hidden
-            />
-            <p className="relative text-white text-3xl sm:text-4xl font-bold tabular-nums leading-none [font-variant-numeric:tabular-nums]">
-              {displayValue.toFixed(6)} {assetSymbol}
-            </p>
-          </div>
+          <p className="text-white text-3xl sm:text-4xl font-bold tabular-nums leading-none [font-variant-numeric:tabular-nums]">
+            {displayValue.toFixed(6)} {assetSymbol}
+          </p>
           {tokenPriceInCurrency != null &&
             tokenPriceInCurrency > 0 &&
             selectedCurrency != null && (
