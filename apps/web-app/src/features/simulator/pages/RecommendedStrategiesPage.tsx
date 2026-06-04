@@ -94,7 +94,7 @@ export default function RecommendedStrategiesPage() {
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="h-[260px] animate-pulse rounded-2xl border border-white/[0.06] bg-white/[0.03]"
+                className="h-[260px] rounded-2xl border border-white/[0.06] bg-white/[0.03]"
               />
             ))}
           </div>
