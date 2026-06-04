@@ -53,6 +53,21 @@ function priceSourceLabel(source: PriceSource | null): string | null {
 
 type InfoTab = "overview" | "details";
 
+const RANGE_OPTIONS = [
+  { id: "3h", label: "3H", ms: 3 * 60 * 60 * 1000 },
+  { id: "1d", label: "1D", ms: 24 * 60 * 60 * 1000 },
+  { id: "3d", label: "3D", ms: 3 * 24 * 60 * 60 * 1000 },
+  { id: "7d", label: "7D", ms: 7 * 24 * 60 * 60 * 1000 },
+] as const;
+type RangeId = (typeof RANGE_OPTIONS)[number]["id"];
+
+interface ChartPoint {
+  timestamp: number;
+  tick: string;
+  fullLabel: string;
+  value: number;
+}
+
 export interface AssetDetailContext {
   symbolUpper: string;
   stockInfo: AssetInfo;
@@ -185,14 +200,61 @@ export function AssetDetailLayout({
     (e) => e.symbol.toUpperCase() === symbolUpper
   );
 
-  const chartData = useMemo(
-    () =>
-      (priceHistory ?? []).map((point) => ({
-        date: point.date,
-        value: convertUsdToSelected(point.price, fxRate),
-      })),
-    [priceHistory, fxRate]
-  );
+  const [range, setRange] = useState<RangeId>("7d");
+
+  const { chartData, axisTicks } = useMemo(() => {
+    const history = priceHistory ?? [];
+    if (history.length === 0)
+      return { chartData: [] as ChartPoint[], axisTicks: [] as number[] };
+    const opt = RANGE_OPTIONS.find((o) => o.id === range)!;
+    const cutoff = Date.now() - opt.ms;
+    const intraday = range === "3h" || range === "1d";
+
+    const points: ChartPoint[] = history
+      .filter((point) => point.timestamp >= cutoff)
+      .map((point) => {
+        const d = new Date(point.timestamp);
+        const tick = intraday
+          ? d.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
+        const fullLabel = d.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        return {
+          timestamp: point.timestamp,
+          tick,
+          fullLabel,
+          value: convertUsdToSelected(point.price, fxRate),
+        };
+      });
+
+    // One axis tick per distinct bucket (per day for multi-day ranges, per
+    // hour:minute for intraday) so a day with many points shows its date once.
+    const seen = new Set<string>();
+    const ticks: number[] = [];
+    for (const p of points) {
+      if (!seen.has(p.tick)) {
+        seen.add(p.tick);
+        ticks.push(p.timestamp);
+      }
+    }
+
+    return { chartData: points, axisTicks: ticks };
+  }, [priceHistory, fxRate, range]);
+
+  const tickLabelByTimestamp = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const p of chartData) map.set(p.timestamp, p.tick);
+    return map;
+  }, [chartData]);
+
+  const hasHistory = (priceHistory?.length ?? 0) > 0;
 
   const isMaxSm = useIsMaxSm();
 
@@ -347,16 +409,36 @@ export function AssetDetailLayout({
               <div className="border-t border-white/5" />
 
               <section className="mt-8 rounded-2xl border border-white/7 bg-[#0E0E0E] p-5 max-sm:p-4">
-                <div className="mb-5 flex items-center justify-between">
+                <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                   <h2 className="text-base font-semibold leading-tight text-white">
-                    Price (last 7 days)
+                    Price
                   </h2>
-                  {chartData.length > 0 && (
-                    <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-300">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                      Live
-                    </div>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {hasHistory && (
+                      <div className="inline-flex rounded-lg border border-white/7 bg-white/[0.02] p-0.5">
+                        {RANGE_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setRange(opt.id)}
+                            className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                              range === opt.id
+                                ? "bg-white/10 text-white"
+                                : "text-white/45 hover:text-white/80"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {chartData.length > 0 && (
+                      <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-300">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        Live
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {isLoadingHistory ? (
@@ -369,13 +451,22 @@ export function AssetDetailLayout({
                       <LineChart data={chartData}>
                         <CartesianGrid stroke="rgba(255,255,255,0.07)" />
                         <XAxis
-                          dataKey="date"
+                          dataKey="timestamp"
+                          type="number"
+                          scale="time"
+                          domain={["dataMin", "dataMax"]}
+                          ticks={axisTicks}
+                          tickFormatter={(ts) =>
+                            tickLabelByTimestamp.get(Number(ts)) ?? ""
+                          }
                           tick={{
                             fill: "rgba(255,255,255,0.55)",
                             fontSize: 12,
                           }}
                           tickLine={false}
                           axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                          interval="preserveStartEnd"
+                          minTickGap={48}
                         />
                         <YAxis
                           width={isMaxSm ? 64 : 90}
@@ -393,6 +484,12 @@ export function AssetDetailLayout({
                           formatter={(v) =>
                             formatCurrency(Number(v), selectedCurrency)
                           }
+                          labelFormatter={(_, payload) =>
+                            payload && payload.length
+                              ? (payload[0].payload as { fullLabel: string })
+                                  .fullLabel
+                              : ""
+                          }
                           contentStyle={{
                             background: "#111111",
                             border: "1px solid rgba(255,255,255,0.12)",
@@ -406,7 +503,7 @@ export function AssetDetailLayout({
                           dataKey="value"
                           stroke="#10B981"
                           strokeWidth={2}
-                          dot={{ r: 3 }}
+                          dot={false}
                           activeDot={{ r: 5 }}
                         />
                       </LineChart>
