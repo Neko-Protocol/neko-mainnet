@@ -29,7 +29,7 @@ export function Sidebar() {
     <aside className="flex h-screen w-56 flex-col bg-[#161616] border-r border-white/8">
       <div className="border-b border-white/8 px-4 py-5">
         <Image
-          src="/neko.svg"
+          src="/Neko.svg"
           alt="Neko"
           width={96}
           height={32}
