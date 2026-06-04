@@ -10,6 +10,8 @@ export type LiveApyInput = Pick<
 >;
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
 import { useFilteredDestinations } from "./useFilteredDestinations";
+import { useEtherfuseYields } from "./useEtherfuseYields";
+import { resolveEtherfuseBondApy } from "../utils/etherfuseBondApy";
 
 interface LiveStrategyApy {
   apy: number | null;
@@ -41,6 +43,9 @@ export function useLiveStrategyApy(strategy: LiveApyInput): LiveStrategyApy {
     yieldTokens,
     isLoading: destLoading,
   } = useFilteredDestinations(strategy.token);
+
+  // Shared cached query (same key as useFilteredDestinations) — no extra fetch.
+  const yieldsData = useEtherfuseYields().data;
 
   const destIsVault = strategy.destination.kind === "vault";
   const stackIsVault = strategy.stackVenue?.kind === "vault";
@@ -84,7 +89,24 @@ export function useLiveStrategyApy(strategy: LiveApyInput): LiveStrategyApy {
       }
     }
 
-    return destApy ?? stackApy ?? null;
+    // Asset's own native yield (Etherfuse bonds only). A yield-bearing bond
+    // keeps accruing while the principal sits in a pool/vault, so it stacks on
+    // top. Skip when a leg is itself a yield-token of that same bond — the
+    // "Bond hold" destination already represents the native yield (no double
+    // count). Returns null for non-bond tokens.
+    const destIsYieldToken = strategy.destination.kind === "yield-token";
+    const stackIsYieldToken = strategy.stackVenue?.kind === "yield-token";
+    const assetNativeApy =
+      destIsYieldToken || stackIsYieldToken
+        ? null
+        : (resolveEtherfuseBondApy(strategy.token.code, yieldsData)?.apy ??
+          null);
+
+    // Total yield = destination + stacked venue + asset's native yield.
+    const parts = [destApy, stackApy, assetNativeApy].filter(
+      (v): v is number => typeof v === "number" && Number.isFinite(v)
+    );
+    return parts.length > 0 ? parts.reduce((sum, v) => sum + v, 0) : null;
   }, [
     destIsVault,
     stackIsVault,
@@ -96,6 +118,7 @@ export function useLiveStrategyApy(strategy: LiveApyInput): LiveStrategyApy {
     pools,
     vaults,
     yieldTokens,
+    yieldsData,
   ]);
 
   const isLoading =
