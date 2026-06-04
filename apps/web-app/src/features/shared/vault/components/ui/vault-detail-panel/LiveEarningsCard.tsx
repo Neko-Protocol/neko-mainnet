@@ -279,8 +279,7 @@ export function LiveEarningsCard({
   if (currentValue <= 0) return null;
 
   const liveEarnings = Math.max(0, displayValue - netDeposited);
-  const showLiveIndicator = apyDecimal > 0;
-  const showEarningsPulse = showLiveIndicator && !prefersReduced;
+  const showEarningsPulse = apyDecimal > 0 && !prefersReduced;
   const statEnterClass = prefersReduced
     ? ""
     : "animate-in fade-in slide-in-from-bottom-1";
@@ -288,16 +287,8 @@ export function LiveEarningsCard({
   return (
     <div className="animate-in fade-in">
       <div className="flex items-center gap-2 mb-4">
-        <h3 className="text-white/70 text-sm font-medium">
-          Your earnings, live
-        </h3>
+        <h3 className="text-white/70 text-sm font-medium">Your earnings</h3>
         <Info size={13} className="text-white/30" />
-        {showLiveIndicator && (
-          <span className="ml-1 flex items-center gap-1 text-emerald-400 text-xs font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Live
-          </span>
-        )}
       </div>
 
       <div
