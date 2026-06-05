@@ -1,4 +1,4 @@
-# Contributing to Neko DApp
+# Contributing to Neko
 
 Thank you for your interest in contributing to Neko! This document provides guidelines and instructions for contributing to the project.
 
@@ -30,12 +30,12 @@ Before you begin:
 1. **Fork the repository** on GitHub
 2. **Clone your fork** locally:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/Neko-DApp.git
+   git clone https://github.com/YOUR_USERNAME/neko-mainnet.git
    cd Neko-DApp
    ```
 3. **Add the upstream remote**:
    ```bash
-   git remote add upstream https://github.com/Neko-Protocol/Neko-DApp.git
+   git remote add upstream https://github.com/Neko-Protocol/neko-mainnet.git
    ```
 
 ## Development Setup
@@ -46,8 +46,6 @@ Ensure you have the following installed:
 
 - **Node.js** (v18 or higher)
 - **npm** (v10.2.3 or higher)
-- **Rust** (v1.70 or higher) - for smart contract development
-- **Stellar CLI** (v23.1.0 or higher) - for contract bindings
 
 See the [README.md](./README.md) for detailed installation instructions.
 
@@ -58,7 +56,7 @@ See the [README.md](./README.md) for detailed installation instructions.
    npm install
    ```
 
-2. **Build contract packages**:
+2. **Build packages**:
    ```bash
    npm run build
    ```
