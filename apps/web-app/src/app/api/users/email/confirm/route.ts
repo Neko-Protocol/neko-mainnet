@@ -3,17 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 import { getAppOrigin } from "@/lib/config/app-origin";
 import { getSupabaseAdmin } from "@/lib/services/supabase.server";
 
-// Two entry points for confirming a magic-link email:
+// GET /api/users/email/confirm?wallet=...&token_hash=...&type=magiclink
 //
-//   GET  /api/users/email/confirm?wallet=...&token_hash=...&type=magiclink
-//        Used when the Supabase email template is customized to send
-//        `token_hash` directly. We verify server-side without cookies.
-//
-//   POST /api/users/email/confirm   { wallet, access_token }
-//        Used by the client `/auth/email-confirmed` page after parsing the
-//        URL fragment that Supabase's default `{{ .ConfirmationURL }}` flow
-//        leaves on the redirect (#access_token=...). We validate the token
-//        by calling auth.getUser(access_token).
+// Browser-facing Supabase magic-link target. Used when the email template
+// sends `token_hash` directly. We verify server-side without cookies, then
+// 302-redirect to /settings.
 
 function getAuthClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -64,37 +58,5 @@ export async function GET(request: NextRequest) {
     return settingsRedirect(request, ok ? "verified" : "error");
   } catch {
     return settingsRedirect(request, "error");
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const body = (await request.json()) as {
-      wallet?: string;
-      access_token?: string;
-    };
-    const wallet = body.wallet?.trim();
-    const accessToken = body.access_token?.trim();
-    if (!wallet || !accessToken) {
-      return NextResponse.json({ error: "missing_params" }, { status: 400 });
-    }
-
-    const auth = getAuthClient();
-    if (!auth) {
-      return NextResponse.json({ error: "not_configured" }, { status: 500 });
-    }
-
-    const { data, error } = await auth.auth.getUser(accessToken);
-    if (error || !data?.user?.email) {
-      return NextResponse.json({ error: "invalid_token" }, { status: 401 });
-    }
-
-    const ok = await markVerified(wallet, data.user.email, data.user.id);
-    if (!ok) {
-      return NextResponse.json({ error: "update_failed" }, { status: 500 });
-    }
-    return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
 }
