@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { backendClient } from "@/lib/services/backend-client";
+
 function parseFragment(): Record<string, string> {
   if (typeof window === "undefined") return {};
   const hash = window.location.hash.replace(/^#/, "");
@@ -38,12 +40,11 @@ export default function EmailConfirmedPage() {
 
     void (async () => {
       try {
-        const res = await fetch("/api/users/email/confirm", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ wallet, access_token: accessToken }),
+        await backendClient.post("/users/email/confirm", {
+          wallet,
+          access_token: accessToken,
         });
-        redirect(res.ok ? "verified" : "error");
+        redirect("verified");
       } catch {
         redirect("error");
       }
