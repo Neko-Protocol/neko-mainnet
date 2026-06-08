@@ -8,7 +8,7 @@ import { useCurrencyStore } from "@/stores/currency.store";
 import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { useTotalPortfolioUsd } from "@/features/shared/dashboard/hooks/useTotalPortfolioUsd";
-import { useDashboardPositions } from "@/features/expert/dashboard/hooks/useDashboardPositions";
+import { useHighestVaultApy } from "@/features/shared/dashboard/hooks/useHighestVaultApy";
 import { StatCard } from "@/features/shared/discover/components/ui/StatCard";
 
 const MainStats: React.FC = () => {
@@ -18,17 +18,9 @@ const MainStats: React.FC = () => {
     holdings,
     isLoading,
   } = useTotalPortfolioUsd();
-  const { positions } = useDashboardPositions();
+  const { highestApy, isLoading: isLoadingHighestApy } = useHighestVaultApy();
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate();
-
-  // Average APY of pools where the user actually has positions
-  const avgPoolApy = React.useMemo(() => {
-    const positionsWithApy = positions.filter(({ pool }) => pool.apy > 0);
-    if (positionsWithApy.length === 0) return null;
-    const sum = positionsWithApy.reduce((acc, { pool }) => acc + pool.apy, 0);
-    return (sum / positionsWithApy.length).toFixed(SUMMARY_DISPLAY_DECIMALS);
-  }, [positions]);
 
   const totalInSelected = convertUsdToSelected(portfolioTotalUsd, fxRate);
   const formattedTotal = formatCurrency(
@@ -44,26 +36,31 @@ const MainStats: React.FC = () => {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
         <StatCard
           icon={<DollarSign className="h-5 w-5" />}
           label="Total Portfolio Value"
           value={address ? formattedTotal : formattedZero}
           isLoading={isLoading && !!address}
-          tooltip="Sum of pool positions + vault positions in USD."
+          tooltip="Sum of vault/pool positions + assets held in your wallet."
         />
         <StatCard
           icon={<Coins className="h-5 w-5" />}
           label="Assets Held"
           value={address ? holdings.length : 0}
           isLoading={isLoading && !!address}
+          tooltip="Number of total assets held in your wallet."
         />
         <StatCard
           icon={<TrendingUp className="h-5 w-5" />}
-          label="Avg. Pool APY"
-          tooltip="Average APY across your active pool positions."
-          value={avgPoolApy !== null ? `${avgPoolApy}%` : "-"}
-          isLoading={isLoading && !!address}
+          label="Highest Vault APY"
+          tooltip="Best available APY across Neko vaults."
+          value={
+            highestApy !== null
+              ? `${highestApy.toFixed(SUMMARY_DISPLAY_DECIMALS)}%`
+              : "-"
+          }
+          isLoading={isLoadingHighestApy}
         />
       </div>
     </div>
