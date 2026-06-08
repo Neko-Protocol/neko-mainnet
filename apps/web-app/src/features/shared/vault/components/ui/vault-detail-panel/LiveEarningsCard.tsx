@@ -11,6 +11,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Info, TrendingUp } from "lucide-react";
+import { AppTooltip } from "@/components/ui/AppTooltip";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { formatCurrency } from "@/lib/helpers/currency";
 import type { SupportedCurrency } from "@/stores/currency.store";
@@ -433,7 +434,22 @@ export function LiveEarningsCard({
             className={statEnterClass}
             style={prefersReduced ? undefined : { animationDelay: "120ms" }}
           >
-            <p className="text-white/40 text-xs mb-1">Effective APY</p>
+            <div className="flex items-center gap-1 mb-1">
+              <p className="text-white/40 text-xs">Effective APY</p>
+              <AppTooltip
+                content="This is your annualized return based on actual earnings since your first deposit. This may differ from the vault's current APY, which reflects today's rate. Effective rate averages over your entire holding period, including earlier periods when the rate may have been different."
+                widthClassName="w-64"
+                position="top"
+              >
+                <button
+                  type="button"
+                  aria-label="More information about Effective APY"
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-white/40 hover:text-white/70 transition-colors"
+                >
+                  <Info className="h-3 w-3" />
+                </button>
+              </AppTooltip>
+            </div>
             <p
               className={`font-bold text-sm tabular-nums ${
                 apyPercent > 0 ? "text-emerald-400" : "text-white"
