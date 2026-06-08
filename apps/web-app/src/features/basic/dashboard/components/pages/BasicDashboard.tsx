@@ -3,7 +3,7 @@
 import React from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
-import MainStats from "@/features/shared/dashboard/components/ui/MainStats";
+import BasicMainStats from "@/features/basic/dashboard/components/ui/BasicMainStats";
 import BasicQuickActions from "@/features/basic/dashboard/components/ui/BasicQuickActions";
 import { WalletHoldingsCard } from "@/features/basic/dashboard/components/ui/WalletHoldingsCard";
 import DiscoverAssets from "@/features/shared/dashboard/components/ui/DiscoverAssets";
@@ -27,7 +27,7 @@ const BasicDashboard: React.FC = () => {
           imageLayoutClassName="-right-6 top-4 h-[112%] w-[78%] opacity-60 sm:right-0 sm:top-0 sm:h-full sm:w-[75%] sm:opacity-100"
         />
         <EmailNudgeBanner />
-        <MainStats />
+        <BasicMainStats />
         <WalletHoldingsCard holdings={holdings} isLoading={isLoading} />
         <YourPositions />
         <BasicQuickActions />

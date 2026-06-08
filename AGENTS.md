@@ -1,10 +1,10 @@
 # AGENTS.md
 
-This file provides guidance to Codex, Claude and Cursor when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-Neko DApp is a DeFi protocol built on Stellar blockchain featuring liquidity pools, lending, borrowing, and RWA (Real-World Assets) token management. It's a Turborepo monorepo with a Next.js frontend and NestJS backend.
+Neko DApp is a DeFi protocol built on Stellar blockchain featuring liquidity pools, lending, borrowing, and RWA (Real-World Assets) token management. It's a Turborepo monorepo with a Next.js frontend and smart contracts in both Rust (Stellar/Soroban) and Solidity (EVM/Foundry).
 
 ## Commands
 
@@ -78,10 +78,12 @@ Feature Components → Feature Hooks → Services/Helpers → Contract Clients (
 ### Multi-Chain Support
 
 - **Stellar**: @stellar/stellar-sdk, Stellar Wallets Kit, SoroSwap SDK
+- **EVM**: viem, wagmi, RainbowKit, CoW Swap SDK, Uniswap SDK
 
 ## Code Style
 
 - Prettier: double quotes, semicolons, 2-space indent, 80 char width, es5 trailing commas
+- Foundry (Solidity): 4-space indent, 120 char line length, double quotes
 - Conventional commits: feat, fix, chore, refactor, etc.
 
 ## Environment Setup
@@ -101,10 +103,11 @@ NEXT_PUBLIC_SOROSWAP_API_KEY=your_api_key_here
 - Node.js v18+, npm v10.2.3+
 - Rust v1.70+ (for Stellar contracts)
 - Stellar CLI v23.1.0+ (for contract bindings)
+- Foundry (for EVM contracts)
 
 ## Skills
 
-Additional skills available in `.agents/skills/` for specific patterns:
+Additional skills available in `.Codex/skills/` for specific patterns:
 
 - **tanstack-query**: React Query best practices and patterns
 - **tailwind-patterns**: Tailwind CSS component patterns

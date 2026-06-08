@@ -3,7 +3,7 @@
 import React from "react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
-import MainStats from "@/features/shared/dashboard/components/ui/MainStats";
+import MainStats from "@/features/expert/dashboard/components/ui/MainStats";
 import QuickActions from "@/features/expert/dashboard/components/ui/QuickActions";
 import DiscoverAssets from "@/features/shared/dashboard/components/ui/DiscoverAssets";
 import { EmailNudgeBanner } from "@/features/shared/dashboard/components/ui/EmailNudgeBanner";
