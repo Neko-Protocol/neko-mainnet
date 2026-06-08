@@ -87,12 +87,6 @@ export function StrategyRow({
 
   return (
     <div className="group relative flex h-full min-h-[260px] flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-[#161616] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-white/15 hover:bg-[#1A1A1A]">
-      {/* Soft accent glow in corner */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-20 -top-20 h-44 w-44 rounded-full bg-[#229EDF]/[0.07] blur-3xl"
-      />
-
       {/* Header */}
       <div className="relative flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
@@ -145,7 +139,7 @@ export function StrategyRow({
       <div className="relative mt-4">
         {hasApy ? (
           <>
-            <p className="bg-gradient-to-r from-white to-[#5BB8E8] bg-clip-text text-4xl font-bold leading-none tracking-tight tabular-nums text-transparent">
+            <p className="text-4xl font-bold leading-none tracking-tight tabular-nums text-white">
               {apyLabel}
             </p>
             <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
@@ -195,7 +189,7 @@ export function StrategyRow({
         <button
           type="button"
           onClick={onExecute}
-          className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-[#229EDF] px-3 text-sm font-semibold text-white shadow-[0_4px_20px_rgba(34,158,223,0.3)] transition-all hover:bg-[#1a8ac9] hover:shadow-[0_4px_25px_rgba(34,158,223,0.45)] active:scale-[0.98]"
+          className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-[#229EDF] px-3 text-sm font-semibold text-white transition-colors hover:bg-[#1a8ac9] active:scale-[0.98]"
         >
           <Play className="h-3.5 w-3.5 fill-current" />
           Execute strategy
