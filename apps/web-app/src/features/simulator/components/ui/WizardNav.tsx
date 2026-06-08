@@ -58,7 +58,7 @@ export function WizardNav({
               "rounded-full px-7 py-3 text-sm font-semibold transition-all",
               continueDisabled
                 ? "cursor-not-allowed bg-white/[0.06] text-white/30"
-                : "bg-[#229EDF] text-white shadow-[0_4px_20px_rgba(34,158,223,0.3)] hover:bg-[#1a8ac9] hover:shadow-[0_4px_25px_rgba(34,158,223,0.45)] active:scale-[0.98]"
+                : "bg-[#229EDF] text-white hover:bg-[#1a8ac9] active:scale-[0.98]"
             )}
           >
             {continueLabel}

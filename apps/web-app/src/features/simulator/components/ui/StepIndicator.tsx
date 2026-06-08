@@ -90,7 +90,7 @@ export function StepIndicator({ steps, currentPhase }: StepIndicatorProps) {
                   "flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300",
                   isDone && "bg-[#229EDF] text-white",
                   isActive &&
-                    "bg-[#229EDF] text-white ring-4 ring-[#229EDF]/25 shadow-[0_0_18px_rgba(34,158,223,0.45)] scale-105",
+                    "bg-[#229EDF] text-white ring-2 ring-[#229EDF]/30 scale-105",
                   !isActive &&
                     !isDone &&
                     "border border-white/10 bg-[#161616] text-white/35"
