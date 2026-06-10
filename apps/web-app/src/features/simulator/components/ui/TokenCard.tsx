@@ -55,16 +55,6 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
       )}
       aria-pressed={isSelected}
     >
-      {accent && (
-        <div
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-50 blur-3xl",
-            accent.bg
-          )}
-        />
-      )}
-
       <div className="relative mb-3 flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-sm font-bold text-[#121212] ring-1 ring-white/10">
