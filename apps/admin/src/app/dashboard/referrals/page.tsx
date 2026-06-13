@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import {
   getReferralLeaderboard,
+  getReferredUsers,
   type ReferralLeaderboardRow as LeaderboardRow,
+  type ReferredUser,
 } from "@/lib/referrals";
 
 function truncate(address: string): string {
@@ -15,6 +18,15 @@ function formatUsd(value: number): string {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 2,
+  });
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 }
 
@@ -32,10 +44,91 @@ function sortValue(row: LeaderboardRow, key: SortKey): number {
   return row.swap_volume_usd;
 }
 
+function ReferredUsersPanel({ wallet }: { wallet: string }) {
+  const [users, setUsers] = useState<ReferredUser[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await getReferredUsers(wallet);
+        if (!cancelled) setUsers(data);
+      } catch (err) {
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : "Failed to load");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [wallet]);
+
+  const content = (() => {
+    if (error) return <p className="text-xs text-red-400">{error}</p>;
+    if (users === null)
+      return <p className="text-xs text-white/40">Loading…</p>;
+    if (users.length === 0)
+      return <p className="text-xs text-white/40">No referred users yet.</p>;
+    return (
+      <div className="grid grid-cols-3 gap-x-8">
+        <div className="text-[10px] font-medium uppercase tracking-wide text-white/35 pb-2">
+          Referred wallet
+        </div>
+        <div className="text-[10px] font-medium uppercase tracking-wide text-white/35 pb-2">
+          Status
+        </div>
+        <div className="text-[10px] font-medium uppercase tracking-wide text-white/35 pb-2">
+          Confirmed at
+        </div>
+        {users.map((u) => (
+          <>
+            <div
+              key={`${u.referred_wallet}-w`}
+              className="font-mono text-xs text-white/80 border-white/5"
+            >
+              {truncate(u.referred_wallet)}
+            </div>
+            <div key={`${u.referred_wallet}-s`} className="border-white/5">
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                  u.status === "confirmed"
+                    ? "bg-emerald-500/15 text-emerald-400"
+                    : "bg-amber-500/15 text-amber-400"
+                }`}
+              >
+                {u.status}
+              </span>
+            </div>
+            <div
+              key={`${u.referred_wallet}-c`}
+              className="text-xs text-white/50 border-white/5"
+            >
+              {formatDate(u.confirmed_at)}
+            </div>
+          </>
+        ))}
+      </div>
+    );
+  })();
+
+  return (
+    <tr>
+      <td
+        colSpan={7}
+        className="border-b border-white/5 bg-white/[0.015] pl-12 pr-4 py-4"
+      >
+        {content}
+      </td>
+    </tr>
+  );
+}
+
 export default function ReferralsPage() {
   const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("swap_volume");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   const sortedRows = useMemo(() => {
     if (!rows) return null;
@@ -62,6 +155,15 @@ export default function ReferralsPage() {
       cancelled = true;
     };
   }, []);
+
+  function toggleExpand(wallet: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(wallet)) next.delete(wallet);
+      else next.add(wallet);
+      return next;
+    });
+  }
 
   return (
     <div className="p-6 lg:p-8">
@@ -108,6 +210,7 @@ export default function ReferralsPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-white/8 text-xs uppercase tracking-wide text-white/45">
               <tr>
+                <th className="px-4 py-3 w-8"></th>
                 <th className="px-4 py-3">#</th>
                 <th className="px-4 py-3">Referrer</th>
                 <th className="px-4 py-3">Code</th>
@@ -129,29 +232,48 @@ export default function ReferralsPage() {
               </tr>
             </thead>
             <tbody>
-              {sortedRows.map((row, index) => (
-                <tr
-                  key={row.referrer_wallet}
-                  className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02]"
-                >
-                  <td className="px-4 py-3 text-white/45">{index + 1}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-white">
-                    {truncate(row.referrer_wallet)}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-white/70">
-                    {row.code}
-                  </td>
-                  <td className="px-4 py-3 text-white/70">
-                    {row.confirmed_count}
-                  </td>
-                  <td className="px-4 py-3 text-white">
-                    {formatUsd(row.swap_volume_usd)}
-                  </td>
-                  <td className="px-4 py-3 text-white">
-                    {formatUsd(row.vault_tvl_usd)}
-                  </td>
-                </tr>
-              ))}
+              {sortedRows.map((row, index) => {
+                const isExpanded = expanded.has(row.referrer_wallet);
+                return (
+                  <>
+                    <tr
+                      key={row.referrer_wallet}
+                      className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] cursor-pointer"
+                      onClick={() => toggleExpand(row.referrer_wallet)}
+                    >
+                      <td className="px-4 py-3 text-white/40">
+                        {isExpanded ? (
+                          <ChevronDown size={14} />
+                        ) : (
+                          <ChevronRight size={14} />
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-white/45">{index + 1}</td>
+                      <td className="px-4 py-3 font-mono text-xs text-white">
+                        {truncate(row.referrer_wallet)}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-white/70">
+                        {row.code}
+                      </td>
+                      <td className="px-4 py-3 text-white/70">
+                        {row.confirmed_count}
+                      </td>
+                      <td className="px-4 py-3 text-white">
+                        {formatUsd(row.swap_volume_usd)}
+                      </td>
+                      <td className="px-4 py-3 text-white">
+                        {formatUsd(row.vault_tvl_usd)}
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <ReferredUsersPanel
+                        key={`${row.referrer_wallet}-panel`}
+                        wallet={row.referrer_wallet}
+                      />
+                    )}
+                  </>
+                );
+              })}
             </tbody>
           </table>
         </div>
