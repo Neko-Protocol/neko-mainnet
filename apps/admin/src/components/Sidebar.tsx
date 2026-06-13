@@ -11,6 +11,7 @@ import {
   Sparkles,
   Target,
   Users,
+  Zap,
 } from "lucide-react";
 
 const links = [
@@ -20,6 +21,7 @@ const links = [
   { href: "/dashboard/campaigns", label: "Campaigns", icon: Mail },
   { href: "/dashboard/strategies", label: "Strategies", icon: Target },
   { href: "/dashboard/recommended", label: "Recommended", icon: Sparkles },
+  { href: "/dashboard/activations", label: "Activations", icon: Zap },
 ] as const;
 
 export function Sidebar() {
