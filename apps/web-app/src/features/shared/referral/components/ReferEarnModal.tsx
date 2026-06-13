@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Gift, Users, X } from "lucide-react";
+import Image from "next/image";
+import { Copy, Users, X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { useReferralStats } from "../hooks/useReferralStats";
 
@@ -58,13 +59,8 @@ export function ReferEarnModal({ open, onClose }: ReferEarnModalProps) {
         >
           <div className="mb-5 flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#229EDF]/15">
-                <Gift size={20} className="text-[#229EDF]" />
-              </div>
               <div>
-                <h2 className="text-lg font-semibold text-white">
-                  Refer &amp; Earn
-                </h2>
+                <h2 className="text-lg font-semibold text-white">Referrals</h2>
                 <p className="text-xs text-white/50">
                   Invite friends to Neko with your personal link
                 </p>
@@ -87,21 +83,42 @@ export function ReferEarnModal({ open, onClose }: ReferEarnModalProps) {
             {isPending || !link ? (
               <div className="h-9 animate-pulse rounded-lg bg-white/5" />
             ) : (
-              <button
-                type="button"
-                onClick={copyLink}
-                className="flex w-full items-center justify-between gap-2 rounded-lg bg-black/30 px-3 py-2 text-left font-mono text-xs text-white/85 transition-colors hover:bg-black/50"
-              >
-                <span className="truncate">{link}</span>
-                <span className="inline-flex shrink-0 items-center gap-1.5">
+              <div className="flex items-center gap-2 rounded-lg bg-black/30 px-3 py-2">
+                <span className="flex-1 overflow-x-auto whitespace-nowrap font-mono text-xs text-white/85 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  {link}
+                </span>
+                <button
+                  type="button"
+                  onClick={copyLink}
+                  className="inline-flex shrink-0 items-center gap-1.5 text-white/60 transition-colors hover:text-white"
+                >
                   <Copy size={13} />
                   {copied && (
                     <span className="text-[10px] uppercase tracking-wide text-emerald-300">
                       copied
                     </span>
                   )}
-                </span>
-              </button>
+                </button>
+              </div>
+            )}
+
+            {link && (
+              <div className="mt-3 flex gap-1">
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Join me on @NekoProto! Use my referral link: ${link}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-white/70 transition-colors hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+                >
+                  Share on
+                  <Image
+                    src="/assets/social-logos/x-logo.png"
+                    alt="X"
+                    width={13}
+                    height={13}
+                  />
+                </a>
+              </div>
             )}
           </div>
 
