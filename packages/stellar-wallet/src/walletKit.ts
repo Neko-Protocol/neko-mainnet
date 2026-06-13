@@ -11,7 +11,6 @@ let kit: Kit | null = null;
 let initPromise: Promise<Kit> | null = null;
 
 export interface StellarWalletKitOptions {
-  /** Overrides NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE. Only honoured on first init. */
   networkPassphrase?: string;
 }
 
@@ -22,15 +21,6 @@ export function getConfiguredNetworkPassphrase(): string {
   );
 }
 
-/**
- * Lazily loads and initialises the Stellar Wallets Kit (singleton).
- *
- * The @creit.tech/stellar-wallets-kit v2 root module initialises
- * @preact/signals at module scope and reads `globalThis.localStorage`,
- * which crashes during Next.js SSR/static prerendering. By dynamically
- * importing the package only inside this function we guarantee the code
- * only ever runs in the browser.
- */
 export async function getStellarWalletKit(
   options?: StellarWalletKitOptions
 ): Promise<Kit> {

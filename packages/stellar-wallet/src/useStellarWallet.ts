@@ -9,16 +9,9 @@ import { useStellarWalletStore } from "./store";
 
 export interface SignTransactionOptions {
   networkPassphrase?: string;
-  /** Defaults to the connected address. */
   address?: string;
 }
 
-/**
- * One wallet hook for every Neko app: connect/disconnect through the
- * Stellar Wallets Kit modal, connection state persisted under the
- * "stellar-wallet" localStorage key, and transaction signing with the
- * connected account.
- */
 export function useStellarWallet() {
   const { address, walletName, setWallet, clearWallet } =
     useStellarWalletStore();
@@ -28,7 +21,6 @@ export function useStellarWallet() {
     setConnecting(true);
     try {
       const Kit = await getStellarWalletKit();
-      // v2 authModal returns { address } directly - no callback needed.
       const { address: walletAddress } = await Kit.authModal();
       setWallet({ address: walletAddress, walletName: "Stellar Wallet" });
       return walletAddress;
@@ -42,7 +34,7 @@ export function useStellarWallet() {
       const Kit = await getStellarWalletKit();
       await Kit.disconnect();
     } catch {
-      // Clearing local state is what matters; kit errors are non-fatal here.
+      // intentionally silent
     }
     clearWallet();
   }, [clearWallet]);
