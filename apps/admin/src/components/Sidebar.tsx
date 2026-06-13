@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  Share2,
   Sparkles,
   Target,
   Users,
@@ -22,6 +23,7 @@ const links = [
   { href: "/dashboard/strategies", label: "Strategies", icon: Target },
   { href: "/dashboard/recommended", label: "Recommended", icon: Sparkles },
   { href: "/dashboard/activations", label: "Activations", icon: Zap },
+  { href: "/dashboard/referrals", label: "Referrals", icon: Share2 },
 ] as const;
 
 export function Sidebar() {
