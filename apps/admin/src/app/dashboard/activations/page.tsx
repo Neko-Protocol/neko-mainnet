@@ -2,15 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
-interface ActivationSummary {
-  id: string;
-  name: string;
-  reward_xlm: number;
-  expires_at: string;
-  created_at: string;
-  counts: { total: number; pending: number; payable: number; paid: number };
-}
+import { listActivations, type ActivationSummary } from "@/lib/activations";
 
 type ActivationRow = ActivationSummary & { expired: boolean };
 
@@ -29,9 +21,7 @@ export default function ActivationsPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/backend/v1/activations");
-        if (!res.ok) throw new Error("Failed to load activations");
-        const data = (await res.json()) as ActivationSummary[];
+        const data = await listActivations();
         const now = Date.now();
         if (!cancelled) {
           setActivations(

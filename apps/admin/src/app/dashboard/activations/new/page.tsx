@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { createActivation } from "@/lib/activations";
 import {
   AlertTriangle,
   CalendarClock,
@@ -64,25 +65,13 @@ export default function NewActivationPage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/backend/v1/activations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          reward_xlm: reward,
-          expires_at: new Date(expiresAt).toISOString(),
-          emails: valid,
-        }),
+      const { id } = await createActivation({
+        name,
+        reward_xlm: reward,
+        expires_at: new Date(expiresAt).toISOString(),
+        emails: valid,
       });
-      const payload = (await res.json().catch(() => ({}))) as {
-        id?: string;
-        message?: string;
-      };
-      if (!res.ok) {
-        throw new Error(payload.message ?? "Failed to create activation");
-      }
-      if (!payload.id) throw new Error("Missing activation id");
-      router.push(`/dashboard/activations/${payload.id}`);
+      router.push(`/dashboard/activations/${id}`);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -106,8 +95,8 @@ export default function NewActivationPage() {
               New activation
             </h1>
             <p className="text-sm text-white/50">
-              Participants become payable once they verify a listed email
-              before the expiry date.
+              Participants become payable once they verify a listed email before
+              the expiry date.
             </p>
           </div>
         </div>
@@ -212,8 +201,8 @@ export default function NewActivationPage() {
                   Participants
                 </h2>
                 <p className="text-xs text-white/45">
-                  One email per line, commas and semicolons work too.
-                  Duplicates are removed automatically.
+                  One email per line, commas and semicolons work too. Duplicates
+                  are removed automatically.
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
@@ -232,7 +221,9 @@ export default function NewActivationPage() {
             <textarea
               aria-label="Participant emails"
               className={`${inputStyles} min-h-[220px] font-mono text-sm`}
-              placeholder={"fabian@oppialabs.com\nsantiago@oppialabs.com\nmatias@oppialabs.com\nkevin@oppialabs.com"}
+              placeholder={
+                "fabian@oppialabs.com\nsantiago@oppialabs.com\nmatias@oppialabs.com\nkevin@oppialabs.com"
+              }
               value={emailsRaw}
               onChange={(ev) => setEmailsRaw(ev.target.value)}
               required

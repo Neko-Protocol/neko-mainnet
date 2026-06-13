@@ -7,8 +7,7 @@ export function middleware(request: NextRequest) {
   const requiresAuth =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/api/campaigns") ||
-    pathname.startsWith("/api/segments") ||
-    pathname.startsWith("/api/backend");
+    pathname.startsWith("/api/segments");
 
   if (requiresAuth) {
     const session = request.cookies.get("admin_session")?.value;
@@ -28,6 +27,5 @@ export const config = {
     "/dashboard/:path*",
     "/api/campaigns/:path*",
     "/api/segments/:path*",
-    "/api/backend/:path*",
   ],
 };

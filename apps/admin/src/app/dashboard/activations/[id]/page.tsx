@@ -6,29 +6,15 @@ import { useCallback, useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { useStellarWallet } from "@neko/stellar-wallet";
 import { AdminWalletButton } from "@/components/AdminWalletButton";
-
-type ParticipantStatus = "pending" | "payable" | "paying" | "paid";
-
-interface Participant {
-  id: string;
-  email: string;
-  status: ParticipantStatus;
-  matched_wallet: string | null;
-  matched_at: string | null;
-  paid_tx_hash: string | null;
-  paid_by: string | null;
-  paid_at: string | null;
-  paid_amount_xlm: number | null;
-}
-
-interface ActivationDetail {
-  id: string;
-  name: string;
-  reward_xlm: number;
-  expires_at: string;
-  created_at: string;
-  participants: Participant[];
-}
+import {
+  getActivation,
+  prepareActivationPayout,
+  cancelActivationPayout,
+  submitActivationPayout,
+  type ActivationDetail,
+  type Participant,
+  type ParticipantStatus,
+} from "@/lib/activations";
 
 const STATUS_BADGE: Record<ParticipantStatus, string> = {
   pending: "bg-white/10 text-white/55",
@@ -52,22 +38,6 @@ function stellarExpertTxUrl(hash: string): string {
   return `https://stellar.expert/explorer/${network}/tx/${hash}`;
 }
 
-async function postJson(path: string, body: unknown) {
-  const res = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const payload = (await res.json().catch(() => ({}))) as {
-    message?: string;
-    code?: string;
-  } & Record<string, unknown>;
-  if (!res.ok) {
-    throw new Error(payload.message ?? payload.code ?? "Request failed");
-  }
-  return payload;
-}
-
 export default function ActivationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const wallet = useStellarWallet();
@@ -85,9 +55,7 @@ export default function ActivationDetailPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/backend/v1/activations/${id}`);
-        if (!res.ok) throw new Error("Failed to load activation");
-        const data = (await res.json()) as ActivationDetail;
+        const data = await getActivation(id);
         if (cancelled) return;
         setActivation(data);
         setExpired(new Date(data.expires_at).getTime() < Date.now());
@@ -111,10 +79,10 @@ export default function ActivationDetailPage() {
     setPayError(null);
     setPayingId(participant.id);
     try {
-      const prepared = (await postJson(
-        "/api/backend/v1/activations/payouts/prepare",
-        { participant_id: participant.id, admin_wallet: wallet.address }
-      )) as { xdr: string; network_passphrase: string };
+      const prepared = await prepareActivationPayout({
+        participant_id: participant.id,
+        admin_wallet: wallet.address,
+      });
 
       let signedXdr: string;
       try {
@@ -122,14 +90,13 @@ export default function ActivationDetailPage() {
           networkPassphrase: prepared.network_passphrase,
         });
       } catch (signErr) {
-        // Signature rejected or wallet failed: release the payout lock.
-        await postJson("/api/backend/v1/activations/payouts/cancel", {
-          participant_id: participant.id,
-        }).catch(() => undefined);
+        await cancelActivationPayout({ participant_id: participant.id }).catch(
+          () => undefined
+        );
         throw signErr;
       }
 
-      await postJson("/api/backend/v1/activations/payouts/submit", {
+      await submitActivationPayout({
         participant_id: participant.id,
         signed_xdr: signedXdr,
       });

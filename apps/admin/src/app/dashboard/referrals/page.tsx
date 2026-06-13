@@ -1,14 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-
-interface LeaderboardRow {
-  referrer_wallet: string;
-  code: string;
-  confirmed_count: number;
-  swap_volume_usd: number;
-  vault_tvl_usd: number;
-}
+import {
+  getReferralLeaderboard,
+  type ReferralLeaderboardRow as LeaderboardRow,
+} from "@/lib/referrals";
 
 function truncate(address: string): string {
   return `${address.slice(0, 6)}…${address.slice(-6)}`;
@@ -54,9 +50,7 @@ export default function ReferralsPage() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/backend/v1/referrals/leaderboard");
-        if (!res.ok) throw new Error("Failed to load leaderboard");
-        const data = (await res.json()) as LeaderboardRow[];
+        const data = await getReferralLeaderboard();
         if (!cancelled) setRows(data);
       } catch (err) {
         if (!cancelled) {
