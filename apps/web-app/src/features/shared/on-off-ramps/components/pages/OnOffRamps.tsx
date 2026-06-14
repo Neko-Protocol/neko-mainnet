@@ -128,9 +128,12 @@ const OnOffRamps: React.FC = () => {
     const checkProviderStatus = async () => {
       setIsCheckingProviderStatus(true);
       try {
-        const response = await fetch("/api/anchor/etherfuse/status", {
-          cache: "no-store",
-        });
+        const response = await fetch(
+          "/api/backend-proxy/v1/anchor/etherfuse/status",
+          {
+            cache: "no-store",
+          }
+        );
         if (!response.ok) {
           setIsEtherfuseConfigured(false);
           return;
