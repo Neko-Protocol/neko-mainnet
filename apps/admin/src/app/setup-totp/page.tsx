@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { getTotpSetup } from "@/lib/auth-actions";
 
 type SetupOk = {
   qrDataUrl: string;
@@ -53,17 +54,11 @@ export default function SetupTotpPage() {
     setData(null);
     setLoading(true);
     try {
-      const trimmed = email.trim();
-      const res = await fetch(
-        `/api/auth/setup-totp?email=${encodeURIComponent(trimmed)}`
-      );
-      const json = (await res.json()) as SetupOk & { error?: string };
-      if (!res.ok || "error" in json) {
-        setError(json.error ?? "Request failed");
-        return;
-      }
-      const { qrDataUrl, secret, passwordHashCommand } = json;
+      const { qrDataUrl, secret, passwordHashCommand } =
+        await getTotpSetup(email);
       setData({ qrDataUrl, secret, passwordHashCommand });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Request failed");
     } finally {
       setLoading(false);
     }

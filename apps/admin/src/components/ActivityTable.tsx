@@ -1,6 +1,6 @@
 "use client";
 
-import type { AuditLog } from "@/lib/supabase";
+import type { AuditLog } from "@/types/audit";
 
 function formatRelative(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
