@@ -5,6 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { CampaignDTO } from "@/types/campaign";
 import { SEGMENTS } from "@/lib/segments";
+import {
+  getCampaign,
+  previewCampaign,
+  sendCampaign,
+  updateCampaignTvl,
+} from "@/lib/campaigns";
 
 function segmentTitle(segmentId: string): string {
   return SEGMENTS.find((s) => s.id === segmentId)?.label ?? segmentId;
@@ -49,25 +55,13 @@ export default function CampaignDetailPage() {
     if (!id) return;
     setLoadError(null);
     try {
-      const [cRes, pRes] = await Promise.all([
-        fetch(`/api/campaigns/${id}`),
-        fetch(`/api/campaigns/${id}/preview`),
-      ]);
-
-      if (!cRes.ok) {
-        throw new Error("Campaign not found");
-      }
-      const cJson = (await cRes.json()) as CampaignDTO;
+      const cJson = await getCampaign(id);
       setCampaign(cJson);
       setTvlInput(cJson.tvl_moved != null ? String(cJson.tvl_moved) : "");
 
-      if (pRes.ok) {
-        const pJson = (await pRes.json()) as {
-          count: number;
-          sample: string[];
-        };
-        setPreview(pJson);
-      } else {
+      try {
+        setPreview(await previewCampaign(id));
+      } catch {
         setPreview(null);
       }
     } catch (e) {
@@ -94,16 +88,7 @@ export default function CampaignDetailPage() {
     setSending(true);
     setSendMsg(null);
     try {
-      const res = await fetch(`/api/campaigns/${campaign.id}/send`, {
-        method: "POST",
-      });
-      const body = (await res.json().catch(() => ({}))) as {
-        ok?: boolean;
-        error?: string;
-      };
-      if (!res.ok) {
-        throw new Error(body.error ?? "Send failed");
-      }
+      await sendCampaign(campaign.id);
       await reload();
       router.refresh();
     } catch (e) {
@@ -124,13 +109,7 @@ export default function CampaignDetailPage() {
     setTvlSaving(true);
     setTvlMsg(null);
     try {
-      const res = await fetch(`/api/campaigns/${campaign.id}/tvl`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ tvl_moved: value }),
-      });
-      if (!res.ok) throw new Error("Failed");
+      await updateCampaignTvl(campaign.id, value);
       await reload();
       setTvlMsg("Saved");
     } catch {
