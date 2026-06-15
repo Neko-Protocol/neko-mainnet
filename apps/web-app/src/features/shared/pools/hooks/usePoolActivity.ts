@@ -12,14 +12,14 @@ export interface PoolEvent {
 
 async function fetchPoolActivity(poolId: string): Promise<PoolEvent[]> {
   const data = await backendClient.get<{ events: PoolEvent[] }>(
-    `/v1/pool-activity/${encodeURIComponent(poolId)}`
+    `/v1/contract-activity/${encodeURIComponent(poolId)}`
   );
   return data.events;
 }
 
 export function usePoolActivity(poolId: string) {
   return useQuery({
-    queryKey: ["pool-activity", poolId],
+    queryKey: ["contract-activity", poolId],
     queryFn: () => fetchPoolActivity(poolId),
     staleTime: 60_000,
     retry: false,
