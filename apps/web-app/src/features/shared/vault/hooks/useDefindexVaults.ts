@@ -13,8 +13,6 @@ export type DefindexVaultsPayload = {
   fetchErrors?: { contractId: string; message: string }[];
 };
 
-// Raw backend response: vault data + USD prices. Presentation mapping to
-// `VaultView` (icons, art, formatting) stays client-side.
 interface RawDefindexVaultsResponse {
   vaults: { contractId: string; info: VaultInfoResponse }[];
   prices: Record<string, number>;

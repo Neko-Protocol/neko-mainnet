@@ -28,10 +28,6 @@ export async function fetchVaultApy(
   };
 }
 
-/**
- * Client hook around `GET /v1/vault/apy` (via backend proxy) that returns the live APY and
- * strategy breakdown for a DeFindex vault.
- */
 export function useVaultApy(vaultId: string | null | undefined) {
   const query = useQuery<VaultApyResponse, Error>({
     queryKey: ["vault-apy", vaultId],
