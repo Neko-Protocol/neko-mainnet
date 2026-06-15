@@ -3,14 +3,17 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 import { useStellarWallet } from "@neko/stellar-wallet";
 import { AdminWalletButton } from "@/components/AdminWalletButton";
 import {
   getActivation,
   prepareActivationPayout,
+  prepareBatchActivationPayout,
   cancelActivationPayout,
   submitActivationPayout,
+  submitBatchActivationPayout,
+  sendActivationInvites,
   type ActivationDetail,
   type Participant,
   type ParticipantStatus,
@@ -38,6 +41,23 @@ function stellarExpertTxUrl(hash: string): string {
   return `https://stellar.expert/explorer/${network}/tx/${hash}`;
 }
 
+function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+function activationPdfFilename(activation: ActivationDetail): string {
+  const slug =
+    activation.name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || activation.id;
+  return `activation-${slug}.pdf`;
+}
+
 export default function ActivationDetailPage() {
   const { id } = useParams<{ id: string }>();
   const wallet = useStellarWallet();
@@ -47,6 +67,8 @@ export default function ActivationDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
+  const [payingAll, setPayingAll] = useState(false);
+  const [inviteStatus, setInviteStatus] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   const refresh = useCallback(() => setReloadKey((k) => k + 1), []);
@@ -110,6 +132,140 @@ export default function ActivationDetailPage() {
     }
   }
 
+  async function payAll() {
+    if (!wallet.address) {
+      setPayError("Connect a wallet to pay rewards.");
+      return;
+    }
+    if (!activation) return;
+
+    setPayingAll(true);
+    setPayError(null);
+    try {
+      let remaining = 1;
+      while (remaining > 0) {
+        const prepared = await prepareBatchActivationPayout({
+          activation_id: activation.id,
+          admin_wallet: wallet.address,
+        });
+
+        if (!prepared.participant_ids.length) break;
+
+        let signedXdr: string;
+        try {
+          signedXdr = await wallet.signTransaction(prepared.xdr, {
+            networkPassphrase: prepared.network_passphrase,
+          });
+        } catch {
+          break;
+        }
+
+        await submitBatchActivationPayout({
+          activation_id: activation.id,
+          participant_ids: prepared.participant_ids,
+          signed_xdr: signedXdr,
+        });
+
+        remaining = prepared.remaining_payable;
+      }
+    } catch (err) {
+      setPayError(
+        err instanceof Error ? err.message : "Batch payment failed, try again."
+      );
+    } finally {
+      setPayingAll(false);
+      refresh();
+    }
+  }
+
+  async function downloadPdf() {
+    if (!activation) return;
+    setPayError(null);
+    try {
+      const { jsPDF } = await import("jspdf");
+      const autoTable = (await import("jspdf-autotable")).default;
+
+      const participants = activation.participants;
+      const payable = participants.filter((p) => p.status === "payable").length;
+      const paid = participants.filter((p) => p.status === "paid");
+      const paidCount = paid.length;
+      const totalPaidXlm = paid.reduce(
+        (sum, p) => sum + (p.paid_amount_xlm ?? activation.reward_xlm),
+        0
+      );
+
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text(activation.name, 14, 18);
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`${activation.reward_xlm} XLM per participant`, 14, 26);
+      doc.text(`Expires ${formatDateTime(activation.expires_at)}`, 14, 32);
+      doc.text(`Generated ${formatDateTime(new Date().toISOString())}`, 14, 38);
+      doc.setTextColor(0);
+      doc.text(
+        `Participants: ${participants.length} · Payable: ${payable} · Paid: ${paidCount} · Total paid: ${totalPaidXlm} XLM`,
+        14,
+        46
+      );
+
+      const txColumnIndex = 5;
+      autoTable(doc, {
+        startY: 52,
+        head: [
+          ["Email", "Status", "Wallet", "Amount", "Paid At", "Transaction"],
+        ],
+        body: participants.map((p) => [
+          p.email,
+          p.status,
+          p.matched_wallet ? truncate(p.matched_wallet) : "-",
+          p.paid_amount_xlm != null ? String(p.paid_amount_xlm) : "-",
+          p.paid_at ? formatDateTime(p.paid_at) : "-",
+          p.paid_tx_hash ? truncate(p.paid_tx_hash) : "-",
+        ]),
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [34, 158, 223] },
+        didDrawCell: (data) => {
+          if (
+            data.section !== "body" ||
+            data.column.index !== txColumnIndex ||
+            data.row.index < 0
+          ) {
+            return;
+          }
+          const participant = participants[data.row.index];
+          if (!participant?.paid_tx_hash) return;
+          doc.link(
+            data.cell.x,
+            data.cell.y,
+            data.cell.width,
+            data.cell.height,
+            { url: stellarExpertTxUrl(participant.paid_tx_hash) }
+          );
+        },
+      });
+
+      doc.save(activationPdfFilename(activation));
+    } catch (err) {
+      setPayError(
+        err instanceof Error ? err.message : "Failed to generate PDF."
+      );
+    }
+  }
+
+  async function resendInvites() {
+    if (!activation) return;
+    setInviteStatus(null);
+    try {
+      const { sent } = await sendActivationInvites(activation.id);
+      setInviteStatus(`Sent ${sent} invites`);
+    } catch (err) {
+      setInviteStatus(
+        err instanceof Error ? err.message : "Failed to send invites"
+      );
+    }
+  }
+
   if (error) {
     return (
       <div className="p-6 lg:p-8">
@@ -157,12 +313,44 @@ export default function ActivationDetailPage() {
               completed · {payableCount} payable · {paidCount} paid
             </p>
           </div>
-          <AdminWalletButton
-            address={wallet.address}
-            connecting={wallet.connecting}
-            onConnect={() => void wallet.connect().catch(() => undefined)}
-            onDisconnect={() => void wallet.disconnect()}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void downloadPdf()}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-1.5 text-xs text-white/80 transition hover:bg-white/5"
+            >
+              <Download className="size-3.5" aria-hidden />
+              Download PDF
+            </button>
+            {payableCount > 0 && wallet.address ? (
+              <button
+                type="button"
+                onClick={() => void payAll()}
+                disabled={payingAll || payingId !== null}
+                className="inline-flex items-center justify-center rounded-full bg-[#229EDF] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-50"
+              >
+                {payingAll
+                  ? "Paying all…"
+                  : `Pay all (${payableCount} · ${payableCount * activation.reward_xlm} XLM)`}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => void resendInvites()}
+              className="text-xs text-white/50 transition hover:text-white"
+            >
+              Resend invites
+            </button>
+            {inviteStatus ? (
+              <span className="text-xs text-white/45">{inviteStatus}</span>
+            ) : null}
+            <AdminWalletButton
+              address={wallet.address}
+              connecting={wallet.connecting}
+              onConnect={() => void wallet.connect().catch(() => undefined)}
+              onDisconnect={() => void wallet.disconnect()}
+            />
+          </div>
         </div>
       </div>
 
@@ -220,7 +408,9 @@ export default function ActivationDetailPage() {
                     <button
                       type="button"
                       onClick={() => void pay(p)}
-                      disabled={!wallet.address || payingId !== null}
+                      disabled={
+                        !wallet.address || payingId !== null || payingAll
+                      }
                       className="inline-flex items-center justify-center rounded-full bg-[#229EDF] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-50"
                       title={
                         wallet.address
