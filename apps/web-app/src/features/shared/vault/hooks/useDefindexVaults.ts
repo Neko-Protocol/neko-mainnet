@@ -1,6 +1,9 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import type { VaultInfoResponse } from "@defindex/sdk";
+import { backendClient } from "@/lib/services/backend-client";
+import { defindexInfoToVaultView } from "@/lib/defindex/mapToVaultView";
 import type { VaultView } from "../types/vault";
 
 export type DefindexVaultsPayload = {
@@ -10,15 +13,38 @@ export type DefindexVaultsPayload = {
   fetchErrors?: { contractId: string; message: string }[];
 };
 
+interface RawDefindexVaultsResponse {
+  vaults: { contractId: string; info: VaultInfoResponse }[];
+  prices: Record<string, number>;
+  fetchErrors?: { contractId: string; message: string }[];
+  error?: string;
+  hint?: string;
+}
+
 async function fetchDefindexVaults(): Promise<DefindexVaultsPayload> {
-  const res = await fetch("/api/defindex/vaults");
-  if (!res.ok) throw new Error("Failed to load vaults");
-  const data = (await res.json()) as DefindexVaultsPayload;
+  const data = await backendClient.get<RawDefindexVaultsResponse>(
+    "/v1/defindex/vaults"
+  );
+
+  const fetchErrors = data.fetchErrors ? [...data.fetchErrors] : [];
+  const prices = data.prices ?? {};
+  const vaults: VaultView[] = [];
+  for (const { contractId, info } of data.vaults ?? []) {
+    try {
+      vaults.push(defindexInfoToVaultView(contractId, info, prices));
+    } catch (err) {
+      fetchErrors.push({
+        contractId,
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
   return {
-    vaults: data.vaults ?? [],
+    vaults,
     error: data.error,
     hint: data.hint,
-    fetchErrors: data.fetchErrors,
+    fetchErrors: fetchErrors.length > 0 ? fetchErrors : undefined,
   };
 }
 
