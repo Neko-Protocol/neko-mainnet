@@ -3,18 +3,23 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 import { useStellarWallet } from "@neko/stellar-wallet";
 import { AdminWalletButton } from "@/components/AdminWalletButton";
 import {
   getActivation,
   prepareActivationPayout,
+  prepareBatchActivationPayout,
   cancelActivationPayout,
   submitActivationPayout,
+  submitBatchActivationPayout,
+  sendActivationInvites,
   type ActivationDetail,
   type Participant,
   type ParticipantStatus,
 } from "@/lib/activations";
+import { downloadActivationPdf } from "@/lib/activation-pdf";
+import { stellarExpertTxUrl, truncate } from "@/lib/stellar-format";
 
 const STATUS_BADGE: Record<ParticipantStatus, string> = {
   pending: "bg-white/10 text-white/55",
@@ -22,21 +27,6 @@ const STATUS_BADGE: Record<ParticipantStatus, string> = {
   paying: "bg-[#229EDF]/15 text-[#229EDF]",
   paid: "bg-emerald-400/15 text-emerald-300",
 };
-
-function truncate(address: string): string {
-  return `${address.slice(0, 6)}…${address.slice(-6)}`;
-}
-
-function stellarExpertTxUrl(hash: string): string {
-  const network =
-    (process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET").toUpperCase() ===
-      "PUBLIC" ||
-    (process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET").toUpperCase() ===
-      "MAINNET"
-      ? "public"
-      : "testnet";
-  return `https://stellar.expert/explorer/${network}/tx/${hash}`;
-}
 
 export default function ActivationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,6 +37,8 @@ export default function ActivationDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
+  const [payingAll, setPayingAll] = useState(false);
+  const [inviteStatus, setInviteStatus] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
   const refresh = useCallback(() => setReloadKey((k) => k + 1), []);
@@ -110,6 +102,65 @@ export default function ActivationDetailPage() {
     }
   }
 
+  async function payAll() {
+    if (!wallet.address) {
+      setPayError("Connect a wallet to pay rewards.");
+      return;
+    }
+    if (!activation) return;
+
+    setPayingAll(true);
+    setPayError(null);
+    try {
+      let remaining = 1;
+      while (remaining > 0) {
+        const prepared = await prepareBatchActivationPayout({
+          activation_id: activation.id,
+          admin_wallet: wallet.address,
+        });
+
+        if (!prepared.participant_ids.length) break;
+
+        let signedXdr: string;
+        try {
+          signedXdr = await wallet.signTransaction(prepared.xdr, {
+            networkPassphrase: prepared.network_passphrase,
+          });
+        } catch {
+          break;
+        }
+
+        await submitBatchActivationPayout({
+          activation_id: activation.id,
+          participant_ids: prepared.participant_ids,
+          signed_xdr: signedXdr,
+        });
+
+        remaining = prepared.remaining_payable;
+      }
+    } catch (err) {
+      setPayError(
+        err instanceof Error ? err.message : "Batch payment failed, try again."
+      );
+    } finally {
+      setPayingAll(false);
+      refresh();
+    }
+  }
+
+  async function resendInvites() {
+    if (!activation) return;
+    setInviteStatus(null);
+    try {
+      const { sent } = await sendActivationInvites(activation.id);
+      setInviteStatus(`Sent ${sent} invites`);
+    } catch (err) {
+      setInviteStatus(
+        err instanceof Error ? err.message : "Failed to send invites"
+      );
+    }
+  }
+
   if (error) {
     return (
       <div className="p-6 lg:p-8">
@@ -157,12 +208,53 @@ export default function ActivationDetailPage() {
               completed · {payableCount} payable · {paidCount} paid
             </p>
           </div>
-          <AdminWalletButton
-            address={wallet.address}
-            connecting={wallet.connecting}
-            onConnect={() => void wallet.connect().catch(() => undefined)}
-            onDisconnect={() => void wallet.disconnect()}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setPayError(null);
+                downloadActivationPdf(activation).catch((err) =>
+                  setPayError(
+                    err instanceof Error
+                      ? err.message
+                      : "Failed to generate PDF."
+                  )
+                );
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-1.5 text-xs text-white/80 transition hover:bg-white/5"
+            >
+              <Download className="size-3.5" aria-hidden />
+              Download PDF
+            </button>
+            {payableCount > 0 && wallet.address ? (
+              <button
+                type="button"
+                onClick={() => void payAll()}
+                disabled={payingAll || payingId !== null}
+                className="inline-flex items-center justify-center rounded-full bg-[#229EDF] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-50"
+              >
+                {payingAll
+                  ? "Paying all…"
+                  : `Pay all (${payableCount} · ${payableCount * activation.reward_xlm} XLM)`}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => void resendInvites()}
+              className="text-xs text-white/50 transition hover:text-white"
+            >
+              Resend invites
+            </button>
+            {inviteStatus ? (
+              <span className="text-xs text-white/45">{inviteStatus}</span>
+            ) : null}
+            <AdminWalletButton
+              address={wallet.address}
+              connecting={wallet.connecting}
+              onConnect={() => void wallet.connect().catch(() => undefined)}
+              onDisconnect={() => void wallet.disconnect()}
+            />
+          </div>
         </div>
       </div>
 
@@ -220,7 +312,9 @@ export default function ActivationDetailPage() {
                     <button
                       type="button"
                       onClick={() => void pay(p)}
-                      disabled={!wallet.address || payingId !== null}
+                      disabled={
+                        !wallet.address || payingId !== null || payingAll
+                      }
                       className="inline-flex items-center justify-center rounded-full bg-[#229EDF] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-50"
                       title={
                         wallet.address

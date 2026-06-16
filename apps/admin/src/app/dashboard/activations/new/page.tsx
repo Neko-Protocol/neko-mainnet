@@ -37,6 +37,7 @@ export default function NewActivationPage() {
   const [rewardXlm, setRewardXlm] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [emailsRaw, setEmailsRaw] = useState("");
+  const [sendInvites, setSendInvites] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,6 +71,7 @@ export default function NewActivationPage() {
         reward_xlm: reward,
         expires_at: new Date(expiresAt).toISOString(),
         emails: valid,
+        send_invites: sendInvites,
       });
       router.push(`/dashboard/activations/${id}`);
       router.refresh();
@@ -285,6 +287,24 @@ export default function NewActivationPage() {
                 : "-"}
             </p>
           </div>
+
+          <label className="mt-5 flex cursor-pointer items-start gap-2.5">
+            <input
+              type="checkbox"
+              checked={sendInvites}
+              onChange={(ev) => setSendInvites(ev.target.checked)}
+              className="mt-0.5 size-4 shrink-0 accent-[#229EDF]"
+            />
+            <span>
+              <span className="block text-sm text-white/80">
+                Email an invitation to each participant now
+              </span>
+              <span className="mt-0.5 block text-xs text-white/45">
+                Recipients without a Neko account just connect a wallet and
+                verify this email.
+              </span>
+            </span>
+          </label>
 
           <button
             type="submit"
