@@ -18,6 +18,8 @@ import {
   type Participant,
   type ParticipantStatus,
 } from "@/lib/activations";
+import { downloadActivationPdf } from "@/lib/activation-pdf";
+import { stellarExpertTxUrl, truncate } from "@/lib/stellar-format";
 
 const STATUS_BADGE: Record<ParticipantStatus, string> = {
   pending: "bg-white/10 text-white/55",
@@ -25,38 +27,6 @@ const STATUS_BADGE: Record<ParticipantStatus, string> = {
   paying: "bg-[#229EDF]/15 text-[#229EDF]",
   paid: "bg-emerald-400/15 text-emerald-300",
 };
-
-function truncate(address: string): string {
-  return `${address.slice(0, 6)}…${address.slice(-6)}`;
-}
-
-function stellarExpertTxUrl(hash: string): string {
-  const network =
-    (process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET").toUpperCase() ===
-      "PUBLIC" ||
-    (process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET").toUpperCase() ===
-      "MAINNET"
-      ? "public"
-      : "testnet";
-  return `https://stellar.expert/explorer/${network}/tx/${hash}`;
-}
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
-function activationPdfFilename(activation: ActivationDetail): string {
-  const slug =
-    activation.name
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "") || activation.id;
-  return `activation-${slug}.pdf`;
-}
 
 export default function ActivationDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -178,81 +148,6 @@ export default function ActivationDetailPage() {
     }
   }
 
-  async function downloadPdf() {
-    if (!activation) return;
-    setPayError(null);
-    try {
-      const { jsPDF } = await import("jspdf");
-      const autoTable = (await import("jspdf-autotable")).default;
-
-      const participants = activation.participants;
-      const payable = participants.filter((p) => p.status === "payable").length;
-      const paid = participants.filter((p) => p.status === "paid");
-      const paidCount = paid.length;
-      const totalPaidXlm = paid.reduce(
-        (sum, p) => sum + (p.paid_amount_xlm ?? activation.reward_xlm),
-        0
-      );
-
-      const doc = new jsPDF();
-      doc.setFontSize(16);
-      doc.text(activation.name, 14, 18);
-      doc.setFontSize(10);
-      doc.setTextColor(100);
-      doc.text(`${activation.reward_xlm} XLM per participant`, 14, 26);
-      doc.text(`Expires ${formatDateTime(activation.expires_at)}`, 14, 32);
-      doc.text(`Generated ${formatDateTime(new Date().toISOString())}`, 14, 38);
-      doc.setTextColor(0);
-      doc.text(
-        `Participants: ${participants.length} · Payable: ${payable} · Paid: ${paidCount} · Total paid: ${totalPaidXlm} XLM`,
-        14,
-        46
-      );
-
-      const txColumnIndex = 5;
-      autoTable(doc, {
-        startY: 52,
-        head: [
-          ["Email", "Status", "Wallet", "Amount", "Paid At", "Transaction"],
-        ],
-        body: participants.map((p) => [
-          p.email,
-          p.status,
-          p.matched_wallet ? truncate(p.matched_wallet) : "-",
-          p.paid_amount_xlm != null ? String(p.paid_amount_xlm) : "-",
-          p.paid_at ? formatDateTime(p.paid_at) : "-",
-          p.paid_tx_hash ? truncate(p.paid_tx_hash) : "-",
-        ]),
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [34, 158, 223] },
-        didDrawCell: (data) => {
-          if (
-            data.section !== "body" ||
-            data.column.index !== txColumnIndex ||
-            data.row.index < 0
-          ) {
-            return;
-          }
-          const participant = participants[data.row.index];
-          if (!participant?.paid_tx_hash) return;
-          doc.link(
-            data.cell.x,
-            data.cell.y,
-            data.cell.width,
-            data.cell.height,
-            { url: stellarExpertTxUrl(participant.paid_tx_hash) }
-          );
-        },
-      });
-
-      doc.save(activationPdfFilename(activation));
-    } catch (err) {
-      setPayError(
-        err instanceof Error ? err.message : "Failed to generate PDF."
-      );
-    }
-  }
-
   async function resendInvites() {
     if (!activation) return;
     setInviteStatus(null);
@@ -316,7 +211,16 @@ export default function ActivationDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => void downloadPdf()}
+              onClick={() => {
+                setPayError(null);
+                downloadActivationPdf(activation).catch((err) =>
+                  setPayError(
+                    err instanceof Error
+                      ? err.message
+                      : "Failed to generate PDF."
+                  )
+                );
+              }}
               className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-1.5 text-xs text-white/80 transition hover:bg-white/5"
             >
               <Download className="size-3.5" aria-hidden />
