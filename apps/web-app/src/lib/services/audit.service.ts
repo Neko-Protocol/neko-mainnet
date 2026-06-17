@@ -1,17 +1,15 @@
+import { backendClient } from "@/lib/services/backend-client";
 import type { AuditEvent, AuditLog } from "@/lib/types/audit.types";
 
 class AuditService {
-  private readonly baseUrl = "/api/audit";
+  private readonly basePath = "/v1/audit";
 
   async log(event: AuditEvent): Promise<{ isFirstVaultDeposit?: boolean }> {
     try {
-      const res = await fetch(this.baseUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(event),
-      });
-      if (!res.ok) return {};
-      const data = (await res.json()) as { isFirstVaultDeposit?: boolean };
+      const data = await backendClient.post<{ isFirstVaultDeposit?: boolean }>(
+        this.basePath,
+        event
+      );
       return { isFirstVaultDeposit: data.isFirstVaultDeposit };
     } catch {
       return {};
@@ -24,9 +22,7 @@ class AuditService {
         limit: String(Math.min(limit, 50)),
       });
       if (wallet) params.set("wallet", wallet);
-      const res = await fetch(`${this.baseUrl}?${params}`);
-      if (!res.ok) return [];
-      return (await res.json()) as AuditLog[];
+      return await backendClient.get<AuditLog[]>(`${this.basePath}?${params}`);
     } catch {
       return [];
     }

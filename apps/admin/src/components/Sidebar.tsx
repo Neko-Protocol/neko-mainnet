@@ -2,16 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Activity,
   LayoutDashboard,
   LogOut,
   Mail,
+  Share2,
   Sparkles,
   Target,
   Users,
+  Zap,
 } from "lucide-react";
+import { logout } from "@/lib/auth-actions";
 
 const links = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -20,10 +23,19 @@ const links = [
   { href: "/dashboard/campaigns", label: "Campaigns", icon: Mail },
   { href: "/dashboard/strategies", label: "Strategies", icon: Target },
   { href: "/dashboard/recommended", label: "Recommended", icon: Sparkles },
+  { href: "/dashboard/activations", label: "Activations", icon: Zap },
+  { href: "/dashboard/referrals", label: "Referrals", icon: Share2 },
 ] as const;
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleLogout() {
+    await logout();
+    router.replace("/login");
+    router.refresh();
+  }
 
   return (
     <aside className="flex h-screen w-56 flex-col bg-[#161616] border-r border-white/8">
@@ -60,15 +72,14 @@ export function Sidebar() {
         })}
       </nav>
       <div className="border-t border-white/8 p-2">
-        <form action="/api/auth/logout" method="post">
-          <button
-            type="submit"
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/65 transition hover:bg-red-500/10 hover:text-red-300"
-          >
-            <LogOut className="size-4" aria-hidden />
-            Log out
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={() => void handleLogout()}
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/65 transition hover:bg-red-500/10 hover:text-red-300"
+        >
+          <LogOut className="size-4" aria-hidden />
+          Log out
+        </button>
       </div>
     </aside>
   );

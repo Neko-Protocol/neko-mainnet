@@ -7,6 +7,7 @@ import { truncateAddress } from "@/lib/utils";
 import { CARD_STYLES, CARD_BUTTON_STYLES } from "./sidebarConfig";
 import { useCartStore } from "@/stores/cart.store";
 import { useUIMode } from "@/hooks/useUIMode";
+import { ReferEarnModal } from "@/features/shared/referral/components/ReferEarnModal";
 
 const NETWORK = (
   process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET"
@@ -21,6 +22,7 @@ interface ConnectedCardProps {
 
 export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
   const [open, setOpen] = React.useState(false);
+  const [referOpen, setReferOpen] = React.useState(false);
   const cartCount = useCartStore((s) => s.items.length);
   const { isBasic } = useUIMode();
 
@@ -88,19 +90,17 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
       <div className="pt-2">
         <button
           type="button"
-          onClick={() =>
-            window.open(
-              "https://form.typeform.com/to/bYEeE8xy",
-              "_blank",
-              "noopener,noreferrer"
-            )
-          }
+          onClick={() => setReferOpen(true)}
           className="flex w-full items-center justify-between rounded-full bg-[#229EDF] px-5 py-3 text-sm font-semibold text-white cursor-pointer transition-colors hover:bg-[#1e8bc9]"
         >
-          <span>Feedback</span>
+          <span className="flex items-center gap-2">
+            Referrals
+          </span>
           <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
         </button>
       </div>
+
+      <ReferEarnModal open={referOpen} onClose={() => setReferOpen(false)} />
     </div>
   );
 }
