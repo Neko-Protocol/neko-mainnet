@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
     "@defindex/sdk",
     "@neko/defindex-vault",
     "@neko/reflector",
+    "@neko/stellar-wallet",
   ],
 };
 

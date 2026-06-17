@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { backendClient } from "@/lib/services/backend-client";
 
 export interface PoolEvent {
   id: string;
@@ -10,14 +11,15 @@ export interface PoolEvent {
 }
 
 async function fetchPoolActivity(poolId: string): Promise<PoolEvent[]> {
-  const res = await fetch(`/api/pool-activity/${encodeURIComponent(poolId)}`);
-  if (!res.ok) throw new Error("Failed to fetch activity");
-  return (await res.json()).events;
+  const data = await backendClient.get<{ events: PoolEvent[] }>(
+    `/v1/contract-activity/${encodeURIComponent(poolId)}`
+  );
+  return data.events;
 }
 
 export function usePoolActivity(poolId: string) {
   return useQuery({
-    queryKey: ["pool-activity", poolId],
+    queryKey: ["contract-activity", poolId],
     queryFn: () => fetchPoolActivity(poolId),
     staleTime: 60_000,
     retry: false,
