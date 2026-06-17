@@ -41,7 +41,7 @@ async function apiFetch<T>(url: string, options?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-const BASE = "/api/anchor";
+const BASE = "/api/backend-proxy/v1/anchor";
 
 // Customers
 export async function createCustomer(

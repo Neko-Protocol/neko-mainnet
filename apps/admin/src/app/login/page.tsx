@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { loginStep1, loginStep2 } from "@/lib/auth-actions";
 
 type Phase = 1 | 2;
 
@@ -18,27 +19,16 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ step: 1, email, password }),
-      });
-      const data = (await res.json()) as {
-        ok?: boolean;
-        step?: number;
-        error?: string;
-      };
-      if (res.ok && data.ok && data.step === 2) {
+      const data = await loginStep1(email, password);
+      if (data.ok) {
         setPhase(2);
         setCode("");
         requestAnimationFrame(() => codeInputRef.current?.focus());
         return;
       }
-      if (res.status === 401) {
-        setError(data.error ?? "Invalid credentials");
-        return;
-      }
-      setError(data.error ?? "Something went wrong");
+      setError(data.error ?? "Invalid credentials");
+    } catch {
+      setError("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -49,23 +39,16 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ step: 2, code }),
-      });
-      const data = (await res.json()) as { ok?: boolean; error?: string };
-      if (res.ok && data.ok) {
+      const data = await loginStep2(code);
+      if (data.ok) {
         window.location.href = "/dashboard";
         return;
       }
-      if (res.status === 401) {
-        setError(data.error ?? "Invalid code, try again");
-        setCode("");
-        codeInputRef.current?.focus();
-        return;
-      }
-      setError(data.error ?? "Something went wrong");
+      setError(data.error ?? "Invalid code, try again");
+      setCode("");
+      codeInputRef.current?.focus();
+    } catch {
+      setError("Something went wrong");
     } finally {
       setLoading(false);
     }

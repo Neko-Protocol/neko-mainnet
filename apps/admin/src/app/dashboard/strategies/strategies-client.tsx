@@ -3,13 +3,16 @@
 import { DollarSign, Layers, Loader2, Target, TrendingUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useState, useTransition } from "react";
 import {
   STRATEGY_TYPES,
   type StrategyStatus,
   type StrategyType,
   type StrategyWithStats,
 } from "@/lib/strategies-schema";
+import { createStrategy } from "@/lib/strategies";
+import { getAdminEmails } from "@/lib/auth-actions";
 
 function strategyDuration(
   createdAt: string,
@@ -90,12 +93,6 @@ type Props = {
   aggregates: { totalInvited: number; avgAcceptance: number };
 };
 
-async function fetchJson<T>(path: string): Promise<T> {
-  const res = await fetch(path, { credentials: "include" });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json() as Promise<T>;
-}
-
 const CHIP =
   "inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[11px] text-white/70";
 
@@ -122,15 +119,10 @@ export default function StrategiesClient(props: Props) {
   const [formAssigned, setFormAssigned] = useState("");
   const [formStatus, setFormStatus] = useState<StrategyStatus>("active");
 
-  const [adminEmails, setAdminEmails] = useState<string[]>([]);
-
-  useEffect(() => {
-    fetchJson<{ emails: string[] }>("/api/admin-users")
-      .then((data) =>
-        setAdminEmails(Array.isArray(data.emails) ? data.emails : [])
-      )
-      .catch(() => setAdminEmails([]));
-  }, []);
+  const { data: adminEmails = [] } = useQuery({
+    queryKey: ["admin-emails"],
+    queryFn: getAdminEmails,
+  });
 
   const refresh = useCallback(() => {
     router.refresh();
@@ -141,35 +133,18 @@ export default function StrategiesClient(props: Props) {
     setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch("/api/strategies", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name: formName.trim(),
-          description: formDescription.trim() || null,
-          type: formType,
-          target_count: formTarget,
-          target_volume:
-            formTargetVolume === ""
-              ? 0
-              : Math.max(0, Number(formTargetVolume) || 0),
-          assigned_to: formAssigned.trim() || null,
-          status: formStatus,
-        }),
+      const created = await createStrategy({
+        name: formName.trim(),
+        description: formDescription.trim() || null,
+        type: formType,
+        target_count: formTarget,
+        target_volume:
+          formTargetVolume === ""
+            ? 0
+            : Math.max(0, Number(formTargetVolume) || 0),
+        assigned_to: formAssigned.trim() || null,
+        status: formStatus,
       });
-      if (!res.ok) {
-        let msg = "Failed to create strategy.";
-        try {
-          const j = (await res.json()) as { error?: string };
-          if (typeof j?.error === "string") msg = j.error;
-        } catch {
-          //
-        }
-        setError(msg);
-        return;
-      }
-      const created = (await res.json()) as { id?: string };
       setModalOpen(false);
       setFormName("");
       setFormDescription("");
@@ -182,8 +157,10 @@ export default function StrategiesClient(props: Props) {
         startNav(() => router.push(`/dashboard/strategies/${created.id}`));
       }
       refresh();
-    } catch {
-      setError("Network error.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to create strategy."
+      );
     } finally {
       setSubmitting(false);
     }

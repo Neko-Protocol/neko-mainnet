@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { backendClient } from "@/lib/services/backend-client";
 
 export interface RatePoint {
   date: string;
@@ -6,13 +7,18 @@ export interface RatePoint {
   borrow_apy: number | null;
 }
 
-async function fetchPoolRateHistory(poolId: string): Promise<RatePoint[]> {
-  const res = await fetch(`/api/pool-rates/${encodeURIComponent(poolId)}`);
-  if (!res.ok) throw new Error("Failed to fetch pool rate history");
-  const json = await res.json();
+interface RateHistoryRow {
+  supply_apy: number | null;
+  borrow_apy: number | null;
+  recorded_at: string;
+}
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (json.data ?? []).map((row: any) => {
+async function fetchPoolRateHistory(poolId: string): Promise<RatePoint[]> {
+  const rows = await backendClient.get<RateHistoryRow[]>(
+    `/v1/pool-rates/${encodeURIComponent(poolId)}`
+  );
+
+  return (rows ?? []).map((row) => {
     const d = new Date(row.recorded_at);
     const label = `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
     return {
