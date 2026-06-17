@@ -5,8 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import type { CampaignDTO } from "@/types/campaign";
 import { SEGMENTS, type SegmentId } from "@/lib/segments";
-import { getSegmentCount } from "@/lib/segments-actions";
-import { getCampaign, updateCampaign } from "@/lib/campaigns";
 
 export default function EditCampaignPage() {
   const router = useRouter();
@@ -30,13 +28,12 @@ export default function EditCampaignPage() {
         await Promise.resolve();
         if (!id) return;
         setLoadError(null);
-        let c: CampaignDTO;
-        try {
-          c = await getCampaign(id);
-        } catch {
+        const res = await fetch(`/api/campaigns/${id}`);
+        if (!res.ok) {
           setLoadError("Campaign not found");
           return;
         }
+        const c = (await res.json()) as CampaignDTO;
         if (c.status !== "draft") {
           setLoadError("Only draft campaigns can be edited");
           setInitial(null);
@@ -62,7 +59,10 @@ export default function EditCampaignPage() {
     setCountLoading(true);
     setCount(null);
     try {
-      setCount(await getSegmentCount(seg));
+      const res = await fetch(`/api/segments/${seg}/count`);
+      if (!res.ok) throw new Error("Failed to load segment size");
+      const data = (await res.json()) as { count?: number };
+      setCount(typeof data.count === "number" ? data.count : 0);
     } catch {
       setCount(null);
     } finally {
@@ -83,12 +83,22 @@ export default function EditCampaignPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await updateCampaign(id, {
-        name,
-        subject,
-        body_html: bodyHtml,
-        segment,
+      const res = await fetch(`/api/campaigns/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          subject,
+          body_html: bodyHtml,
+          segment,
+        }),
       });
+      const payload = (await res.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(payload.error ?? "Failed to update campaign");
+      }
       router.push(`/dashboard/campaigns/${id}`);
       router.refresh();
     } catch (err) {

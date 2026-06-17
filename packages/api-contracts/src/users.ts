@@ -6,7 +6,6 @@ export interface UserPreferences {
 export interface UserConnectEvent {
   wallet_address: string;
   wallet_provider: string | null;
-  ref_code?: string | null;
 }
 
 export interface UserPublic {

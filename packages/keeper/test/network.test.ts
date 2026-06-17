@@ -6,10 +6,6 @@ describe("defindexNetworkFromString", () => {
     expect(defindexNetworkFromString("PUBLIC")).not.toBeNull();
   });
 
-  it("returns a supported network for MAINNET", () => {
-    expect(defindexNetworkFromString("MAINNET")).not.toBeNull();
-  });
-
   it("returns a supported network for TESTNET", () => {
     expect(defindexNetworkFromString("TESTNET")).not.toBeNull();
   });

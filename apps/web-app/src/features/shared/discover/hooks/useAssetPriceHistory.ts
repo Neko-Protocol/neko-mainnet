@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { backendClient } from "@/lib/services/backend-client";
 
 export interface PricePoint {
   /** Display label (date) — kept for backwards compatibility. */
@@ -21,9 +20,9 @@ interface AssetPriceHistoryResponse {
 }
 
 async function fetchAssetPriceHistory(symbol: string): Promise<PricePoint[]> {
-  const json = await backendClient.get<AssetPriceHistoryResponse>(
-    `/v1/asset-prices/${encodeURIComponent(symbol)}`
-  );
+  const res = await fetch(`/api/asset-prices/${encodeURIComponent(symbol)}`);
+  if (!res.ok) throw new Error("Failed to fetch asset price history");
+  const json = (await res.json()) as AssetPriceHistoryResponse;
 
   return (json.data ?? []).map((row) => {
     const d = new Date(row.recorded_at);

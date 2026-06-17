@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
 import { DollarSign, Loader2, Trash2 } from "lucide-react";
 import {
   useCallback,
@@ -22,18 +21,6 @@ import {
   type StrategyStatus,
   type StrategyType,
 } from "@/lib/strategies-schema";
-import {
-  getStrategy,
-  getStrategyRealVolumeUsd,
-  updateStrategy,
-} from "@/lib/strategies";
-import {
-  acceptInvitation,
-  createStrategyInvitation,
-  deleteInvitation,
-  listStrategyInvitations,
-} from "@/lib/invitations";
-import { getAdminEmails } from "@/lib/auth-actions";
 
 const ACTIVITY_OPTIONS = [
   { value: "lend_deposit", label: "Lent / Deposited" },
@@ -152,12 +139,19 @@ function strategyDuration(
   return `${days} days`;
 }
 
+async function fetchJson<T>(path: string, opts?: RequestInit): Promise<T> {
+  const res = await fetch(path, { credentials: "include", ...opts });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json() as Promise<T>;
+}
+
 export default function StrategyDetailPage() {
   const params = useParams();
   const id = typeof params?.id === "string" ? params.id : "";
 
   const [strategy, setStrategy] = useState<Strategy | null>(null);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [adminEmails, setAdminEmails] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -200,14 +194,14 @@ export default function StrategyDetailPage() {
     setError(null);
     try {
       const [s, invs] = await Promise.all([
-        getStrategy(id),
-        listStrategyInvitations(id),
+        fetchJson<Strategy>(`/api/strategies/${id}`),
+        fetchJson<Invitation[]>(`/api/strategies/${id}/invitations`),
       ]);
       setStrategy(s);
       setInvitations(Array.isArray(invs) ? invs : []);
       setRealTvlLoading(true);
-      getStrategyRealVolumeUsd(id)
-        .then((v) => setRealTvl(v))
+      fetchJson<{ real_volume: number }>(`/api/strategies/${id}/real-volume`)
+        .then((d) => setRealTvl(d.real_volume))
         .catch(() => setRealTvl(null))
         .finally(() => setRealTvlLoading(false));
     } catch {
@@ -225,10 +219,13 @@ export default function StrategyDetailPage() {
     });
   }, [loadAll]);
 
-  const { data: adminEmails = [] } = useQuery({
-    queryKey: ["admin-emails"],
-    queryFn: getAdminEmails,
-  });
+  useEffect(() => {
+    fetchJson<{ emails: string[] }>("/api/admin-users")
+      .then((data) =>
+        setAdminEmails(Array.isArray(data.emails) ? data.emails : [])
+      )
+      .catch(() => setAdminEmails([]));
+  }, []);
 
   useEffect(() => {
     if (!markedAcceptedBanner) return;
@@ -303,21 +300,30 @@ export default function StrategyDetailPage() {
     if (!id || !strategy) return;
     setSubmittingEdit(true);
     try {
-      await updateStrategy(id, {
-        name: eName.trim(),
-        description: eDesc.trim() || null,
-        type: eType,
-        target_count: eTarget,
-        target_volume:
-          eTargetVolume === "" ? 0 : Math.max(0, Number(eTargetVolume) || 0),
-        assigned_to: eAssigned.trim() || null,
-        status: eStatus,
+      const res = await fetch(`/api/strategies/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name: eName.trim(),
+          description: eDesc.trim() || null,
+          type: eType,
+          target_count: eTarget,
+          target_volume:
+            eTargetVolume === "" ? 0 : Math.max(0, Number(eTargetVolume) || 0),
+          assigned_to: eAssigned.trim() || null,
+          status: eStatus,
+        }),
       });
+      if (!res.ok) {
+        setError("Could not update strategy.");
+        return;
+      }
       setEditOpen(false);
       await loadAll();
       setError(null);
     } catch {
-      setError("Could not update strategy.");
+      setError("Network error.");
     } finally {
       setSubmittingEdit(false);
     }
@@ -331,13 +337,22 @@ export default function StrategyDetailPage() {
     if (!ok) return;
     setClosingStrategy(true);
     try {
-      await updateStrategy(id, {
-        status: "completed",
-        completed_at: new Date().toISOString(),
+      const res = await fetch(`/api/strategies/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          status: "completed",
+          completed_at: new Date().toISOString(),
+        }),
       });
+      if (!res.ok) {
+        setError("Could not close strategy.");
+        return;
+      }
       await loadAll();
     } catch {
-      setError("Could not close strategy.");
+      setError("Network error.");
     } finally {
       setClosingStrategy(false);
     }
@@ -348,13 +363,29 @@ export default function StrategyDetailPage() {
     if (!id) return;
     setSubmitInvite(true);
     try {
-      await createStrategyInvitation(id, {
-        email: formEmail.trim(),
-        type: formType,
-        assigned_to: formAssigned.trim() || undefined,
-        notes: formNotes.trim() || undefined,
-        expires_days: formExpiresDays,
+      const res = await fetch(`/api/strategies/${id}/invitations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          email: formEmail.trim(),
+          type: formType,
+          assigned_to: formAssigned.trim() || undefined,
+          notes: formNotes.trim() || undefined,
+          expires_days: formExpiresDays,
+        }),
       });
+      if (!res.ok) {
+        let msg = "Failed to send invitation.";
+        try {
+          const j = (await res.json()) as { error?: string };
+          if (typeof j?.error === "string") msg = j.error;
+        } catch {
+          //
+        }
+        setError(msg);
+        return;
+      }
       setInviteOpen(false);
       setFormEmail("");
       setFormType("user");
@@ -363,10 +394,8 @@ export default function StrategyDetailPage() {
       setFormExpiresDays(7);
       setError(null);
       await loadAll();
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to send invitation."
-      );
+    } catch {
+      setError("Network error.");
     } finally {
       setSubmitInvite(false);
     }
@@ -378,10 +407,17 @@ export default function StrategyDetailPage() {
       window.confirm(`Delete invitation for ${inv.email}?`);
     if (!ok) return;
     try {
-      await deleteInvitation(inv.id);
+      const res = await fetch(`/api/invitations/${inv.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        setError("Could not delete invitation.");
+        return;
+      }
       await loadAll();
     } catch {
-      setError("Could not delete invitation.");
+      setError("Network error.");
     }
   }
 
@@ -410,21 +446,33 @@ export default function StrategyDetailPage() {
     setAcceptLoading(true);
     setError(null);
     try {
-      await acceptInvitation(inv.id, {
-        accepted_notes: acceptedNotes.trim() || null,
-        volume_moved: volumeNum,
+      const res = await fetch(`/api/invitations/${inv.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          accepted_notes: acceptedNotes.trim() || null,
+          volume_moved: volumeNum,
+        }),
       });
+      if (!res.ok) {
+        let msg = "Could not mark invitation as accepted.";
+        try {
+          const j = (await res.json()) as { error?: string };
+          if (typeof j?.error === "string") msg = j.error;
+        } catch {
+          //
+        }
+        setError(msg);
+        return;
+      }
       setAcceptingInvitation(null);
       setAcceptedNotes("");
       setVolumeMoved("");
       setMarkedAcceptedBanner("Marked as accepted");
       await loadAll();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Could not mark invitation as accepted."
-      );
+    } catch {
+      setError("Network error.");
     } finally {
       setAcceptLoading(false);
     }

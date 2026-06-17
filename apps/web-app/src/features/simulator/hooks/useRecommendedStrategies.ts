@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { backendClient } from "@/lib/services/backend-client";
 import { usePools } from "@/lib/orchestrator/hooks/usePools";
 import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
@@ -27,9 +26,9 @@ export interface ResolvedRecommendedStrategy {
 }
 
 async function fetchRecommended(): Promise<RecommendedStrategyDto[]> {
-  const data = await backendClient.get<{
-    strategies: RecommendedStrategyDto[];
-  }>("/v1/strategies/recommended");
+  const res = await fetch("/api/strategies/recommended");
+  if (!res.ok) throw new Error("Failed to fetch recommended strategies");
+  const data = (await res.json()) as { strategies: RecommendedStrategyDto[] };
   return data.strategies ?? [];
 }
 

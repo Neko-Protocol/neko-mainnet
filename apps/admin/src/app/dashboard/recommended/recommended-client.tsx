@@ -2,8 +2,7 @@
 
 import { Loader2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   decodeDestinationValue,
   encodeDestinationValue,
@@ -11,16 +10,16 @@ import {
   type DestinationKind,
   type RecommendedStrategy,
 } from "@/lib/recommended-strategies-schema";
-import {
-  createRecommendedStrategy,
-  deleteRecommendedStrategy,
-  listCatalogDestinations,
-  updateRecommendedStrategy,
-} from "@/lib/recommended-strategies";
 
 type Props = {
   recommendations: RecommendedStrategy[];
 };
+
+async function fetchJson<T>(path: string): Promise<T> {
+  const res = await fetch(path, { credentials: "include" });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json() as Promise<T>;
+}
 
 const CHIP =
   "inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[11px] text-white/70";
@@ -145,6 +144,8 @@ function buildPayload(form: FormState): Record<string, unknown> | null {
 export default function RecommendedClient({ recommendations }: Props) {
   const router = useRouter();
 
+  const [catalog, setCatalog] = useState<CatalogDestination[]>([]);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -152,10 +153,16 @@ export default function RecommendedClient({ recommendations }: Props) {
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: catalog = [], isSuccess: catalogLoaded } = useQuery({
-    queryKey: ["recommended-catalog"],
-    queryFn: listCatalogDestinations,
-  });
+  useEffect(() => {
+    fetchJson<{ destinations: CatalogDestination[] }>(
+      "/api/recommended/catalog"
+    )
+      .then((data) =>
+        setCatalog(Array.isArray(data.destinations) ? data.destinations : [])
+      )
+      .catch(() => setCatalog([]))
+      .finally(() => setCatalogLoaded(true));
+  }, []);
 
   const tokenOptions = useMemo(() => {
     const codes = new Set<string>();
@@ -243,23 +250,32 @@ export default function RecommendedClient({ recommendations }: Props) {
     }
 
     try {
-      if (editingId) {
-        await updateRecommendedStrategy(editingId, payload);
-      } else {
-        await createRecommendedStrategy(
-          payload as Parameters<typeof createRecommendedStrategy>[0]
-        );
+      const url = editingId
+        ? `/api/recommended/${editingId}`
+        : "/api/recommended";
+      const res = await fetch(url, {
+        method: editingId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        let msg = editingId
+          ? "Failed to update recommendation."
+          : "Failed to create recommendation.";
+        try {
+          const j = (await res.json()) as { error?: string };
+          if (typeof j?.error === "string") msg = j.error;
+        } catch {
+          //
+        }
+        setError(msg);
+        return;
       }
       closeModal();
       refresh();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : editingId
-            ? "Failed to update recommendation."
-            : "Failed to create recommendation."
-      );
+    } catch {
+      setError("Network error.");
     } finally {
       setSubmitting(false);
     }
@@ -269,10 +285,19 @@ export default function RecommendedClient({ recommendations }: Props) {
     setActionId(r.id);
     setError(null);
     try {
-      await updateRecommendedStrategy(r.id, { is_active: !r.is_active });
+      const res = await fetch(`/api/recommended/${r.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ is_active: !r.is_active }),
+      });
+      if (!res.ok) {
+        setError("Failed to update active status.");
+        return;
+      }
       refresh();
     } catch {
-      setError("Failed to update active status.");
+      setError("Network error.");
     } finally {
       setActionId(null);
     }
@@ -283,10 +308,17 @@ export default function RecommendedClient({ recommendations }: Props) {
     setActionId(r.id);
     setError(null);
     try {
-      await deleteRecommendedStrategy(r.id);
+      const res = await fetch(`/api/recommended/${r.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        setError("Failed to delete recommendation.");
+        return;
+      }
       refresh();
     } catch {
-      setError("Failed to delete recommendation.");
+      setError("Network error.");
     } finally {
       setActionId(null);
     }

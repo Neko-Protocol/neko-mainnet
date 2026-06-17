@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { usersService } from "@/lib/services/users.service";
-import { useReferralStore } from "@/stores/referral.store";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 
 // Registers the connected wallet with our Supabase users table on every
@@ -12,7 +11,6 @@ import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 export function useUserSync() {
   const address = useStellarWalletStore((s) => s.address);
   const walletName = useStellarWalletStore((s) => s.walletName);
-  const refCode = useReferralStore((s) => s.refCode);
   const lastSynced = useRef<string | null>(null);
 
   useEffect(() => {
@@ -22,7 +20,6 @@ export function useUserSync() {
     void usersService.register({
       wallet_address: address,
       wallet_provider: walletName ?? null,
-      ref_code: refCode ?? null,
     });
-  }, [address, walletName, refCode]);
+  }, [address, walletName]);
 }

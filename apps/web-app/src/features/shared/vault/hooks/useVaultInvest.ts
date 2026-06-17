@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { backendClient, BackendError } from "@/lib/services/backend-client";
 import { useVaultData } from "./useVaultData";
 
 interface StrategyAllocation {
@@ -56,22 +55,16 @@ interface InvestResponse {
   vaults?: KeeperVaultResult[];
 }
 
-// The backend exposes the keeper trigger (`POST /v1/vault-invest/run-now`) but
-// no read-only "invest status" endpoint, so the live status panel stays empty
-// until that data is exposed. Returning a disabled status keeps the UI inert
-// without issuing a request that would 404.
-const EMPTY_INVEST_STATUS: InvestStatus = {
-  idle: 0,
-  total: 0,
-  canInvest: false,
-  canRebalance: false,
-  cooldownRemaining: 0,
-  allocations: [],
-  targetAllocations: [],
-};
-
-async function fetchInvestStatus(): Promise<InvestStatus> {
-  return EMPTY_INVEST_STATUS;
+async function fetchInvestStatus({
+  queryKey,
+}: {
+  queryKey: readonly unknown[];
+}): Promise<InvestStatus> {
+  const id = queryKey[1] as string | undefined;
+  const q = id ? `?vault=${encodeURIComponent(id)}` : "";
+  const res = await fetch(`/api/vault/invest${q}`);
+  if (!res.ok) throw new Error("Failed to fetch invest status");
+  return res.json();
 }
 
 export function useVaultInvest(vaultContractId: string | null | undefined) {
@@ -82,7 +75,8 @@ export function useVaultInvest(vaultContractId: string | null | undefined) {
   const { data, refetch: refetchStatus } = useQuery({
     queryKey: ["vault-invest-status", vaultContractId],
     queryFn: fetchInvestStatus,
-    staleTime: Infinity,
+    refetchInterval: 30_000,
+    staleTime: 15_000,
     enabled: !!vaultContractId,
   });
 
@@ -92,23 +86,15 @@ export function useVaultInvest(vaultContractId: string | null | undefined) {
     setLastResult(null);
 
     try {
-      const q = vaultContractId
-        ? `?vault=${encodeURIComponent(vaultContractId)}`
-        : "";
-      let json: InvestResponse;
-      try {
-        json = await backendClient.post<InvestResponse>(
-          `/v1/vault-invest/run-now${q}`,
-          {}
-        );
-      } catch (err) {
-        const message =
-          err instanceof BackendError
-            ? err.message
-            : err instanceof Error
-              ? err.message
-              : "Unexpected error";
-        setLastResult(`Error: ${message}`);
+      const res = await fetch("/api/vault/invest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vault: vaultContractId }),
+      });
+      const json = (await res.json()) as InvestResponse;
+
+      if (!res.ok && res.status !== 207) {
+        setLastResult(`Error: ${json.error}`);
         return;
       }
 
