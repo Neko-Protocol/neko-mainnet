@@ -10,7 +10,6 @@ export function defindexNetworkFromString(
 ): SupportedNetworks | null {
   switch (stellarNetwork) {
     case "PUBLIC":
-    case "MAINNET":
       return SupportedNetworks.MAINNET;
     case "TESTNET":
     case "FUTURENET":

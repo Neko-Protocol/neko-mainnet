@@ -1,7 +1,3 @@
-/*
-THIS FEATURE IS NOT BEING UTILIZED AND ENDPOINTS DO NOT EXIST.
-*/
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -14,7 +10,6 @@ import type { AnchorProvider } from "@/lib/anchors/types";
 import type { RampDirection } from "../../types/ramp";
 import { RAMP_PROVIDERS } from "../../constants/ramp.config";
 import { simulateFiatReceived } from "../../utils/rampApi";
-import { backendClient } from "@/lib/services/backend-client";
 
 import { useRampState } from "../../hooks/useRampState";
 import { useAnchorCustomer } from "../../hooks/useAnchorCustomer";
@@ -133,9 +128,14 @@ const OnOffRamps: React.FC = () => {
     const checkProviderStatus = async () => {
       setIsCheckingProviderStatus(true);
       try {
-        const result = await backendClient.get<{ configured?: boolean }>(
-          "/v1/anchor/etherfuse/status"
-        );
+        const response = await fetch("/api/anchor/etherfuse/status", {
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          setIsEtherfuseConfigured(false);
+          return;
+        }
+        const result: { configured?: boolean } = await response.json();
         setIsEtherfuseConfigured(Boolean(result.configured));
       } catch {
         setIsEtherfuseConfigured(false);

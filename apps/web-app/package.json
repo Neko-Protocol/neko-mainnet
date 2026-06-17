@@ -23,7 +23,6 @@
     "@neko/keeper": "*",
     "@neko/orchestrator": "*",
     "@neko/reflector": "0.0.0",
-    "@neko/stellar-wallet": "0.0.0",
     "@soroswap/sdk": "^0.3.8",
     "@stellar/design-system": "^3.2.7",
     "@stellar/freighter-api": "^5.0.0",

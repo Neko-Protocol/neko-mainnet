@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { backendClient } from "@/lib/services/backend-client";
 
 export interface VaultApyStrategy {
   name: string;
@@ -15,12 +14,17 @@ export interface VaultApyResponse {
   note?: string;
 }
 
-export async function fetchVaultApy(
-  vaultId: string
-): Promise<VaultApyResponse> {
-  const data = await backendClient.get<VaultApyResponse>(
-    `/v1/vault/apy?vault=${encodeURIComponent(vaultId)}`
+export async function fetchVaultApy(vaultId: string): Promise<VaultApyResponse> {
+  const res = await fetch(
+    `/api/vault/apy?vault=${encodeURIComponent(vaultId)}`
   );
+  if (!res.ok) {
+    throw new Error(`Failed to load vault APY (${res.status})`);
+  }
+  const data = (await res.json()) as VaultApyResponse & { error?: string };
+  if (data.error) {
+    throw new Error(data.error);
+  }
   return {
     vaultApy: data.vaultApy ?? null,
     strategies: Array.isArray(data.strategies) ? data.strategies : [],
@@ -28,6 +32,10 @@ export async function fetchVaultApy(
   };
 }
 
+/**
+ * Client hook around `GET /api/vault/apy` that returns the live APY and
+ * strategy breakdown for a DeFindex vault.
+ */
 export function useVaultApy(vaultId: string | null | undefined) {
   const query = useQuery<VaultApyResponse, Error>({
     queryKey: ["vault-apy", vaultId],

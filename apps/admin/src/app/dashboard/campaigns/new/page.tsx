@@ -4,8 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { SEGMENTS, type SegmentId } from "@/lib/segments";
-import { getSegmentCount } from "@/lib/segments-actions";
-import { createCampaign } from "@/lib/campaigns";
 
 export default function NewCampaignPage() {
   const router = useRouter();
@@ -23,7 +21,10 @@ export default function NewCampaignPage() {
     setCountLoading(true);
     setCount(null);
     try {
-      setCount(await getSegmentCount(seg));
+      const res = await fetch(`/api/segments/${seg}/count`);
+      if (!res.ok) throw new Error("Failed to load segment size");
+      const data = (await res.json()) as { count?: number };
+      setCount(typeof data.count === "number" ? data.count : 0);
     } catch {
       setCount(null);
     } finally {
@@ -43,14 +44,25 @@ export default function NewCampaignPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const created = await createCampaign({
-        name,
-        subject,
-        body_html: bodyHtml,
-        segment,
+      const res = await fetch("/api/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          subject,
+          body_html: bodyHtml,
+          segment,
+        }),
       });
-      if (!created.id) throw new Error("Missing campaign id");
-      router.push(`/dashboard/campaigns/${created.id}`);
+      const payload = (await res.json().catch(() => ({}))) as {
+        id?: string;
+        error?: string;
+      };
+      if (!res.ok) {
+        throw new Error(payload.error ?? "Failed to create campaign");
+      }
+      if (!payload.id) throw new Error("Missing campaign id");
+      router.push(`/dashboard/campaigns/${payload.id}`);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

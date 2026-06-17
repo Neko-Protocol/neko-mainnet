@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { backendClient } from "@/lib/services/backend-client";
 
 export interface VaultPpsPoint {
   date: string;
@@ -7,19 +6,15 @@ export interface VaultPpsPoint {
   recordedAt: string;
 }
 
-interface VaultPpsHistoryResponse {
-  data: { pps: string; recorded_at: string }[];
-  apy7d: number | null;
-}
-
 async function fetchVaultPpsHistory(
   vaultId: string
 ): Promise<{ points: VaultPpsPoint[]; apy7d: number | null }> {
-  const json = await backendClient.get<VaultPpsHistoryResponse>(
-    `/v1/vault-pps/${encodeURIComponent(vaultId)}`
-  );
+  const res = await fetch(`/api/vault-pps/${encodeURIComponent(vaultId)}`);
+  if (!res.ok) throw new Error("Failed to fetch vault PPS history");
+  const json = await res.json();
 
-  const points: VaultPpsPoint[] = (json.data ?? []).map((row) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const points: VaultPpsPoint[] = (json.data ?? []).map((row: any) => {
     const d = new Date(row.recorded_at);
     const label = `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
     return {
