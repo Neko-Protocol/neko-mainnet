@@ -1,12 +1,12 @@
-import { DashboardCache } from "./dashboard-cache";
+import { CacheService } from "./cache.service";
 
-describe("DashboardCache", () => {
-  let cache: DashboardCache;
+describe("CacheService", () => {
+  let cache: CacheService;
 
   beforeEach(() => {
     jest.useFakeTimers({ doNotFake: ["nextTick", "setImmediate"] });
     jest.setSystemTime(new Date("2026-01-01T00:00:00Z"));
-    cache = new DashboardCache();
+    cache = new CacheService();
   });
 
   afterEach(() => {
@@ -90,7 +90,7 @@ describe("DashboardCache", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it("clear empties cache and inflight map", async () => {
+  it("clear empties cache and inflight map", () => {
     cache.set("k1", 1, 1000);
     cache.set("k2", 2, 1000);
     cache.clear();

@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { CacheModule } from "./cache/cache.module";
 import { EmailModule } from "./email/email.module";
 import { HealthModule } from "./health/health.module";
 import { OrchestratorModule } from "./orchestrator/orchestrator.module";
@@ -7,6 +8,7 @@ import { SupabaseModule } from "./supabase/supabase.module";
 
 @Module({
   imports: [
+    CacheModule,
     StellarModule,
     SupabaseModule,
     OrchestratorModule,

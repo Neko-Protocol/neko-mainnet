@@ -16,6 +16,7 @@ import { ConfigService } from "@nestjs/config";
 import { fetchManagedFunds } from "../vault-invest/keeper/tx";
 import { VaultPpsService } from "./vault-pps.service";
 import { SupabaseService } from "@core/supabase/supabase.service";
+import { CacheService } from "@core/cache/cache.service";
 
 const { Client: ClientMock } = jest.requireMock("@neko/defindex-vault") as {
   Client: jest.Mock;
@@ -55,6 +56,7 @@ describe("VaultPpsService", () => {
     const mod = await Test.createTestingModule({
       providers: [
         VaultPpsService,
+        CacheService,
         { provide: ConfigService, useValue: config },
         { provide: SupabaseService, useValue: supabase },
       ],

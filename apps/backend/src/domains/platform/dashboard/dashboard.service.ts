@@ -11,7 +11,7 @@ import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { OrchestratorService } from "@core/orchestrator/orchestrator.service";
 import { StellarRpcService } from "@core/stellar/stellar-rpc.service";
 import { STELLAR_PRICE_SERVICE } from "@domains/market-data/asset-prices/asset-prices.tokens";
-import { DashboardCache } from "./cache/dashboard-cache";
+import { CacheService } from "@core/cache/cache.service";
 import { batchCheckLpBalances } from "./lp-screen";
 import type {
   DashboardPoolCatalogResponse,
@@ -90,7 +90,7 @@ export class DashboardService {
   constructor(
     private readonly orchestratorSvc: OrchestratorService,
     private readonly stellar: StellarRpcService,
-    private readonly cache: DashboardCache,
+    private readonly cache: CacheService,
     private readonly config: ConfigService,
     @Inject(STELLAR_PRICE_SERVICE)
     private readonly priceService: StellarPriceService

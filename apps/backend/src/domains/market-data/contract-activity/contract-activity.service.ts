@@ -1,5 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { xdr } from "@stellar/stellar-sdk";
+import { CacheService } from "@core/cache/cache.service";
+
+const CONTRACT_ACTIVITY_TTL_MS = 60_000;
 
 export interface PoolEvent {
   id: string;
@@ -50,7 +53,17 @@ function tryDecodeAmount(bodyXdrBase64: string): number | null {
 
 @Injectable()
 export class ContractActivityService {
+  constructor(private readonly cache: CacheService) {}
+
   async getActivity(poolId: string): Promise<PoolEvent[]> {
+    return this.cache.getOrFetch(
+      `contract-activity:${poolId}`,
+      CONTRACT_ACTIVITY_TTL_MS,
+      () => this.fetchActivity(poolId)
+    );
+  }
+
+  private async fetchActivity(poolId: string): Promise<PoolEvent[]> {
     const contractId = extractContractId(decodeURIComponent(poolId));
     const url = `https://api.stellar.expert/explorer/public/contract/${contractId}/events?limit=200&order=desc`;
 

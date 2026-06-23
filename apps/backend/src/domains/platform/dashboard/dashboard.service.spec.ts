@@ -18,7 +18,7 @@ jest.mock("./lp-screen", () => ({
 import { ConfigService } from "@nestjs/config";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { parseAllVaultIds } from "@neko/keeper";
-import { DashboardCache } from "./cache/dashboard-cache";
+import { CacheService } from "@core/cache/cache.service";
 import { DashboardService } from "./dashboard.service";
 import { batchCheckLpBalances } from "./lp-screen";
 
@@ -45,7 +45,7 @@ function build({
   priceService?: { getPriceWithSource: jest.Mock };
   config?: Partial<Record<string, string>>;
 }) {
-  const cache = new DashboardCache();
+  const cache = new CacheService();
   const stellar = {
     rpc: { __mock: "rpc.Server" },
     getNetworkPassphrase: () => "Test SDF Network ; September 2015",

@@ -4,6 +4,9 @@ import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { parseAllVaultIds } from "@neko/keeper";
 import { fetchManagedFunds } from "../vault-invest/keeper/tx";
 import { SupabaseService } from "@core/supabase/supabase.service";
+import { CacheService } from "@core/cache/cache.service";
+
+const VAULT_PPS_TTL_MS = 15 * 60_000;
 
 export interface RecordPpsResult {
   inserted: number;
@@ -30,7 +33,8 @@ export class VaultPpsService {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly supabase: SupabaseService
+    private readonly supabase: SupabaseService,
+    private readonly cache: CacheService
   ) {
     this.rpcUrl = config.getOrThrow<string>("STELLAR_RPC_URL");
     this.networkPassphrase = config.getOrThrow<string>(
@@ -89,6 +93,12 @@ export class VaultPpsService {
   }
 
   async getHistory(vaultId: string): Promise<VaultPpsHistoryResult> {
+    return this.cache.getOrFetch(`vault-pps:${vaultId}`, VAULT_PPS_TTL_MS, () =>
+      this.fetchHistory(vaultId)
+    );
+  }
+
+  private async fetchHistory(vaultId: string): Promise<VaultPpsHistoryResult> {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await this.supabase.client
       .from("vault_pps_history")

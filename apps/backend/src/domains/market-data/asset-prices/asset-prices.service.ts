@@ -8,7 +8,10 @@ import {
   type StellarPriceService,
 } from "@neko/keeper";
 import { SupabaseService } from "@core/supabase/supabase.service";
+import { CacheService } from "@core/cache/cache.service";
 import { STELLAR_PRICE_SERVICE } from "./asset-prices.tokens";
+
+const ASSET_PRICES_TTL_MS = 5 * 60_000;
 
 export interface RecordPricesResult {
   inserted: number;
@@ -28,6 +31,7 @@ export class AssetPricesService {
   constructor(
     private readonly config: ConfigService,
     private readonly supabase: SupabaseService,
+    private readonly cache: CacheService,
     @Inject(STELLAR_PRICE_SERVICE)
     private readonly priceService: StellarPriceService
   ) {
@@ -77,6 +81,14 @@ export class AssetPricesService {
   }
 
   async getHistory(symbol: string): Promise<AssetPriceHistoryRow[]> {
+    return this.cache.getOrFetch(
+      `asset-prices:${symbol}`,
+      ASSET_PRICES_TTL_MS,
+      () => this.fetchHistory(symbol)
+    );
+  }
+
+  private async fetchHistory(symbol: string): Promise<AssetPriceHistoryRow[]> {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const { data, error } = await this.supabase.client
       .from("asset_price_history")

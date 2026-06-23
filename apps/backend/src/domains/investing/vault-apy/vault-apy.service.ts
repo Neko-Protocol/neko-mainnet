@@ -28,6 +28,9 @@ import {
 } from "@neko/orchestrator";
 import type { Network } from "@blend-capital/blend-sdk";
 import { StellarRpcService } from "@core/stellar/stellar-rpc.service";
+import { CacheService } from "@core/cache/cache.service";
+
+const VAULT_APY_TTL_MS = 10 * 60_000;
 
 function mapNetworkId(raw: string): StellarNetworkId {
   const n = raw.trim().toUpperCase();
@@ -110,7 +113,8 @@ export class VaultApyService {
 
   constructor(
     private readonly config: ConfigService,
-    private readonly stellar: StellarRpcService
+    private readonly stellar: StellarRpcService,
+    private readonly cache: CacheService
   ) {
     this.stellarNetwork =
       this.config.get<string>("STELLAR_NETWORK") ?? "mainnet";
@@ -316,7 +320,12 @@ export class VaultApyService {
         note: "No vault configured for this network.",
       };
     }
+    return this.cache.getOrFetch(`vault-apy:${vaultId}`, VAULT_APY_TTL_MS, () =>
+      this.computeVaultApy(vaultId)
+    );
+  }
 
+  private async computeVaultApy(vaultId: string): Promise<VaultApyResult> {
     // For all vaults, try the DeFindex SDK APY first.
     const defindexApy = await this.getDefindexVaultApy(vaultId);
 

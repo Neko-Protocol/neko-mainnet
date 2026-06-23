@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { StellarRpcService } from "@core/stellar/stellar-rpc.service";
 import { SupabaseService } from "@core/supabase/supabase.service";
+import { CacheService } from "@core/cache/cache.service";
 import { BlendPoolAdapter } from "./adapters/blend-pool.adapter";
 import type { PoolRateRow } from "./adapters/blend-pool.adapter";
 import { AquaPoolAdapter } from "./adapters/aqua-pool.adapter";
@@ -12,16 +13,29 @@ import { getBlendPoolIds } from "./adapters/blend-config";
 import type { PoolRateHistoryEntryDto } from "./dto/pool-rate-history-entry.dto";
 import type { RecordRatesResponseDto } from "./dto/record-rates-response.dto";
 
+const POOL_RATES_TTL_MS = 5 * 60_000;
+
 @Injectable()
 export class PoolRatesService {
   private readonly logger = new Logger(PoolRatesService.name);
 
   constructor(
     private readonly supabase: SupabaseService,
-    private readonly stellar: StellarRpcService
+    private readonly stellar: StellarRpcService,
+    private readonly cache: CacheService
   ) {}
 
   async getHistory(poolId: string): Promise<PoolRateHistoryEntryDto[]> {
+    return this.cache.getOrFetch(
+      `pool-rates:${poolId}`,
+      POOL_RATES_TTL_MS,
+      () => this.fetchHistory(poolId)
+    );
+  }
+
+  private async fetchHistory(
+    poolId: string
+  ): Promise<PoolRateHistoryEntryDto[]> {
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
     const { data, error } = await this.supabase.client

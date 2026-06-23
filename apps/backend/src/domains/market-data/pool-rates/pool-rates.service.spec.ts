@@ -3,6 +3,7 @@ import { InternalServerErrorException } from "@nestjs/common";
 import { PoolRatesService } from "./pool-rates.service";
 import { StellarRpcService } from "@core/stellar/stellar-rpc.service";
 import { SupabaseService } from "@core/supabase/supabase.service";
+import { CacheService } from "@core/cache/cache.service";
 
 jest.mock("./adapters/blend-pool.adapter");
 jest.mock("./adapters/aqua-pool.adapter");
@@ -41,6 +42,7 @@ async function buildModule(supabase: SupabaseService) {
   const mod = await Test.createTestingModule({
     providers: [
       PoolRatesService,
+      CacheService,
       { provide: StellarRpcService, useValue: mockStellar },
       { provide: SupabaseService, useValue: supabase },
     ],

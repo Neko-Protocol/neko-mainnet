@@ -13,6 +13,7 @@ jest.mock("@neko/keeper", () => ({
 
 import { AssetPricesService } from "./asset-prices.service";
 import { SupabaseService } from "@core/supabase/supabase.service";
+import { CacheService } from "@core/cache/cache.service";
 import { STELLAR_PRICE_SERVICE } from "./asset-prices.tokens";
 
 describe("AssetPricesService", () => {
@@ -37,6 +38,7 @@ describe("AssetPricesService", () => {
       ],
       providers: [
         AssetPricesService,
+        CacheService,
         { provide: SupabaseService, useValue: supabase },
         { provide: STELLAR_PRICE_SERVICE, useValue: priceService },
       ],
@@ -69,6 +71,7 @@ describe("AssetPricesService", () => {
       ],
       providers: [
         AssetPricesService,
+        CacheService,
         { provide: SupabaseService, useValue: supabase },
         { provide: STELLAR_PRICE_SERVICE, useValue: priceService },
       ],
@@ -102,6 +105,7 @@ describe("AssetPricesService", () => {
       ],
       providers: [
         AssetPricesService,
+        CacheService,
         { provide: SupabaseService, useValue: supabase },
         { provide: STELLAR_PRICE_SERVICE, useValue: priceService },
       ],

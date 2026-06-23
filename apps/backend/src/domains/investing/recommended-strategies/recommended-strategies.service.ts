@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import { SupabaseService } from "@core/supabase/supabase.service";
+import { CacheService } from "@core/cache/cache.service";
 import {
   CreateRecommendedDto,
   UpdateRecommendedDto,
@@ -26,9 +27,16 @@ function parseIntNumber(raw: unknown, fallback = 0): number {
   return fallback;
 }
 
+const RECOMMENDED_TTL_MS = 10 * 60_000;
+const PUBLIC_CACHE_KEY = "recommended:public";
+const CATALOG_CACHE_KEY = "recommended:catalog";
+
 @Injectable()
 export class RecommendedStrategiesService {
-  constructor(private readonly supabase: SupabaseService) {}
+  constructor(
+    private readonly supabase: SupabaseService,
+    private readonly cache: CacheService
+  ) {}
 
   private mapRow(row: Record<string, unknown>): RecommendedStrategy | null {
     const id = typeof row.id === "string" ? row.id : null;
@@ -103,6 +111,12 @@ export class RecommendedStrategiesService {
   }
 
   async listCatalogDestinations(): Promise<CatalogDestination[]> {
+    return this.cache.getOrFetch(CATALOG_CACHE_KEY, RECOMMENDED_TTL_MS, () =>
+      this.fetchCatalogDestinations()
+    );
+  }
+
+  private async fetchCatalogDestinations(): Promise<CatalogDestination[]> {
     const { data, error } = await this.supabase.client
       .from("destination_catalog")
       .select("kind, id, name, protocol, apy, accepted_token_codes")
@@ -139,6 +153,12 @@ export class RecommendedStrategiesService {
    * camelCase DTO shape the web-app consumes.
    */
   async listPublic(): Promise<PublicRecommendedStrategy[]> {
+    return this.cache.getOrFetch(PUBLIC_CACHE_KEY, RECOMMENDED_TTL_MS, () =>
+      this.fetchPublic()
+    );
+  }
+
+  private async fetchPublic(): Promise<PublicRecommendedStrategy[]> {
     const { data, error } = await this.supabase.client
       .from("recommended_strategies")
       .select("*")
@@ -254,6 +274,7 @@ export class RecommendedStrategiesService {
         message: error?.message,
       });
     }
+    this.cache.invalidate(PUBLIC_CACHE_KEY);
     return strategy;
   }
 
@@ -329,6 +350,7 @@ export class RecommendedStrategiesService {
       .from("recommended_strategies")
       .update(patch)
       .eq("id", id);
+    this.cache.invalidate(PUBLIC_CACHE_KEY);
   }
 
   async delete(id: string): Promise<void> {
@@ -336,5 +358,6 @@ export class RecommendedStrategiesService {
       .from("recommended_strategies")
       .delete()
       .eq("id", id);
+    this.cache.invalidate(PUBLIC_CACHE_KEY);
   }
 }

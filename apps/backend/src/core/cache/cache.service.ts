@@ -5,10 +5,18 @@ interface Entry<T> {
   expiresAt: number;
 }
 
+const DEFAULT_MAX_SIZE = 5_000;
+
+/**
+ * In-process TTL cache with in-flight request de-duplication. Suitable for a
+ * single long-lived instance: entries are lost on restart (and rebuilt lazily)
+ * and are not shared across instances.
+ */
 @Injectable()
-export class DashboardCache {
+export class CacheService {
   private readonly store = new Map<string, Entry<unknown>>();
   private readonly inflight = new Map<string, Promise<unknown>>();
+  private readonly maxSize = DEFAULT_MAX_SIZE;
 
   get<T>(key: string): T | undefined {
     const entry = this.store.get(key);
@@ -21,6 +29,10 @@ export class DashboardCache {
   }
 
   set<T>(key: string, data: T, ttlMs: number): void {
+    if (!this.store.has(key) && this.store.size >= this.maxSize) {
+      const oldest = this.store.keys().next().value;
+      if (oldest !== undefined) this.store.delete(oldest);
+    }
     this.store.set(key, { data, expiresAt: Date.now() + ttlMs });
   }
 
