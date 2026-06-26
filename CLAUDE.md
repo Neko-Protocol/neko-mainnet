@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Neko DApp is a DeFi protocol built on the **Stellar/Soroban** network. It offers liquidity pools, lending, borrowing, vault strategies, and an on/off-ramp flow oriented at both crypto-native users ("expert" mode) and fiat-first users ("basic" mode). The repo is a **Turborepo + npm workspaces monorepo** with three apps and shared packages.
+Neko DApp is an RWA aggregator (capital routing layer) application that aggregates external protocols and services: DeFindex vaults, Reflector oracle data, Blend/SoroSwap/Aquarius market integrations, Soroswap swaps, wallet flows, admin operations, and on/off-ramp flows. It is a **Turborepo + npm workspaces monorepo** with three apps and shared packages.
 
-**The Soroban smart contracts are NOT in this repo.** They are deployed on-chain (testnet and mainnet) and consumed here through auto-generated TypeScript bindings under `packages/contracts/*`. Authoring or deploying contracts happens in a separate repository.
+**Neko-owned smart contracts are not used in this repo.** The only generated Soroban bindings consumed here are external integrations: `@neko/defindex-vault` and `@neko/reflector`.
 
 ## Monorepo Structure
 
@@ -17,12 +17,13 @@ apps/
   backend/        # API server — NestJS 10 (port 4000), Supabase-backed
 packages/
   config/         # Shared ESLint, PostCSS, Tailwind 4 preset, tsconfig
-  contracts/      # Auto-generated TS bindings for deployed Soroban contracts
-    lending/      # @neko/lending
-    backstop/     # @neko/backstop
+  api-contracts/  # Shared DTOs/types for web/admin/backend API contracts
+  keeper/         # Vault keeper, asset config, pricing, DeFindex helpers
+  orchestrator/   # External market orchestration across Blend, SoroSwap, Aquarius
+  stellar-wallet/ # Freighter + Stellar Wallets Kit Zustand integration
+  contracts/      # Auto-generated TS bindings for external deployed contracts only
     reflector/    # @neko/reflector (SEP-40 oracle)
     defindex-vault/ # @neko/defindex-vault
-scripts/          # One-off vault onboarding scripts (.mjs)
 ```
 
 Workspaces declared in root `package.json`: `apps/*`, `packages/*`, `packages/contracts/*`.
@@ -51,15 +52,11 @@ npm run lint             # eslint
 
 ### Backend (`apps/backend/`)
 
-Standard NestJS — `npm run start:dev`, `npm run build`, `npm run test`. Listens on port 4000 with CORS enabled.
+NestJS — `npm run dev`, `npm run build`, `npm run test`. Listens on port 4000 with URI versioning under `/v1` and Swagger at `/docs`.
 
 ### Admin (`apps/admin/`)
 
 Standard Next.js — `npm run dev`, `npm run build`, `npm run start`.
-
-### Vault onboarding scripts (`scripts/`)
-
-Run with `node scripts/<name>.mjs`. Available: `create-eurc-vault`, `create-tesouro-vault`, `create-usdc-vault`, `invest-eurc`, `invest-tesouro`, `invest-usdc`.
 
 ## Architecture
 
@@ -69,14 +66,13 @@ Run with `node scripts/<name>.mjs`. Available: `create-eurc-vault`, `create-teso
 app/                  # Next.js App Router
   (app)/(basic)/      # Routes for "basic" UI mode
   (app)/(expert)/     # Routes for "expert" UI mode
-  api/                # Route handlers: anchor, asset-prices, audit, defindex, etherfuse,
-                      #   faucet, pool-activity, pool-rates, soroban-rpc, soroswap, users, vault
+  api/                # backend-proxy/[...path] route forwarding to NestJS
   auth/               # Auth routes
 components/           # Global UI: navigation, ui-mode modal, wallet sync, etc.
 features/             # Feature modules (see below)
-hooks/                # 16 custom hooks (useBalances, useStellarWallet, useToast, useUIMode, …)
+hooks/                # 14 shared hooks (useWallet, useStellarWallet, useToast, useUIMode, …)
 lib/                  # Services, helpers, constants, orchestrator, defindex helpers, anchors
-providers/            # WalletProvider (Stellar), ToastProvider
+providers/            # ToastProvider and app-level query/toast wiring
 stores/               # Zustand stores
 ```
 
@@ -84,7 +80,7 @@ stores/               # Zustand stores
 
 - `basic/` — Buy flow for fiat-first users. `BasicDiscoverPage`, `BasicAssetDetail`, `BasicBuyForm`, `AddToCartModal`. Uses `react-hook-form` + `zod`.
 - `expert/` — Advanced trading. `Dashboard`, `ExpertDiscoverPage`, `ExpertAssetDetail`, `Swap` (SoroSwap-backed).
-- `shared/` — Protocol integrations consumed by both modes. Submodules: `admin`, `backstop`, `borrowing`, `dashboard`, `discover`, `lending`, `on-off-ramps`, `pools`, `settings`, `vault`, `wallet`. Each has `components/`, `hooks/`, `types/`, `utils/`.
+- `shared/` — External protocol and product integrations consumed by both modes. Submodules include `admin`, `borrowing`, `dashboard`, `discover`, `lending`, `on-off-ramps`, `pools`, `referral`, `settings`, `vault`, and `wallet`. Treat borrowing/lending/pool UI as integrations with external protocols, not Neko-owned contracts.
 - `simulator/` — Investment projection wizard (token → strategy → destination → projected returns).
 
 **Stores (Zustand, `src/stores/`):**
@@ -92,22 +88,24 @@ stores/               # Zustand stores
 - `cart.store.ts` — shopping cart for basic-mode buys
 - `currency.store.ts` — selected fiat
 - `fx-rate.store.ts` — FX conversion rates
+- `pendingMultisigTxs.store.ts` — Lobstr Vault pending transaction state
+- `referral.store.ts` — captured referral code/session state
 - `strategies.store.ts` — saved investment strategies
 - `stellarWalletStore.ts` — connected Stellar wallet metadata
 - `ui-mode.store.ts` — basic/expert mode toggle
 
 **Providers (`src/providers/`):**
 
-- `WalletProvider.tsx` — Stellar wallet connection via `@creit.tech/stellar-wallets-kit` + Freighter
 - `ToastProvider.tsx` — toast notifications
+- Wallet connection state is centralized in `@neko/stellar-wallet` and consumed through hooks/stores; do not add a second wallet state layer.
 
 ### Data flow
 
 ```
-Feature components → feature hooks → lib/services + lib/orchestrator → @neko/* contract clients → Soroban RPC
+Feature components → feature hooks → `backendClient` or local services → Next backend proxy → NestJS `/v1` API → external APIs, Supabase, Stellar RPC/Horizon, and generated DeFindex/Reflector bindings
 ```
 
-`lib/services/` contains `audit.service.ts`, `fx-rate.service.ts`, `horizonActivityScanner.ts`, `lending.service.ts`, `positionScanner.ts`, `stellar-price.service.ts`, `supabase.server.ts`, `users.service.ts`.
+`lib/services/` contains client/server helpers such as `backend-client.ts`, `audit.service.ts`, `fx-rate.service.ts`, `horizonActivityScanner.ts`, `positionScanner.ts`, `transaction.api.ts`, `supabase.server.ts`, and `users.service.ts`.
 
 ### State and server data
 
@@ -117,30 +115,55 @@ Feature components → feature hooks → lib/services + lib/orchestrator → @ne
 
 ### Admin app (`apps/admin/`)
 
-Next.js 16 internal console. Routes under `app/dashboard/`: `activity`, `strategies` (+ `[id]`), `users`, `campaigns` (+ `[id]`), `invitations`. Auth via Supabase with TOTP 2FA (`otpauth`, `qrcode`). API routes proxy to the NestJS backend. `middleware.ts` enforces auth.
+Next.js 16 internal console. Routes under `app/dashboard/` include `activity`, `strategies`, `users`, `campaigns`, `recommended`, `activations`, `referrals`, and `invitations`. Auth uses Supabase-backed admin sessions plus TOTP 2FA (`otpauth`, `qrcode`). Server helpers call the NestJS backend via `BACKEND_INTERNAL_URL`/`BACKEND_INTERNAL_KEY`. `middleware.ts` enforces auth.
 
-### Backend app (`apps/backend/`)
+### Backend infrastructure (`apps/backend/`)
 
-NestJS 10 + Express adapter. Bootstraps in `src/main.ts` on port 4000 with CORS. Current modules under `src/modules/`: `health`, `supabase`. Configured via `@nestjs/config` and `ConfigModule`.
+NestJS 10 + Express adapter. Bootstraps in `src/main.ts` on port 4000 with CORS, URI versioning (`/v1`), Swagger (`/docs`), Helmet, compression, global validation, global exception filtering, request IDs, throttling, pino logging, shutdown hooks, and a Node WebSocket polyfill for Supabase realtime compatibility.
 
-### Smart contract integration
+The backend is an internal API. `AppModule` installs two global guards: `ThrottlerGuard` and `InternalApiKeyGuard`. Browser clients should not call Railway/backend directly; `apps/web-app/src/app/api/backend-proxy/[...path]/route.ts` forwards `/v1/*` requests with `BACKEND_INTERNAL_KEY`, and `apps/admin` server helpers call `BACKEND_INTERNAL_URL` with the same internal key.
 
-Each `@neko/*` package wraps one deployed Soroban contract:
+Core infrastructure lives under `src/core/`:
 
-| Package                | Contract                          | Mainnet address (web-app constants)                                                                                                      |
-| ---------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `@neko/lending`        | Lending pool                      | `CAPTJPAXEURYXEWGDSCCU3SZDYIP3U7KTS7VQM2EYLLK2JKIR4JIVWIH` (pool 1), `CD3HUT3N6LLUS4XZUWRIIJZUKN2B3UDDMEH2IMK6S3UKAHTZ6VKKBTYQ` (pool 2) |
-| `@neko/backstop`       | Backstop / risk buffer            | `CCSNXCONDIFZADRJZZRHMRXDGTC6EMI7ZAYAJPJMXSDHBMOPBLBX5XQX` (pool 1), `CADKADCLXIZTU7Q3WS5M37HUF5BX3WCSTCM2ESN2JCJK5FBBH57FKSAV` (pool 2) |
-| `@neko/reflector`      | SEP-40 oracle                     | `CALI2BYU2JE6WVRUFYTS6MSBNEHGJ35P4AVCZYF3B6QOE3QKOB2PLE6M`                                                                               |
-| `@neko/defindex-vault` | Vault strategy manager (DeFindex) | Testnet: `CBHGX6TCHHVYJ7P3UZS7WI5TRAAA7GQA2L2Y7P2LCPIXWWD5FKDF2Z5S`                                                                      |
+- `stellar/` — Stellar RPC/Horizon helpers and network/passphrase access.
+- `supabase/` — Supabase service clients for platform/admin data.
+- `orchestrator/` — External market orchestration service wrapper, not a Neko contract layer.
+- `email/` — Resend-backed email helpers.
+- `health/` — health checks.
 
-Web-app reads addresses from `apps/web-app/src/lib/constants/contracts.ts` (mainnet) and `lib/constants/lendingContracts.ts` (network-aware). Stellar network config lives in `lib/config/stellar.config.ts`.
+Business domains live under `src/domains/`:
 
-Each `packages/contracts/<name>/src/index.ts` is generated via `soroban contract bindings ts` and built with `tsc` into `dist/`. **Do not hand-edit these files** — regenerate from the upstream contracts repo.
+- `chain/transaction` — transaction prepare/submit/status relay endpoints.
+- `market-data/` — asset prices, pool rates, Etherfuse yields, and contract/activity scanners.
+- `investing/` — DeFindex vault catalog, APY, PPS history, keeper/rebalance jobs, strategy catalog, and recommended strategies.
+- `platform/` — users, audit logs, dashboard aggregation, referrals, and activations.
+- `admin/` — admin auth/dashboard, campaigns, invitations, segments, strategies, and console workflows.
+
+Scheduled jobs are backend-owned through `@nestjs/schedule` (for example vault invest, vault PPS, pool rates, and asset prices). Do not add cron-only behavior back into web-app route handlers.
+
+### External contract bindings
+
+This repo consumes only these generated Soroban bindings:
+
+| Package                | Role                                       |
+| ---------------------- | ------------------------------------------ |
+| `@neko/defindex-vault` | Generated DeFindex vault bindings          |
+| `@neko/reflector`      | Generated SEP-40 Reflector oracle bindings |
+
+Other `@neko/*` packages are application libraries, not Neko smart contracts:
+
+- `@neko/orchestrator` — external market orchestration for Blend, SoroSwap, Aquarius, and Stellar RPC.
+- `@neko/keeper` — vault keeper configuration, asset registry, DeFindex helpers, price services, and rebalance planning.
+- `@neko/stellar-wallet` — Freighter/Stellar Wallets Kit connection and signing state.
+- `@neko/api-contracts` — shared API DTOs.
+
+Web-app reads network config from `apps/web-app/src/lib/config/stellar.config.ts`, Reflector constants from `apps/web-app/src/lib/constants/contracts.ts`, and vault IDs from `apps/web-app/src/lib/defindex/vaultIds.ts` (re-exported from `@neko/keeper`).
+
+Each `packages/contracts/<name>/src/index.ts` is generated via `soroban contract bindings ts` and built with `tsc` into `dist/`. **Do not hand-edit these files**. If DeFindex or Reflector bindings drift, regenerate them from the external artifact/source for that integration.
 
 ### Multi-chain note
 
-The dApp is **Stellar/Soroban only**. There are no EVM contracts, viem, wagmi, or RainbowKit dependencies in this monorepo today. SoroSwap and Blend Capital SDKs are used for DEX and lending integrations on Stellar.
+The dApp is **Stellar-only** at the app layer and uses generated bindings only for DeFindex vaults and Reflector oracle reads. There are no Neko-owned smart contracts, EVM contracts, viem, wagmi, or RainbowKit dependencies in this monorepo. SoroSwap and Blend SDKs are external integrations.
 
 ## Environment Setup
 
@@ -157,16 +180,24 @@ NEXT_PUBLIC_APP_URL=
 NEXT_PUBLIC_NEKO_TREASURY_ADDRESS=
 
 # Integrations
-SOROSWAP_API_KEY=
+NEXT_PUBLIC_SOROSWAP_API_KEY=
 DEFINDEX_API_KEY=
 ETHERFUSE_API_KEY=
+ETHERFUSE_BASE_URL=
 ALFREDPAY_API_KEY=
-ALFREDPAY_SECRET=
+ALFREDPAY_API_SECRET=
+ALFREDPAY_BASE_URL=
+ALFREDPAY_WEBHOOK_SECRET=
 
 # Supabase (audit logs, users)
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+
+# Backend proxy
+BACKEND_INTERNAL_URL=
+BACKEND_INTERNAL_KEY=
+NEXT_PUBLIC_USE_BACKEND_DASHBOARD=
 ```
 
 ### Backend — `apps/backend/.env`
@@ -179,16 +210,12 @@ Supabase + Resend (email). See `.env.example`.
 
 ## Vercel deployment
 
-`vercel.json` builds only `web-app` via `turbo run build --filter=web-app`. Defines cron jobs:
-
-- `/api/vault/invest` — daily at 02:00 UTC
-- `/api/pool-rates/record` — hourly
-- `/api/asset-prices/record` — daily at 02:00 UTC
+`vercel.json` builds only `web-app` via `turbo run build --filter=web-app`. Scheduled jobs are owned by the backend (for example vault invest, pool rates, and asset prices), not Next.js route handlers in `apps/web-app`.
 
 ## Prerequisites
 
-- Node.js v20+ (engines hint), npm v10+
-- Optional: Stellar CLI for regenerating contract bindings in a sibling contracts repo (not needed for normal dApp work)
+- Node.js v20+, npm v11.6.2 (root `packageManager`)
+- Optional: Stellar CLI for regenerating DeFindex/Reflector bindings from external artifacts (not needed for normal dApp work)
 
 ## Code Style
 
@@ -210,6 +237,7 @@ Surfaced to Claude Code via the `.claude/skills` symlink:
 - **vercel-composition-patterns** — Composition patterns, React 19 APIs
 - **web-design-guidelines** — UI/accessibility review checklist
 - **seo-audit** — On-page SEO audit
+- **vault** (`apps/web-app/.claude/skills/vault/SKILL.md`) — DeFindex vault onboarding and strategy integration
 - **remotion-best-practices** — Video generation with Remotion
 - **commit-work** — Conventional commit drafting
 - **agent-md-refactor** — Split bloated CLAUDE.md / AGENTS.md
@@ -235,8 +263,9 @@ git clone https://github.com/garrytan/gstack ~/.claude/skills/gstack
 
 **Domain-specific (use project skill, not the generic subagent):**
 
-- Stellar / Soroban / Horizon work → `stellar-dev` skill, NOT `blockchain-developer` subagent
+- Stellar / Soroban / Horizon app integration work → `stellar-dev` skill, NOT `blockchain-developer` subagent
 - React Query / TanStack Query → `tanstack-query` skill, NOT `react-specialist`
+- Client data fetching in this repo should stay on TanStack Query; treat generic SWR guidance in other skills as non-authoritative unless the stack changes.
 - Tailwind component patterns → `tailwind-patterns` skill, NOT `ui-designer`
 - Next.js conventions (RSC, metadata, route handlers) → `next-best-practices` skill BEFORE `nextjs-developer`
 - React performance / composition → `vercel-react-best-practices` + `vercel-composition-patterns` BEFORE `react-specialist`
@@ -245,8 +274,8 @@ git clone https://github.com/garrytan/gstack ~/.claude/skills/gstack
 
 - Sprint planning → `/plan-ceo-review`, `/plan-eng-review`
 - Design pass → `/design-consultation`, `/design-shotgun`
-- Security audit of contract integrations → `/cso` AND `security-auditor` subagent
-- QA / dogfooding → `/qa` + project `verify` skill
+- Security audit of DeFindex/Reflector integration or signing flows → `/cso` AND `security-auditor` subagent
+- QA / dogfooding → `/qa` plus the relevant app/package test, lint, or build command
 - Release → `/ship`, `/land-and-deploy`
 
 **Backend (`apps/backend/` + `apps/admin/` API routes + Supabase):**
@@ -258,9 +287,9 @@ git clone https://github.com/garrytan/gstack ~/.claude/skills/gstack
 
 **Fall back to VoltAgent subagents only when no project skill covers it:**
 
-- `rust-engineer` — only relevant if you open a sibling contracts repo
+- `rust-engineer` — not relevant for this repo unless the user explicitly opens a separate Rust project
 - `blockchain-developer` — only if introducing a new chain (not currently used)
-- `fintech-engineer` — DeFi math / lending model questions
+- `fintech-engineer` — DeFi math, vault APY, and external market-model questions
 - `code-reviewer`, `test-automator`, `debugger` — isolated quality work
 - `agent-organizer` — orchestrate multiple subagents without polluting the main context
 
