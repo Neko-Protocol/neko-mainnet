@@ -7,6 +7,25 @@ argument-hint: "[task-description]"
 
 # Stellar Development Skill (Soroban-first)
 
+## Neko Repo Boundary
+
+When working in `neko-mainnet`, this repo is a Stellar **application** repo,
+not a Neko smart-contract repo:
+
+- Neko-owned smart contracts are not used by this repository.
+- The only generated Soroban bindings consumed here are external integrations:
+  `packages/contracts/defindex-vault` and `packages/contracts/reflector`.
+- Do not create or search for `apps/contracts/`, Foundry projects, wagmi,
+  RainbowKit, viem, or EVM/Solidity code here.
+- Do not hand-edit generated `packages/contracts/*/src/index.ts` files. If a
+  DeFindex or Reflector binding is wrong, regenerate it from that external
+  integration's artifact/source.
+- For DeFindex vault onboarding or strategy wiring in the web app, read
+  `apps/web-app/.claude/skills/vault/SKILL.md` after this skill.
+- For app-side Stellar flows, prefer existing application packages:
+  `@neko/orchestrator`, `@neko/keeper`, `@neko/stellar-wallet`, and
+  `@neko/api-contracts`. These are not Neko smart contracts.
+
 ## What this Skill is for
 
 Use this Skill when the user asks for:
