@@ -15,8 +15,10 @@ import {
   submitBatchActivationPayout,
   sendActivationInvites,
   type ActivationDetail,
+  type BatchPayoutSkipped,
   type Participant,
   type ParticipantStatus,
+  type PayoutAsset,
 } from "@/lib/activations";
 import { downloadActivationPdf } from "@/lib/activation-pdf";
 import { stellarExpertTxUrl, truncate } from "@/lib/stellar-format";
@@ -36,6 +38,9 @@ export default function ActivationDetailPage() {
   const [expired, setExpired] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
+  const [skippedParticipants, setSkippedParticipants] = useState<
+    BatchPayoutSkipped[]
+  >([]);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payingAll, setPayingAll] = useState(false);
   const [inviteStatus, setInviteStatus] = useState<string | null>(null);
@@ -62,6 +67,16 @@ export default function ActivationDetailPage() {
       cancelled = true;
     };
   }, [id, reloadKey]);
+
+  const payoutAsset: PayoutAsset = activation?.payout_asset ?? "XLM";
+  const rewardAmount = activation?.reward_amount ?? activation?.reward_xlm ?? 0;
+
+  function formatPaidAmount(participant: Participant): string {
+    const amount =
+      participant.paid_amount ?? participant.paid_amount_xlm ?? rewardAmount;
+    const asset = (participant.paid_asset as PayoutAsset | null) ?? payoutAsset;
+    return `${amount} ${asset}`;
+  }
 
   async function pay(participant: Participant) {
     if (!wallet.address) {
@@ -111,15 +126,25 @@ export default function ActivationDetailPage() {
 
     setPayingAll(true);
     setPayError(null);
+    setSkippedParticipants([]);
     try {
       let remaining = 1;
+      const allSkipped: BatchPayoutSkipped[] = [];
       while (remaining > 0) {
         const prepared = await prepareBatchActivationPayout({
           activation_id: activation.id,
           admin_wallet: wallet.address,
         });
 
-        if (!prepared.participant_ids.length) break;
+        if (prepared.skipped.length) {
+          allSkipped.push(...prepared.skipped);
+          setSkippedParticipants([...allSkipped]);
+        }
+
+        if (!prepared.participant_ids.length) {
+          if (allSkipped.length && remaining > 0) break;
+          break;
+        }
 
         let signedXdr: string;
         try {
@@ -197,7 +222,7 @@ export default function ActivationDetailPage() {
               {activation.name}
             </h1>
             <p className="mt-1 text-sm text-white/50">
-              {activation.reward_xlm} XLM per participant ·{" "}
+              {rewardAmount} {payoutAsset} per participant ·{" "}
               {expired ? "Expired" : "Expires"}{" "}
               {new Date(activation.expires_at).toLocaleString("en-US", {
                 dateStyle: "medium",
@@ -235,7 +260,7 @@ export default function ActivationDetailPage() {
               >
                 {payingAll
                   ? "Paying all…"
-                  : `Pay all (${payableCount} · ${payableCount * activation.reward_xlm} XLM)`}
+                  : `Pay all (${payableCount} · ${payableCount * rewardAmount} ${payoutAsset})`}
               </button>
             ) : null}
             <button
@@ -261,6 +286,31 @@ export default function ActivationDetailPage() {
       {payError ? (
         <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
           {payError}
+        </div>
+      ) : null}
+
+      {skippedParticipants.length > 0 ? (
+        <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+          <p className="font-medium">Skipped — needs USDC trustline</p>
+          <ul className="mt-1 list-inside list-disc text-amber-200/90">
+            {skippedParticipants.map((s) => {
+              const participant = activation.participants.find(
+                (p) => p.id === s.participant_id
+              );
+              return (
+                <li key={s.participant_id}>
+                  {participant?.email ?? s.participant_id}
+                  {s.reason === "NO_TRUSTLINE"
+                    ? " — recipient must add a USDC trustline on Stellar"
+                    : ` — ${s.reason}`}
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-2 text-xs text-amber-200/70">
+            These participants remain payable and can be retried after they add
+            a USDC trustline.
+          </p>
         </div>
       ) : null}
 
@@ -300,7 +350,7 @@ export default function ActivationDetailPage() {
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 text-xs text-[#229EDF] hover:underline"
                     >
-                      {p.paid_amount_xlm ?? activation.reward_xlm} XLM
+                      {formatPaidAmount(p)}
                       <ExternalLink className="size-3" />
                     </a>
                   ) : (
@@ -324,7 +374,7 @@ export default function ActivationDetailPage() {
                     >
                       {payingId === p.id
                         ? "Paying…"
-                        : `Pay ${activation.reward_xlm} XLM`}
+                        : `Pay ${rewardAmount} ${payoutAsset}`}
                     </button>
                   )}
                 </td>

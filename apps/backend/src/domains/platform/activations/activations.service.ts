@@ -12,11 +12,15 @@ import {
   Memo,
   Transaction,
   TransactionBuilder,
+  xdr,
 } from "@stellar/stellar-sdk";
 import {
+  buildAssetPaymentOperation,
   buildNativePaymentOperation,
+  matchesAssetPayout,
   matchesNativePayout,
   parseSignedTransaction,
+  USDC_ASSET,
 } from "@shared/stellar/payment-xdr";
 import { StellarRpcService } from "@core/stellar/stellar-rpc.service";
 import { SupabaseService } from "@core/supabase/supabase.service";
@@ -38,6 +42,8 @@ export interface ActivationSummary {
   id: string;
   name: string;
   reward_xlm: number;
+  reward_amount: number;
+  payout_asset: "XLM" | "USDC";
   expires_at: string;
   created_by: string | null;
   created_at: string;
@@ -55,6 +61,8 @@ export interface ActivationParticipant {
   paid_by: string | null;
   paid_at: string | null;
   paid_amount_xlm: number | null;
+  paid_asset: string | null;
+  paid_amount: number | null;
 }
 
 @Injectable()
@@ -88,11 +96,15 @@ export class ActivationsService {
       });
     }
 
+    const payoutAsset = dto.payout_asset ?? "XLM";
+
     const { data: activation, error } = await this.supabase.client
       .from("activations")
       .insert({
         name: dto.name.trim(),
         reward_xlm: dto.reward_xlm,
+        reward_amount: dto.reward_xlm,
+        payout_asset: payoutAsset,
         expires_at: dto.expires_at,
         created_by: dto.created_by?.trim() || null,
       })
@@ -189,6 +201,8 @@ export class ActivationsService {
       id: a.id,
       name: a.name,
       reward_xlm: Number(a.reward_xlm),
+      reward_amount: Number(a.reward_amount ?? a.reward_xlm),
+      payout_asset: (a.payout_asset ?? "XLM") as "XLM" | "USDC",
       expires_at: a.expires_at,
       created_by: a.created_by,
       created_at: a.created_at,
@@ -214,7 +228,7 @@ export class ActivationsService {
         this.supabase.client
           .from("activation_participants")
           .select(
-            "id, activation_id, email, status, matched_wallet, matched_at, paid_tx_hash, paid_by, paid_at, paid_amount_xlm"
+            "id, activation_id, email, status, matched_wallet, matched_at, paid_tx_hash, paid_by, paid_at, paid_amount_xlm, paid_asset, paid_amount"
           )
           .eq("activation_id", id)
           .order("email"),
@@ -230,7 +244,14 @@ export class ActivationsService {
     return {
       ...activation,
       reward_xlm: Number(activation.reward_xlm),
-      participants: (participants ?? []) as ActivationParticipant[],
+      reward_amount: Number(activation.reward_amount ?? activation.reward_xlm),
+      payout_asset: (activation.payout_asset ?? "XLM") as "XLM" | "USDC",
+      participants: (participants ?? []).map((p) => ({
+        ...(p as ActivationParticipant),
+        paid_amount_xlm:
+          p.paid_amount_xlm != null ? Number(p.paid_amount_xlm) : null,
+        paid_amount: p.paid_amount != null ? Number(p.paid_amount) : null,
+      })) as ActivationParticipant[],
     };
   }
 
@@ -254,7 +275,7 @@ export class ActivationsService {
   async preparePayout(dto: PreparePayoutDto) {
     const participant = await this.loadParticipant(dto.participant_id);
     const activation = await this.loadActivation(participant.activation_id);
-    const rewardXlm = Number(activation.reward_xlm);
+    const payout = this.getActivationPayout(activation);
 
     if (!participant.matched_wallet) {
       throw new UnprocessableEntityException({
@@ -274,6 +295,58 @@ export class ActivationsService {
     try {
       const horizon = this.stellar.horizon;
       const destination = participant.matched_wallet;
+      const amount = payout.amount.toFixed(7);
+
+      if (payout.asset === "USDC") {
+        let destinationAccount;
+        try {
+          destinationAccount = await horizon.loadAccount(destination);
+        } catch (err) {
+          if (this.isHorizonNotFound(err)) {
+            await this.unlock(participant.id);
+            throw new UnprocessableEntityException({
+              code: "NO_TRUSTLINE",
+              message: "Recipient has no USDC trustline.",
+            });
+          }
+          throw err;
+        }
+
+        if (!this.hasUsdcTrustline(destinationAccount)) {
+          await this.unlock(participant.id);
+          throw new UnprocessableEntityException({
+            code: "NO_TRUSTLINE",
+            message: "Recipient has no USDC trustline.",
+          });
+        }
+
+        const source = await horizon.loadAccount(dto.admin_wallet);
+        const tx = new TransactionBuilder(source, {
+          fee: (parseInt(BASE_FEE, 10) * FEE_MULTIPLIER).toString(),
+          networkPassphrase: this.stellar.getNetworkPassphrase(),
+        })
+          .addOperation(
+            buildAssetPaymentOperation({
+              destination,
+              amount,
+              asset: USDC_ASSET,
+            })
+          )
+          .addMemo(Memo.text(PAYOUT_MEMO))
+          .setTimeout(300)
+          .build();
+
+        return {
+          participant_id: participant.id,
+          xdr: tx.toXDR(),
+          network_passphrase: this.stellar.getNetworkPassphrase(),
+          destination,
+          reward_xlm: payout.amount,
+          reward_amount: payout.amount,
+          payout_asset: payout.asset,
+          creates_account: false,
+        };
+      }
 
       let destinationExists = true;
       try {
@@ -283,7 +356,7 @@ export class ActivationsService {
         else throw err;
       }
 
-      if (!destinationExists && rewardXlm < 1) {
+      if (!destinationExists && payout.amount < 1) {
         throw new UnprocessableEntityException({
           code: "UNFUNDED_RECIPIENT",
           message:
@@ -292,7 +365,6 @@ export class ActivationsService {
       }
 
       const source = await horizon.loadAccount(dto.admin_wallet);
-      const amount = rewardXlm.toFixed(7);
 
       const tx = new TransactionBuilder(source, {
         fee: (parseInt(BASE_FEE, 10) * FEE_MULTIPLIER).toString(),
@@ -314,7 +386,9 @@ export class ActivationsService {
         xdr: tx.toXDR(),
         network_passphrase: this.stellar.getNetworkPassphrase(),
         destination,
-        reward_xlm: rewardXlm,
+        reward_xlm: payout.amount,
+        reward_amount: payout.amount,
+        payout_asset: payout.asset,
         creates_account: !destinationExists,
       };
     } catch (err) {
@@ -340,23 +414,34 @@ export class ActivationsService {
       });
     }
     const activation = await this.loadActivation(participant.activation_id);
-    const rewardXlm = Number(activation.reward_xlm);
+    const payout = this.getActivationPayout(activation);
 
-    const tx = this.parseAndValidateXdr(dto.signed_xdr, participant, rewardXlm);
+    const tx = this.parseAndValidateXdr(
+      dto.signed_xdr,
+      participant,
+      payout.amount,
+      payout.asset
+    );
 
     try {
       const result = await this.stellar.horizon.submitTransaction(tx);
 
+      const updatePayload: Record<string, unknown> = {
+        status: "paid",
+        paid_tx_hash: result.hash,
+        paid_by: tx.source,
+        paid_at: new Date().toISOString(),
+        paid_amount: payout.amount,
+        paid_asset: payout.asset,
+        payout_started_at: null,
+      };
+      if (payout.asset === "XLM") {
+        updatePayload.paid_amount_xlm = payout.amount;
+      }
+
       const { data: updated } = await this.supabase.client
         .from("activation_participants")
-        .update({
-          status: "paid",
-          paid_tx_hash: result.hash,
-          paid_by: tx.source,
-          paid_at: new Date().toISOString(),
-          paid_amount_xlm: rewardXlm,
-          payout_started_at: null,
-        })
+        .update(updatePayload)
         .eq("id", participant.id)
         .eq("status", "paying")
         .select("id");
@@ -367,12 +452,18 @@ export class ActivationsService {
         );
       }
 
-      await this.recordPayoutAudit(participant, rewardXlm, result.hash);
+      await this.recordPayoutAudit(
+        participant,
+        payout.amount,
+        payout.asset,
+        result.hash
+      );
 
       await this.sendPayoutConfirmation({
         to: participant.email,
         activationName: activation.name,
-        amountXlm: rewardXlm,
+        amount: payout.amount,
+        asset: payout.asset,
         wallet: participant.matched_wallet!,
         txHash: result.hash,
         paidAtISO: new Date().toISOString(),
@@ -405,7 +496,7 @@ export class ActivationsService {
 
   async prepareBatchPayout(dto: PrepareBatchPayoutDto) {
     const activation = await this.loadActivation(dto.activation_id);
-    const rewardXlm = Number(activation.reward_xlm);
+    const payout = this.getActivationPayout(activation);
 
     const { data: payableRows, error: listError } = await this.supabase.client
       .from("activation_participants")
@@ -451,16 +542,54 @@ export class ActivationsService {
     }
 
     const lockedIds = locked.map((p) => p.id);
+    const skipped: Array<{ participant_id: string; reason: string }> = [];
 
     try {
       const horizon = this.stellar.horizon;
       const source = await horizon.loadAccount(dto.admin_wallet);
-      const amount = rewardXlm.toFixed(7);
+      const amount = payout.amount.toFixed(7);
       const included: typeof locked = [];
-      const operations: ReturnType<typeof buildNativePaymentOperation>[] = [];
+      const operations: xdr.Operation[] = [];
 
       for (const participant of locked) {
         const destination = participant.matched_wallet!;
+
+        if (payout.asset === "USDC") {
+          let destinationAccount;
+          try {
+            destinationAccount = await horizon.loadAccount(destination);
+          } catch (err) {
+            if (this.isHorizonNotFound(err)) {
+              await this.unlock(participant.id);
+              skipped.push({
+                participant_id: participant.id,
+                reason: "NO_TRUSTLINE",
+              });
+              continue;
+            }
+            throw err;
+          }
+
+          if (!this.hasUsdcTrustline(destinationAccount)) {
+            await this.unlock(participant.id);
+            skipped.push({
+              participant_id: participant.id,
+              reason: "NO_TRUSTLINE",
+            });
+            continue;
+          }
+
+          included.push(participant);
+          operations.push(
+            buildAssetPaymentOperation({
+              destination,
+              amount,
+              asset: USDC_ASSET,
+            })
+          );
+          continue;
+        }
+
         let destinationExists = true;
         try {
           await horizon.loadAccount(destination);
@@ -469,7 +598,7 @@ export class ActivationsService {
           else throw err;
         }
 
-        if (!destinationExists && rewardXlm < 1) {
+        if (!destinationExists && payout.amount < 1) {
           await this.unlock(participant.id);
           continue;
         }
@@ -488,7 +617,9 @@ export class ActivationsService {
         throw new UnprocessableEntityException({
           code: "NO_ELIGIBLE",
           message:
-            "No participants could be included (e.g. unfunded accounts below 1 XLM).",
+            payout.asset === "USDC"
+              ? "No participants could be included (missing USDC trustlines)."
+              : "No participants could be included (e.g. unfunded accounts below 1 XLM).",
         });
       }
 
@@ -511,9 +642,12 @@ export class ActivationsService {
         xdr: tx.toXDR(),
         network_passphrase: this.stellar.getNetworkPassphrase(),
         participant_ids: included.map((p) => p.id),
-        reward_xlm: rewardXlm,
+        reward_xlm: payout.amount,
+        reward_amount: payout.amount,
+        payout_asset: payout.asset,
         op_count: opCount,
         remaining_payable: remainingPayable,
+        skipped,
       };
     } catch (err) {
       await Promise.all(lockedIds.map((id) => this.unlock(id)));
@@ -536,7 +670,7 @@ export class ActivationsService {
 
   async submitBatchPayout(dto: SubmitBatchPayoutDto) {
     const activation = await this.loadActivation(dto.activation_id);
-    const rewardXlm = Number(activation.reward_xlm);
+    const payout = this.getActivationPayout(activation);
 
     const { data: rows, error } = await this.supabase.client
       .from("activation_participants")
@@ -561,7 +695,12 @@ export class ActivationsService {
 
     let tx: Transaction;
     try {
-      tx = this.parseAndValidateBatchXdr(dto.signed_xdr, paying, rewardXlm);
+      tx = this.parseAndValidateBatchXdr(
+        dto.signed_xdr,
+        paying,
+        payout.amount,
+        payout.asset
+      );
     } catch (err) {
       if (err instanceof UnprocessableEntityException) {
         await Promise.all(paying.map((p) => this.unlock(p.id)));
@@ -574,17 +713,23 @@ export class ActivationsService {
       let paid = 0;
       const covered: typeof paying = [];
 
+      const updatePayload: Record<string, unknown> = {
+        status: "paid",
+        paid_tx_hash: result.hash,
+        paid_by: tx.source,
+        paid_at: new Date().toISOString(),
+        paid_amount: payout.amount,
+        paid_asset: payout.asset,
+        payout_started_at: null,
+      };
+      if (payout.asset === "XLM") {
+        updatePayload.paid_amount_xlm = payout.amount;
+      }
+
       for (const participant of paying) {
         const { data: updated } = await this.supabase.client
           .from("activation_participants")
-          .update({
-            status: "paid",
-            paid_tx_hash: result.hash,
-            paid_by: tx.source,
-            paid_at: new Date().toISOString(),
-            paid_amount_xlm: rewardXlm,
-            payout_started_at: null,
-          })
+          .update(updatePayload)
           .eq("id", participant.id)
           .eq("status", "paying")
           .select("id");
@@ -592,7 +737,12 @@ export class ActivationsService {
         if (updated?.length) {
           paid += 1;
           covered.push(participant);
-          await this.recordPayoutAudit(participant, rewardXlm, result.hash);
+          await this.recordPayoutAudit(
+            participant,
+            payout.amount,
+            payout.asset,
+            result.hash
+          );
         } else {
           this.logger.warn(
             `batch payout submitted but row ${participant.id} was not in 'paying' state`
@@ -605,7 +755,8 @@ export class ActivationsService {
           this.sendPayoutConfirmation({
             to: participant.email,
             activationName: activation.name,
-            amountXlm: rewardXlm,
+            amount: payout.amount,
+            asset: payout.asset,
             wallet: participant.matched_wallet!,
             txHash: result.hash,
             paidAtISO: new Date().toISOString(),
@@ -630,6 +781,44 @@ export class ActivationsService {
   }
 
   // ---- helpers ----
+
+  private getActivationPayout(activation: {
+    reward_amount?: number | string | null;
+    reward_xlm: number | string;
+    payout_asset?: string | null;
+  }): { asset: "XLM" | "USDC"; amount: number } {
+    const asset = (activation.payout_asset ?? "XLM") as "XLM" | "USDC";
+    const amount = Number(activation.reward_amount ?? activation.reward_xlm);
+    return { asset, amount };
+  }
+
+  private hasUsdcTrustline(account: {
+    balances: Array<{
+      asset_type: string;
+      asset_code?: string;
+      asset_issuer?: string;
+    }>;
+  }): boolean {
+    const issuer = USDC_ASSET.getIssuer();
+    return account.balances.some(
+      (b) =>
+        b.asset_type !== "native" &&
+        b.asset_code === "USDC" &&
+        b.asset_issuer === issuer
+    );
+  }
+
+  private matchesPayoutOp(
+    op: Transaction["operations"][number],
+    destination: string,
+    expectedAmount: string,
+    asset: "XLM" | "USDC"
+  ): boolean {
+    if (asset === "XLM") {
+      return matchesNativePayout(op, destination, expectedAmount);
+    }
+    return matchesAssetPayout(op, destination, expectedAmount, USDC_ASSET);
+  }
 
   private async loadParticipant(id: string) {
     const { data, error } = await this.supabase.client
@@ -738,16 +927,22 @@ export class ActivationsService {
   private parseAndValidateXdr(
     signedXdr: string,
     participant: { matched_wallet: string | null },
-    rewardXlm: number
+    rewardAmount: number,
+    asset: "XLM" | "USDC"
   ): Transaction {
     const tx = this.parseTransactionFromXdr(signedXdr);
-    const expectedAmount = rewardXlm.toFixed(7);
+    const expectedAmount = rewardAmount.toFixed(7);
     const op = tx.operations.length === 1 ? tx.operations[0] : null;
 
     if (
       !op ||
       !participant.matched_wallet ||
-      !matchesNativePayout(op, participant.matched_wallet, expectedAmount)
+      !this.matchesPayoutOp(
+        op,
+        participant.matched_wallet,
+        expectedAmount,
+        asset
+      )
     ) {
       throw new UnprocessableEntityException({
         code: "XDR_MISMATCH",
@@ -761,10 +956,11 @@ export class ActivationsService {
   private parseAndValidateBatchXdr(
     signedXdr: string,
     participants: Array<{ id: string; matched_wallet: string | null }>,
-    rewardXlm: number
+    rewardAmount: number,
+    asset: "XLM" | "USDC"
   ): Transaction {
     const tx = this.parseTransactionFromXdr(signedXdr);
-    const expectedAmount = rewardXlm.toFixed(7);
+    const expectedAmount = rewardAmount.toFixed(7);
     const expectedDestinations = new Set(
       participants.map((p) => p.matched_wallet).filter(Boolean) as string[]
     );
@@ -787,7 +983,7 @@ export class ActivationsService {
         !destination ||
         !expectedDestinations.has(destination) ||
         matchedDestinations.has(destination) ||
-        !matchesNativePayout(op, destination, expectedAmount)
+        !this.matchesPayoutOp(op, destination, expectedAmount, asset)
       ) {
         throw new UnprocessableEntityException({
           code: "XDR_MISMATCH",
@@ -804,7 +1000,8 @@ export class ActivationsService {
   private async sendPayoutConfirmation(params: {
     to: string;
     activationName: string;
-    amountXlm: number;
+    amount: number;
+    asset: "XLM" | "USDC";
     wallet: string;
     txHash: string;
     paidAtISO: string;
@@ -815,7 +1012,11 @@ export class ActivationsService {
         templateId: ACTIVATION_PAYOUT_TEMPLATE,
         variables: {
           activation_name: params.activationName,
-          amount_xlm: params.amountXlm,
+          amount: Number(params.amount).toString(),
+          asset: params.asset,
+          ...(params.asset === "XLM"
+            ? { amount_xlm: Number(params.amount).toString() }
+            : {}),
           wallet: params.wallet,
           paid_at: new Date(params.paidAtISO).toLocaleString(undefined, {
             dateStyle: "medium",
@@ -833,6 +1034,8 @@ export class ActivationsService {
     activation: {
       name: string;
       reward_xlm: number | string;
+      reward_amount?: number | string;
+      payout_asset?: string;
       expires_at: string;
     },
     emails: string[]
@@ -845,6 +1048,10 @@ export class ActivationsService {
       variables: {
         activation_name: activation.name,
         reward_xlm: Number(activation.reward_xlm),
+        asset: activation.payout_asset ?? "XLM",
+        reward_amount: Number(
+          activation.reward_amount ?? activation.reward_xlm
+        ),
         participant_email: email,
         expires_at: new Date(activation.expires_at).toLocaleString(undefined, {
           dateStyle: "medium",
@@ -866,27 +1073,32 @@ export class ActivationsService {
    */
   private async recordPayoutAudit(
     participant: { matched_wallet: string | null },
-    rewardXlm: number,
+    rewardAmount: number,
+    asset: "XLM" | "USDC",
     txHash: string
   ) {
     try {
       let amountInUsd: number | null = null;
-      const { data: priceRow } = await this.supabase.client
-        .from("asset_price_history")
-        .select("price")
-        .eq("symbol", "XLM")
-        .order("recorded_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (priceRow?.price && priceRow.price > 0) {
-        amountInUsd = rewardXlm * priceRow.price;
+      if (asset === "USDC") {
+        amountInUsd = rewardAmount;
+      } else {
+        const { data: priceRow } = await this.supabase.client
+          .from("asset_price_history")
+          .select("price")
+          .eq("symbol", "XLM")
+          .order("recorded_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (priceRow?.price && priceRow.price > 0) {
+          amountInUsd = rewardAmount * priceRow.price;
+        }
       }
 
       const result = await this.audit.record({
         wallet_address: participant.matched_wallet,
         action_type: "activation_payout",
-        asset_in: "XLM",
-        token_amount_in: rewardXlm,
+        asset_in: asset,
+        token_amount_in: rewardAmount,
         amount_in: amountInUsd,
         tx_hash: txHash,
       });

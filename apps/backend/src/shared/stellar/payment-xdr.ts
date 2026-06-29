@@ -57,3 +57,37 @@ export function buildNativePaymentOperation(params: {
     amount,
   });
 }
+
+export const USDC_ASSET = new Asset(
+  "USDC",
+  "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN"
+);
+
+export function buildAssetPaymentOperation(params: {
+  destination: string;
+  amount: string;
+  asset: Asset;
+}): xdr.Operation {
+  const { destination, amount, asset } = params;
+  return Operation.payment({
+    destination,
+    asset,
+    amount,
+  });
+}
+
+export function matchesAssetPayout(
+  op: Transaction["operations"][number],
+  destination: string,
+  expectedAmount: string,
+  asset: Asset
+): boolean {
+  return (
+    op.type === "payment" &&
+    op.destination === destination &&
+    !op.asset.isNative() &&
+    op.asset.getCode() === asset.getCode() &&
+    op.asset.getIssuer() === asset.getIssuer() &&
+    Number(op.amount).toFixed(7) === expectedAmount
+  );
+}

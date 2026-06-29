@@ -2,10 +2,14 @@
 
 import { backendFetch } from "./backend";
 
+export type PayoutAsset = "XLM" | "USDC";
+
 export interface ActivationSummary {
   id: string;
   name: string;
   reward_xlm: number;
+  reward_amount: number;
+  payout_asset: PayoutAsset;
   expires_at: string;
   created_at: string;
   counts: { total: number; pending: number; payable: number; paid: number };
@@ -23,12 +27,21 @@ export interface Participant {
   paid_by: string | null;
   paid_at: string | null;
   paid_amount_xlm: number | null;
+  paid_asset: string | null;
+  paid_amount: number | null;
+}
+
+export interface BatchPayoutSkipped {
+  participant_id: string;
+  reason: string;
 }
 
 export interface ActivationDetail {
   id: string;
   name: string;
   reward_xlm: number;
+  reward_amount: number;
+  payout_asset: PayoutAsset;
   expires_at: string;
   created_at: string;
   participants: Participant[];
@@ -49,6 +62,7 @@ export async function getActivation(id: string): Promise<ActivationDetail> {
 export async function createActivation(data: {
   name: string;
   reward_xlm: number;
+  payout_asset?: PayoutAsset;
   expires_at: string;
   emails: string[];
   send_invites?: boolean;
@@ -59,6 +73,7 @@ export async function createActivation(data: {
     body: JSON.stringify({
       name: data.name,
       reward_xlm: data.reward_xlm,
+      payout_asset: data.payout_asset ?? "XLM",
       expires_at: data.expires_at,
       emails: data.emails,
       send_invites: data.send_invites ?? false,
@@ -77,7 +92,11 @@ export async function createActivation(data: {
 export async function prepareActivationPayout(data: {
   participant_id: string;
   admin_wallet: string;
-}): Promise<{ xdr: string; network_passphrase: string }> {
+}): Promise<{
+  xdr: string;
+  network_passphrase: string;
+  payout_asset: PayoutAsset;
+}> {
   const res = await backendFetch("v1/activations/payouts/prepare", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -86,12 +105,22 @@ export async function prepareActivationPayout(data: {
   const payload = (await res.json().catch(() => ({}))) as {
     xdr?: string;
     network_passphrase?: string;
+    payout_asset?: PayoutAsset;
     message?: string;
+    code?: string;
   };
-  if (!res.ok) throw new Error(payload.message ?? "Failed to prepare payout");
+  if (!res.ok) {
+    if (payload.code === "NO_TRUSTLINE") {
+      throw new Error(
+        "Recipient has no USDC trustline. They must add USDC on Stellar before this payout can proceed."
+      );
+    }
+    throw new Error(payload.message ?? "Failed to prepare payout");
+  }
   return {
     xdr: payload.xdr!,
     network_passphrase: payload.network_passphrase!,
+    payout_asset: payload.payout_asset ?? "XLM",
   };
 }
 
@@ -142,8 +171,11 @@ export async function prepareBatchActivationPayout(data: {
   network_passphrase: string;
   participant_ids: string[];
   reward_xlm: number;
+  reward_amount: number;
+  payout_asset: PayoutAsset;
   op_count: number;
   remaining_payable: number;
+  skipped: BatchPayoutSkipped[];
 }> {
   const res = await backendFetch("v1/activations/payouts/prepare-batch", {
     method: "POST",
@@ -156,8 +188,11 @@ export async function prepareBatchActivationPayout(data: {
     network_passphrase?: string;
     participant_ids?: string[];
     reward_xlm?: number;
+    reward_amount?: number;
+    payout_asset?: PayoutAsset;
     op_count?: number;
     remaining_payable?: number;
+    skipped?: BatchPayoutSkipped[];
     message?: string;
   };
   if (!res.ok)
@@ -168,8 +203,11 @@ export async function prepareBatchActivationPayout(data: {
     network_passphrase: payload.network_passphrase!,
     participant_ids: payload.participant_ids ?? [],
     reward_xlm: payload.reward_xlm ?? 0,
+    reward_amount: payload.reward_amount ?? payload.reward_xlm ?? 0,
+    payout_asset: payload.payout_asset ?? "XLM",
     op_count: payload.op_count ?? 0,
     remaining_payable: payload.remaining_payable ?? 0,
+    skipped: payload.skipped ?? [],
   };
 }
 

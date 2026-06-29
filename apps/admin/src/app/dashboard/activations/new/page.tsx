@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { createActivation } from "@/lib/activations";
+import { createActivation, type PayoutAsset } from "@/lib/activations";
 import {
   AlertTriangle,
   CalendarClock,
@@ -34,6 +34,7 @@ const inputStyles =
 export default function NewActivationPage() {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [payoutAsset, setPayoutAsset] = useState<PayoutAsset>("XLM");
   const [rewardXlm, setRewardXlm] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
   const [emailsRaw, setEmailsRaw] = useState("");
@@ -45,14 +46,14 @@ export default function NewActivationPage() {
 
   const reward = Number(rewardXlm);
   const rewardValid = Number.isFinite(reward) && reward > 0;
-  const totalXlm = rewardValid ? reward * valid.length : 0;
+  const totalReward = rewardValid ? reward * valid.length : 0;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
     if (!rewardValid) {
-      setError("Reward must be a positive XLM amount.");
+      setError(`Reward must be a positive ${payoutAsset} amount.`);
       return;
     }
     if (!valid.length) {
@@ -69,6 +70,7 @@ export default function NewActivationPage() {
       const { id } = await createActivation({
         name,
         reward_xlm: reward,
+        payout_asset: payoutAsset,
         expires_at: new Date(expiresAt).toISOString(),
         emails: valid,
         send_invites: sendInvites,
@@ -141,6 +143,31 @@ export default function NewActivationPage() {
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
                   <label
+                    htmlFor="activation-payout-asset"
+                    className="mb-1.5 block text-sm font-medium text-white/70"
+                  >
+                    Payout asset
+                  </label>
+                  <select
+                    id="activation-payout-asset"
+                    className={inputStyles}
+                    value={payoutAsset}
+                    onChange={(ev) =>
+                      setPayoutAsset(ev.target.value as PayoutAsset)
+                    }
+                  >
+                    <option value="XLM">XLM (default)</option>
+                    <option value="USDC">USDC</option>
+                  </select>
+                  {payoutAsset === "USDC" ? (
+                    <p className="mt-1.5 text-xs text-white/45">
+                      Recipients must have a funded account with a USDC
+                      trustline. Others are skipped during batch payout.
+                    </p>
+                  ) : null}
+                </div>
+                <div>
+                  <label
                     htmlFor="activation-reward"
                     className="mb-1.5 block text-sm font-medium text-white/70"
                   >
@@ -163,11 +190,11 @@ export default function NewActivationPage() {
                       required
                     />
                     <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-white/45">
-                      XLM
+                      {payoutAsset}
                     </span>
                   </div>
                 </div>
-                <div>
+                <div className="sm:col-span-2 sm:max-w-[calc(50%-0.625rem)]">
                   <label
                     htmlFor="activation-expiry"
                     className="mb-1.5 block text-sm font-medium text-white/70"
@@ -258,7 +285,7 @@ export default function NewActivationPage() {
                 Reward each
               </dt>
               <dd className="font-medium text-white">
-                {rewardValid ? `${reward} XLM` : "-"}
+                {rewardValid ? `${reward} ${payoutAsset}` : "-"}
               </dd>
             </div>
             <div className="flex items-center justify-between">
@@ -282,8 +309,8 @@ export default function NewActivationPage() {
               Max budget if everyone completes
             </p>
             <p className="mt-1 text-xl font-semibold text-[#229EDF]">
-              {totalXlm > 0
-                ? `${totalXlm.toLocaleString("en-US", { maximumFractionDigits: 7 })} XLM`
+              {totalReward > 0
+                ? `${totalReward.toLocaleString("en-US", { maximumFractionDigits: 7 })} ${payoutAsset}`
                 : "-"}
             </p>
           </div>

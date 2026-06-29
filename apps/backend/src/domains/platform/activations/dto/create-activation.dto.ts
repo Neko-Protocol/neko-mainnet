@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsDateString,
   IsEmail,
+  IsIn,
   IsNumber,
   IsOptional,
   IsPositive,
@@ -21,10 +22,22 @@ export class CreateActivationDto {
   @MaxLength(200)
   name!: string;
 
-  @ApiProperty({ description: "XLM reward per participant." })
+  @ApiProperty({
+    description: "Reward per participant (in the activation's payout asset).",
+  })
   @IsNumber()
   @IsPositive()
   reward_xlm!: number;
+
+  @ApiProperty({
+    description: "Payout asset for this activation.",
+    enum: ["XLM", "USDC"],
+    default: "XLM",
+    required: false,
+  })
+  @IsOptional()
+  @IsIn(["XLM", "USDC"])
+  payout_asset?: "XLM" | "USDC";
 
   @ApiProperty({
     description: "ISO timestamp after which verifications no longer count.",

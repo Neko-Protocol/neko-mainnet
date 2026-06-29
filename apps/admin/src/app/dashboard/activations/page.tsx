@@ -48,7 +48,7 @@ export default function ActivationsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-white">Activations</h1>
           <p className="text-sm text-white/50">
-            XLM reward programs for verified participant emails.
+            Reward programs for verified participant emails (XLM or USDC).
           </p>
         </div>
         <Link
@@ -96,7 +96,8 @@ export default function ActivationsPage() {
                       {a.name}
                     </td>
                     <td className="px-4 py-3 text-white/70">
-                      {a.reward_xlm} XLM
+                      {a.reward_amount ?? a.reward_xlm}{" "}
+                      {a.payout_asset ?? "XLM"}
                     </td>
                     <td className="px-4 py-3">
                       <span
