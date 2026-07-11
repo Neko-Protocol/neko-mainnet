@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import StrategiesLibraryPage from "@/features/simulator/pages/StrategiesLibraryPage";
+import { StrategiesLibraryPage } from "@/features/simulator/strategies";
 
 export const metadata: Metadata = {
   title: "Strategies | Neko Protocol",
