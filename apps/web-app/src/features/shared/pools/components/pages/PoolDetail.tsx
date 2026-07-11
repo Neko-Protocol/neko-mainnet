@@ -11,8 +11,12 @@ import {
   usePoolAction,
   usePools,
 } from "@/lib/orchestrator";
-import { fromSmallestUnit, toSmallestUnit } from "@/lib/helpers/tokenUtils";
-import { atomicToDecimal, decimalToAtomic } from "@/lib/helpers/amount";
+import { fromSmallestUnit, toSmallestUnit } from "@neko/orchestrator";
+import {
+  atomicToDecimal,
+  decimalToAtomic,
+  reserveStroopsFromApiString,
+} from "@neko/orchestrator";
 import type { PoolAction, PoolInfo } from "@/lib/orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
@@ -30,7 +34,6 @@ import {
   safeParseFloat,
 } from "@/lib/helpers/formatUtils";
 import { getPoolTokenIcon } from "../../utils/poolTokenIcons";
-import { reserveStroopsFromApiString } from "@/lib/helpers/stellar/aquaDeposit";
 import { ensureTrustlineForSAC } from "@/lib/helpers/stellar/trustline";
 import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
 
@@ -42,7 +45,7 @@ function calculateBorrowLimit(
   return collateralAmount * (collateralFactorPct / 100);
 }
 import { useToast } from "@/hooks/useToast";
-import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
+import { isUserCancellationError } from "@neko/orchestrator";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";

@@ -5,36 +5,6 @@ import {
 import { getAvailableTokens } from "./stellar/soroswap";
 import type { Token } from "./stellar/soroswap";
 
-export const toSmallestUnit = (
-  amount: string | number,
-  decimals: number = 7
-): string => {
-  const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
-  if (isNaN(numAmount)) return "0";
-
-  const multiplier = Math.pow(10, decimals);
-  const result = Math.floor(numAmount * multiplier).toString();
-  return result;
-};
-
-export const fromSmallestUnit = (
-  amount: string,
-  decimals: number = 7
-): string => {
-  const numAmount = BigInt(amount);
-  const divisor = BigInt(Math.pow(10, decimals));
-  const whole = numAmount / divisor;
-  const fractional = numAmount % divisor;
-
-  if (fractional === BigInt(0)) {
-    return whole.toString();
-  }
-
-  const fractionalStr = fractional.toString().padStart(decimals, "0");
-  const trimmedFractional = fractionalStr.replace(/0+$/, "");
-  return `${whole}.${trimmedFractional}`;
-};
-
 export const getExplorerUrl = (
   txHash: string,
   network?: string

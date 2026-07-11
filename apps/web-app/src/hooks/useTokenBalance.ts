@@ -5,7 +5,7 @@ import { getTokens, getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import { getTokenAddress } from "@/lib/helpers/stellar/soroswap";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit } from "@neko/orchestrator";
 
 const BASE_RESERVE = 0.5;
 

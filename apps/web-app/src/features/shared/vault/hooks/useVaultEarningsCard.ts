@@ -6,7 +6,7 @@ import {
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit } from "@neko/orchestrator";
 import { auditService } from "@/lib/services/audit.service";
 import { useWallet } from "@/hooks/useWallet";
 import type { AuditLog } from "@/lib/types/audit.types";

@@ -10,7 +10,7 @@ import {
   vaultDedicatedArtKey,
 } from "@/features/shared/vault/utils/vaultAssetArt";
 import { formatAmount } from "@/lib/helpers/formatUtils";
-import { getTokenIcon } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon } from "@/lib/helpers/tokenDisplay";
 
 // Per-vault static overrides: contractId → fields that differ from the defaults.
 // Merge order: defaults → STATIC_OVERRIDES[contractId] → derived fields.

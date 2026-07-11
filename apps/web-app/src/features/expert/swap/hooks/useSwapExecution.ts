@@ -22,7 +22,7 @@ import {
 } from "@/features/expert/swap/constants/swapConfig";
 import { useWallet } from "@/hooks/useWallet";
 import { auditService } from "@/lib/services/audit.service";
-import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
+import { extractSignedTxXdr } from "@neko/orchestrator";
 
 export interface SwapExecutionParams {
   amountIn: string;

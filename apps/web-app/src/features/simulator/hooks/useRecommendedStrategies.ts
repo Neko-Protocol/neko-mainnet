@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { backendClient } from "@/lib/services/backend-client";
 import { usePools } from "@/lib/orchestrator/hooks/usePools";
 import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
-import { getTokenIcon } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon } from "@/lib/helpers/tokenDisplay";
 import type { RecommendedStrategyDto } from "../types/recommended.types";
 import type {
   SimulatorDestination,

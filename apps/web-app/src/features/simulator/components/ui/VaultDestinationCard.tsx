@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { SimulatorDestination } from "../../types/simulator.types";
 
 interface VaultDestinationCardProps {

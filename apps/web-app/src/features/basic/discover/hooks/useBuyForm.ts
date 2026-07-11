@@ -9,8 +9,8 @@ import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useToast } from "@/hooks/useToast";
 import { getPaymentTokenForAsset } from "@/lib/constants/buy.config";
-import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
-import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { sanitizeAmountInput } from "@/lib/helpers/tokenDisplay";
+import { extractContractErrorOrNull } from "@neko/orchestrator";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
 export interface BuyFormState {

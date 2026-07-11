@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
-import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
+import { sanitizeAmountInput } from "@/lib/helpers/tokenDisplay";
 import { formatCurrency } from "@/lib/helpers/currency";
 import type { SupportedCurrency } from "@/stores/currency.store";
 import { useMultisigDetection } from "@/hooks/useMultisigDetection";

@@ -3,7 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { squeezeSummaryDecimals } from "@/lib/helpers/formatUtils";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { VaultView, VaultCategory } from "../../types/vault";
 import { vaultArtForSymbol } from "../../utils/vaultAssetArt";
 import { VaultAssetIllustrations } from "./VaultAssetIllustrations";

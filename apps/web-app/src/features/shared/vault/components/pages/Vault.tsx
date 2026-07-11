@@ -19,7 +19,7 @@ import {
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
-import { getTokenIcon } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon } from "@/lib/helpers/tokenDisplay";
 import type { VaultView } from "../../types/vault";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";

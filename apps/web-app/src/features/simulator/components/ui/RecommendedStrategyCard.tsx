@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ArrowRight, Bookmark, BookmarkCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import {
   CLASS_ACCENT,
   getAssetTaxonomy,

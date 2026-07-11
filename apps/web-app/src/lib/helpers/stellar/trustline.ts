@@ -6,10 +6,7 @@ import {
 } from "@stellar/stellar-sdk";
 import { TokenMetadata } from "@blend-capital/blend-sdk";
 import { horizonUrl, networkPassphrase, rpcUrl } from "@/lib/constants/network";
-import {
-  extractSignedTxXdr,
-  type SignTransactionFn,
-} from "@/lib/helpers/stellar/transaction";
+import { extractSignedTxXdr, type SignTransactionFn } from "@neko/orchestrator";
 
 export interface ClassicAssetRef {
   code: string;

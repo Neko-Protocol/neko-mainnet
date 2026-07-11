@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
+import { sanitizeAmountInput } from "@/lib/helpers/tokenDisplay";
 
 interface AmountInputProps {
   value: string;

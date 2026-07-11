@@ -7,7 +7,7 @@ import { useSwapExecution } from "@/features/expert/swap/hooks/useSwapExecution"
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import { useCartStore, type CartItem } from "@/stores/cart.store";
-import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { extractContractErrorOrNull } from "@neko/orchestrator";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
 export type ItemExecutionStatus =

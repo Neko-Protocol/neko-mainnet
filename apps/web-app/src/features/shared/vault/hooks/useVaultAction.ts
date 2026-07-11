@@ -19,15 +19,15 @@ import {
 import { useMultisigDetection } from "@/hooks/useMultisigDetection";
 import { lobstrVaultService } from "@/lib/services/lobstr-vault.service";
 import { usePendingMultisigTxsStore } from "@/stores/pendingMultisigTxs.store";
-import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
-import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { extractContractErrorOrNull } from "@neko/orchestrator";
+import { toSmallestUnit, fromSmallestUnit } from "@neko/orchestrator";
 import {
   applySlippageBps,
   decimalToAtomic,
+  extractSignedTxXdr,
   mulDivCeil,
   mulDivFloor,
-} from "@/lib/helpers/amount";
-import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
+} from "@neko/orchestrator";
 import { resolveDecimalsForAuditAssetKey } from "@/lib/helpers/auditAssetAmounts";
 import { auditService } from "@/lib/services/audit.service";
 

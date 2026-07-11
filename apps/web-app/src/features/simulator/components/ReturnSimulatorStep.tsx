@@ -9,7 +9,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { cn } from "@/lib/utils";
 import { formatAmount, safeParseFloat } from "@/lib/helpers/formatUtils";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
-import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { MappedBalances } from "@/lib/helpers/stellar/wallet";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { useEtherfuseYields } from "../hooks/useEtherfuseYields";

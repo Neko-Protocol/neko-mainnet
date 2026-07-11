@@ -7,7 +7,7 @@ import {
   allowHttpForSoroban,
 } from "@/lib/constants/network";
 import { useWallet } from "@/hooks/useWallet";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit } from "@neko/orchestrator";
 export function useVaultBalance(contractId: string | null | undefined) {
   const { address } = useWallet();
 
