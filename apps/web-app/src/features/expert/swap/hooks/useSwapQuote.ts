@@ -6,7 +6,7 @@ import {
   DEBOUNCE_MS,
   QUOTE_REFRESH_INTERVAL_MS,
 } from "@/features/expert/swap/constants/swapConfig";
-import type { PlatformFee } from "@/lib/types/soroswapTypes";
+import type { PlatformFee } from "@/lib/helpers/stellar/soroswap";
 
 const MAX_CONSECUTIVE_FAILURES = 3;
 

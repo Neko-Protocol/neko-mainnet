@@ -2,14 +2,14 @@ import { useRef, useCallback } from "react";
 import type { Token } from "@/lib/helpers/stellar/soroswap";
 import { getQuote, type QuoteRequest } from "@/lib/helpers/stellar/soroswap";
 import { formatAmount } from "@/lib/helpers/formatUtils";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit } from "@neko/orchestrator";
 import {
   DEFAULT_SLIPPAGE_BPS,
   MAX_HOPS,
   PLATFORM_FEE_BPS,
   NEKO_TREASURY_ADDRESS,
 } from "@/features/expert/swap/constants/swapConfig";
-import type { PlatformFee } from "@/lib/types/soroswapTypes";
+import type { PlatformFee } from "@/lib/helpers/stellar/soroswap";
 
 export interface StellarQuoteResult {
   amount: string | null;

@@ -28,6 +28,11 @@ export {
   getApiKey,
   hasApiKey,
   invalidateSoroswapSDK,
+  getSDKNetwork,
+  getSoroswapSDK,
+  makeAPIRequest,
+  toSmallestUnit,
+  formatTokenForAPI,
   isValidContractAddress,
   getTokenExplorerUrl,
 } from "./utils.js";

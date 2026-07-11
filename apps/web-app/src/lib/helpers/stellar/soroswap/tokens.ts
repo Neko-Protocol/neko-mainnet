@@ -1,56 +1,26 @@
-import type { Token } from "../../../types/soroswapTypes";
+import { soroswap } from "@neko/orchestrator";
 import {
   getAssetsConfig,
   getCurrentNetworkId,
-  type AssetConfig,
 } from "@/lib/constants/assets.config";
 
-export type TokenInfo = Pick<
-  AssetConfig,
-  "name" | "contract" | "code" | "decimals" | "icon"
->;
+export type TokenInfo = soroswap.TokenInfo;
 
-export const getCurrentNetwork = (): string => getCurrentNetworkId();
+export const buildRegistry = (): soroswap.SoroswapTokenRegistry => ({
+  availableTokens: getAssetsConfig(),
+  currentNetwork: getCurrentNetworkId(),
+});
 
-export const getAvailableTokens = (): Record<string, TokenInfo> => {
-  return getAssetsConfig();
-};
+export const getCurrentNetwork = (): string =>
+  soroswap.getCurrentNetwork(buildRegistry());
 
-export const getTokens = (): Record<string, string> => {
-  const tokens = getAvailableTokens();
-  const result: Record<string, string> = {};
-  Object.entries(tokens).forEach(([code, info]) => {
-    result[code] = info.contract;
-  });
-  return result;
-};
+export const getAvailableTokens = (): Record<string, TokenInfo> =>
+  soroswap.getAvailableTokens(buildRegistry());
 
-export const getTokenAddress = (token: Token | string): string => {
-  if (typeof token === "string") {
-    // Already a valid Soroban contract address
-    if (token.startsWith("C") && token.length === 56) {
-      return token;
-    }
-    // Try to look up by token code (e.g. "XLM" → contract address)
-    const tokens = getTokens();
-    if (tokens[token]) {
-      return tokens[token];
-    }
-    return token;
-  }
+export const getTokens = (): Record<string, string> =>
+  soroswap.getTokens(buildRegistry());
 
-  if (token.type === "native") {
-    const tokens = getTokens();
-    return tokens.XLM ?? getAvailableTokens().XLM?.contract ?? "";
-  }
-
-  if (token.contract) {
-    return token.contract;
-  }
-
-  throw new Error(
-    "Invalid token format: must be string address or Token with contract"
-  );
-};
+export const getTokenAddress = (token: soroswap.Token | string): string =>
+  soroswap.getTokenAddress(token, buildRegistry());
 
 export const TOKENS: Record<string, string> = getTokens();
