@@ -10,8 +10,8 @@ export type LiveApyInput = Pick<
 >;
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
 import { useFilteredDestinations } from "./useFilteredDestinations";
-import { useEtherfuseYields } from "./useEtherfuseYields";
-import { resolveEtherfuseBondApy } from "../utils/etherfuseBondApy";
+import { useEtherfuseYields } from "@/features/shared/yields/hooks/useEtherfuseYields";
+import { resolveEtherfuseBondApy } from "@/features/shared/yields/utils/etherfuseBondApy";
 
 interface LiveStrategyApy {
   apy: number | null;

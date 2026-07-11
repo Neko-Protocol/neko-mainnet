@@ -12,7 +12,7 @@ import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import type { MappedBalances } from "@/lib/helpers/stellar/wallet";
 import { useCurrencyStore } from "@/stores/currency.store";
-import { useEtherfuseYields } from "../hooks/useEtherfuseYields";
+import { useEtherfuseYields } from "@/features/shared/yields/hooks/useEtherfuseYields";
 import {
   isEtherfuseBondToken,
   resolveEtherfuseBondApy,

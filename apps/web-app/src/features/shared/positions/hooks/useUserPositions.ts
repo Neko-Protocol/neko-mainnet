@@ -4,7 +4,7 @@ import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { POOLS_QUERY_KEY } from "@/lib/orchestrator/hooks/usePools";
 import { orchestrator } from "@/lib/orchestrator/core/Orchestrator";
 import { useWallet } from "@/hooks/useWallet";
-import { batchCheckLpBalances } from "@/lib/services/positionScanner";
+import { batchCheckLpBalances } from "@/features/shared/positions/services/positionScanner";
 import {
   BLEND_ASSET_CODES,
   BLEND_POOL_VAULTS,

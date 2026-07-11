@@ -9,8 +9,8 @@ import {
 import { parseBalance } from "@/lib/helpers/formatUtils";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { usePortfolioValue } from "./usePortfolioValue";
-import { useDashboardPositions } from "@/features/expert/dashboard/hooks/useDashboardPositions";
-import { useVaultsTotalUsd } from "@/features/expert/dashboard/hooks/useVaultsTotalUsd";
+import { useDashboardPositions } from "@/features/shared/positions/hooks/useDashboardPositions";
+import { useVaultsTotalUsd } from "@/features/shared/positions/hooks/useVaultsTotalUsd";
 
 export function useTotalPortfolioUsd() {
   const {

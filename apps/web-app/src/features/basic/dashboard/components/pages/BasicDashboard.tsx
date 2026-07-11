@@ -8,9 +8,9 @@ import BasicQuickActions from "@/features/basic/dashboard/components/ui/BasicQui
 import { WalletHoldingsCard } from "@/features/basic/dashboard/components/ui/WalletHoldingsCard";
 import DiscoverAssets from "@/features/shared/dashboard/components/ui/DiscoverAssets";
 import { EmailNudgeBanner } from "@/features/shared/dashboard/components/ui/EmailNudgeBanner";
-import AssetBreakdown from "@/features/expert/dashboard/components/ui/AssetBreakdown";
+import AssetBreakdown from "@/features/shared/positions/components/ui/AssetBreakdown";
 import { useWalletHoldings } from "@/features/shared/wallet/hooks/useWalletHoldings";
-import YourPositions from "@/features/expert/dashboard/components/ui/YourPositions";
+import YourPositions from "@/features/shared/positions/components/ui/YourPositions";
 
 const BasicDashboard: React.FC = () => {
   const { holdings, isLoading } = useWalletHoldings();

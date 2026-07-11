@@ -5,7 +5,7 @@ import { useStellarQuote } from "./useStellarQuote";
 import {
   DEBOUNCE_MS,
   QUOTE_REFRESH_INTERVAL_MS,
-} from "@/features/expert/swap/constants/swapConfig";
+} from "@/features/shared/swap-engine/constants/swapConfig";
 import type { PlatformFee } from "@/lib/types/soroswapTypes";
 
 const MAX_CONSECUTIVE_FAILURES = 3;

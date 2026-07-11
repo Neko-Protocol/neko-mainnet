@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getTokens, getTokenAddress } from "@/lib/helpers/stellar/soroswap";
-import { useSwapExecution } from "@/features/expert/swap/hooks/useSwapExecution";
+import { useSwapExecution } from "@/features/shared/swap-engine/hooks/useSwapExecution";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import {

@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useDashboardPools } from "@/features/expert/dashboard/hooks/useDashboardPools";
+import { useDashboardPools } from "@/features/shared/positions/hooks/useDashboardPools";
 import { LendTable } from "@/features/shared/lending/components/ui/LendTable";
 import type { PoolData } from "@/features/shared/lending/types/lending";
 

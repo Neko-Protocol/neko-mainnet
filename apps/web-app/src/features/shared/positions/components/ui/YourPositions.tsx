@@ -3,10 +3,10 @@
 import React, { useMemo } from "react";
 import Link from "next/link";
 import { Layers } from "lucide-react";
-import { useDashboardPositions } from "@/features/expert/dashboard/hooks/useDashboardPositions";
-import { useDashboardVaultPositions } from "@/features/expert/dashboard/hooks/useDashboardVaultPositions";
-import { useBearingYieldPositions } from "@/features/expert/dashboard/hooks/useBearingYieldPositions";
-import { useEtherfuseYields } from "@/features/simulator/hooks/useEtherfuseYields";
+import { useDashboardPositions } from "@/features/shared/positions/hooks/useDashboardPositions";
+import { useDashboardVaultPositions } from "@/features/shared/positions/hooks/useDashboardVaultPositions";
+import { useBearingYieldPositions } from "@/features/shared/positions/hooks/useBearingYieldPositions";
+import { useEtherfuseYields } from "@/features/shared/yields/hooks/useEtherfuseYields";
 import { YourPositionsTable } from "./YourPositionsTable";
 import MyVaultPositions from "@/features/shared/vault/components/ui/MyVaultPositions";
 import { BearingYieldTable } from "./BearingYieldTable";

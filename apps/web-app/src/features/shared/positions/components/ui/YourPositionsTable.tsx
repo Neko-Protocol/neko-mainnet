@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import type { UserPositionWithPool } from "@/features/expert/dashboard/hooks/useUserPositions";
+import type { UserPositionWithPool } from "@/features/shared/positions/hooks/useUserPositions";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
 import type { PoolInfo } from "@/lib/orchestrator/types/pool.types";

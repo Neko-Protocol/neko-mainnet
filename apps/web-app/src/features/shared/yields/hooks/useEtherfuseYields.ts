@@ -2,7 +2,7 @@
 
 import type { EtherfuseYieldEntry } from "@neko/api-contracts";
 import { useQuery } from "@tanstack/react-query";
-import { getBondYields } from "@/lib/services/etherfuse.api";
+import { getBondYields } from "@/features/shared/yields/services/etherfuse.api";
 
 export type { EtherfuseYieldEntry };
 

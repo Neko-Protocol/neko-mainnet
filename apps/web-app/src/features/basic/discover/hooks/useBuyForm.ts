@@ -3,8 +3,8 @@
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getTokens, getTokenAddress } from "@/lib/helpers/stellar/soroswap";
-import { useSwapQuote } from "@/features/expert/swap/hooks/useSwapQuote";
-import { useSwapExecution } from "@/features/expert/swap/hooks/useSwapExecution";
+import { useSwapQuote } from "@/features/shared/swap-engine/hooks/useSwapQuote";
+import { useSwapExecution } from "@/features/shared/swap-engine/hooks/useSwapExecution";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useToast } from "@/hooks/useToast";

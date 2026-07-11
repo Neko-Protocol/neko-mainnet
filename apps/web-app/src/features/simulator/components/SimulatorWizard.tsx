@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { VaultActionModal } from "@/features/shared/vault/components/ui/VaultActionModal";
 import type { VaultView } from "@/features/shared/vault/types/vault";
-import { useSwapExecution } from "@/features/expert/swap/hooks/useSwapExecution";
+import { useSwapExecution } from "@/features/shared/swap-engine/hooks/useSwapExecution";
 import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";

@@ -16,7 +16,7 @@ import {
   findDestinationById,
 } from "../utils/buildDestinationIndex";
 import { useSimulatorTokens } from "./useSimulatorTokens";
-import { useEtherfuseYields } from "./useEtherfuseYields";
+import { useEtherfuseYields } from "@/features/shared/yields/hooks/useEtherfuseYields";
 
 export interface ResolvedRecommendedStrategy {
   dto: RecommendedStrategyDto;

@@ -21,12 +21,12 @@ import type {
 import {
   ETHERFUSE_BOND_SYMBOLS,
   type EtherfuseBondSymbol,
-} from "../constants/etherfuseBonds";
-import { resolveEtherfuseBondApy } from "../utils/etherfuseBondApy";
-import { useEtherfuseYields } from "./useEtherfuseYields";
+} from "@/features/shared/yields/constants/etherfuseBonds";
+import { resolveEtherfuseBondApy } from "@/features/shared/yields/utils/etherfuseBondApy";
+import { useEtherfuseYields } from "@/features/shared/yields/hooks/useEtherfuseYields";
 
-export { ETHERFUSE_BOND_SYMBOLS } from "../constants/etherfuseBonds";
-export { resolveEtherfuseBondApy } from "../utils/etherfuseBondApy";
+export { ETHERFUSE_BOND_SYMBOLS } from "@/features/shared/yields/constants/etherfuseBonds";
+export { resolveEtherfuseBondApy } from "@/features/shared/yields/utils/etherfuseBondApy";
 
 function safeNumber(value: number | string | undefined | null): number {
   if (value === null || value === undefined) return 0;

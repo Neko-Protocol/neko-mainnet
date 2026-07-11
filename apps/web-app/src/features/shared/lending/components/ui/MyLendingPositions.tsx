@@ -14,7 +14,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
-import { useUserPositions } from "@/features/expert/dashboard/hooks/useUserPositions";
+import { useUserPositions } from "@/features/shared/positions/hooks/useUserPositions";
 import { usePoolAction } from "@/lib/orchestrator";
 import { ColHeader } from "./ColHeader";
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";

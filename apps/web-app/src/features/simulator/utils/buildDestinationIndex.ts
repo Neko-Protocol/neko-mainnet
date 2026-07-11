@@ -13,9 +13,9 @@ import {
 import {
   ETHERFUSE_BOND_SYMBOLS,
   type EtherfuseBondSymbol,
-} from "../constants/etherfuseBonds";
-import { resolveEtherfuseBondApy } from "./etherfuseBondApy";
-import type { EtherfuseYieldEntry } from "../hooks/useEtherfuseYields";
+} from "@/features/shared/yields/constants/etherfuseBonds";
+import { resolveEtherfuseBondApy } from "@/features/shared/yields/utils/etherfuseBondApy";
+import type { EtherfuseYieldEntry } from "@/features/shared/yields/hooks/useEtherfuseYields";
 import type { SimulatorDestination } from "../types/simulator.types";
 
 function safeNumber(value: number | string | undefined | null): number {

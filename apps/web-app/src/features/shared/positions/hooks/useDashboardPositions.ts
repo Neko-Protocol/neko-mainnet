@@ -13,7 +13,7 @@ import {
   DASHBOARD_LIMITS,
   DASHBOARD_POOL_QUERY_OPTS,
 } from "./useDashboardPools";
-import { batchCheckLpBalances } from "@/lib/services/positionScanner";
+import { batchCheckLpBalances } from "@/features/shared/positions/services/positionScanner";
 import { BLEND_VAULT_ONLY_RESERVES } from "@/lib/orchestrator/adapters/blend-config";
 import {
   USE_BACKEND_DASHBOARD,
