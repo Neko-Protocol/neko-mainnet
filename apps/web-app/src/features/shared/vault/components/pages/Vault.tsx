@@ -133,7 +133,7 @@ const Vault: React.FC = () => {
       enabled: !!address && !!v.detail?.contracts?.vault,
       staleTime: 2 * 60_000,
       gcTime: 10 * 60_000,
-      refetchInterval: false,
+      refetchInterval: false as const,
       refetchOnWindowFocus: false,
       retry: false,
     })),
