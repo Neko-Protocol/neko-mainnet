@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useReferralStore } from "@/stores/referral.store";
+import { useReferralStore } from "../stores/referral.store";
 
 // Persists the ?ref=<code> param so the code survives navigation and is
 // attached to the registration call when the visitor connects a wallet.

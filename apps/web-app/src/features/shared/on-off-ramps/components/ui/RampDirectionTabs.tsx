@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { RampDirection } from "../../types/ramp";
-import type { AnchorProvider } from "@/lib/anchors/types";
+import type { AnchorProvider } from "@/features/shared/on-off-ramps/types/anchors";
 import { RAMP_PROVIDERS } from "../../constants/ramp.config";
 
 interface RampDirectionTabsProps {

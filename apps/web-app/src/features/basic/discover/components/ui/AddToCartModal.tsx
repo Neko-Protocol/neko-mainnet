@@ -5,7 +5,7 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { BasicBuyForm, type BuyConfirmPayload } from "./BasicBuyForm";
-import { useCartStore } from "@/stores/cart.store";
+import { useCartStore } from "@/features/basic/cart/stores/cart.store";
 import { ASSET_INFO } from "@/features/shared/discover/utils/assetInfo";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 

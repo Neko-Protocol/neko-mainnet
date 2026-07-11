@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Vault } from "lucide-react";
-import { parseDefindexVaultIds } from "@/lib/defindex/vaultIds";
+import { parseDefindexVaultIds } from "@/features/shared/vault/utils/vaultIds";
 import type { VaultView } from "../../types/vault";
 import { VaultCard } from "./VaultCard";
 

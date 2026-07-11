@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usersService } from "@/lib/services/users.service";
-import { useReferralStore } from "@/stores/referral.store";
+import { useReferralStore } from "@/features/shared/referral/stores/referral.store";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 
 // Registers the connected wallet with our Supabase users table on every

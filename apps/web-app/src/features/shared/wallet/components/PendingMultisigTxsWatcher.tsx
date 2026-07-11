@@ -1,6 +1,6 @@
 "use client";
 
-import { usePendingMultisigTxsPolling } from "@/hooks/usePendingMultisigTxsPolling";
+import { usePendingMultisigTxsPolling } from "@/features/shared/wallet/hooks/usePendingMultisigTxsPolling";
 
 /**
  * Renderless component that mounts the multisig pending-tx poller globally.

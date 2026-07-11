@@ -7,7 +7,10 @@ import {
   getOffRampTransaction,
   submitSignedXdr,
 } from "../utils/rampApi";
-import type { AnchorProvider, OffRampTransaction } from "@/lib/anchors/types";
+import type {
+  AnchorProvider,
+  OffRampTransaction,
+} from "@/features/shared/on-off-ramps/types/anchors";
 import {
   POLL_INTERVAL_MS,
   MAX_POLL_DURATION_MS,

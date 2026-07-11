@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
-import type { AnchorProvider } from "@/lib/anchors/types";
+import type { AnchorProvider } from "@/features/shared/on-off-ramps/types/anchors";
 import type { RampDirection } from "../../types/ramp";
 import { RAMP_PROVIDERS } from "../../constants/ramp.config";
 import { simulateFiatReceived } from "../../utils/rampApi";

@@ -1,8 +1,8 @@
 "use client";
 
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
-import { useUIModeStore } from "@/stores/ui-mode.store";
-import { UIModeModal } from "@/components/ui/UIModeModal";
+import { useUIModeStore } from "../stores/ui-mode.store";
+import { UIModeModal } from "./UIModeModal";
 
 /**
  * Renders the UI-mode selection modal exactly once  after the user connects

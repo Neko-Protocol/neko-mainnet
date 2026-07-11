@@ -1,5 +1,5 @@
 import type { SupportedCurrency } from "@/stores/currency.store";
-import type { UIMode } from "@/stores/ui-mode.store";
+import type { UIMode } from "@/features/shared/ui-mode/stores/ui-mode.store";
 
 export interface UserPreferences {
   currency?: SupportedCurrency;

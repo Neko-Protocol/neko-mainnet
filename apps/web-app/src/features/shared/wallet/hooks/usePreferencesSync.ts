@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usersService } from "@/lib/services/users.service";
 import { useCurrencyStore } from "@/stores/currency.store";
-import { useUIModeStore } from "@/stores/ui-mode.store";
+import { useUIModeStore } from "@/features/shared/ui-mode/stores/ui-mode.store";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 
 // Syncs currency and UI-mode preferences between Supabase and local Zustand stores.

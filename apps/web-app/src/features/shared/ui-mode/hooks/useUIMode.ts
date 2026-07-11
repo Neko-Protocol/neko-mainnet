@@ -1,6 +1,6 @@
 "use client";
 
-import { useUIModeStore } from "@/stores/ui-mode.store";
+import { useUIModeStore } from "../stores/ui-mode.store";
 
 export function useUIMode() {
   const mode = useUIModeStore((s) => s.mode);

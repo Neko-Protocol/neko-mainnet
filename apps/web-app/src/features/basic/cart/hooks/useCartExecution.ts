@@ -6,7 +6,10 @@ import { getTokens, getTokenAddress } from "@/lib/helpers/stellar/soroswap";
 import { useSwapExecution } from "@/features/expert/swap/hooks/useSwapExecution";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
-import { useCartStore, type CartItem } from "@/stores/cart.store";
+import {
+  useCartStore,
+  type CartItem,
+} from "@/features/basic/cart/stores/cart.store";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 

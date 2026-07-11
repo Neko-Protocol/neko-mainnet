@@ -4,8 +4,8 @@ import { useEffect, useRef } from "react";
 import { ModuleType } from "@creit.tech/stellar-wallets-kit/types";
 import { getStellarWalletKit } from "@/lib/helpers/stellar/wallet";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
-import { useUserSync } from "@/hooks/useUserSync";
-import { usePreferencesSync } from "@/hooks/usePreferencesSync";
+import { useUserSync } from "@/features/shared/wallet/hooks/useUserSync";
+import { usePreferencesSync } from "@/features/shared/wallet/hooks/usePreferencesSync";
 
 /**
  * Silently auto-connects when the dApp is opened inside a wallet's in-app

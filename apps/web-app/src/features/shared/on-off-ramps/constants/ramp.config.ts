@@ -1,4 +1,4 @@
-import type { AnchorProvider } from "@/lib/anchors/types";
+import type { AnchorProvider } from "@/features/shared/on-off-ramps/types/anchors";
 
 export interface ProviderConfig {
   name: AnchorProvider;

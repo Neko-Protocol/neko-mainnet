@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { BannerPage } from "@/components/ui/BannerPage";
-import { useCartStore } from "@/stores/cart.store";
+import { useCartStore } from "@/features/basic/cart/stores/cart.store";
 import {
   useCartExecution,
   type ItemExecutionStatus,

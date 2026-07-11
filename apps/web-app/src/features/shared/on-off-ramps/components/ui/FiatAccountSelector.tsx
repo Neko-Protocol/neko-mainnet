@@ -2,7 +2,7 @@
 
 import React from "react";
 import { ExternalLink } from "lucide-react";
-import type { SavedFiatAccount } from "@/lib/anchors/types";
+import type { SavedFiatAccount } from "@/features/shared/on-off-ramps/types/anchors";
 import { maskClabe } from "../../utils/formatters";
 
 interface FiatAccountSelectorProps {

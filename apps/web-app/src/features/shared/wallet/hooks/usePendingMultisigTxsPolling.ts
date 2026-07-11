@@ -7,7 +7,7 @@ import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 import {
   usePendingMultisigTxsStore,
   type PendingMultisigTx,
-} from "@/stores/pendingMultisigTxs.store";
+} from "@/features/shared/wallet/stores/pendingMultisigTxs.store";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { horizonUrl } from "@/lib/constants/network";

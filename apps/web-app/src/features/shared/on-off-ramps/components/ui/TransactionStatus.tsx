@@ -3,7 +3,7 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import type { TransactionStatus } from "@/lib/anchors/types";
+import type { TransactionStatus } from "@/features/shared/on-off-ramps/types/anchors";
 
 interface TransactionStatusProps {
   status: TransactionStatus;

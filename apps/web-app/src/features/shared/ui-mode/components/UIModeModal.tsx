@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import type { UIMode } from "@/stores/ui-mode.store";
+import type { UIMode } from "../stores/ui-mode.store";
 
 const MODES: { id: UIMode; label: string; description: string }[] = [
   {
