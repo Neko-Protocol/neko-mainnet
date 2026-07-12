@@ -5,7 +5,7 @@ import { Wallet, Mail, Sliders, LayoutGrid, Network } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useCopyToClipboard } from "@/features/shared/settings/hooks/useCopyToClipboard";
 import { SettingsWalletSection } from "../ui/SettingsWalletSection";
 import { SettingsNetworkSection } from "../ui/SettingsNetworkSection";
 import { SettingsPreferencesSection } from "../ui/SettingsPreferencesSection";

@@ -1,10 +1,10 @@
-import type { AnchorProvider } from "@/lib/anchors/types";
+import type { AnchorProvider } from "@/features/shared/on-off-ramps/types/anchors";
 import type {
   Quote,
   OnRampTransaction,
   OffRampTransaction,
   SavedFiatAccount,
-} from "@/lib/anchors/types";
+} from "@/features/shared/on-off-ramps/types/anchors";
 
 export type { AnchorProvider };
 

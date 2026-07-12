@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { Copy, CheckCircle, ExternalLink } from "lucide-react";
-import type { PaymentInstructions } from "@/lib/anchors/types";
+import type { PaymentInstructions } from "@/features/shared/on-off-ramps/types/anchors";
 
 interface PaymentInstructionsProps {
   instructions: PaymentInstructions;

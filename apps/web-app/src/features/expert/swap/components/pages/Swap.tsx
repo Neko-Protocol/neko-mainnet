@@ -21,7 +21,7 @@ import {
   getTokenIconFitClass,
   getExplorerUrl,
 } from "@/lib/helpers/tokenUtils";
-import { DEFAULT_SLIPPAGE_BPS } from "@/features/expert/swap/constants/swapConfig";
+import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { BannerPage } from "@/components/ui/BannerPage";
@@ -30,8 +30,8 @@ import TokenSelectorModal from "../ui/TokenSelectorModal";
 
 import { useSwapState } from "../../hooks/useSwapState";
 import { useTokenSelection } from "../../hooks/useTokenSelection";
-import { useSwapQuote } from "../../hooks/useSwapQuote";
-import { useSwapExecution } from "../../hooks/useSwapExecution";
+import { useSwapQuote } from "@/features/shared/swap-engine/hooks/useSwapQuote";
+import { useSwapExecution } from "@/features/shared/swap-engine/hooks/useSwapExecution";
 import { useSwapPrices } from "../../hooks/useSwapPrices";
 
 import { SwapButton } from "../ui/SwapButton";

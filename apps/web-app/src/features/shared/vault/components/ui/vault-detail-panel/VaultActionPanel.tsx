@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
 import { formatCurrency } from "@/lib/helpers/currency";
 import type { SupportedCurrency } from "@/stores/currency.store";
-import { useMultisigDetection } from "@/hooks/useMultisigDetection";
+import { useMultisigDetection } from "@/features/shared/vault/hooks/useMultisigDetection";
 import { MultisigBanner } from "@/features/shared/vault/components/ui/MultisigBanner";
 import type { VaultActionPanelProps } from "./types";
 

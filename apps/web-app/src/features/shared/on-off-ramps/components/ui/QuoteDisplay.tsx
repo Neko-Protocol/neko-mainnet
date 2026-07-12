@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import type { Quote } from "@/lib/anchors/types";
+import type { Quote } from "@/features/shared/on-off-ramps/types/anchors";
 import { formatCountdown, formatRate } from "../../utils/formatters";
 
 interface QuoteDisplayProps {

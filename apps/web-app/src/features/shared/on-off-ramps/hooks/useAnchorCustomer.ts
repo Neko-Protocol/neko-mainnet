@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { createCustomer, getCustomer } from "../utils/rampApi";
-import type { AnchorProvider } from "@/lib/anchors/types";
+import type { AnchorProvider } from "@/features/shared/on-off-ramps/types/anchors";
 import {
   CUSTOMER_ID_STORAGE_KEY,
   BANK_ACCOUNT_ID_STORAGE_KEY,

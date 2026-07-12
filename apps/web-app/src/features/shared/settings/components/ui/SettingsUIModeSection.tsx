@@ -3,7 +3,10 @@
 import React, { useState } from "react";
 import { Check } from "lucide-react";
 import { SectionCard } from "@/components/ui/SectionCard";
-import { useUIModeStore, type UIMode } from "@/stores/ui-mode.store";
+import {
+  useUIModeStore,
+  type UIMode,
+} from "@/features/shared/ui-mode/stores/ui-mode.store";
 
 const MODES: { id: UIMode; label: string; description: string }[] = [
   {

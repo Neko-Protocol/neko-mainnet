@@ -9,7 +9,7 @@ import {
 } from "@stellar/stellar-sdk";
 import { getEtherfuseAssets } from "../utils/rampApi";
 import { networkPassphrase, horizonUrl } from "@/lib/constants/network";
-import type { AnchorProvider } from "@/lib/anchors/types";
+import type { AnchorProvider } from "@/features/shared/on-off-ramps/types/anchors";
 import {
   extractSignedTxXdr,
   type SignTransactionFn,

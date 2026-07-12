@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { AssetPriceCard } from "@/features/expert/discover/components/ui/AssetPriceCard";
+import { AssetPriceCard } from "@/features/shared/discover/components/ui/AssetPriceCard";
 import { useCurrencyStore } from "@/stores/currency.store";
 
 const DASHBOARD_ASSET_LIMIT = 3;

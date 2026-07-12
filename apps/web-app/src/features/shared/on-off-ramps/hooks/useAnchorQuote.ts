@@ -3,7 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { getQuote } from "../utils/rampApi";
-import type { AnchorProvider, Quote } from "@/lib/anchors/types";
+import type {
+  AnchorProvider,
+  Quote,
+} from "@/features/shared/on-off-ramps/types/anchors";
 import { RAMP_PROVIDERS } from "../constants/ramp.config";
 
 export function useAnchorQuote(provider: AnchorProvider) {

@@ -16,9 +16,9 @@ import {
   rpcUrl as configRpcUrl,
   stellarNetwork,
 } from "@/lib/config/stellar.config";
-import { useMultisigDetection } from "@/hooks/useMultisigDetection";
-import { lobstrVaultService } from "@/lib/services/lobstr-vault.service";
-import { usePendingMultisigTxsStore } from "@/stores/pendingMultisigTxs.store";
+import { useMultisigDetection } from "@/features/shared/vault/hooks/useMultisigDetection";
+import { lobstrVaultService } from "@/features/shared/vault/services/lobstr-vault.service";
+import { usePendingMultisigTxsStore } from "@/features/shared/wallet/stores/pendingMultisigTxs.store";
 import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
 import { toSmallestUnit, fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import {

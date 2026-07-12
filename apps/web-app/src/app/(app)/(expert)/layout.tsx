@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { type ReactNode } from "react";
-import { useUIMode } from "@/hooks/useUIMode";
+import { useUIMode } from "@/features/shared/ui-mode/hooks/useUIMode";
 
 export default function ExpertModeLayout({
   children,

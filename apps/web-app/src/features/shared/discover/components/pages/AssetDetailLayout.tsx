@@ -39,7 +39,7 @@ import {
 } from "../../utils/assetClass";
 import type { PriceSource } from "@/lib/services/stellar-price.service";
 import { AttributeRow, CopyAddress, useIsMaxSm } from "../ui/AssetDetailAtoms";
-import { useEtherfuseYields } from "@/features/simulator/hooks/useEtherfuseYields";
+import { useEtherfuseYields } from "@/features/shared/yields/hooks/useEtherfuseYields";
 
 const PRICE_SOURCE_LABEL: Record<PriceSource, string> = {
   reflector: "Reflector",

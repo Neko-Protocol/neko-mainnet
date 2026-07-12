@@ -2,8 +2,8 @@
 
 import { useMemo } from "react";
 import { DiscoverPageLayout } from "@/features/shared/discover/components/pages/DiscoverPageLayout";
-import { AssetPriceCard } from "../ui/AssetPriceCard";
-import { useEtherfuseYields } from "@/features/simulator/hooks/useEtherfuseYields";
+import { AssetPriceCard } from "@/features/shared/discover/components/ui/AssetPriceCard";
+import { useEtherfuseYields } from "@/features/shared/yields/hooks/useEtherfuseYields";
 
 export function ExpertDiscoverPage() {
   const { data: yields } = useEtherfuseYields();

@@ -2,7 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getKycStatus, getKycUrl } from "../utils/rampApi";
-import type { AnchorProvider, KycStatus } from "@/lib/anchors/types";
+import type {
+  AnchorProvider,
+  KycStatus,
+} from "@/features/shared/on-off-ramps/types/anchors";
 
 export function useAnchorKyc(
   provider: AnchorProvider,

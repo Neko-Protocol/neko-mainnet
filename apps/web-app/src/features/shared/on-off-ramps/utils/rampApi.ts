@@ -9,7 +9,7 @@ import type {
   KycRequirements,
   KycSubmissionResult,
   AnchorProvider,
-} from "@/lib/anchors/types";
+} from "@/features/shared/on-off-ramps/types/anchors";
 
 export class RampApiError extends Error {
   code: string;
