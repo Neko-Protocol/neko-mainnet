@@ -1,4 +1,4 @@
-import type { Token } from "../../../types/soroswapTypes";
+import type { Token } from "../../../types/swapTypes";
 import {
   getAssetsConfig,
   getCurrentNetworkId,
@@ -7,13 +7,34 @@ import {
 
 export type TokenInfo = Pick<
   AssetConfig,
-  "name" | "contract" | "code" | "decimals" | "icon"
+  | "name"
+  | "contract"
+  | "code"
+  | "decimals"
+  | "icon"
+  | "isInstitutional"
+  | "isSwappable"
 >;
 
 export const getCurrentNetwork = (): string => getCurrentNetworkId();
 
 export const getAvailableTokens = (): Record<string, TokenInfo> => {
   return getAssetsConfig();
+};
+
+/**
+ * Tokens a user can actually trade. Institutional assets are allowlist-gated
+ * by their issuer (BENJI's trustlines are `auth_required`; the Centrifuge
+ * institutional share classes are contract-allowlisted), so they have no AMM
+ * route and must never reach the swap UI — offering them would produce quotes
+ * that can only fail at signing time.
+ */
+export const getSwappableTokens = (): Record<string, TokenInfo> => {
+  return Object.fromEntries(
+    Object.entries(getAvailableTokens()).filter(
+      ([, info]) => !info.isInstitutional && info.isSwappable !== false
+    )
+  );
 };
 
 export const getTokens = (): Record<string, string> => {
@@ -27,7 +48,7 @@ export const getTokens = (): Record<string, string> => {
 
 export const getTokenAddress = (token: Token | string): string => {
   if (typeof token === "string") {
-    // Already a valid Soroban contract address
+    // Already a valid Soroban contract address.
     if (token.startsWith("C") && token.length === 56) {
       return token;
     }

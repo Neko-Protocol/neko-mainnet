@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Neko DApp is an RWA aggregator (capital routing layer) application that aggregates external protocols and services: DeFindex vaults, Reflector oracle data, Blend/SoroSwap/Aquarius market integrations, Soroswap swaps, wallet flows, admin operations, and on/off-ramp flows. It is a **Turborepo + npm workspaces monorepo** with three apps and shared packages.
+Neko DApp is an RWA aggregator (capital routing layer) application that aggregates external protocols and services: DeFindex vaults, Reflector oracle data, Blend/Aquarius market integrations, xBull Swap routing, wallet flows, admin operations, and on/off-ramp flows. It is a **Turborepo + npm workspaces monorepo** with three apps and shared packages.
 
 **Neko-owned smart contracts are not used in this repo.** The only generated Soroban bindings consumed here are external integrations: `@neko/defindex-vault` and `@neko/reflector`.
 
@@ -19,7 +19,7 @@ packages/
   config/         # Shared ESLint, PostCSS, Tailwind 4 preset, tsconfig
   api-contracts/  # Shared DTOs/types for web/admin/backend API contracts
   keeper/         # Vault keeper, asset config, pricing, DeFindex helpers
-  orchestrator/   # External market orchestration across Blend, SoroSwap, Aquarius
+  orchestrator/   # External market orchestration across Blend and Aquarius
   stellar-wallet/ # Freighter + Stellar Wallets Kit Zustand integration
   contracts/      # Auto-generated TS bindings for external deployed contracts only
     reflector/    # @neko/reflector (SEP-40 oracle)
@@ -79,7 +79,7 @@ stores/               # Zustand stores
 **Feature modules (`src/features/`):**
 
 - `basic/` — Buy flow for fiat-first users. `BasicDiscoverPage`, `BasicAssetDetail`, `BasicBuyForm`, `AddToCartModal`. Uses `react-hook-form` + `zod`.
-- `expert/` — Advanced trading. `Dashboard`, `ExpertDiscoverPage`, `ExpertAssetDetail`, `Swap` (SoroSwap-backed).
+- `expert/` — Advanced trading. `Dashboard`, `ExpertDiscoverPage`, `ExpertAssetDetail`, `Swap` (xBull Swap-backed).
 - `shared/` — External protocol and product integrations consumed by both modes. Submodules include `admin`, `borrowing`, `dashboard`, `discover`, `lending`, `on-off-ramps`, `pools`, `referral`, `settings`, `vault`, and `wallet`. Treat borrowing/lending/pool UI as integrations with external protocols, not Neko-owned contracts.
 - `simulator/` — Investment projection wizard (token → strategy → destination → projected returns).
 
@@ -152,7 +152,7 @@ This repo consumes only these generated Soroban bindings:
 
 Other `@neko/*` packages are application libraries, not Neko smart contracts:
 
-- `@neko/orchestrator` — external market orchestration for Blend, SoroSwap, Aquarius, and Stellar RPC.
+- `@neko/orchestrator` — external market orchestration for Blend, Aquarius, and Stellar RPC.
 - `@neko/keeper` — vault keeper configuration, asset registry, DeFindex helpers, price services, and rebalance planning.
 - `@neko/stellar-wallet` — Freighter/Stellar Wallets Kit connection and signing state.
 - `@neko/api-contracts` — shared API DTOs.
@@ -163,7 +163,7 @@ Each `packages/contracts/<name>/src/index.ts` is generated via `soroban contract
 
 ### Multi-chain note
 
-The dApp is **Stellar-only** at the app layer and uses generated bindings only for DeFindex vaults and Reflector oracle reads. There are no Neko-owned smart contracts, EVM contracts, viem, wagmi, or RainbowKit dependencies in this monorepo. SoroSwap and Blend SDKs are external integrations.
+The dApp is **Stellar-only** at the app layer and uses generated bindings only for DeFindex vaults and Reflector oracle reads. There are no Neko-owned smart contracts, EVM contracts, viem, wagmi, or RainbowKit dependencies in this monorepo. xBull Swap, Aqua, and Blend are external integrations.
 
 ## Environment Setup
 
@@ -177,10 +177,8 @@ NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE=
 NEXT_PUBLIC_STELLAR_RPC_URL=
 NEXT_PUBLIC_STELLAR_HORIZON_URL=
 NEXT_PUBLIC_APP_URL=
-NEXT_PUBLIC_NEKO_TREASURY_ADDRESS=
 
 # Integrations
-NEXT_PUBLIC_SOROSWAP_API_KEY=
 DEFINDEX_API_KEY=
 ETHERFUSE_API_KEY=
 ETHERFUSE_BASE_URL=

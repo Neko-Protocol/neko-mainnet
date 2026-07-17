@@ -17,6 +17,8 @@ node_modules/
 .next/
 out/
 build/
+!apps/web-app/src/app/api/swap/build/
+!apps/web-app/src/app/api/swap/build/route.ts
 dist/
 *.tsbuildinfo
 next-env.d.ts
