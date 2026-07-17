@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, type ReactNode } from "react";
 import { Search, X } from "lucide-react";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
+import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { ASSET_CLASS_FILTERS, getAssetTaxonomy } from "../../utils/assetClass";

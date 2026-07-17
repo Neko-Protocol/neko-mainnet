@@ -9,7 +9,7 @@ import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
+import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
 import { ROUTES } from "@/features/shared/discover/constants/discover";
 import { ASSET_INFO } from "@/features/shared/discover/utils/assetInfo";
 import type { AssetInfo } from "@/features/shared/discover/types/discover";

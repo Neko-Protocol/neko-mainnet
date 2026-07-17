@@ -43,7 +43,7 @@ import { useEtherfuseYields } from "@/features/shared/yields/hooks/useEtherfuseY
 
 const PRICE_SOURCE_LABEL: Record<PriceSource, string> = {
   reflector: "Reflector",
-  soroswap: "Soroswap",
+  "swap-kit": "xBull Swap",
   coingecko: "CoinGecko",
 };
 
