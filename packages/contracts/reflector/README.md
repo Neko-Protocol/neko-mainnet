@@ -2,8 +2,6 @@
 
 Generated TypeScript bindings for the external **Reflector** SEP-40 oracle Soroban contract, consumed read-only for asset price data across the Neko dApp.
 
-**This is not a Neko-owned contract.** Reflector owns and deploys the oracle contract this package binds to; Neko only consumes it.
-
 ## Regenerating
 
 `src/index.ts` is generated via the Stellar CLI, not hand-written:
