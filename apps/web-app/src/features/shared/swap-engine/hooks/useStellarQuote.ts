@@ -1,27 +1,20 @@
 import { useRef, useCallback } from "react";
-import type { Token } from "@/lib/helpers/stellar/soroswap";
-import { getQuote, type QuoteRequest } from "@/lib/helpers/stellar/soroswap";
+import type { Token } from "@/lib/helpers/stellar/swap-kit";
+import { getQuote, type QuoteRequest } from "@/lib/helpers/stellar/swap-kit";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
-import {
-  DEFAULT_SLIPPAGE_BPS,
-  MAX_HOPS,
-  PLATFORM_FEE_BPS,
-  NEKO_TREASURY_ADDRESS,
-} from "@/features/shared/swap-engine/constants/swapConfig";
-import type { PlatformFee } from "@/lib/types/soroswapTypes";
+import { resolveDecimalsForSwapToken } from "@/lib/helpers/auditAssetAmounts";
+import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";
 
 export interface StellarQuoteResult {
   amount: string | null;
   error: string | null;
-  platformFee?: PlatformFee;
 }
 
 export function useStellarQuote(
   amountIn: string,
   tokenIn: Token | string,
-  tokenOut: Token | string,
-  apiKeyConfigured: boolean
+  tokenOut: Token | string
 ): {
   fetchStellarQuote: () => Promise<StellarQuoteResult>;
   cancelStellarQuote: () => void;
@@ -42,9 +35,6 @@ export function useStellarQuote(
 
       if (!trimmedAmount || isNaN(parsedAmount) || parsedAmount <= 0)
         return { amount: null, error: null };
-      if (!apiKeyConfigured)
-        return { amount: null, error: "API key not configured" };
-
       cancelStellarQuote();
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
@@ -55,14 +45,7 @@ export function useStellarQuote(
           assetOut: tokenOut as Token | string,
           amount: trimmedAmount,
           tradeType: "EXACT_IN",
-          protocols: NEKO_TREASURY_ADDRESS
-            ? ["sdex"]
-            : ["soroswap", "phoenix", "aqua"],
           slippageBps: DEFAULT_SLIPPAGE_BPS,
-          maxHops: MAX_HOPS,
-          ...(NEKO_TREASURY_ADDRESS
-            ? { feeBps: PLATFORM_FEE_BPS, referralId: NEKO_TREASURY_ADDRESS }
-            : {}),
         };
 
         const quote = await getQuote(quoteRequest);
@@ -75,9 +58,13 @@ export function useStellarQuote(
           const amountOutBigInt = BigInt(amountOutStr);
           if (amountOutBigInt > BigInt(0)) {
             return {
-              amount: formatAmount(fromSmallestUnit(amountOutStr, 7)),
+              amount: formatAmount(
+                fromSmallestUnit(
+                  amountOutStr,
+                  resolveDecimalsForSwapToken(tokenOut) ?? 7
+                )
+              ),
               error: null,
-              platformFee: quote.platformFee,
             };
           }
         }
@@ -107,7 +94,7 @@ export function useStellarQuote(
           error: errorMessage || "Failed to get quote",
         };
       }
-    }, [amountIn, tokenIn, tokenOut, apiKeyConfigured, cancelStellarQuote]);
+    }, [amountIn, tokenIn, tokenOut, cancelStellarQuote]);
 
   return { fetchStellarQuote, cancelStellarQuote };
 }

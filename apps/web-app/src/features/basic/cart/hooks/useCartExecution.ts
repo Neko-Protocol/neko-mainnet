@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { getTokens, getTokenAddress } from "@/lib/helpers/stellar/soroswap";
+import { getTokens, getTokenAddress } from "@/lib/helpers/stellar/swap-kit";
 import { useSwapExecution } from "@/features/shared/swap-engine/hooks/useSwapExecution";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
@@ -14,11 +14,7 @@ import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
 export type ItemExecutionStatus =
-  | "idle"
-  | "executing"
-  | "success"
-  | "error"
-  | "rejected";
+  "idle" | "executing" | "success" | "error" | "rejected";
 
 export interface ItemStatus {
   status: ItemExecutionStatus;

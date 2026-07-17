@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { Token } from "@/lib/helpers/stellar/soroswap";
+import type { Token } from "@/lib/helpers/stellar/swap-kit";
 
 export type OrderType = "swap" | "limit" | "twap";
 

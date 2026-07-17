@@ -1,21 +1,17 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import type { Token } from "@/lib/helpers/stellar/soroswap";
-import { hasApiKey } from "@/lib/helpers/stellar/soroswap";
+import type { Token } from "@/lib/helpers/stellar/swap-kit";
 import { useStellarQuote } from "./useStellarQuote";
 import {
   DEBOUNCE_MS,
   QUOTE_REFRESH_INTERVAL_MS,
 } from "@/features/shared/swap-engine/constants/swapConfig";
-import type { PlatformFee } from "@/lib/types/soroswapTypes";
 
 const MAX_CONSECUTIVE_FAILURES = 3;
 
 export interface SwapQuoteState {
   amountOut: string;
   isLoadingQuote: boolean;
-  apiKeyConfigured: boolean;
   quoteError: string | null;
-  platformFee: PlatformFee | undefined;
 }
 
 export interface SwapQuoteActions {
@@ -30,11 +26,7 @@ export function useSwapQuote(
 ): SwapQuoteState & SwapQuoteActions {
   const [amountOut, setAmountOut] = useState<string>("0.0");
   const [isLoadingQuote, setIsLoadingQuote] = useState<boolean>(false);
-  const [apiKeyConfigured] = useState<boolean>(() => hasApiKey());
   const [quoteError, setQuoteError] = useState<string | null>(null);
-  const [platformFee, setPlatformFee] = useState<PlatformFee | undefined>(
-    undefined
-  );
 
   const quoteTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const quoteIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -43,8 +35,7 @@ export function useSwapQuote(
   const { fetchStellarQuote, cancelStellarQuote } = useStellarQuote(
     amountIn,
     tokenIn,
-    tokenOut,
-    apiKeyConfigured
+    tokenOut
   );
 
   const fetchLiveQuote = useCallback(async () => {
@@ -70,7 +61,6 @@ export function useSwapQuote(
 
       if (result.amount !== null) {
         setAmountOut(result.amount);
-        setPlatformFee(result.platformFee ?? undefined);
         setIsLoadingQuote(false);
         setQuoteError(null);
         failureCountRef.current = 0;
@@ -121,11 +111,10 @@ export function useSwapQuote(
       !isNaN(parsedAmount) &&
       parsedAmount > 0;
 
-    const shouldFetch = isValid && !!address && apiKeyConfigured;
+    const shouldFetch = isValid && !!address;
 
     const resetQuote = () => {
       setAmountOut("0.0");
-      setPlatformFee(undefined);
       setQuoteError(null);
     };
 
@@ -158,7 +147,6 @@ export function useSwapQuote(
     tokenIn,
     tokenOut,
     address,
-    apiKeyConfigured,
     fetchLiveQuote,
     cancelStellarQuote,
   ]);
@@ -189,14 +177,12 @@ export function useSwapQuote(
         clearInterval(quoteIntervalRef.current);
       }
     };
-  }, [amountIn, tokenIn, tokenOut, address, apiKeyConfigured, fetchLiveQuote]);
+  }, [amountIn, tokenIn, tokenOut, address, fetchLiveQuote]);
 
   return {
     amountOut,
     isLoadingQuote,
-    apiKeyConfigured,
     quoteError,
-    platformFee,
     fetchLiveQuote,
   };
 }
