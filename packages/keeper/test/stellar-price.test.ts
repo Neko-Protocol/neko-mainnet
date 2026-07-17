@@ -18,13 +18,8 @@ const xlmConfig: AssetConfig = {
 function makeDeps(
   overrides: Partial<StellarPriceServiceDeps> = {}
 ): StellarPriceServiceDeps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const noopSdk: any = { getPrice: async () => [] };
   return {
-    getSoroswapSDK: () => noopSdk,
-    getSoroswapApiKey: () => undefined,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getSoroswapNetwork: () => "MAINNET" as any,
+    getSwapKitUsdPrice: async () => 0,
     getReflectorClient: () => null,
     getAssetConfig: () => undefined,
     ...overrides,

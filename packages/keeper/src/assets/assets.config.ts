@@ -3,7 +3,7 @@ export interface ReflectorAsset {
   value: string;
 }
 
-export type AssetPriceSource = "reflector" | "soroswap" | "coingecko";
+export type AssetPriceSource = "reflector" | "swap-kit" | "coingecko";
 
 export interface AssetConfig {
   code: string;
@@ -13,9 +13,19 @@ export interface AssetConfig {
   icon: string;
   priceSource: AssetPriceSource;
   isStablecoin?: boolean;
+  /** Whether the asset is currently supported by the platform swap router. */
+  isSwappable?: boolean;
+  /**
+   * Transfers are restricted to allowlisted/authorized holders — the issuer
+   * gates who may hold the asset (SEP-8 style `auth_required` trustlines, or a
+   * contract-level allowlist). A retail wallet cannot acquire these by simply
+   * adding a trustline or swapping, so surface them as reference-only rather
+   * than as something a user can buy.
+   */
+  isInstitutional?: boolean;
   /**
    * CoinGecko `/simple/price` id (e.g. `stellar`, `usd-coin`).
-   * Used only when Soroswap returns no price — not a substitute for on-chain parity.
+   * Used as an off-chain fallback when primary pricing is unavailable.
    */
   coinGeckoId?: string;
   /**
@@ -37,7 +47,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC",
       decimals: 7,
       icon: "/assets/xlm-logo.png",
-      priceSource: "soroswap",
+      priceSource: "swap-kit",
       coinGeckoId: "stellar",
     },
     USDC: {
@@ -46,12 +56,71 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
       decimals: 7,
       icon: "/assets/usdc-logo.png",
-      priceSource: "soroswap",
+      priceSource: "swap-kit",
       isStablecoin: true,
       coinGeckoId: "usd-coin",
     },
   },
   mainnet: {
+    BENJI: {
+      code: "BENJI",
+      name: "Franklin OnChain U.S. Government Money Fund",
+      // SAC for BENJI-GBHNGLLIE3KWGKCHIKMHJ5HVZHYIK7WTBE4QF5PLAKL4CJGSEU7HZIW5
+      // (issuer home_domain www.franklintempleton.com). Beware: several
+      // impostor BENJI assets exist on mainnet under lookalike domains.
+      contract: "CCDSDPD7FXB74PFB2SYCHGQRWLXQRYRTQSPCVSRJ7FAOLOUGWEYAXQ7A",
+      decimals: 7,
+      icon: "/assets/franklin-templeton-logo.png",
+      priceSource: "coingecko",
+      isStablecoin: false,
+      isInstitutional: true,
+      coinGeckoId: "franklin-templeton-benji",
+    },
+    JTRSY: {
+      code: "JTRSY",
+      name: "Janus Henderson Anemoy Treasury Fund",
+      contract: "CBHOEKLWTB6HR2A3IXHIIMQG5FOXWXS6EG4Q5YJDRPMXPCX7M24CYR2O",
+      decimals: 18,
+      icon: "https://centrifuge.mypinata.cloud/ipfs/bafkreieracb5e57bhg7bphd7sp4hxf3yhbm3cxinst3o5mennfosagkxuu",
+      priceSource: "coingecko",
+      isStablecoin: false,
+      isInstitutional: true,
+      coinGeckoId: "janus-henderson-anemoy-treasury-fund",
+    },
+    JAAA: {
+      code: "JAAA",
+      name: "Janus Henderson Anemoy AAA CLO Fund",
+      contract: "CDV6U7OEVY6KUEJ4WNS63AYB6RFU3BAE7AZJOQ7LPH447C6NWUXEZZSO",
+      decimals: 18,
+      icon: "https://centrifuge.mypinata.cloud/ipfs/bafkreifp5ww5lpbgrny36oxgzg2kjw2226lmj2vmekp4nqemm5ewhhtmwi",
+      priceSource: "coingecko",
+      isStablecoin: false,
+      isInstitutional: true,
+      coinGeckoId: "janus-henderson-anemoy-aaa-clo-fund",
+    },
+    // Keyed uppercase (canonical spelling is `deJTRSY`): the discover layer
+    // looks assets up by `code.toUpperCase()`, so a mixed-case key renders a
+    // card with no config and a dead detail route.
+    DEJTRSY: {
+      code: "DEJTRSY",
+      name: "DeFi Janus Henderson Anemoy Treasury Fund",
+      contract: "CBI7UCH5KGSVQRO5H4SUCZUTZABCITZLRHQQZTWL2TK4RZ72TAR6IHRV",
+      decimals: 18,
+      icon: "https://centrifuge.mypinata.cloud/ipfs/bafkreieracb5e57bhg7bphd7sp4hxf3yhbm3cxinst3o5mennfosagkxuu",
+      priceSource: "swap-kit",
+      isStablecoin: false,
+    },
+    // Keyed uppercase; canonical spelling is `deJAAA`. See DEJTRSY above.
+    DEJAAA: {
+      code: "DEJAAA",
+      name: "DeFi Janus Henderson Anemoy AAA CLO Fund",
+      contract: "CC64WBDGS6QQP22QTTIACYIXT3WF7BBQEYOQPLTP7GTKYY7PZ74QYGSL",
+      decimals: 18,
+      icon: "https://centrifuge.mypinata.cloud/ipfs/bafkreifp5ww5lpbgrny36oxgzg2kjw2226lmj2vmekp4nqemm5ewhhtmwi",
+      priceSource: "swap-kit",
+      isStablecoin: false,
+      coinGeckoId: "defi-janus-henderson-anemoy-aaa-clo-fund",
+    },
     CETES: {
       code: "CETES",
       name: "Mexican Treasury Token",
@@ -72,7 +141,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CB3YA656OYIHU57657I5KGSBRHE5I3OZU4VFC22PYAOANFZHEWNYGAGP",
       decimals: 7,
       icon: "/assets/usdy-logo.png",
-      priceSource: "soroswap",
+      priceSource: "swap-kit",
       isStablecoin: true,
       coinGeckoId: "ondo-us-dollar-yield",
     },
@@ -151,7 +220,7 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CCCRWH6Q3FNP3I2I57BDLM5AFAT7O6OF6GKQOC6SSJNDAVRZ57SPHGU2",
       decimals: 7,
       icon: "/assets/pyusd-logo.png",
-      priceSource: "soroswap",
+      priceSource: "swap-kit",
       isStablecoin: true,
       coinGeckoId: "paypal-usd",
     },
@@ -161,8 +230,9 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       contract: "CA67EQNWGPGXHVT6E4HQ65WEV54KFDB6HJDHVCJM33VKZ7XKR5MN3KPJ",
       decimals: 6,
       icon: "https://stellar.myfilebase.com/ipfs/Qmeysg43Da4zS5r1waeDi24ZZcq54AGqGjdiubPRtG9Vcq",
-      priceSource: "soroswap",
+      priceSource: "swap-kit",
       isStablecoin: true,
+      isSwappable: false,
       coinGeckoId: "gyen",
     },
   },
