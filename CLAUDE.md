@@ -70,33 +70,41 @@ app/                  # Next.js App Router
   auth/               # Auth routes
 components/           # Global UI: navigation, ui-mode modal, wallet sync, etc.
 features/             # Feature modules (see below)
-hooks/                # 14 shared hooks (useWallet, useStellarWallet, useToast, useUIMode, …)
-lib/                  # Services, helpers, constants, orchestrator, defindex helpers, anchors
-providers/            # ToastProvider and app-level query/toast wiring
-stores/               # Zustand stores
+hooks/                # 8 shared hooks (useFxRate, useNavItems, useStellarWallet, useToast, useTokenBalance, useTokenPrice, useWallet, useWalletType) — module-specific hooks live inside features/
+lib/                  # Services, helpers, constants, orchestrator, price utils
+providers/            # ToastProvider, WalletProvider, and app-level query/toast wiring
+stores/               # 3 cross-cutting Zustand stores; module-owned stores are colocated in features/ (see below)
 ```
 
 **Feature modules (`src/features/`):**
 
-- `basic/` — Buy flow for fiat-first users. `BasicDiscoverPage`, `BasicAssetDetail`, `BasicBuyForm`, `AddToCartModal`. Uses `react-hook-form` + `zod`.
-- `expert/` — Advanced trading. `Dashboard`, `ExpertDiscoverPage`, `ExpertAssetDetail`, `Swap` (SoroSwap-backed).
-- `shared/` — External protocol and product integrations consumed by both modes. Submodules include `admin`, `borrowing`, `dashboard`, `discover`, `lending`, `on-off-ramps`, `pools`, `referral`, `settings`, `vault`, and `wallet`. Treat borrowing/lending/pool UI as integrations with external protocols, not Neko-owned contracts.
-- `simulator/` — Investment projection wizard (token → strategy → destination → projected returns).
+- `basic/` — Buy flow for fiat-first users. Submodules: `cart/`, `dashboard/`, `discover/`. Uses `react-hook-form` + `zod`.
+- `expert/` — Advanced trading. Submodules: `dashboard/`, `discover/`, `swap/` (SoroSwap-backed).
+- `shared/` — External protocol and product integrations consumed by both modes. Submodules: `currency`, `dashboard`, `discover`, `lending`, `on-off-ramps`, `pools`, `positions`, `referral`, `settings`, `swap-engine`, `ui-mode`, `vault`, `wallet`, and `yields`. Treat lending/pool/vault UI as integrations with external protocols, not Neko-owned contracts. Admin functionality lives entirely in the separate `apps/admin` app, not here.
+- `simulator/strategies/` — Investment projection wizard (token → strategy → destination → projected returns). Nested one level under `simulator/`.
 
-**Stores (Zustand, `src/stores/`):**
+Every feature submodule follows the same colocated layout — see the `feature-module-conventions` skill for the pattern and where new code should go.
 
-- `cart.store.ts` — shopping cart for basic-mode buys
+**Stores (Zustand):**
+
+Root `src/stores/` — cross-cutting state only:
+
 - `currency.store.ts` — selected fiat
 - `fx-rate.store.ts` — FX conversion rates
-- `pendingMultisigTxs.store.ts` — Lobstr Vault pending transaction state
-- `referral.store.ts` — captured referral code/session state
-- `strategies.store.ts` — saved investment strategies
 - `stellarWalletStore.ts` — connected Stellar wallet metadata
-- `ui-mode.store.ts` — basic/expert mode toggle
+
+Module-owned stores are colocated inside their feature (`features/<module>/stores/`), not in `src/stores/`:
+
+- `features/basic/cart/stores/cart.store.ts` — shopping cart for basic-mode buys
+- `features/shared/wallet/stores/pendingMultisigTxs.store.ts` — Lobstr Vault pending transaction state
+- `features/shared/referral/stores/referral.store.ts` — captured referral code/session state
+- `features/simulator/strategies/stores/strategies.store.ts` — saved investment strategies
+- `features/shared/ui-mode/stores/ui-mode.store.ts` — basic/expert mode toggle
 
 **Providers (`src/providers/`):**
 
 - `ToastProvider.tsx` — toast notifications
+- `WalletProvider.tsx` — wallet context wiring
 - Wallet connection state is centralized in `@neko/stellar-wallet` and consumed through hooks/stores; do not add a second wallet state layer.
 
 ### Data flow
@@ -105,13 +113,19 @@ stores/               # Zustand stores
 Feature components → feature hooks → `backendClient` or local services → Next backend proxy → NestJS `/v1` API → external APIs, Supabase, Stellar RPC/Horizon, and generated DeFindex/Reflector bindings
 ```
 
-`lib/services/` contains client/server helpers such as `backend-client.ts`, `audit.service.ts`, `fx-rate.service.ts`, `horizonActivityScanner.ts`, `positionScanner.ts`, `transaction.api.ts`, `supabase.server.ts`, and `users.service.ts`.
+`lib/services/` contains client/server helpers such as `backend-client.ts`, `audit.service.ts`, `fx-rate.service.ts`, `stellar-price.service.ts`, `transaction.api.ts`, `supabase.server.ts`, and `users.service.ts`. Position-scanning helpers (`horizonActivityScanner.ts`, `positionScanner.ts`) are colocated in `features/shared/positions/services/`, not here.
 
 ### State and server data
 
 - **Global state**: Zustand
 - **Server state**: TanStack Query v5
 - **DB / auth**: Supabase (audit logs, user metadata)
+
+### Testing
+
+- `packages/keeper` and `packages/orchestrator` use **Vitest** (`vitest.config.ts` + `test/`).
+- `apps/backend` uses **Jest** (unit + e2e) with path aliases `@core`, `@domains`, `@common`, `@shared`, `@config` (see `apps/backend/package.json`).
+- `apps/web-app` and `apps/admin` currently have **no test suite** — don't assume tests exist for frontend code.
 
 ### Admin app (`apps/admin/`)
 
@@ -139,6 +153,12 @@ Business domains live under `src/domains/`:
 - `platform/` — users, audit logs, dashboard aggregation, referrals, and activations.
 - `admin/` — admin auth/dashboard, campaigns, invitations, segments, strategies, and console workflows.
 
+Two more top-level `src/` dirs exist beyond `core/`/`domains/`:
+
+- `common/` — cross-app decorators, filters, guards, middleware (`skip-auth`, `all-exceptions.filter`, `internal-api-key.guard`, `request-id.middleware`).
+- `config/` — environment validation (`env.validation.ts`).
+- `shared/` — **not the same thing as `core/`**. `shared/stellar/` holds allowlist/error helpers and `payment-xdr.ts`, distinct from `core/stellar/`'s RPC/Horizon client. When touching Stellar backend code, check both directories before assuming there's only one.
+
 Scheduled jobs are backend-owned through `@nestjs/schedule` (for example vault invest, vault PPS, pool rates, and asset prices). Do not add cron-only behavior back into web-app route handlers.
 
 ### External contract bindings
@@ -157,7 +177,7 @@ Other `@neko/*` packages are application libraries, not Neko smart contracts:
 - `@neko/stellar-wallet` — Freighter/Stellar Wallets Kit connection and signing state.
 - `@neko/api-contracts` — shared API DTOs.
 
-Web-app reads network config from `apps/web-app/src/lib/config/stellar.config.ts`, Reflector constants from `apps/web-app/src/lib/constants/contracts.ts`, and vault IDs from `apps/web-app/src/lib/defindex/vaultIds.ts` (re-exported from `@neko/keeper`).
+Web-app reads network config from `apps/web-app/src/lib/config/stellar.config.ts`, Reflector constants from `apps/web-app/src/lib/constants/contracts.ts`, and vault IDs from `apps/web-app/src/features/shared/vault/utils/vaultIds.ts` (re-exported from `@neko/keeper`).
 
 Each `packages/contracts/<name>/src/index.ts` is generated via `soroban contract bindings ts` and built with `tsc` into `dist/`. **Do not hand-edit these files**. If DeFindex or Reflector bindings drift, regenerate them from the external artifact/source for that integration.
 
@@ -208,6 +228,10 @@ Supabase URL + service role key (see `.env.example`).
 
 Supabase + Resend (email). See `.env.example`.
 
+## Brand & Design System
+
+Neko's visual identity (color tokens, typography, logo/asset inventory, and known cross-app inconsistencies) is documented in [BRAND.md](BRAND.md). Use the `neko-brand` skill when generating or reviewing UI — don't invent colors/fonts outside the documented `neko-*`/`wallet-*` tokens.
+
 ## Vercel deployment
 
 `vercel.json` builds only `web-app` via `turbo run build --filter=web-app`. Scheduled jobs are owned by the backend (for example vault invest, pool rates, and asset prices), not Next.js route handlers in `apps/web-app`.
@@ -222,14 +246,28 @@ Supabase + Resend (email). See `.env.example`.
 - Prettier: double quotes, semicolons, 2-space indent, 80 char width, es5 trailing commas
 - ESLint via shared config in `packages/config/eslint.config.mjs`
 - Tailwind 4 via shared preset in `packages/config/tailwind.config.ts`
+- `apps/web-app` intentionally has both `@mui/material`/`@emotion/*` and Tailwind 4 in play — this is not an in-progress migration to "clean up" into one or the other
 - Husky pre-commit hooks (`npm run prepare`)
 - Conventional commits: `feat`, `fix`, `chore`, `refactor`, `docs`, `test`
+
+## Recommended MCP servers
+
+Configured project-wide in `.mcp.json`: `mintlify` (docs) and `context7` (up-to-date library docs for Next.js/NestJS/Tailwind — public endpoint, no auth needed).
+
+Evaluate and add locally (need a personal credential, intentionally not committed):
+
+- **GitHub MCP** (`github/github-mcp-server`) — repo-wide issue/PR/code search beyond one-off `gh` calls.
+- **Supabase MCP** — direct table/migration/log access for `apps/admin` + `apps/backend`'s Supabase usage. Needs a personal project ref + access token.
+- **Figma Dev Mode MCP server** — if design work happens in Figma, lets an agent read variables/components as source of truth. Runs locally via the Figma desktop app.
+- **stellar-mcp** (community, `syronlabs/stellar-mcp`) — optional Horizon/Soroban query tool; the `stellar-dev` skill + Stellar CLI already cover most of this, so evaluate before adopting.
 
 ## Skills (project-versioned, in `.agents/skills/`)
 
 Surfaced to Claude Code via the `.claude/skills` symlink:
 
 - **stellar-dev** — Stellar / Soroban / Horizon playbook (PREFERRED over the generic `blockchain-developer` subagent for any Stellar work)
+- **neko-brand** — Neko color/typography/logo tokens; use for any new or reviewed UI
+- **feature-module-conventions** — the colocated `components/hooks/stores/services/types/utils` + barrel `index.ts` pattern used across `src/features/**`
 - **tanstack-query** — React Query v5 patterns and v4→v5 migration
 - **tailwind-patterns** — Production-ready Tailwind component recipes
 - **next-best-practices** — Next.js App Router conventions (RSC, metadata, route handlers)
@@ -267,6 +305,8 @@ git clone https://github.com/garrytan/gstack ~/.claude/skills/gstack
 - React Query / TanStack Query → `tanstack-query` skill, NOT `react-specialist`
 - Client data fetching in this repo should stay on TanStack Query; treat generic SWR guidance in other skills as non-authoritative unless the stack changes.
 - Tailwind component patterns → `tailwind-patterns` skill, NOT `ui-designer`
+- Neko brand/visual identity (colors, typography, logos) → `neko-brand` skill, NOT `ui-designer`
+- New feature-module code (where to put components/hooks/stores/services) → `feature-module-conventions` skill first
 - Next.js conventions (RSC, metadata, route handlers) → `next-best-practices` skill BEFORE `nextjs-developer`
 - React performance / composition → `vercel-react-best-practices` + `vercel-composition-patterns` BEFORE `react-specialist`
 
