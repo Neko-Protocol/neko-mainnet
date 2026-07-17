@@ -1,16 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getQuote, getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import type { Token } from "@/lib/types/soroswapTypes";
+import { getQuote, getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
+import type { Token } from "@/lib/types/swapTypes";
 import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
 import { safeParseFloat } from "@/lib/helpers/formatUtils";
-import {
-  DEFAULT_SLIPPAGE_BPS,
-  MAX_HOPS,
-  PLATFORM_FEE_BPS,
-  NEKO_TREASURY_ADDRESS,
-} from "@/features/shared/swap-engine/constants/swapConfig";
+import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";
 
 export function useSimulatorStablecoinBondQuote(opts: {
   stableCoinCode: string;
@@ -53,14 +48,7 @@ export function useSimulatorStablecoinBondQuote(opts: {
         assetOut,
         amount: amountStableHuman,
         tradeType: "EXACT_IN",
-        protocols: NEKO_TREASURY_ADDRESS
-          ? ["sdex"]
-          : ["soroswap", "phoenix", "aqua"],
         slippageBps: DEFAULT_SLIPPAGE_BPS,
-        maxHops: MAX_HOPS,
-        ...(NEKO_TREASURY_ADDRESS
-          ? { feeBps: PLATFORM_FEE_BPS, referralId: NEKO_TREASURY_ADDRESS }
-          : {}),
       });
       if (!quote) {
         throw new Error("No liquidity quote for this pair");

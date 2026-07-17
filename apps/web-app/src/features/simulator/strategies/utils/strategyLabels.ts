@@ -8,14 +8,12 @@ import type { VaultApyStrategy } from "@/features/shared/vault/hooks/useVaultApy
 const POOL_PROTOCOL_LABEL: Record<PoolType, string> = {
   blend: "Blend",
   neko: "Neko",
-  soroswap: "Soroswap",
   aqua: "Aqua",
   custom: "Pool",
 };
 
 const POOL_STRATEGY_LABEL: Record<PoolType, string> = {
   blend: "Lend your tokens and earn interest",
-  soroswap: "Provide liquidity and earn trading fees",
   aqua: "Provide liquidity and earn trading fees",
   neko: "Earn yield from this pool",
   custom: "Earn yield from this pool",
@@ -38,7 +36,6 @@ const VAULT_CATEGORY_STRATEGY: Record<VaultCategory, string> = {
 const STRATEGY_NAME_LABEL: Record<string, string> = {
   neko: "Lend on Neko pool",
   aquarius: "Provide liquidity on Aquarius",
-  soroswap: "Provide liquidity on Soroswap",
   blend: "Lend on Blend",
   defindex: "Earn yield with DeFindex",
 };
