@@ -2,8 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getQuote, getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import type { Token } from "@/lib/types/soroswapTypes";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import type { Token } from "@/lib/helpers/stellar/soroswap";
+import { fromSmallestUnit } from "@neko/orchestrator";
 import { safeParseFloat } from "@/lib/helpers/formatUtils";
 import {
   DEFAULT_SLIPPAGE_BPS,

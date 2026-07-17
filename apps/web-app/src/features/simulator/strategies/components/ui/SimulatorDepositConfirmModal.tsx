@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
-import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
+import { isUserCancellationError } from "@neko/orchestrator";
 
 interface SimulatorDepositConfirmModalProps {
   title: string;

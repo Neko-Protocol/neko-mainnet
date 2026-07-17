@@ -9,7 +9,7 @@ import { useFxRate } from "@/hooks/useFxRate";
 import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { formatAmount } from "@/lib/helpers/formatUtils";
-import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import type { MappedBalances } from "@/lib/helpers/stellar/wallet";
 import { useCurrencyStore } from "@/stores/currency.store";
@@ -187,7 +187,11 @@ function PopularTokenRow({
   const fiatValue =
     isLoading || price <= 0
       ? "—"
-      : formatCurrency(convertUsdToSelected(price, fxRate), selectedCurrency, 2);
+      : formatCurrency(
+          convertUsdToSelected(price, fxRate),
+          selectedCurrency,
+          2
+        );
 
   return (
     <TokenItem

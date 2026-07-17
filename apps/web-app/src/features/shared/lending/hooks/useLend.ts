@@ -5,12 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
-import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { extractContractErrorOrNull } from "@neko/orchestrator";
 import { usePools, usePoolAction } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
-import { decimalToAtomic } from "@/lib/helpers/amount";
+import { fromSmallestUnit } from "@neko/orchestrator";
+import { decimalToAtomic } from "@neko/orchestrator";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolData } from "../types/lending";
 import {

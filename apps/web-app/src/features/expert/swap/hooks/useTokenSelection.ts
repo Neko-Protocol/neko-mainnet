@@ -4,7 +4,7 @@ import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
 import {
   getTokenId as getTokenIdUtil,
   getTokenIcon,
-} from "@/lib/helpers/tokenUtils";
+} from "@/lib/helpers/tokenDisplay";
 
 export interface TokenSelectionState {
   tokenSelectorOpen: boolean;

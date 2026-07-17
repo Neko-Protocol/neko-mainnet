@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { getPoolTokenIcon } from "../../../utils/poolTokenIcons";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { PoolDetailPanelToken } from "./types";
 
 export function OverviewTokenLabel({ token }: { token: PoolDetailPanelToken }) {

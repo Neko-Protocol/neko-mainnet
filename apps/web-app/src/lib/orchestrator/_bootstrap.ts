@@ -14,7 +14,7 @@ import {
   getAssetsConfig,
   getContractToCodeMap,
 } from "@/lib/constants/assets.config";
-import { extractContractError } from "@/lib/helpers/stellar/contractErrors";
+import { extractContractError } from "@neko/orchestrator";
 
 export function mapNetworkId(raw: string): StellarNetworkId {
   const n = raw.toUpperCase();

@@ -9,12 +9,12 @@ import { useVaultBalance } from "../../hooks/useVaultBalance";
 import { useVaultAction } from "../../hooks/useVaultAction";
 import { useVaultData } from "../../hooks/useVaultData";
 import { useWallet } from "@/hooks/useWallet";
-import { sanitizeAmountInput } from "@/lib/helpers/tokenUtils";
+import { sanitizeAmountInput } from "@/lib/helpers/tokenDisplay";
 import {
   atomicToDecimal,
   decimalToAtomic,
   mulDivFloor,
-} from "@/lib/helpers/amount";
+} from "@neko/orchestrator";
 import { useQuery } from "@tanstack/react-query";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 import { useVaultApy } from "../../hooks/useVaultApy";

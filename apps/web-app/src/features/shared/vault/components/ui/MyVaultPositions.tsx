@@ -3,10 +3,8 @@
 import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import {
-  getTokenIconFitClass,
-  fromSmallestUnit,
-} from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit } from "@neko/orchestrator";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { Wallet, Coins, Info } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useVaultData } from "../../hooks/useVaultData";

@@ -5,7 +5,7 @@ import { usePools } from "@/lib/orchestrator/hooks/usePools";
 import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { getAssetTaxonomy } from "@/features/shared/discover/utils/assetClass";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit } from "@neko/orchestrator";
 import {
   getPoolProtocolLabel,
   getPoolStrategyLabels,

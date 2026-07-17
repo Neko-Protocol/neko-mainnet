@@ -10,7 +10,7 @@ import {
   useCartStore,
   type CartItem,
 } from "@/features/basic/cart/stores/cart.store";
-import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { extractContractErrorOrNull } from "@neko/orchestrator";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
 export type ItemExecutionStatus =
