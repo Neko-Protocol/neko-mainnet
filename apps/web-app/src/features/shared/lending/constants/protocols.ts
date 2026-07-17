@@ -2,7 +2,6 @@
 export const LENDING_PROTOCOL_ORDER = [
   "neko",
   "aqua",
-  "soroswap",
   "blend",
   "custom",
 ] as const;
@@ -10,7 +9,6 @@ export const LENDING_PROTOCOL_ORDER = [
 export const LENDING_PROTOCOL_LABELS: Record<string, string> = {
   neko: "Neko",
   aqua: "Aqua",
-  soroswap: "Soroswap",
   blend: "Blend",
   custom: "Custom",
 };

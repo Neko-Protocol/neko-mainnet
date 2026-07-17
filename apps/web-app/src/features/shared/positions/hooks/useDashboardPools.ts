@@ -9,7 +9,7 @@ import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import { USE_BACKEND_DASHBOARD } from "./useBackendDashboardPositions";
 
-export const DASHBOARD_LIMITS = { blend: 5, aqua: 2, soroswap: 2 } as const;
+export const DASHBOARD_LIMITS = { blend: 5, aqua: 2 } as const;
 export const DASHBOARD_POOL_QUERY_OPTS = {
   refetchInterval: 5 * 60_000,
   staleTime: 3 * 60_000,
@@ -54,7 +54,6 @@ function toPoolData(pool: PoolInfo): PoolData {
 interface BackendCatalog {
   blend: PoolInfo[];
   aqua: PoolInfo[];
-  soroswap: PoolInfo[];
 }
 
 interface WirePoolInfo extends Omit<PoolInfo, "tvl"> {
@@ -64,7 +63,6 @@ interface WirePoolInfo extends Omit<PoolInfo, "tvl"> {
 interface WirePoolCatalog {
   blend: WirePoolInfo[];
   aqua: WirePoolInfo[];
-  soroswap: WirePoolInfo[];
 }
 
 function deserializePools(pools: WirePoolInfo[]): PoolInfo[] {
@@ -75,9 +73,8 @@ export function useDashboardPools(): UseDashboardPoolsResult {
   const legacyEnabled = !USE_BACKEND_DASHBOARD;
 
   // Blend keeps its own LIMIT-scoped key — fetching the full reserve list is
-  // expensive (per-reserve TokenMetadata + emissions APY RPC). Aqua and
-  // Soroswap share with usePools via `select` since `limit` for them is only
-  // an in-memory slice of an already-fetched list.
+  // expensive (per-reserve TokenMetadata + emissions APY RPC). Aqua shares
+  // with usePools via `select` because its limit is an in-memory slice.
   const blendQuery = useQuery<PoolInfo[]>({
     queryKey: ["orchestrator", "pools", "blend", DASHBOARD_LIMITS.blend],
     queryFn: () => orchestrator.getPoolsByType("blend", DASHBOARD_LIMITS.blend),
@@ -89,14 +86,6 @@ export function useDashboardPools(): UseDashboardPoolsResult {
     queryKey: [...POOLS_QUERY_KEY, "aqua"],
     queryFn: () => orchestrator.getPoolsByType("aqua"),
     select: (pools) => pools.slice(0, DASHBOARD_LIMITS.aqua),
-    ...DASHBOARD_POOL_QUERY_OPTS,
-    enabled: legacyEnabled,
-  });
-
-  const soroswapQuery = useQuery<PoolInfo[], Error, PoolInfo[]>({
-    queryKey: [...POOLS_QUERY_KEY, "soroswap"],
-    queryFn: () => orchestrator.getPoolsByType("soroswap"),
-    select: (pools) => pools.slice(0, DASHBOARD_LIMITS.soroswap),
     ...DASHBOARD_POOL_QUERY_OPTS,
     enabled: legacyEnabled,
   });
@@ -114,7 +103,6 @@ export function useDashboardPools(): UseDashboardPoolsResult {
       return {
         blend: deserializePools(json.blend ?? []),
         aqua: deserializePools(json.aqua ?? []),
-        soroswap: deserializePools(json.soroswap ?? []),
       };
     },
   });
@@ -123,23 +111,10 @@ export function useDashboardPools(): UseDashboardPoolsResult {
     if (USE_BACKEND_DASHBOARD) {
       const data = backendCatalogQuery.data;
       if (!data) return [] as PoolInfo[];
-      return [
-        ...data.blend,
-        ...data.aqua.slice(0, DASHBOARD_LIMITS.aqua),
-        ...data.soroswap.slice(0, DASHBOARD_LIMITS.soroswap),
-      ];
+      return [...data.blend, ...data.aqua.slice(0, DASHBOARD_LIMITS.aqua)];
     }
-    return [
-      ...(blendQuery.data ?? []),
-      ...(aquaQuery.data ?? []),
-      ...(soroswapQuery.data ?? []),
-    ];
-  }, [
-    blendQuery.data,
-    aquaQuery.data,
-    soroswapQuery.data,
-    backendCatalogQuery.data,
-  ]);
+    return [...(blendQuery.data ?? []), ...(aquaQuery.data ?? [])];
+  }, [blendQuery.data, aquaQuery.data, backendCatalogQuery.data]);
 
   const assets = useMemo(
     () =>
@@ -151,10 +126,10 @@ export function useDashboardPools(): UseDashboardPoolsResult {
 
   const isLoading = USE_BACKEND_DASHBOARD
     ? backendCatalogQuery.isLoading
-    : blendQuery.isLoading && aquaQuery.isLoading && soroswapQuery.isLoading;
+    : blendQuery.isLoading && aquaQuery.isLoading;
   const error = USE_BACKEND_DASHBOARD
     ? backendCatalogQuery.error
-    : (blendQuery.error ?? aquaQuery.error ?? soroswapQuery.error);
+    : (blendQuery.error ?? aquaQuery.error);
 
   return { assets, isLoading, error: error as Error | null };
 }

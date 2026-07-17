@@ -27,7 +27,6 @@ import { BLEND_VAULT_ONLY_RESERVES } from "@/lib/orchestrator/adapters/blend-con
 
 const PROTOCOL_ICONS: Record<string, string> = {
   neko: "/neko-logo.png",
-  soroswap: "/assets/vault-creators/soroswap.jpg",
   aqua: "https://coin-images.coingecko.com/coins/images/20026/small/aqua-logo.png?1696519446",
   blend: "/assets/vault-creators/blend.png",
 };
@@ -126,18 +125,14 @@ const MyPositions: React.FC = () => {
 
   const aggUnified: UnifiedPosition[] = aggregatedPositions.map((pos) => {
     const withdrawUnit =
-      pos.pool.type === "aqua" || pos.pool.type === "soroswap"
+      pos.pool.type === "aqua"
         ? (pos.position.metadata?.withdrawUnit as
-            | "underlying"
-            | "lp_shares"
-            | undefined)
+            "underlying" | "lp_shares" | undefined)
         : undefined;
     const underlyingAmountsRaw = pos.position.metadata?.underlyingAmountsRaw as
-      | string[]
-      | undefined;
+      string[] | undefined;
     const secondaryRaw =
-      (pos.pool.type === "aqua" || pos.pool.type === "soroswap") &&
-      withdrawUnit === "underlying"
+      pos.pool.type === "aqua" && withdrawUnit === "underlying"
         ? underlyingAmountsRaw?.[1]
         : undefined;
     const secondaryDecimals = pos.pool.tokens[1]?.decimals ?? 7;
@@ -289,11 +284,7 @@ const MyPositions: React.FC = () => {
                       amount: 0n,
                       audit: {
                         tokens: [auditToken],
-                        poolType: pos.protocolId as
-                          | "blend"
-                          | "aqua"
-                          | "soroswap"
-                          | "neko",
+                        poolType: pos.protocolId as "blend" | "aqua" | "neko",
                         metadata: {},
                       },
                     },

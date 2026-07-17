@@ -3,7 +3,6 @@ export {
   Orchestrator,
   PoolRegistry,
   BlendPoolAdapter,
-  SoroswapPoolAdapter,
   AquaPoolAdapter,
   OrchestratorError,
   PoolNotFoundError,

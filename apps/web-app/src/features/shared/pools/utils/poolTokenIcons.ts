@@ -1,5 +1,5 @@
 import { STELLAR_FALLBACK_CONTRACTS } from "@/lib/constants/tokenIcons";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
+import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
 import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 
 /**

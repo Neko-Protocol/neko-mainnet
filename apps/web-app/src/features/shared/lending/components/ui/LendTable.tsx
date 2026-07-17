@@ -44,7 +44,6 @@ import { LENDING_PROTOCOL_LABELS } from "../../constants/protocols";
 
 const PROTOCOL_ICONS: Record<string, string> = {
   neko: "/neko-logo.png",
-  soroswap: "/assets/vault-creators/soroswap.jpg",
   aqua: "https://coin-images.coingecko.com/coins/images/20026/small/aqua-logo.png?1696519446",
   blend: "/assets/vault-creators/blend.png",
 };
@@ -554,12 +553,7 @@ function SortDropdown({
 // ── ColumnsDropdown ───────────────────────────────────────────────────────────
 
 export type ColumnKey =
-  | "protocol"
-  | "pool"
-  | "apy"
-  | "liquidity"
-  | "totalBorrowed"
-  | "borrow";
+  "protocol" | "pool" | "apy" | "liquidity" | "totalBorrowed" | "borrow";
 
 const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: "protocol", label: "Protocol" },

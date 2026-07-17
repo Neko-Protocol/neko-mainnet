@@ -76,7 +76,7 @@ export function useVaultsTotalUsd() {
     useDashboardVaultPositions();
 
   // Build a stable symbol→contractAddress map using the canonical assets config
-  // as the primary source (same as useTokenPrice), so Soroswap can price
+  // as the primary source (same as useTokenPrice), so xBull Swap can price
   // assets like CETES/USTRY even when DeFindex leaves contractAddress empty.
   const uniqueAssets = useMemo(() => {
     const assetsConfig = getAssetsConfig();
@@ -117,7 +117,7 @@ export function useVaultsTotalUsd() {
   });
 
   // Per-symbol queries using the same queryKey as useTokenPrice so the cache is
-  // shared. Pass the canonical contractAddress so Soroswap can price assets like
+  // shared. Pass the canonical contractAddress so xBull Swap can price assets like
   // CETES/USTRY even when DeFindex leaves contractAddress empty.
   const priceQueries = useQueries({
     queries: uniqueAssets.map(([symbol, contractAddress]) => ({

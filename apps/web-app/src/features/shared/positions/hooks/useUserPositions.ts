@@ -5,10 +5,7 @@ import { POOLS_QUERY_KEY } from "@/lib/orchestrator/hooks/usePools";
 import { orchestrator } from "@/lib/orchestrator/core/Orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { batchCheckLpBalances } from "@/features/shared/positions/services/positionScanner";
-import {
-  BLEND_ASSET_CODES,
-  BLEND_POOL_VAULTS,
-} from "@/lib/orchestrator/adapters/blend-config";
+import { BLEND_ASSET_CODES } from "@/lib/orchestrator/adapters/blend-config";
 import { getContractToCodeMap } from "@/lib/constants/assets.config";
 import type {
   PoolInfo,
@@ -71,12 +68,9 @@ export function useUserPositions() {
 
   const blendPools = blendListQuery.data ?? [];
 
-  const cachedSoroswap =
-    queryClient.getQueryData<PoolInfo[]>([...POOLS_QUERY_KEY, "soroswap"]) ??
-    [];
   const cachedAqua =
     queryClient.getQueryData<PoolInfo[]>([...POOLS_QUERY_KEY, "aqua"]) ?? [];
-  const nonBlendPools = [...cachedSoroswap, ...cachedAqua];
+  const nonBlendPools = cachedAqua;
 
   const vaultBlendPositionsQuery = useQuery<PoolPosition[]>({
     queryKey: ["orchestrator", "blend-vault-positions", address],
@@ -98,7 +92,7 @@ export function useUserPositions() {
     refetchOnWindowFocus: false,
   });
 
-  // ── LP balance pre-screen (Aqua + Soroswap) ───────────────────────────────
+  // ── LP balance pre-screen (Aqua) ──────────────────────────────────────────
   const lpScreenQuery = useQuery<Set<string>>({
     queryKey: [
       "orchestrator",
@@ -153,7 +147,7 @@ export function useUserPositions() {
     if (pool) positions.push({ pool, position: pos });
   }
 
-  // Aqua + Soroswap positions (only pre-screened)
+  // Aqua positions (only pre-screened)
   positionQueries.forEach((q, i) => {
     const pos = q.data as PoolPosition | undefined;
     if (!pos) return;

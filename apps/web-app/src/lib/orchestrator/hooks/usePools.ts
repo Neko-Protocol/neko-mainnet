@@ -17,16 +17,6 @@ export function usePools(enabled = true) {
     enabled,
   });
 
-  const soroswapQuery = useQuery<PoolInfo[]>({
-    queryKey: [...POOLS_QUERY_KEY, "soroswap"],
-    queryFn: () => orchestrator.getPoolsByType("soroswap"),
-    refetchInterval: 5 * 60_000,
-    staleTime: 3 * 60_000,
-    retry: 2,
-    throwOnError: false,
-    enabled,
-  });
-
   const aquaQuery = useQuery<PoolInfo[]>({
     queryKey: [...POOLS_QUERY_KEY, "aqua"],
     queryFn: () => orchestrator.getPoolsByType("aqua"),
@@ -38,9 +28,8 @@ export function usePools(enabled = true) {
   });
 
   const blendPools = blendQuery.data ?? [];
-  const soroswapPools = soroswapQuery.data ?? [];
   const aquaPools = aquaQuery.data ?? [];
-  const data = [...blendPools, ...soroswapPools, ...aquaPools];
+  const data = [...blendPools, ...aquaPools];
 
   // Treat blend as the "first paint" source and keep others loading in background.
   const isInitialBlendLoad = enabled && blendQuery.isLoading;
@@ -50,17 +39,10 @@ export function usePools(enabled = true) {
     ...blendQuery,
     data,
     isLoading,
-    isFetching:
-      blendQuery.isFetching ||
-      soroswapQuery.isFetching ||
-      aquaQuery.isFetching,
-    error: blendQuery.error ?? soroswapQuery.error ?? aquaQuery.error,
+    isFetching: blendQuery.isFetching || aquaQuery.isFetching,
+    error: blendQuery.error ?? aquaQuery.error,
     refetch: async () => {
-      await Promise.all([
-        blendQuery.refetch(),
-        soroswapQuery.refetch(),
-        aquaQuery.refetch(),
-      ]);
+      await Promise.all([blendQuery.refetch(), aquaQuery.refetch()]);
     },
   };
 }
