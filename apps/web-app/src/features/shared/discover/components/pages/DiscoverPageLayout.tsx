@@ -30,6 +30,8 @@ export function DiscoverPageLayout({ renderCard }: DiscoverPageLayoutProps) {
       native: 0,
       stablecoin: 0,
       "sovereign-bond": 0,
+      "tokenized-fund": 0,
+      "structured-credit": 0,
     };
     for (const code of tokenCodes) {
       const cls = getAssetTaxonomy(code)?.class;

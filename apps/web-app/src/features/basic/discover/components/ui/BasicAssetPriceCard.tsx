@@ -19,6 +19,7 @@ import {
   CLASS_ACCENT,
   getAssetTaxonomy,
 } from "@/features/shared/discover/utils/assetClass";
+import { InstitutionalNotice } from "@/features/shared/discover/components/ui/InstitutionalNotice";
 import { AddToCartModal } from "./AddToCartModal";
 
 export interface BasicAssetPriceCardProps {
@@ -49,6 +50,7 @@ export function BasicAssetPriceCard({
 
   const taxonomy = assetInfo?.taxonomy ?? getAssetTaxonomy(codeUpper);
   const accent = taxonomy ? CLASS_ACCENT[taxonomy.class] : undefined;
+  const isInstitutional = Boolean(taxonomy?.institutional);
 
   const displayName = assetInfo?.name ?? assetConfig?.name ?? codeUpper;
   const logoSrc = assetInfo?.logo ?? assetConfig?.icon;
@@ -85,9 +87,12 @@ export function BasicAssetPriceCard({
               </div>
             )}
             <div className="min-w-0">
-              <h3 className="text-white font-semibold text-sm leading-tight truncate">
-                {codeUpper}
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-white font-semibold text-sm leading-tight truncate">
+                  {codeUpper}
+                </h3>
+                {isInstitutional && <InstitutionalNotice className="h-5 w-5" />}
+              </div>
               <p className="text-white/50 text-xs mt-0.5 truncate">
                 {displayName}
               </p>
@@ -132,7 +137,7 @@ export function BasicAssetPriceCard({
 
         {/* Two-button CTA  stopPropagation so clicks don't navigate the card */}
         <div
-          className="mt-4 grid grid-cols-2 gap-2"
+          className={`mt-4 grid gap-2 ${isInstitutional ? "grid-cols-1" : "grid-cols-2"}`}
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
@@ -141,16 +146,18 @@ export function BasicAssetPriceCard({
             className="flex items-center justify-center rounded-xl border border-[#229EDF]/20 bg-[#229EDF]/10 px-2 py-1.5 text-xs font-semibold text-[#229EDF] transition-colors hover:bg-[#229EDF]/20 sm:px-3 sm:py-2.5 sm:text-sm"
             onClick={(e) => e.stopPropagation()}
           >
-            Buy Asset
+            {isInstitutional ? "Discover More" : "Buy Asset"}
           </Link>
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            className="flex items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-xs font-semibold text-white/60 transition-colors hover:bg-white/10 hover:text-white/90 sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
-          >
-            <ShoppingBag className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
-            Shopping Cart
-          </button>
+          {!isInstitutional && (
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="flex items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-xs font-semibold text-white/60 transition-colors hover:bg-white/10 hover:text-white/90 sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
+            >
+              <ShoppingBag className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+              Shopping Cart
+            </button>
+          )}
         </div>
       </div>
 
