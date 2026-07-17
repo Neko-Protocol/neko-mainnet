@@ -2,8 +2,6 @@
 
 Generated TypeScript bindings for the external **DeFindex Vault** Soroban contract (SEP-40-adjacent vault interface), consumed read-only and for user-signed deposit/withdraw actions across the Neko dApp.
 
-**This is not a Neko-owned contract.** DeFindex owns and deploys the vault contract this package binds to; Neko only consumes it.
-
 ## Regenerating
 
 `src/index.ts` is generated via the Stellar CLI, not hand-written:
