@@ -18,7 +18,6 @@ export {
   computeBlendEmissionsApy,
   type PoolReserve,
 } from "./adapters/blend-emissions.js";
-export { SoroswapPoolAdapter } from "./adapters/SoroswapPoolAdapter.js";
 export { AquaPoolAdapter } from "./adapters/AquaPoolAdapter.js";
 export * from "./adapters/aqua-config.js";
 export {

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
-import type { Token } from "@/lib/helpers/stellar/soroswap";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
+import type { Token } from "@/lib/helpers/stellar/swap-kit";
+import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
 import {
   getTokenId as getTokenIdUtil,
   getTokenIcon,

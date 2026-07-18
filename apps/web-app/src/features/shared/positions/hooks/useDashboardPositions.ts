@@ -26,9 +26,8 @@ export function useDashboardPositions() {
 
   // ── Pool lists ─────────────────────────────────────────────────────────────
   // Blend: keep the LIMIT in the query (real RPC cost — BlendAdapter iterates
-  // every reserve, each doing TokenMetadata + emissions APY calls). Aqua and
-  // Soroswap: share cache with usePools — `limit` for them is just an in-memory
-  // slice of an already-fetched list, no extra network.
+  // every reserve, each doing TokenMetadata + emissions APY calls). Aqua
+  // shares cache with usePools, with an in-memory limit.
   const legacyEnabled = !USE_BACKEND_DASHBOARD;
   const blendQuery = useQuery<PoolInfo[]>({
     queryKey: ["orchestrator", "pools", "blend", DASHBOARD_LIMITS.blend],
@@ -44,20 +43,11 @@ export function useDashboardPositions() {
     enabled: legacyEnabled,
   });
 
-  const soroswapQuery = useQuery<PoolInfo[]>({
-    queryKey: [...POOLS_QUERY_KEY, "soroswap"],
-    queryFn: () => orchestrator.getPoolsByType("soroswap"),
-    ...DASHBOARD_POOL_QUERY_OPTS,
-    enabled: legacyEnabled,
-  });
-
   const nonBlendPools: PoolInfo[] = [
     ...(aquaQuery.data ?? []).slice(0, DASHBOARD_LIMITS.aqua),
-    ...(soroswapQuery.data ?? []).slice(0, DASHBOARD_LIMITS.soroswap),
   ];
 
-  const poolsReady =
-    !blendQuery.isLoading && !aquaQuery.isLoading && !soroswapQuery.isLoading;
+  const poolsReady = !blendQuery.isLoading && !aquaQuery.isLoading;
 
   // Direct (non-vault) Blend reserves only. Vault reserves are owned by the
   // vault hooks (useDashboardVaultPositions / useVaultsTotalUsd) and counted in

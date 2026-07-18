@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
-import type { Token } from "@/lib/helpers/stellar/soroswap";
+import type { Token } from "@/lib/helpers/stellar/swap-kit";
 import type { SupportedCurrency } from "@/stores/currency.store";
 
 export interface SwapPrices {

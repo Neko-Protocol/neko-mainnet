@@ -14,15 +14,20 @@ export function ExpertAssetMobileActions({
   symbolUpper,
   stockInfo,
 }: ExpertAssetMobileActionsProps) {
+  const isInstitutional = Boolean(stockInfo.taxonomy?.institutional);
+  const buyLabel = isInstitutional ? "Discover more on" : "Buy on";
+
   return (
     <div className="flex w-full justify-center gap-3">
-      <Link
-        href={`/swap?to=${symbolUpper}`}
-        className="flex flex-1 min-w-0 items-center justify-center gap-2 px-3 py-3 rounded-xl bg-[#229EDF] text-white font-semibold text-sm text-center hover:bg-[#1a8bc7] transition-colors border border-[#229EDF]/50"
-      >
-        <ArrowLeftRight className="h-4 w-4 shrink-0" />
-        <span className="leading-tight">Swap on Neko</span>
-      </Link>
+      {!isInstitutional && (
+        <Link
+          href={`/swap?to=${symbolUpper}`}
+          className="flex flex-1 min-w-0 items-center justify-center gap-2 px-3 py-3 rounded-xl bg-[#229EDF] text-white font-semibold text-sm text-center hover:bg-[#1a8bc7] transition-colors border border-[#229EDF]/50"
+        >
+          <ArrowLeftRight className="h-4 w-4 shrink-0" />
+          <span className="leading-tight">Swap on Neko</span>
+        </Link>
+      )}
       {stockInfo.buyInfo && (
         <Link
           href={stockInfo.buyInfo.url}
@@ -30,7 +35,7 @@ export function ExpertAssetMobileActions({
         >
           <ExternalLink className="h-4 w-4 shrink-0" />
           <span className="leading-tight">
-            Buy on {stockInfo.buyInfo.platform}
+            {buyLabel} {stockInfo.buyInfo.platform}
           </span>
         </Link>
       )}

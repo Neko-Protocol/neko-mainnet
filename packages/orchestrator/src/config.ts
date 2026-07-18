@@ -4,10 +4,7 @@ export interface OrchestratorNetwork {
   rpcUrl: string;
   passphrase: string;
   allowHttp?: boolean;
-  /**
-   * Optional Horizon REST endpoint. Required by integrations that need to
-   * submit classic transactions (e.g. Soroswap trustline flow).
-   */
+  /** Optional Horizon REST endpoint for classic Stellar operations. */
   horizonUrl?: string;
 }
 /**
@@ -36,7 +33,7 @@ export interface OrchestratorConfig {
   contractToCodeMap: Record<string, string>;
   /**
    * Optional rich token metadata keyed by token code (e.g. "XLM"). Adapters
-   * that need decimals (Soroswap, Aqua) consume this when present, falling
+   * that need decimals (such as Aqua) consume this when present, falling
    * back to defaults derived from `contractToCodeMap` otherwise.
    */
   tokens?: Record<string, OrchestratorTokenInfo>;

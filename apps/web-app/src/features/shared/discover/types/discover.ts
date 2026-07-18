@@ -1,4 +1,9 @@
-export type AssetClass = "native" | "stablecoin" | "sovereign-bond";
+export type AssetClass =
+  | "native"
+  | "stablecoin"
+  | "sovereign-bond"
+  | "tokenized-fund"
+  | "structured-credit";
 
 export interface AssetTaxonomy {
   /** Broad category used for filtering on the discover page. */
@@ -7,6 +12,12 @@ export interface AssetTaxonomy {
   classLabel: string;
   /** Issuer / brand behind the token, e.g. "Circle", "Etherfuse". */
   issuer?: string;
+  /**
+   * Transfers are restricted to allowlisted holders — the asset is shown for
+   * reference and price discovery, but cannot be bought or swapped in-app.
+   * Mirrors `AssetConfig.isInstitutional` from the keeper registry.
+   */
+  institutional?: boolean;
   /** Currency the asset is pegged to (stablecoins only). */
   peg?: "USD" | "EUR" | "JPY" | "KRW" | "BRL" | "MXN";
   /** ISO country / region code where applicable. */

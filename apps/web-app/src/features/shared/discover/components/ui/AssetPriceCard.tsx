@@ -8,7 +8,7 @@ import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
+import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
 import { ROUTES } from "@/features/shared/discover/constants/discover";
 import { ASSET_INFO } from "@/features/shared/discover/utils/assetInfo";
 import type { AssetInfo } from "@/features/shared/discover/types/discover";
@@ -18,6 +18,7 @@ import {
   CLASS_ACCENT,
   getAssetTaxonomy,
 } from "@/features/shared/discover/utils/assetClass";
+import { InstitutionalNotice } from "./InstitutionalNotice";
 
 export interface AssetPriceCardProps {
   tokenCode: string;
@@ -44,6 +45,7 @@ export function AssetPriceCard({
 
   const taxonomy = assetInfo?.taxonomy ?? getAssetTaxonomy(codeUpper);
   const accent = taxonomy ? CLASS_ACCENT[taxonomy.class] : undefined;
+  const isInstitutional = Boolean(taxonomy?.institutional);
 
   const displayName = assetInfo?.name ?? assetConfig?.name ?? codeUpper;
   const logoSrc = assetInfo?.logo ?? assetConfig?.icon;
@@ -77,6 +79,7 @@ export function AssetPriceCard({
                 <h3 className="text-white font-semibold text-sm leading-tight truncate">
                   {codeUpper}
                 </h3>
+                {isInstitutional && <InstitutionalNotice className="h-5 w-5" />}
               </div>
               <p className="text-white/50 text-xs mt-0.5 truncate">
                 {displayName}

@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { XLM_TESTNET_ADDRESS } from "@/lib/config/stellar.config";
 import { useWallet } from "./useWallet";
-import { getTokens, getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { getTokenAddress } from "@/lib/helpers/stellar/soroswap";
+import { getTokens, getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
+import { getTokenAddress } from "@/lib/helpers/stellar/swap-kit";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
 import { fromSmallestUnit } from "@neko/orchestrator";

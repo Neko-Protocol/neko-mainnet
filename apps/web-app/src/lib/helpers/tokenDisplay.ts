@@ -2,8 +2,8 @@ import {
   STELLAR_TOKEN_ICON_MAP,
   STELLAR_FALLBACK_CONTRACTS,
 } from "@/lib/constants/tokenIcons";
-import { getAvailableTokens } from "./stellar/soroswap";
-import type { Token } from "./stellar/soroswap";
+import { getAvailableTokens } from "./stellar/swap-kit";
+import type { Token } from "./stellar/swap-kit";
 
 export const getExplorerUrl = (
   txHash: string,
@@ -55,8 +55,7 @@ export const getTokenId = (
 
 export const getTokenIcon = (
   token:
-    | { type: "native" | "contract"; code?: string; contract?: string }
-    | string
+    { type: "native" | "contract"; code?: string; contract?: string } | string
 ): string | null => {
   let tokenCode: string | null = null;
 

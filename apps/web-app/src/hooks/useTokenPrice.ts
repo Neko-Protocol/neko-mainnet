@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import {
   getAvailableTokens,
   getTokenAddress,
-} from "@/lib/helpers/stellar/soroswap";
-import type { Token } from "@/lib/helpers/stellar/soroswap";
+} from "@/lib/helpers/stellar/swap-kit";
+import type { Token } from "@/lib/helpers/stellar/swap-kit";
 import {
   stellarPriceService,
   type PriceSource,

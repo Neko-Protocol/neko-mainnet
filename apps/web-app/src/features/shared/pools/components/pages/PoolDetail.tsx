@@ -57,14 +57,12 @@ interface PoolDetailProps {
 const ISSUER_LABELS: Record<string, string> = {
   blend: "Blend",
   neko: "Neko",
-  soroswap: "Soroswap",
   aqua: "Aqua",
 };
 
 const ISSUER_ICONS: Record<string, string> = {
   blend: "/assets/vault-creators/blend.png",
   neko: "/logo.svg",
-  soroswap: "/assets/vault-creators/soroswap.jpg",
   aqua: "https://coin-images.coingecko.com/coins/images/20026/small/aqua-logo.png?1696519446",
 };
 
@@ -208,7 +206,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     }, [pool, supportedActions]);
 
   /** AMM / Neko-style: deposit + withdraw, no protocol borrow */
-  const isAmmPairPool = pool?.type === "aqua" || pool?.type === "soroswap";
+  const isAmmPairPool = pool?.type === "aqua";
   const depositWithdrawMode =
     !!pool && canLend && !canBorrow && (canRemoveOrWithdraw || isAmmPairPool);
 
@@ -544,8 +542,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
 
     const action: PoolAction = ammTab === "deposit" ? "deposit" : "withdraw";
     const withdrawUnit =
-      action === "withdraw" &&
-      (pool.type === "aqua" || pool.type === "soroswap")
+      action === "withdraw" && pool.type === "aqua"
         ? (position?.metadata?.withdrawUnit as
             | "underlying"
             | "lp_shares"
@@ -816,19 +813,13 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     const borrowApy = (pool.metadata.borrowApy as number | undefined) ?? 0;
 
     const isAqua = pool.type === "aqua";
-    const isSoroswap = pool.type === "soroswap";
-    const isPairAmm = isAqua || isSoroswap;
+    const isPairAmm = isAqua;
     const liquidityUsd = String(
       (pool.metadata.liquidityUsd as string | undefined) ?? "0"
     );
     const reserveList = isAqua
       ? ((pool.metadata.reserves as string[] | undefined) ?? [])
-      : isSoroswap
-        ? [
-            String(pool.metadata.reserveA ?? "0"),
-            String(pool.metadata.reserveB ?? "0"),
-          ]
-        : [];
+      : [];
 
     let totalLiquidity: string;
     let totalLiquidityRaw: string | undefined;
@@ -868,20 +859,16 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       if (rewards > 0.0001) {
         supplyApySub = `Base ${baseSup.toFixed(2)}% + ${rewards.toFixed(2)}% rewards`;
       }
-      if (isSoroswap) {
+      const aquaPoolType = pool.metadata.aquaPoolType as string | undefined;
+      if (aquaPoolType === "stable_swap" || aquaPoolType === "stable") {
+        poolTypeLabel = "Stable Swap";
+        const amp = pool.metadata.amplificationFactor as
+          | number
+          | null
+          | undefined;
+        if (amp != null) poolTypeDetail = `A: ${amp}`;
+      } else if (aquaPoolType === "constant_product") {
         poolTypeLabel = "Constant Product";
-      } else {
-        const aquaPoolType = pool.metadata.aquaPoolType as string | undefined;
-        if (aquaPoolType === "stable_swap" || aquaPoolType === "stable") {
-          poolTypeLabel = "Stable Swap";
-          const amp = pool.metadata.amplificationFactor as
-            | number
-            | null
-            | undefined;
-          if (amp != null) poolTypeDetail = `A: ${amp}`;
-        } else if (aquaPoolType === "constant_product") {
-          poolTypeLabel = "Constant Product";
-        }
       }
       if (primaryTokenPrice > 0 && t1?.code) {
         oraclePrice = `${t1.code} = ${formatCurrency(

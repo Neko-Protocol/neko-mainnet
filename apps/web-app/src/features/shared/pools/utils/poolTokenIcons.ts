@@ -1,6 +1,6 @@
 import { STELLAR_FALLBACK_CONTRACTS } from "@/lib/constants/tokenIcons";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap";
-import { getTokenIcon } from "@/lib/helpers/tokenDisplay";
+import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
+import { getTokenIcon } from "@/lib/helpers/tokenUtils";
 
 /**
  * Icons used only in pool-oriented UIs. Not merged into the global token map

@@ -2,7 +2,7 @@ import {
   getAssetsConfig,
   getContractToCodeMap,
 } from "@/lib/constants/assets.config";
-import type { Token } from "@/lib/helpers/stellar/soroswap";
+import type { Token } from "@/lib/types/swapTypes";
 
 export function normalizeAuditAssetKey(
   raw: string | null | undefined

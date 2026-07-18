@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
-import { getAvailableTokens, type Token } from "@/lib/helpers/stellar/soroswap";
+import { getSwappableTokens, type Token } from "@/lib/helpers/stellar/swap-kit";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
@@ -216,7 +216,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
   selectedToken,
 }) => {
   const { balances } = useWallet();
-  const availableTokens = useMemo(() => getAvailableTokens(), []);
+  const availableTokens = useMemo(() => getSwappableTokens(), []);
   const tokenCodes = Object.keys(availableTokens);
   const [searchQuery, setSearchQuery] = useState("");
 

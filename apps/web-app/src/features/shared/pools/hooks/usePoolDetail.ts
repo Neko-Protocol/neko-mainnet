@@ -31,11 +31,7 @@ export function usePoolDetail(contractId: string | undefined) {
     );
     const apyFormatted = pool.apy > 0 ? `${pool.apy.toFixed(4)}%` : "0.0000%";
     const typeLabel =
-      pool.type === "blend" || pool.type === "neko"
-        ? "Lending"
-        : pool.type === "soroswap"
-          ? "AMM"
-          : pool.type;
+      pool.type === "blend" || pool.type === "neko" ? "Lending" : pool.type;
 
     return {
       ...pool,

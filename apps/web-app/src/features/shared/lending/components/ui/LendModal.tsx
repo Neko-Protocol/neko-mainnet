@@ -35,10 +35,7 @@ export function LendModal({
   const isAggregated = !!pool.isAggregated;
   const isPairPool =
     !!pool.token2 && pool.token2 !== "Lending" && pool.token2 !== pool.token1;
-  const isPairWithdraw =
-    !isDeposit &&
-    (pool.protocolId === "aqua" || pool.protocolId === "soroswap") &&
-    isPairPool;
+  const isPairWithdraw = !isDeposit && pool.protocolId === "aqua" && isPairPool;
   const pairLabel = isPairPool
     ? `${pool.token1} / ${pool.token2}`
     : pool.token1;
