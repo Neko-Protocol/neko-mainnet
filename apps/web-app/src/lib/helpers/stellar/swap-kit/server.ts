@@ -17,6 +17,17 @@ const swapKit = new SwapKit({
   passphrase: networkPassphrase as Networks,
 });
 
+const REFERRAL_FEE_PERCENTAGE = 20_000n;
+
+function getReferralFees() {
+  const referral = process.env.SWAP_REFERRAL_ADDRESS?.trim();
+  if (!referral) {
+    throw new Error("Missing SWAP_REFERRAL_ADDRESS for xBull referral fees");
+  }
+
+  return [{ referral, feePercentage: REFERRAL_FEE_PERCENTAGE }];
+}
+
 function toAtomicUnits(amount: string, decimals: number): bigint {
   const value = amount.trim();
   if (!/^\d+(\.\d*)?$/.test(value)) {
@@ -48,13 +59,18 @@ export async function getQuoteServer(
     fromAsset: getTokenAddress(request.assetIn),
     toAsset: getTokenAddress(request.assetOut),
     amount,
-    // Referral fees are intentionally omitted.
+    referralFees: getReferralFees(),
   });
-  const minToReceive = (quote.toAmount * (10_000n - slippageBps)) / 10_000n;
+  const amountOut =
+    quote.toAmount - quote.fee.platformFee - quote.fee.referralsFee;
+  if (amountOut <= 0n) {
+    throw new Error("Swap output is insufficient after fees");
+  }
+  const minToReceive = (amountOut * (10_000n - slippageBps)) / 10_000n;
 
   return {
     amountIn: quote.fromAmount.toString(),
-    amountOut: quote.toAmount.toString(),
+    amountOut: amountOut.toString(),
     route: quote.route,
     minToReceive: minToReceive.toString(),
     platformFee: quote.fee.platformFee.toString(),
@@ -71,7 +87,7 @@ export async function buildTransactionServer(
     route: request.quote.route,
     amount: request.quote.amountIn,
     minToReceive: request.quote.minToReceive,
-    // Referral fees are intentionally omitted.
+    referralFees: getReferralFees(),
   });
   return { xdr: result.transactionXDR };
 }
