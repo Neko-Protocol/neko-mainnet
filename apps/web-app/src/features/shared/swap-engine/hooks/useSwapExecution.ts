@@ -15,7 +15,7 @@ import {
 import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";
 import { useWallet } from "@/hooks/useWallet";
 import { auditService } from "@/lib/services/audit.service";
-import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
+import { extractSignedTxXdr } from "@neko/orchestrator";
 
 export interface SwapExecutionParams {
   amountIn: string;

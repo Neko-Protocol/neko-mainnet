@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { X, RefreshCw } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { formatAmount } from "@/lib/helpers/formatUtils";
-import { decimalToAtomic } from "@/lib/helpers/amount";
+import { decimalToAtomic } from "@neko/orchestrator";
 import type { PoolData } from "../../types/lending";
 
 interface LendModalProps {

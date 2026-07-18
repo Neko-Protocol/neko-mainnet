@@ -5,7 +5,7 @@ import { usePools } from "@/lib/orchestrator/hooks/usePools";
 import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { useWallet } from "@/hooks/useWallet";
-import { getTokenIcon } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon } from "@/lib/helpers/tokenDisplay";
 import type { MappedBalances } from "@/lib/helpers/stellar/wallet";
 import type { SimulatorToken } from "@/features/simulator/strategies/types/simulator.types";
 

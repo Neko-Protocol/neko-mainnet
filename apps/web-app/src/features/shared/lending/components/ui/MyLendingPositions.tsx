@@ -18,10 +18,10 @@ import { useUserPositions } from "@/features/shared/positions/hooks/useUserPosit
 import { usePoolAction } from "@/lib/orchestrator";
 import { ColHeader } from "./ColHeader";
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { safeParseFloat } from "@/lib/helpers/formatUtils";
-import { atomicToDecimal } from "@/lib/helpers/amount";
+import { atomicToDecimal } from "@neko/orchestrator";
 import { stellarPriceService } from "@/lib/services/stellar-price.service";
 import { BLEND_VAULT_ONLY_RESERVES } from "@/lib/orchestrator/adapters/blend-config";
 
@@ -127,10 +127,13 @@ const MyPositions: React.FC = () => {
     const withdrawUnit =
       pos.pool.type === "aqua"
         ? (pos.position.metadata?.withdrawUnit as
-            "underlying" | "lp_shares" | undefined)
+            | "underlying"
+            | "lp_shares"
+            | undefined)
         : undefined;
     const underlyingAmountsRaw = pos.position.metadata?.underlyingAmountsRaw as
-      string[] | undefined;
+      | string[]
+      | undefined;
     const secondaryRaw =
       pos.pool.type === "aqua" && withdrawUnit === "underlying"
         ? underlyingAmountsRaw?.[1]

@@ -5,8 +5,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useVaultData } from "@/features/shared/vault/hooks/useVaultData";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
+import { fromSmallestUnit } from "@neko/orchestrator";
 import type { BearingYieldPosition } from "../../hooks/useBearingYieldPositions";
 import type { VaultPositionEntry } from "../../hooks/useDashboardVaultPositions";
 

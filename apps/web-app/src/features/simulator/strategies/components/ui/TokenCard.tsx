@@ -7,7 +7,7 @@ import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { formatAmount } from "@/lib/helpers/formatUtils";
-import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import {
   CLASS_ACCENT,
   getAssetTaxonomy,

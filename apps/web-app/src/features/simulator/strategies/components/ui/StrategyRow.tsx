@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { Play, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import {
   CLASS_ACCENT,
   getAssetTaxonomy,

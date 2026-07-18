@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { Copy, Check } from "lucide-react";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { VaultView } from "@/features/shared/vault/types/vault";
 
 function CopyableAddress({ address }: { address: string }) {

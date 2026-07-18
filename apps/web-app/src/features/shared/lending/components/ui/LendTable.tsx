@@ -37,7 +37,7 @@ import {
 import { ColHeader } from "./ColHeader";
 import type { PoolData } from "../../types/lending";
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { LENDING_PROTOCOL_LABELS } from "../../constants/protocols";
 
 // ── Protocol icon map ──────────────────────────────────────────────────────────
@@ -553,7 +553,12 @@ function SortDropdown({
 // ── ColumnsDropdown ───────────────────────────────────────────────────────────
 
 export type ColumnKey =
-  "protocol" | "pool" | "apy" | "liquidity" | "totalBorrowed" | "borrow";
+  | "protocol"
+  | "pool"
+  | "apy"
+  | "liquidity"
+  | "totalBorrowed"
+  | "borrow";
 
 const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
   { key: "protocol", label: "Protocol" },

@@ -3,11 +3,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
-import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
-import { extractSignedTxXdr } from "@/lib/helpers/stellar/transaction";
+import { isUserCancellationError } from "@neko/orchestrator";
 import { auditService } from "@/lib/services/audit.service";
 import { pollTransactionStatus, txApi } from "@/lib/services/transaction.api";
-import { buildPoolAuditPayload } from "@neko/orchestrator";
+import { buildPoolAuditPayload, extractSignedTxXdr } from "@neko/orchestrator";
 import { orchestrator } from "../core/Orchestrator";
 import { POOLS_QUERY_KEY } from "./usePools";
 import type { PoolActionParams, TransactionResult } from "../types/pool.types";

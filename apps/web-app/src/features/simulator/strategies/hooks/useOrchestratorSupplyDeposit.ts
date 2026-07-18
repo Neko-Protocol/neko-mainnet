@@ -8,7 +8,7 @@ import {
   POOLS_QUERY_KEY,
 } from "@/lib/orchestrator";
 import type { PoolAction, PoolInfo } from "@/lib/orchestrator";
-import { toSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { toSmallestUnit } from "@neko/orchestrator";
 
 export function resolveOrchestratorSupplyAction(
   poolInfo: PoolInfo

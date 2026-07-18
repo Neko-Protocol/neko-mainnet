@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { Info, TrendingUp } from "lucide-react";
 import { AppTooltip } from "@/components/ui/AppTooltip";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit } from "@neko/orchestrator";
 import { formatCurrency } from "@/lib/helpers/currency";
 import type { SupportedCurrency } from "@/stores/currency.store";
 import { useVaultPpsHistory } from "@/features/shared/vault/hooks/useVaultPpsHistory";
