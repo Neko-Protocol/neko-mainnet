@@ -1,6 +1,6 @@
 ---
 name: vault
-description: Guide for adding new DeFindex vaults and yield-strategy integrations to the Neko DApp vault feature. Use this skill when the user asks to "add a vault", "register a new DeFindex vault", "integrate a new strategy" (Blend, Aquarius, SoroSwap, or another external strategy), wire up APY/keeper endpoints for a new vault, expose a new vault in the UI, or extend `apps/web-app/src/features/shared/vault/**`, `apps/web-app/src/lib/defindex/**`, `apps/backend/src/domains/investing/**`, or `packages/keeper/**`. Not for authoring Neko smart contracts (none are used here) or for generic TanStack Query questions (use `tanstack-query`).
+description: Guide for adding new DeFindex vaults and yield-strategy integrations to the Neko DApp vault feature. Use this skill when the user asks to "add a vault", "register a new DeFindex vault", "integrate a new strategy" (Blend, Aquarius, SoroSwap, or another external strategy), wire up APY/keeper endpoints for a new vault, expose a new vault in the UI, or extend `apps/web-app/src/features/shared/vault/**`, `apps/backend/src/domains/investing/**`, or `packages/keeper/**`. Not for authoring Neko smart contracts (none are used here) or for generic TanStack Query questions (use `tanstack-query`).
 user-invocable: true
 argument-hint: "[new vault contract id or strategy name]"
 ---
@@ -62,10 +62,9 @@ apps/web-app/src/
 │   ├── types/vault.ts                         # VaultConfig / VaultStats / VaultView etc.
 │   └── utils/
 │       ├── vault.ts                           # resolveAssetIcon
-│       └── vaultAssetArt.ts                   # symbol → icon asset paths
-└── lib/defindex/
-    ├── mapToVaultView.ts                      # VaultInfoResponse → VaultView
-    └── vaultIds.ts                            # Re-exports vault id helpers from @neko/keeper
+│       ├── vaultAssetArt.ts                   # symbol → icon asset paths
+│       ├── mapToVaultView.ts                  # VaultInfoResponse → VaultView
+│       └── vaultIds.ts                        # Re-exports vault id helpers from @neko/keeper
 
 apps/backend/src/domains/investing/
 ├── defindex/                                  # GET /v1/defindex/vaults
@@ -94,7 +93,7 @@ surface that owns the behavior.
 
 ### 1. Register the vault id
 
-`apps/web-app/src/lib/defindex/vaultIds.ts`
+`apps/web-app/src/features/shared/vault/utils/vaultIds.ts`
 
 ```ts
 // Re-exported from @neko/keeper. Add the source id in:
@@ -121,7 +120,7 @@ That's it for catalog visibility. `DefindexService.getVaults()` fetches configur
 
 ### 3. Override static metadata only if needed
 
-`lib/defindex/mapToVaultView.ts` builds a `VaultView` from the DeFindex `VaultInfoResponse` and currently **hard-codes** some fields: `category: "lending"`, `status: "active"`, `createdBy: "DeFindex"`, `creatorIconSrc: "/defindex-logo.svg"`, `variant: "light"`, `featured: true`, plus human-readable `tvl/apy` strings.
+`features/shared/vault/utils/mapToVaultView.ts` builds a `VaultView` from the DeFindex `VaultInfoResponse` and currently **hard-codes** some fields: `category: "lending"`, `status: "active"`, `createdBy: "DeFindex"`, `creatorIconSrc: "/defindex-logo.svg"`, `variant: "light"`, `featured: true`, plus human-readable `tvl/apy` strings.
 
 If the new vault needs different metadata (e.g. `category: "amm"`, different creator), add a branch keyed off `contractId` inside `defindexInfoToVaultView`, or refactor to look up a small static record first:
 

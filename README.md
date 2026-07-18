@@ -16,8 +16,8 @@
 
 Before getting started, ensure you have:
 
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [npm](https://www.npmjs.com/) (v10.2.3 or higher)
+- [Node.js](https://nodejs.org/) (v20 or higher)
+- [npm](https://www.npmjs.com/) (v11.6.2 or higher)
 
 ### Installation
 
@@ -44,7 +44,7 @@ Before getting started, ensure you have:
 
    Create a `.env.local` file in `apps/web-app/` with all required envs (checkout `apps/web-app/.env.example`).
 
-6. **Start the development server:**
+5. **Start the development server:**
 
    ```bash
    npm run dev
@@ -87,8 +87,9 @@ Before getting started, ensure you have:
 ### Monorepo
 
 - **Build System**: Turborepo
-- **Package Manager**: npm workspaces (v10.2.3+)
+- **Package Manager**: npm workspaces (v11.6.2+)
 - **Code Quality**: ESLint 9, Prettier 3, Husky 9
+
 ## Contributing
 
 Contributions are welcome! Please follow these steps:
@@ -111,21 +112,23 @@ Please ensure your code:
 
 The `.agents/skills/` directory contains specialized skills for Claude Code and other LLM-based assistants. The `.claude/skills` symbolic link provides integration with Claude Code.
 
-| Skill                           | Description                                                                  | Command                        |
-| ------------------------------- | ---------------------------------------------------------------------------- | ------------------------------ |
-| **stellar-dev**                 | Stellar/Soroban development: contracts, SDK, RPC, wallets, testing, security | `/stellar-dev`                 |
-| **tanstack-query**              | TanStack Query v5: patterns, v4→v5 migration, SSR, optimistic updates        | `/tanstack-query`              |
-| **tailwind-patterns**           | Tailwind CSS: layouts, cards, navigation, forms, dark mode                   | `/tailwind-patterns`           |
-| **next-best-practices**         | Next.js: RSC, data patterns, metadata, error handling, bundling              | `/next-best-practices`         |
-| **vercel-react-best-practices** | React performance: rendering, caching, bundle optimization                   | `/vercel-react-best-practices` |
-| **vercel-composition-patterns** | React composition: compound components, render props, context                | `/vercel-composition-patterns` |
-| **remotion-best-practices**     | Remotion video: animations, transitions, audio, captions                     | `/remotion-best-practices`     |
-| **commit-work**                 | Git commits: staging, splitting, Conventional Commits                        | `/commit-work`                 |
-| **seo-audit**                   | SEO audit: meta tags, structured data, performance                           | `/seo-audit`                   |
-| **web-design-guidelines**       | UI/UX review: accessibility, design best practices                           | `/web-design-guidelines`       |
-| **agent-md-refactor**           | Refactor AGENTS.md/CLAUDE.md with progressive disclosure                     | `/agent-md-refactor`           |
-| **skill-creator**               | Guide for creating custom skills                                             | `/skill-creator`               |
-| **find-skills**                 | Discover and install skills from [skills.sh](https://skills.sh/)             | `/find-skills`                 |
+| Skill                           | Description                                                                        | Command                        |
+| ------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------ |
+| **stellar-dev**                 | Stellar/Soroban development: contracts, SDK, RPC, wallets, testing, security       | `/stellar-dev`                 |
+| **neko-brand**                  | Neko brand identity: color tokens, typography, logo usage                          | `/neko-brand`                  |
+| **feature-module-conventions**  | Colocated feature-module layout: where new components/hooks/stores/services belong | `/feature-module-conventions`  |
+| **tanstack-query**              | TanStack Query v5: patterns, v4→v5 migration, SSR, optimistic updates              | `/tanstack-query`              |
+| **tailwind-patterns**           | Tailwind CSS: layouts, cards, navigation, forms, dark mode                         | `/tailwind-patterns`           |
+| **next-best-practices**         | Next.js: RSC, data patterns, metadata, error handling, bundling                    | `/next-best-practices`         |
+| **vercel-react-best-practices** | React performance: rendering, caching, bundle optimization                         | `/vercel-react-best-practices` |
+| **vercel-composition-patterns** | React composition: compound components, render props, context                      | `/vercel-composition-patterns` |
+| **remotion-best-practices**     | Remotion video: animations, transitions, audio, captions                           | `/remotion-best-practices`     |
+| **commit-work**                 | Git commits: staging, splitting, Conventional Commits                              | `/commit-work`                 |
+| **seo-audit**                   | SEO audit: meta tags, structured data, performance                                 | `/seo-audit`                   |
+| **web-design-guidelines**       | UI/UX review: accessibility, design best practices                                 | `/web-design-guidelines`       |
+| **agent-md-refactor**           | Refactor AGENTS.md/CLAUDE.md with progressive disclosure                           | `/agent-md-refactor`           |
+| **skill-creator**               | Guide for creating custom skills                                                   | `/skill-creator`               |
+| **find-skills**                 | Discover and install skills from [skills.sh](https://skills.sh/)                   | `/find-skills`                 |
 
 **Installing new skills:**
 
@@ -141,6 +144,7 @@ This project is licensed under the MIT License.
 
 ## Links
 
+- [Brand & Design System (BRAND.md)](./BRAND.md)
 - [Stellar Documentation](https://developers.stellar.org/)
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Turborepo Documentation](https://turbo.build/repo/docs)
@@ -148,4 +152,3 @@ This project is licensed under the MIT License.
 ## Support
 
 For questions and support, please open an issue on [GitHub](https://github.com/Neko-Protocol/neko-mainnet/issues).
-

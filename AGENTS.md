@@ -35,6 +35,8 @@ Use workspace commands from the target package when possible, for example
   `@neko/api-contracts` are application libraries, not Neko smart contracts.
 - Server state uses TanStack Query v5; do not introduce SWR unless the app
   deliberately changes data-fetching strategy.
+- Don't invent new colors or fonts outside the documented `neko-*`/`wallet-*`
+  tokens — see `BRAND.md` and the `neko-brand` skill.
 
 ## Skills
 
@@ -42,6 +44,8 @@ Project skills live in `.agents/skills/` and are surfaced through `.claude/skill
 and `.cursor/skills`. Prefer the domain skill before a generic subagent:
 
 - `stellar-dev` for Stellar, Soroban, Horizon, RPC, wallets, and XLM/assets
+- `neko-brand` for colors, typography, and logo usage in any UI work
+- `feature-module-conventions` for where new code belongs under `src/features/**`
 - `tanstack-query` for React Query v5 patterns
 - `tailwind-patterns`, `next-best-practices`, `vercel-react-best-practices`,
   and `vercel-composition-patterns` for frontend work
