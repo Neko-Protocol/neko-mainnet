@@ -13,13 +13,13 @@ import {
   getSwappableTokens,
   type Token,
 } from "@/lib/helpers/stellar/swap-kit";
-import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+import { extractContractErrorOrNull } from "@neko/orchestrator";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import {
   sanitizeAmountInput,
   getTokenIconFitClass,
   getExplorerUrl,
-} from "@/lib/helpers/tokenUtils";
+} from "@/lib/helpers/tokenDisplay";
 import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";

@@ -12,7 +12,7 @@ import { useSwapExecution } from "@/features/shared/swap-engine/hooks/useSwapExe
 import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
-import { isUserCancellationError } from "@/lib/helpers/stellar/contractErrors";
+import { isUserCancellationError } from "@neko/orchestrator";
 import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
 import type { Token } from "@/lib/types/swapTypes";
 import { useStrategiesStore } from "@/features/simulator/strategies/stores/strategies.store";

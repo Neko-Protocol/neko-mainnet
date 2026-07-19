@@ -2,7 +2,7 @@ import { useRef, useCallback } from "react";
 import type { Token } from "@/lib/helpers/stellar/swap-kit";
 import { getQuote, type QuoteRequest } from "@/lib/helpers/stellar/swap-kit";
 import { formatAmount } from "@/lib/helpers/formatUtils";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit } from "@neko/orchestrator";
 import { resolveDecimalsForSwapToken } from "@/lib/helpers/auditAssetAmounts";
 import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";
 

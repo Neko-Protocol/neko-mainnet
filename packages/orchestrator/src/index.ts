@@ -33,4 +33,3 @@ export * from "./stellar/contractErrors.js";
 export * from "./stellar/contract-errors.js";
 export * from "./stellar/sorobanBalance.js";
 export * from "./stellar/aquaDeposit.js";
-export * as soroswap from "./stellar/soroswap/index.js";
