@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getQuote, getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
 import type { Token } from "@/lib/types/swapTypes";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit } from "@neko/orchestrator";
 import { safeParseFloat } from "@/lib/helpers/formatUtils";
 import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";
 
