@@ -350,7 +350,7 @@ export function AssetDetailLayout({
               {hasMobileTabs && <div className="h-4" />}
               {/* Header */}
               <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between max-sm:items-center">
-                <div className="flex min-w-0 items-start gap-5 max-sm:flex-col max-sm:items-center">
+                <div className="flex min-w-0 flex-1 items-start gap-5 max-sm:flex-col max-sm:items-center">
                   <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-white/10">
                     <Image
                       src={stockInfo.logo || "/assets/xlm-logo.png"}
@@ -360,16 +360,16 @@ export function AssetDetailLayout({
                       className="object-cover scale-110"
                     />
                   </div>
-                  <div className="flex h-20 min-w-0 flex-1 flex-col justify-between max-sm:h-auto max-sm:w-full max-sm:flex-none max-sm:items-center max-sm:justify-start max-sm:gap-2">
-                    <div className="min-h-0 flex items-center gap-3 max-sm:flex-wrap max-sm:justify-center max-sm:gap-x-2 max-sm:gap-y-1">
-                      <h1 className="pool-detail-hero-title truncate max-sm:overflow-visible max-sm:whitespace-normal max-sm:text-center">
+                  <div className="flex min-w-0 flex-1 flex-col max-sm:w-full max-sm:flex-none max-sm:items-center">
+                    <div className="flex min-w-0 items-center gap-2 max-sm:flex-wrap max-sm:justify-center max-sm:gap-y-1">
+                      <h1 className="asset-detail-title pool-detail-hero-title truncate max-sm:overflow-visible max-sm:whitespace-normal max-sm:text-center">
                         {symbolUpper}
                       </h1>
                       {isInstitutional && (
                         <InstitutionalNotice className="h-8 w-8 max-sm:h-7 max-sm:w-7" />
                       )}
                     </div>
-                    <div className="min-h-0 flex items-center gap-3 max-sm:flex-col max-sm:items-center max-sm:gap-2">
+                    <div className="mt-1 flex min-w-0 items-center gap-3 max-sm:flex-col max-sm:items-center max-sm:gap-2">
                       <span className="truncate text-base font-medium leading-snug text-white/70 max-sm:max-w-full max-sm:overflow-visible max-sm:whitespace-normal max-sm:text-center">
                         {stockInfo.name}
                       </span>
@@ -378,7 +378,7 @@ export function AssetDetailLayout({
                       </span>
                     </div>
                     {taxonomy && accent && (
-                      <div className="flex max-sm:justify-center">
+                      <div className="mt-3 flex max-sm:justify-center">
                         <span
                           className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium text-white/70 ${accent.bg}`}
                         >

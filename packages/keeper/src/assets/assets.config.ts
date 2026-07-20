@@ -224,6 +224,17 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
       isStablecoin: true,
       coinGeckoId: "paypal-usd",
     },
+    XAUM: {
+      code: "XAUM",
+      name: "Matrixdock Gold",
+      contract: "CC2RBGYNCFBCVENIDL5BFBWPH4OUZM2UA3OD2K2N54GLMWCC4KWPVAGO",
+      decimals: 9,
+      icon: "https://stellar.myfilebase.com/ipfs/QmbMy88CNd95QEL6rjVHFtWrT8ao2zaypfb19TBYgmBCv8",
+      priceSource: "coingecko",
+      isStablecoin: false,
+      isSwappable: false,
+      coinGeckoId: "matrixdock-gold",
+    },
     GYEN: {
       code: "GYEN",
       name: "GMO JPY",

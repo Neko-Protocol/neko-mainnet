@@ -155,6 +155,26 @@ const RAW: Record<string, AssetInfo> = {
         "CETES on Stellar: buy at app.etherfuse.com or test at devnet.etherfuse.com.",
     },
   },
+  XAUM: {
+    logo: "https://stellar.myfilebase.com/ipfs/QmbMy88CNd95QEL6rjVHFtWrT8ao2zaypfb19TBYgmBCv8",
+    name: "Matrixdock Gold",
+    description:
+      "Tokenized physical gold: each token is backed by one troy ounce of LBMA-accredited gold",
+    summary:
+      "XAUm is Matrixdock's tokenized gold product, expanded to Stellar in June 2026. Each token represents one troy ounce of 99.99% purity LBMA-accredited physical gold stored with Brink's and Malca-Amit, with reserves independently audited by Bureau Veritas. XAUm ranks among the largest tokenized gold products globally, offering on-chain gold exposure with 24/7 transferability.",
+    highlights: [
+      "Backed 1:1 by one troy ounce of 99.99% purity LBMA-accredited physical gold per token",
+      "Gold stored with Brink's and Malca-Amit; reserves audited by Bureau Veritas",
+      "Stellar contracts audited by OtterSec and Runtime Verification",
+      "Among the top tokenized gold products globally by size",
+    ],
+    buyInfo: {
+      platform: "Matrixdock",
+      url: "https://www.matrixdock.com",
+      description:
+        "XAUm on Stellar: mint and redeem directly through Matrixdock, or trade against USDC in the Aquarius AMM pool.",
+    },
+  },
   BENJI: {
     logo: "/assets/franklin-templeton-logo.png",
     name: "Franklin OnChain U.S. Government Money Fund",
@@ -188,6 +208,12 @@ const RAW: Record<string, AssetInfo> = {
       "Transfers restricted to allowlisted addresses and pausable by operators",
       "Wrapped as deJTRSY for holders who need a freely transferable version",
     ],
+    buyInfo: {
+      platform: "Centrifuge",
+      url: "https://app.centrifuge.io/pool/281474976710662",
+      description:
+        "View fund details, eligibility, performance, and investment access in the Centrifuge app.",
+    },
   },
   DEJTRSY: {
     logo: "https://centrifuge.mypinata.cloud/ipfs/bafkreieracb5e57bhg7bphd7sp4hxf3yhbm3cxinst3o5mennfosagkxuu",
@@ -202,6 +228,12 @@ const RAW: Record<string, AssetInfo> = {
       "Accumulating: yield is reflected in a rising token price",
       "Issued by the Open Market Foundation and pausable by authorized operators",
     ],
+    buyInfo: {
+      platform: "Centrifuge",
+      url: "https://app.centrifuge.io/pool/281474976710660",
+      description:
+        "View deJTRSY performance, integrations, and access options in the Centrifuge app.",
+    },
   },
   JAAA: {
     logo: "https://centrifuge.mypinata.cloud/ipfs/bafkreifp5ww5lpbgrny36oxgzg2kjw2226lmj2vmekp4nqemm5ewhhtmwi",
@@ -216,6 +248,12 @@ const RAW: Record<string, AssetInfo> = {
       "Yields more than Treasuries in exchange for corporate credit and liquidity risk",
       "Transfers restricted to allowlisted addresses; wrapped as deJAAA for open access",
     ],
+    buyInfo: {
+      platform: "Centrifuge",
+      url: "https://app.centrifuge.io/pool/281474976710663",
+      description:
+        "View fund details, eligibility, performance, and investment access in the Centrifuge app.",
+    },
   },
   DEJAAA: {
     logo: "https://centrifuge.mypinata.cloud/ipfs/bafkreifp5ww5lpbgrny36oxgzg2kjw2226lmj2vmekp4nqemm5ewhhtmwi",
@@ -230,6 +268,12 @@ const RAW: Record<string, AssetInfo> = {
       "AAA refers to credit quality of the loan pool, not to price stability",
       "Issued by the Open Market Foundation and pausable by authorized operators",
     ],
+    buyInfo: {
+      platform: "Centrifuge",
+      url: "https://app.centrifuge.io/pool/281474976710659",
+      description:
+        "View deJAAA performance, integrations, and access options in the Centrifuge app.",
+    },
   },
 };
 

@@ -3,7 +3,8 @@ export type AssetClass =
   | "stablecoin"
   | "sovereign-bond"
   | "tokenized-fund"
-  | "structured-credit";
+  | "structured-credit"
+  | "commodity";
 
 export interface AssetTaxonomy {
   /** Broad category used for filtering on the discover page. */
