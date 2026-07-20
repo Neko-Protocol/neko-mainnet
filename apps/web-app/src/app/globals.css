@@ -266,6 +266,10 @@ h1.pool-detail-hero-title {
   color: #ffffff !important;
 }
 
+h1.pool-detail-hero-title.asset-detail-title {
+  width: auto;
+}
+
 /* Slash between pair symbols  slightly heavier than title weight (300) */
 h1.pool-detail-hero-title .pool-detail-hero-slash {
   color: #ffffff80 !important;
