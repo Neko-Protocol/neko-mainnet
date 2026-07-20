@@ -104,6 +104,23 @@ function parseTokenStr(tokenStr: string, contractAddress: string): TokenInfo {
   };
 }
 
+function enrichTokenFromConfig(
+  token: TokenInfo,
+  config: OrchestratorConfig
+): TokenInfo {
+  const code = config.contractToCodeMap[token.address] ?? token.code;
+  const meta = config.tokens?.[code];
+  if (!meta) {
+    return code === token.code ? token : { ...token, code, name: code };
+  }
+  return {
+    address: token.address,
+    code: meta.code,
+    name: meta.name,
+    decimals: meta.decimals,
+  };
+}
+
 function buildPoolName(tokens: TokenInfo[], poolType: AquaPoolType): string {
   const names = tokens.map((t) => t.code).join(" / ");
   return poolType === "stable_swap" || poolType === "stable"
@@ -111,9 +128,12 @@ function buildPoolName(tokens: TokenInfo[], poolType: AquaPoolType): string {
     : `${names} Aqua Pool`;
 }
 
-function mapApiPool(raw: AquaApiPool): PoolInfo {
+function mapApiPool(raw: AquaApiPool, config: OrchestratorConfig): PoolInfo {
   const tokens: TokenInfo[] = raw.tokens_str.map((str, i) =>
-    parseTokenStr(str, raw.tokens_addresses[i] ?? "")
+    enrichTokenFromConfig(
+      parseTokenStr(str, raw.tokens_addresses[i] ?? ""),
+      config
+    )
   );
 
   const totalApyStr = String(raw.total_apy ?? "");
@@ -198,7 +218,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
   async listPools(limit?: number): Promise<PoolInfo[]> {
     try {
       const raw = await fetchAquaPools(getAquaPoolAddresses());
-      const mapped = raw.map(mapApiPool);
+      const mapped = raw.map((pool) => mapApiPool(pool, this.config));
       return limit !== undefined ? mapped.slice(0, limit) : mapped;
     } catch (error) {
       throw new AdapterError("aqua", "listPools", error);
@@ -212,7 +232,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
       if (!pool) {
         throw new Error(`Aqua pool not found: ${poolId}`);
       }
-      return mapApiPool(pool);
+      return mapApiPool(pool, this.config);
     } catch (error) {
       throw new AdapterError("aqua", "getPoolInfo", error);
     }

@@ -96,6 +96,11 @@ export const ASSET_TAXONOMY: Record<string, AssetTaxonomy> = {
     region: "US",
     yieldBearing: true,
   },
+  XAUM: {
+    class: "commodity",
+    classLabel: "Tokenized Gold",
+    issuer: "Matrixdock",
+  },
 };
 
 export function getAssetTaxonomy(code: string): AssetTaxonomy | undefined {
@@ -129,6 +134,11 @@ export const ASSET_CLASS_FILTERS: AssetClassDef[] = [
     id: "structured-credit",
     label: "Structured Credit",
     description: "Tokenized pools of corporate loans (RWA)",
+  },
+  {
+    id: "commodity",
+    label: "Commodities",
+    description: "Tokenized physical commodities (RWA)",
   },
   { id: "native", label: "Native", description: "Network-native assets" },
 ];
@@ -168,6 +178,12 @@ export const CLASS_ACCENT: Record<
     ring: "ring-amber-500/30",
     chip: "bg-amber-500/18 text-amber-300",
   },
+  commodity: {
+    bg: "bg-yellow-500/12",
+    text: "text-yellow-300",
+    ring: "ring-yellow-500/30",
+    chip: "bg-yellow-500/18 text-yellow-300",
+  },
 };
 
 /** Plain-language explanation of each asset class, shown on detail pages. */
@@ -190,6 +206,10 @@ export const CLASS_EXPLANATIONS: Record<
   "tokenized-fund": {
     title: "What is a tokenized fund?",
     body: "A tokenized fund is a share of a regulated investment fund issued directly on-chain, where the token itself is the record of ownership rather than an IOU for one. The fund holds conventional assets, typically short-term government debt, and a transfer agent keeps the on-chain register in sync with the fund's books. Some share classes are restricted to investors the issuer has approved, so they can be tracked but not freely traded.",
+  },
+  commodity: {
+    title: "What is a tokenized commodity?",
+    body: "A tokenized commodity represents ownership of a physical asset, such as gold, held in professional vaults, wrapped into an on-chain token. Each token is redeemable against the underlying reserve, which is verified by independent audits, so holders get commodity price exposure with the liquidity and 24/7 transferability of a digital asset.",
   },
   "structured-credit": {
     title: "What is structured credit?",
