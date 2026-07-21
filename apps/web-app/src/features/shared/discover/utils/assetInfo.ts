@@ -155,26 +155,26 @@ const RAW: Record<string, AssetInfo> = {
         "CETES on Stellar: buy at app.etherfuse.com or test at devnet.etherfuse.com.",
     },
   },
-  XAUM: {
-    logo: "https://stellar.myfilebase.com/ipfs/QmbMy88CNd95QEL6rjVHFtWrT8ao2zaypfb19TBYgmBCv8",
-    name: "Matrixdock Gold",
-    description:
-      "Tokenized physical gold: each token is backed by one troy ounce of LBMA-accredited gold",
-    summary:
-      "XAUm is Matrixdock's tokenized gold product, expanded to Stellar in June 2026. Each token represents one troy ounce of 99.99% purity LBMA-accredited physical gold stored with Brink's and Malca-Amit, with reserves independently audited by Bureau Veritas. XAUm ranks among the largest tokenized gold products globally, offering on-chain gold exposure with 24/7 transferability.",
-    highlights: [
-      "Backed 1:1 by one troy ounce of 99.99% purity LBMA-accredited physical gold per token",
-      "Gold stored with Brink's and Malca-Amit; reserves audited by Bureau Veritas",
-      "Stellar contracts audited by OtterSec and Runtime Verification",
-      "Among the top tokenized gold products globally by size",
-    ],
-    buyInfo: {
-      platform: "Matrixdock",
-      url: "https://www.matrixdock.com",
-      description:
-        "XAUm on Stellar: mint and redeem directly through Matrixdock, or trade against USDC in the Aquarius AMM pool.",
-    },
-  },
+  // XAUM: {
+  //   logo: "https://stellar.myfilebase.com/ipfs/QmbMy88CNd95QEL6rjVHFtWrT8ao2zaypfb19TBYgmBCv8",
+  //   name: "Matrixdock Gold",
+  //   description:
+  //     "Tokenized physical gold: each token is backed by one troy ounce of LBMA-accredited gold",
+  //   summary:
+  //     "XAUm is Matrixdock's tokenized gold product, expanded to Stellar in June 2026. Each token represents one troy ounce of 99.99% purity LBMA-accredited physical gold stored with Brink's and Malca-Amit, with reserves independently audited by Bureau Veritas. XAUm ranks among the largest tokenized gold products globally, offering on-chain gold exposure with 24/7 transferability.",
+  //   highlights: [
+  //     "Backed 1:1 by one troy ounce of 99.99% purity LBMA-accredited physical gold per token",
+  //     "Gold stored with Brink's and Malca-Amit; reserves audited by Bureau Veritas",
+  //     "Stellar contracts audited by OtterSec and Runtime Verification",
+  //     "Among the top tokenized gold products globally by size",
+  //   ],
+  //   buyInfo: {
+  //     platform: "Matrixdock",
+  //     url: "https://www.matrixdock.com",
+  //     description:
+  //       "XAUm on Stellar: mint and redeem directly through Matrixdock, or trade against USDC in the Aquarius AMM pool.",
+  //   },
+  // },
   BENJI: {
     logo: "/assets/franklin-templeton-logo.png",
     name: "Franklin OnChain U.S. Government Money Fund",
