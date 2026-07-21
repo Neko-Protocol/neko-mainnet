@@ -1,12 +1,26 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { orchestrator } from "../core/Orchestrator";
 import type { PoolInfo, PoolPosition } from "../types/pool.types";
+import { getAssetsConfig } from "@/lib/constants/assets.config";
 
 export const POOLS_QUERY_KEY = ["orchestrator", "pools"] as const;
 
+function isActiveAssetPool(pool: PoolInfo, activeTokenCodes: Set<string>) {
+  return pool.tokens.every((token) =>
+    activeTokenCodes.has(token.code.toUpperCase())
+  );
+}
+
 export function usePools(enabled = true) {
+  const activeTokenCodes = useMemo(
+    () =>
+      new Set(Object.keys(getAssetsConfig()).map((code) => code.toUpperCase())),
+    []
+  );
+
   const blendQuery = useQuery<PoolInfo[]>({
     queryKey: [...POOLS_QUERY_KEY, "blend"],
     queryFn: () => orchestrator.getPoolsByType("blend"),
@@ -29,7 +43,13 @@ export function usePools(enabled = true) {
 
   const blendPools = blendQuery.data ?? [];
   const aquaPools = aquaQuery.data ?? [];
-  const data = [...blendPools, ...aquaPools];
+  const data = useMemo(
+    () =>
+      [...blendPools, ...aquaPools].filter((pool) =>
+        isActiveAssetPool(pool, activeTokenCodes)
+      ),
+    [blendPools, aquaPools, activeTokenCodes]
+  );
 
   // Treat blend as the "first paint" source and keep others loading in background.
   const isInitialBlendLoad = enabled && blendQuery.isLoading;
@@ -48,9 +68,18 @@ export function usePools(enabled = true) {
 }
 
 export function usePoolInfo(poolId: string | undefined) {
-  return useQuery<PoolInfo>({
+  const activeTokenCodes = useMemo(
+    () =>
+      new Set(Object.keys(getAssetsConfig()).map((code) => code.toUpperCase())),
+    []
+  );
+
+  return useQuery<PoolInfo | undefined>({
     queryKey: ["orchestrator", "pool", poolId],
-    queryFn: () => orchestrator.getPoolInfo(poolId!),
+    queryFn: async () => {
+      const pool = await orchestrator.getPoolInfo(poolId!);
+      return isActiveAssetPool(pool, activeTokenCodes) ? pool : undefined;
+    },
     enabled: !!poolId,
     staleTime: 10_000,
     retry: 1,

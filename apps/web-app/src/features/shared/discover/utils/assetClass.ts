@@ -96,11 +96,11 @@ export const ASSET_TAXONOMY: Record<string, AssetTaxonomy> = {
     region: "US",
     yieldBearing: true,
   },
-  XAUM: {
-    class: "commodity",
-    classLabel: "Tokenized Gold",
-    issuer: "Matrixdock",
-  },
+  // XAUM: {
+  //   class: "commodity",
+  //   classLabel: "Tokenized Gold",
+  //   issuer: "Matrixdock",
+  // },
 };
 
 export function getAssetTaxonomy(code: string): AssetTaxonomy | undefined {
