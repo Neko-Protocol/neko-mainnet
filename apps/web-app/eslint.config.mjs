@@ -60,6 +60,7 @@ export default [
       "src/features/shared/pools/**/*.{ts,tsx}",
       "src/features/shared/lending/**/*.{ts,tsx}",
       "src/features/shared/dashboard/**/*.{ts,tsx}",
+      "src/features/shared/settings/**/*.{ts,tsx}",
     ],
     plugins: { i18next },
     rules: {

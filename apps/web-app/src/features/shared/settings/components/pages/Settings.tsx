@@ -3,6 +3,7 @@
 import React from "react";
 import { Wallet, Mail, Sliders, LayoutGrid, Network } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { useCopyToClipboard } from "@/features/shared/settings/hooks/useCopyToClipboard";
@@ -22,15 +23,16 @@ const VALID_SECTION_IDS: SectionId[] = [
   "network",
 ];
 
-const TABS: { id: SectionId; label: string; Icon: React.ElementType }[] = [
-  { id: "preferences", label: "Preferences", Icon: Sliders },
-  { id: "uiMode", label: "App Mode", Icon: LayoutGrid },
-  { id: "email", label: "Email", Icon: Mail },
-  { id: "wallet", label: "Wallet", Icon: Wallet },
-  { id: "network", label: "Network", Icon: Network },
+const TABS: { id: SectionId; labelKey: string; Icon: React.ElementType }[] = [
+  { id: "preferences", labelKey: "tabPreferences", Icon: Sliders },
+  { id: "uiMode", labelKey: "tabAppMode", Icon: LayoutGrid },
+  { id: "email", labelKey: "tabEmail", Icon: Mail },
+  { id: "wallet", labelKey: "tabWallet", Icon: Wallet },
+  { id: "network", labelKey: "tabNetwork", Icon: Network },
 ];
 
 export default function Settings() {
+  const t = useTranslations("sharedSettings.page");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -56,11 +58,11 @@ export default function Settings() {
   return (
     <PageContainer maxWidth="7xl">
       <BannerPage
-        title="Settings"
-        subtitle="Manage preferences and configuration."
-        badge="Configuration"
+        title={t("bannerTitle")}
+        subtitle={t("bannerSubtitle")}
+        badge={t("bannerBadge")}
         imageSrc="/banners/settings.svg"
-        imageAlt="Settings  illustration"
+        imageAlt={t("bannerImageAlt")}
         imagePosition="bottom-right"
         imageLayoutClassName="-right-[52px] -top-[51px] h-[132%] w-[97%] opacity-60 sm:right-0 sm:top-0 sm:h-full sm:w-[55%] sm:opacity-100"
         className="mb-8"
@@ -69,10 +71,10 @@ export default function Settings() {
       <div className="mb-4 flex justify-center">
         <div
           role="tablist"
-          aria-label="Settings sections"
+          aria-label={t("sectionsAriaLabel")}
           className="inline-flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-full bg-[#1C1C1C] p-1.5"
         >
-          {TABS.map(({ id, label, Icon }) => {
+          {TABS.map(({ id, labelKey, Icon }) => {
             const isActive = active === id;
             return (
               <button
@@ -88,7 +90,7 @@ export default function Settings() {
                 }`}
               >
                 <Icon className="h-4 w-4" />
-                {label}
+                {t(labelKey)}
               </button>
             );
           })}

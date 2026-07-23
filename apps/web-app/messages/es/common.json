@@ -10,6 +10,9 @@
     "language": {
       "label": "Idioma"
     },
+    "currency": {
+      "label": "Moneda a mostrar"
+    },
     "nav": {
       "dashboard": "Panel",
       "discover": "Descubrir",
@@ -47,6 +50,10 @@
       "basicLabel": "App Básica",
       "basicDescription": "Lenguaje simple, experiencia guiada y complejidad oculta.",
       "changeAnytime": "Puedes cambiar esto en cualquier momento desde <settings>Configuración</settings>."
+    },
+    "readonlyRow": {
+      "viewOnExplorer": "Ver {label} en Stellar Expert",
+      "copyLabel": "Copiar {label}"
     },
     "multisigToasts": {
       "confirmedTitle": "Transacción multisig confirmada",

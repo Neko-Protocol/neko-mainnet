@@ -2,22 +2,23 @@
 
 import React, { useState } from "react";
 import { Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { SectionCard } from "@/components/ui/SectionCard";
 import {
   useUIModeStore,
   type UIMode,
 } from "@/features/shared/ui-mode/stores/ui-mode.store";
 
-const MODES: { id: UIMode; label: string; description: string }[] = [
+const MODES: { id: UIMode; labelKey: string; descriptionKey: string }[] = [
   {
     id: "expert",
-    label: "Expert App",
-    description: "Full data, advanced metrics, and all protocol features.",
+    labelKey: "expertLabel",
+    descriptionKey: "expertDescription",
   },
   {
     id: "basic",
-    label: "Basic App",
-    description: "Simple language, guided experience, and hidden complexity.",
+    labelKey: "basicLabel",
+    descriptionKey: "basicDescription",
   },
 ];
 
@@ -30,6 +31,8 @@ function ConfirmModeDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const t = useTranslations("sharedSettings.uiMode");
+  const tCommon = useTranslations("common.uiMode");
   const target = MODES.find((m) => m.id === targetMode)!;
   return (
     <div
@@ -41,12 +44,17 @@ function ConfirmModeDialog({
         style={{ background: "#161616" }}
       >
         <p className="text-white font-semibold text-base mb-1">
-          Change app mode?
+          {t("changeModeTitle")}
         </p>
         <p className="text-white/50 text-sm leading-relaxed mb-6">
-          You&apos;re switching to{" "}
-          <span className="text-white font-medium">{target.label}</span>.{" "}
-          {target.description}
+          {t.rich("changeModeBody", {
+            mode: () => (
+              <span className="text-white font-medium">
+                {tCommon(target.labelKey)}
+              </span>
+            ),
+            description: tCommon(target.descriptionKey),
+          })}
         </p>
         <div className="flex gap-2">
           <button
@@ -54,14 +62,14 @@ function ConfirmModeDialog({
             onClick={onCancel}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white/60 bg-white/6 hover:bg-white/10 transition-colors"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             type="button"
             onClick={onConfirm}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#229EDF] hover:bg-[#1a8bc7] transition-colors"
           >
-            Confirm
+            {t("confirm")}
           </button>
         </div>
       </div>
@@ -80,6 +88,8 @@ export function SettingsUIModeSection({
   onToggle,
   icon,
 }: SettingsUIModeSectionProps) {
+  const t = useTranslations("sharedSettings.uiMode");
+  const tCommon = useTranslations("common.uiMode");
   const mode = useUIModeStore((s) => s.mode);
   const setMode = useUIModeStore((s) => s.setMode);
   const [pending, setPending] = useState<UIMode | null>(null);
@@ -105,7 +115,7 @@ export function SettingsUIModeSection({
       )}
 
       <SectionCard
-        title="App Mode"
+        title={t("title")}
         collapsible
         open={open}
         onToggle={onToggle}
@@ -113,10 +123,10 @@ export function SettingsUIModeSection({
       >
         <div
           role="radiogroup"
-          aria-label="App mode"
+          aria-label={t("ariaLabel")}
           className="flex flex-col gap-2 pt-1"
         >
-          {MODES.map(({ id, label, description }) => {
+          {MODES.map(({ id, labelKey, descriptionKey }) => {
             const isActive = mode === id;
             return (
               <button
@@ -152,10 +162,10 @@ export function SettingsUIModeSection({
                       isActive ? "text-white" : "text-white/85"
                     }`}
                   >
-                    {label}
+                    {tCommon(labelKey)}
                   </span>
                   <span className="text-xs leading-relaxed text-white/45">
-                    {description}
+                    {tCommon(descriptionKey)}
                   </span>
                 </span>
               </button>

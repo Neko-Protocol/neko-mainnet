@@ -1,3 +1,67 @@
 {
-  "sharedSettings": {}
+  "sharedSettings": {
+    "page": {
+      "bannerTitle": "Settings",
+      "bannerSubtitle": "Manage preferences and configuration.",
+      "bannerBadge": "Configuration",
+      "bannerImageAlt": "Settings illustration",
+      "sectionsAriaLabel": "Settings sections",
+      "tabPreferences": "Preferences",
+      "tabAppMode": "App Mode",
+      "tabEmail": "Email",
+      "tabWallet": "Wallet",
+      "tabNetwork": "Network"
+    },
+    "preferences": {
+      "title": "Preferences"
+    },
+    "email": {
+      "title": "Email (optional)",
+      "connectPrompt": "Connect a wallet to add an email.",
+      "description": "Optional. We'll only use it to reach you about your activity. You'll get a magic link to verify ownership.",
+      "current": "Current",
+      "verified": "Verified",
+      "pending": "Pending",
+      "changeEmail": "Change email",
+      "addEmail": "Add email",
+      "emailPlaceholder": "you@example.com",
+      "sending": "Sending…",
+      "sendLink": "Send verification link",
+      "emailVerifiedToast": "Email verified",
+      "emailVerifyErrorToast": "Could not verify that link. Try sending a new one.",
+      "invalidEmailToast": "Enter a valid email address",
+      "verificationSentToast": "Verification link sent. Check your inbox.",
+      "sendFailedWithReason": "Could not send: {error}",
+      "sendFailedGeneric": "Could not send link"
+    },
+    "network": {
+      "title": "Network",
+      "activeNetwork": "Active Network",
+      "stellar": "Stellar",
+      "rpcUrl": "RPC URL",
+      "horizonUrl": "Horizon URL",
+      "networkPassphrase": "Network Passphrase",
+      "openStellarLab": "Open Stellar Lab"
+    },
+    "wallet": {
+      "title": "Wallet",
+      "provider": "Provider",
+      "address": "Address",
+      "disconnectWallet": "Disconnect Wallet",
+      "disconnecting": "Disconnecting…",
+      "noWalletConnected": "No wallet connected.",
+      "connectViaSidebar": "Connect via the sidebar to get started."
+    },
+    "uiMode": {
+      "title": "App Mode",
+      "ariaLabel": "App mode",
+      "changeModeTitle": "Change app mode?",
+      "changeModeBody": "You're switching to <mode>{mode}</mode>. {description}",
+      "cancel": "Cancel",
+      "confirm": "Confirm"
+    },
+    "clipboard": {
+      "copiedToast": "Copied to clipboard"
+    }
+  }
 }
