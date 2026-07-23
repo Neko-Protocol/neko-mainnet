@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import MainStats from "@/features/shared/dashboard/components/ui/MainStats";
@@ -13,17 +14,18 @@ import { useWalletHoldings } from "@/features/shared/wallet/hooks/useWalletHoldi
 import YourPositions from "@/features/shared/positions/components/ui/YourPositions";
 
 const BasicDashboard: React.FC = () => {
+  const t = useTranslations("basic.dashboard");
   const { holdings, isLoading } = useWalletHoldings();
 
   return (
     <div className="w-full min-w-0 max-w-full min-h-screen overflow-x-hidden">
       <PageContainer maxWidth="7xl" className="space-y-8 sm:space-y-10">
         <BannerPage
-          title="Dashboard"
-          subtitle="Overview of your portfolio and assets"
-          badge="Welcome back"
+          title={t("title")}
+          subtitle={t("subtitle")}
+          badge={t("badge")}
           imageSrc="/banners/oracle.svg"
-          imageAlt="Dashboard illustration"
+          imageAlt={t("illustrationAlt")}
           imageLayoutClassName="-right-6 top-4 h-[112%] w-[78%] opacity-60 sm:right-0 sm:top-0 sm:h-full sm:w-[75%] sm:opacity-100"
         />
         <EmailNudgeBanner />

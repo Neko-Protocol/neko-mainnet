@@ -4,6 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Wallet } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
@@ -21,6 +22,7 @@ export function WalletHoldingsCard({
   holdings,
   isLoading,
 }: WalletHoldingsCardProps) {
+  const t = useTranslations("basic.walletHoldings");
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate();
 
@@ -28,15 +30,15 @@ export function WalletHoldingsCard({
     <div className="w-full">
       <div className="flex flex-col gap-1 mb-5">
         <h2 className="text-xl sm:text-2xl font-bold text-white">
-          Your Holdings
+          {t("title")}
         </h2>
         <div className="flex items-center justify-between">
-          <p className="text-white/40 text-sm">Assets in your wallet</p>
+          <p className="text-white/40 text-sm">{t("subtitle")}</p>
           <Link
             href="/discover"
             className="flex items-center gap-1.5 text-sm font-semibold text-white/40 hover:text-white transition-colors"
           >
-            Explore assets
+            {t("exploreAssets")}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -49,15 +51,15 @@ export function WalletHoldingsCard({
       ) : holdings.length === 0 ? (
         <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-10 text-center">
           <Wallet className="h-8 w-8 text-white/20 mx-auto mb-3" />
-          <p className="text-white font-semibold text-sm mb-1">No assets yet</p>
-          <p className="text-white/40 text-xs mb-5">
-            Browse Discover to find assets you can add to your portfolio
+          <p className="text-white font-semibold text-sm mb-1">
+            {t("noAssetsYet")}
           </p>
+          <p className="text-white/40 text-xs mb-5">{t("browseDiscover")}</p>
           <Link
             href="/discover"
             className="inline-flex items-center gap-1.5 rounded-full bg-[#2A2A2A] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#333] transition-colors"
           >
-            Explore Assets
+            {t("exploreAssetsButton")}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>

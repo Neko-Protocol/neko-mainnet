@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { CheckCircle2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useBuyForm } from "../../hooks/useBuyForm";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import { useWallet } from "@/hooks/useWallet";
@@ -30,6 +31,7 @@ export function BasicBuyForm({
   onConfirm,
   confirmLabel,
 }: BasicBuyFormProps) {
+  const t = useTranslations("basic.buyForm");
   const { address } = useWallet();
   const tokenIconMap = getTokenIconMap();
   const {
@@ -61,7 +63,8 @@ export function BasicBuyForm({
     (onConfirm ? hasOutput : !isLoading);
 
   const buttonLabel =
-    confirmLabel ?? (isLoading && !onConfirm ? "Processing…" : `Buy ${symbol}`);
+    confirmLabel ??
+    (isLoading && !onConfirm ? t("processing") : t("buySymbol", { symbol }));
 
   const handleConfirmClick = () => {
     if (onConfirm) {
@@ -75,13 +78,13 @@ export function BasicBuyForm({
     <div className="p-6 flex flex-col gap-4">
       <div>
         <p className="text-white/40 text-xs font-semibold uppercase tracking-widest mb-3">
-          You&apos;re buying {symbol}
+          {t("youAreBuying", { symbol })}
         </p>
       </div>
 
       {/* Payment input */}
       <div className="flex flex-col gap-1.5">
-        <span className="text-white/50 text-xs font-medium">You pay</span>
+        <span className="text-white/50 text-xs font-medium">{t("youPay")}</span>
         <div className="rounded-xl bg-[#2A2A2A] p-3 flex items-center gap-3">
           <div className="flex items-center gap-2 shrink-0">
             <div className="relative h-5 w-5 overflow-hidden rounded-full bg-white/10">
@@ -116,15 +119,18 @@ export function BasicBuyForm({
         <div className="flex justify-end">
           <span className="text-white/30 text-xs">
             {isLoadingBalance
-              ? "Loading balance…"
+              ? t("loadingBalance")
               : paymentBalance
-                ? `Balance: ${formatAmount(paymentBalance, 4)} ${paymentToken}`
+                ? t("balance", {
+                    amount: formatAmount(paymentBalance, 4),
+                    token: paymentToken,
+                  })
                 : ""}
           </span>
         </div>
         {isInsufficientBalance && (
           <p className="text-red-400 text-xs">
-            Insufficient {paymentToken} balance
+            {t("insufficientBalance", { token: paymentToken })}
           </p>
         )}
       </div>
@@ -132,11 +138,11 @@ export function BasicBuyForm({
       {/* Output estimate */}
       <div className="flex flex-col gap-1.5">
         <span className="text-white/50 text-xs font-medium">
-          You receive (estimated)
+          {t("youReceive")}
         </span>
         <div className="rounded-xl bg-[#252525] p-3 min-h-[48px] flex items-center">
           {isLoadingQuote ? (
-            <span className="text-white/40 text-sm">Calculating…</span>
+            <span className="text-white/40 text-sm">{t("calculating")}</span>
           ) : hasOutput ? (
             <span className="text-white text-xl font-bold tabular-nums">
               {formatAmount(amountOut, 6)}{" "}
@@ -154,7 +160,7 @@ export function BasicBuyForm({
       {/* Action */}
       {!address ? (
         <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-center text-white/50 text-sm">
-          Connect your wallet to continue
+          {t("connectWalletToContinue")}
         </div>
       ) : (
         <button
@@ -171,7 +177,7 @@ export function BasicBuyForm({
       {!onConfirm && txHash && (
         <div className="flex items-center justify-center gap-2 text-emerald-400 text-sm">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
-          <span>Purchase confirmed</span>
+          <span>{t("purchaseConfirmed")}</span>
         </div>
       )}
     </div>

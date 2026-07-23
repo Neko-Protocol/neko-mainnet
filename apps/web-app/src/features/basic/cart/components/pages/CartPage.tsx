@@ -11,6 +11,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { useCartStore } from "@/features/basic/cart/stores/cart.store";
@@ -37,6 +38,8 @@ function ItemStatusIcon({ status }: { status: ItemExecutionStatus }) {
 }
 
 export function CartPage() {
+  const t = useTranslations("basic.cart");
+  const tErrors = useTranslations("basic.errors");
   const { items, removeItem } = useCartStore();
   const { isExecuting, getStatus, executeAll } = useCartExecution();
   const { address } = useWallet();
@@ -46,11 +49,11 @@ export function CartPage() {
   return (
     <PageContainer maxWidth="7xl">
       <BannerPage
-        title="Your Cart"
-        subtitle="Review your pending purchases and confirm them all at once."
-        badge="Checkout"
+        title={t("title")}
+        subtitle={t("subtitle")}
+        badge={t("badge")}
         imageSrc="/banners/cart.png"
-        imageAlt="Cart illustration"
+        imageAlt={t("illustrationAlt")}
         imageLayoutClassName="-right-16 -top-4 h-[130%] w-[80%] opacity-60 sm:-right-[28rem] sm:-top-9 sm:h-[145%] sm:w-[100%] sm:opacity-100"
         imageObjectClassName="object-contain object-right object-top"
         className="mb-8"
@@ -60,14 +63,19 @@ export function CartPage() {
         <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] p-12 text-center">
           <ShoppingBag className="mx-auto mb-4 h-10 w-10 text-white/20" />
           <p className="text-white/50 text-base font-medium">
-            Your cart is empty
+            {t("emptyTitle")}
           </p>
           <p className="mt-1 text-white/30 text-sm">
-            Browse assets in{" "}
-            <Link href="/discover" className="text-[#229EDF] hover:underline">
-              Discover
-            </Link>{" "}
-            and add items to your cart.
+            {t.rich("emptyDescription", {
+              link: (chunks) => (
+                <Link
+                  href="/discover"
+                  className="text-[#229EDF] hover:underline"
+                >
+                  {chunks}
+                </Link>
+              ),
+            })}
           </p>
         </div>
       ) : (
@@ -149,7 +157,7 @@ export function CartPage() {
                           type="button"
                           onClick={() => removeItem(item.id)}
                           disabled={isExecuting}
-                          aria-label={`Remove ${item.symbol}`}
+                          aria-label={t("removeItem", { symbol: item.symbol })}
                           className="rounded-lg p-1.5 text-white/25 transition-colors hover:bg-red-500/10 hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -161,8 +169,8 @@ export function CartPage() {
                   {(status === "error" || status === "rejected") && (
                     <p className="mt-2 ml-13 text-red-400 text-xs">
                       {status === "rejected"
-                        ? "Transaction rejected in wallet"
-                        : (errorMsg ?? "Transaction failed")}
+                        ? t("transactionRejected")
+                        : (errorMsg ?? tErrors("transactionFailed"))}
                     </p>
                   )}
                 </div>
@@ -172,17 +180,14 @@ export function CartPage() {
 
           <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] p-4 mb-4">
             <p className="text-white/40 text-xs mb-0.5">
-              Estimated total spend
+              {t("estimatedTotalSpend")}
             </p>
-            <p className="text-white/30 text-xs">
-              Amounts shown are estimates at the time of adding to cart. Final
-              amounts are determined at execution using live quotes.
-            </p>
+            <p className="text-white/30 text-xs">{t("estimatesDisclaimer")}</p>
           </div>
 
           {!address ? (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center text-white/50 text-sm">
-              Connect your wallet to confirm purchases
+              {t("connectWalletToConfirm")}
             </div>
           ) : (
             <button
@@ -194,10 +199,10 @@ export function CartPage() {
               {isExecuting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Processing…
+                  {t("processing")}
                 </>
               ) : (
-                `Confirm all (${items.length} item${items.length !== 1 ? "s" : ""})`
+                t("confirmAll", { count: items.length })
               )}
             </button>
           )}

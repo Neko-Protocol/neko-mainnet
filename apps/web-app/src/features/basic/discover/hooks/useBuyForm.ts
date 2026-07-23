@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { getTokens, getTokenAddress } from "@/lib/helpers/stellar/swap-kit";
 import { useSwapQuote } from "@/features/shared/swap-engine/hooks/useSwapQuote";
@@ -33,6 +34,7 @@ export interface BuyFormActions {
 export function useBuyForm(
   targetSymbol: string
 ): BuyFormState & BuyFormActions {
+  const t = useTranslations("basic");
   const { address, networkPassphrase, refetchBalances } = useWallet();
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
@@ -79,9 +81,9 @@ export function useBuyForm(
       if (result.txHash) {
         setTxHash(result.txHash);
         setPaymentAmount("");
-        addNotification("Purchase complete", "success", {
+        addNotification(t("buyToasts.purchaseComplete"), "success", {
           ...TOAST_CONFIG.defaultOpts,
-          description: `${targetSymbol} added to your wallet`,
+          description: t("buyToasts.addedToWallet", { symbol: targetSymbol }),
         });
 
         void refetchBalances();
@@ -106,12 +108,14 @@ export function useBuyForm(
       if (err instanceof Error && err.message === "USER_REJECTED") return;
 
       const contractError = extractContractErrorOrNull(err);
+      // TODO(i18n/phase5): err.message/contractError are raw backend/contract
+      // strings and stay untranslated until Phase 5 maps them to error codes.
       const msg = contractError
-        ? `Contract error: ${contractError}`
+        ? t("errors.contractError", { error: contractError })
         : err instanceof Error
           ? err.message
-          : "Purchase failed";
-      addNotification("Purchase failed", "error", {
+          : t("buyToasts.purchaseFailed");
+      addNotification(t("buyToasts.purchaseFailed"), "error", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
       });
@@ -129,6 +133,7 @@ export function useBuyForm(
     refetchBalances,
     queryClient,
     targetSymbol,
+    t,
   ]);
 
   return {

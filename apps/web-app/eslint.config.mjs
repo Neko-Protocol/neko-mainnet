@@ -1,4 +1,5 @@
 import base from "@neko/config/eslint";
+import i18next from "eslint-plugin-i18next";
 
 /**
  * Feature-boundary rules on top of the shared config:
@@ -41,6 +42,23 @@ export default [
                 "basic/ features must not import expert or simulator features.",
             },
           ],
+        },
+      ],
+    },
+  },
+  // i18n guard, ratcheted directory-by-directory as each i18n rollout phase
+  // lands (see docs/i18n plan). Warn-only for now: it flags regressions
+  // without blocking CI on pre-existing patterns the rule can't tell apart
+  // from real UI copy (e.g. dev-only strings).
+  {
+    files: ["src/features/basic/**/*.{ts,tsx}"],
+    plugins: { i18next },
+    rules: {
+      "i18next/no-literal-string": [
+        "warn",
+        {
+          mode: "jsx-text-only",
+          "jsx-attributes": { include: ["alt", "aria-label", "title", "placeholder"] },
         },
       ],
     },

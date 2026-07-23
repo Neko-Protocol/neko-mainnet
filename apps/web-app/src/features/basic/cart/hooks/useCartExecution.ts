@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { getTokens, getTokenAddress } from "@/lib/helpers/stellar/swap-kit";
 import { useSwapExecution } from "@/features/shared/swap-engine/hooks/useSwapExecution";
@@ -26,6 +27,7 @@ export interface ItemStatus {
 }
 
 export function useCartExecution() {
+  const t = useTranslations("basic");
   const { address, networkPassphrase, refetchBalances } = useWallet();
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
@@ -86,11 +88,13 @@ export function useCartExecution() {
         }
 
         const contractError = extractContractErrorOrNull(err);
+        // TODO(i18n/phase5): err.message/contractError are raw backend/contract
+        // strings and stay untranslated until Phase 5 maps them to error codes.
         const msg = contractError
-          ? `Contract error: ${contractError}`
+          ? t("errors.contractError", { error: contractError })
           : err instanceof Error
             ? err.message
-            : "Transaction failed";
+            : t("errors.transactionFailed");
         setItemStatus(item.id, { status: "error", errorMsg: msg });
       }
     }
@@ -108,14 +112,17 @@ export function useCartExecution() {
 
     const total = items.length;
     if (successIds.length === total) {
-      addNotification("All purchases complete", "success", {
+      addNotification(t("cartToasts.allComplete"), "success", {
         ...TOAST_CONFIG.defaultOpts,
-        description: `${total} item${total !== 1 ? "s" : ""} added to your wallet`,
+        description: t("cartToasts.itemsAddedToWallet", { count: total }),
       });
       setStatuses({});
     } else if (successIds.length > 0) {
       addNotification(
-        `${successIds.length} of ${total} purchases complete`,
+        t("cartToasts.partialComplete", {
+          success: successIds.length,
+          total,
+        }),
         "warning",
         { ...TOAST_CONFIG.defaultOpts }
       );
@@ -129,6 +136,7 @@ export function useCartExecution() {
     refetchBalances,
     queryClient,
     addNotification,
+    t,
   ]);
 
   const getStatus = (item: CartItem): ItemStatus =>

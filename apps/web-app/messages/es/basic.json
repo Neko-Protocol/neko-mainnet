@@ -1,3 +1,94 @@
 {
-  "basic": {}
+  "basic": {
+    "assetDetail": {
+      "institutionalTitle": "Se requiere acceso institucional",
+      "institutionalDescription": "{symbol} se muestra solo como referencia y no se puede comprar desde la app.",
+      "discoverMoreOn": "Más información en {platform}",
+      "mobilePanelDiscover": "Descubrir {symbol}",
+      "mobilePanelBuy": "Comprar {symbol}"
+    },
+    "buyForm": {
+      "processing": "Procesando…",
+      "buySymbol": "Comprar {symbol}",
+      "youAreBuying": "Estás comprando {symbol}",
+      "youPay": "Pagas",
+      "loadingBalance": "Cargando saldo…",
+      "balance": "Saldo: {amount} {token}",
+      "insufficientBalance": "Saldo insuficiente de {token}",
+      "youReceive": "Recibes (estimado)",
+      "calculating": "Calculando…",
+      "connectWalletToContinue": "Conecta tu billetera para continuar",
+      "purchaseConfirmed": "Compra confirmada",
+      "addToCart": "Agregar al carrito"
+    },
+    "addToCartModal": {
+      "close": "Cerrar"
+    },
+    "errors": {
+      "contractError": "Error del contrato: {error}",
+      "transactionFailed": "La transacción falló"
+    },
+    "buyToasts": {
+      "purchaseComplete": "Compra completada",
+      "addedToWallet": "{symbol} se agregó a tu billetera",
+      "purchaseFailed": "La compra falló"
+    },
+    "cartToasts": {
+      "allComplete": "Todas las compras se completaron",
+      "itemsAddedToWallet": "{count, plural, one {# artículo se agregó} other {# artículos se agregaron}} a tu billetera",
+      "partialComplete": "{success} de {total} compras completadas"
+    },
+    "priceCard": {
+      "noData": "Sin datos",
+      "loadingPrice": "Cargando precio…",
+      "priceIn": "Precio ({currency})",
+      "apy": "~{value}% APY",
+      "discoverMore": "Ver más",
+      "buyAsset": "Comprar activo",
+      "shoppingCart": "Carrito"
+    },
+    "cart": {
+      "title": "Tu carrito",
+      "subtitle": "Revisa tus compras pendientes y confírmalas todas a la vez.",
+      "badge": "Pago",
+      "illustrationAlt": "Ilustración de carrito",
+      "emptyTitle": "Tu carrito está vacío",
+      "emptyDescription": "Explora activos en <link>Discover</link> y agrégalos a tu carrito.",
+      "removeItem": "Quitar {symbol}",
+      "transactionRejected": "Transacción rechazada en la billetera",
+      "estimatedTotalSpend": "Gasto total estimado",
+      "estimatesDisclaimer": "Los montos mostrados son estimados al momento de agregar al carrito. Los montos finales se determinan al ejecutar la compra con cotizaciones en vivo.",
+      "connectWalletToConfirm": "Conecta tu billetera para confirmar las compras",
+      "processing": "Procesando…",
+      "confirmAll": "Confirmar todo ({count, plural, one {# artículo} other {# artículos}})"
+    },
+    "dashboard": {
+      "title": "Panel",
+      "subtitle": "Resumen de tu portafolio y activos",
+      "badge": "Bienvenido de nuevo",
+      "illustrationAlt": "Ilustración del panel"
+    },
+    "quickActions": {
+      "getStarted": "Comenzar",
+      "connectToStart": "Conecta tu billetera para empezar a usar el protocolo",
+      "connectWallet": "Conectar billetera",
+      "connectWalletDescription": "Explora activos, agrega liquidez y administra tu portafolio",
+      "title": "Acciones rápidas",
+      "subtitle": "Entra directo al protocolo",
+      "exploreAssetsLabel": "Explorar activos",
+      "exploreAssetsDescription": "Consulta tokens RWA y precios",
+      "addLiquidityLabel": "Agregar liquidez",
+      "addLiquidityDescription": "Genera rendimiento en pools",
+      "yourCartLabel": "Tu carrito",
+      "yourCartDescription": "Revisa tus compras pendientes"
+    },
+    "walletHoldings": {
+      "title": "Tus tenencias",
+      "subtitle": "Activos en tu billetera",
+      "exploreAssets": "Explorar activos",
+      "noAssetsYet": "Aún no tienes activos",
+      "browseDiscover": "Explora Discover para encontrar activos que puedas agregar a tu portafolio",
+      "exploreAssetsButton": "Explorar activos"
+    }
+  }
 }
