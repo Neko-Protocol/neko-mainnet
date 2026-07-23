@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import "@stellar/design-system/build/styles.min.css";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -10,10 +10,6 @@ import { DAPP_PUBLIC_ORIGIN, DAPP_SOCIAL_CARD_IMAGE } from "@/lib/share";
 import type { Locale } from "@/i18n/config";
 
 const ROOT_TITLE = "Neko Protocol";
-const ROOT_DESCRIPTION =
-  "All-in-one platform for RWAs on Stellar — vaults, liquidity, and real yield.";
-
-const SOCIAL_CARD_ALT = "Neko Protocol - Real yield from RWAs on Stellar";
 
 // OG locale tags per BCP 47 region conventions; es maps to es_MX pending
 // confirmation of the primary Spanish-speaking target market.
@@ -30,17 +26,20 @@ export const viewport: Viewport = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = (await getLocale()) as Locale;
+  const t = await getTranslations("common.meta");
+  const description = t("description");
+  const socialCardAlt = t("socialCardAlt");
 
   return {
     metadataBase: new URL(DAPP_PUBLIC_ORIGIN),
     title: ROOT_TITLE,
-    description: ROOT_DESCRIPTION,
+    description,
     alternates: {
       canonical: "/",
     },
     openGraph: {
       title: ROOT_TITLE,
-      description: ROOT_DESCRIPTION,
+      description,
       url: "/",
       siteName: ROOT_TITLE,
       locale: OPEN_GRAPH_LOCALE[locale] ?? OPEN_GRAPH_LOCALE.en,
@@ -50,7 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: DAPP_SOCIAL_CARD_IMAGE,
           width: 1200,
           height: 630,
-          alt: SOCIAL_CARD_ALT,
+          alt: socialCardAlt,
           type: "image/png",
         },
       ],
@@ -58,7 +57,7 @@ export async function generateMetadata(): Promise<Metadata> {
     twitter: {
       card: "summary_large_image",
       title: ROOT_TITLE,
-      description: ROOT_DESCRIPTION,
+      description,
       site: "@NekoProto",
       creator: "@NekoProto",
       images: [
@@ -66,7 +65,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: DAPP_SOCIAL_CARD_IMAGE,
           width: 1200,
           height: 630,
-          alt: SOCIAL_CARD_ALT,
+          alt: socialCardAlt,
           type: "image/png",
         },
       ],

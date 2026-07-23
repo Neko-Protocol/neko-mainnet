@@ -51,7 +51,11 @@ export default [
   // without blocking CI on pre-existing patterns the rule can't tell apart
   // from real UI copy (e.g. dev-only strings).
   {
-    files: ["src/features/basic/**/*.{ts,tsx}"],
+    files: [
+      "src/features/basic/**/*.{ts,tsx}",
+      "src/components/**/*.{ts,tsx}",
+      "src/features/shared/ui-mode/**/*.{ts,tsx}",
+    ],
     plugins: { i18next },
     rules: {
       "i18next/no-literal-string": [
@@ -59,6 +63,9 @@ export default [
         {
           mode: "jsx-text-only",
           "jsx-attributes": { include: ["alt", "aria-label", "title", "placeholder"] },
+          // Language endonyms are intentionally shown in their own language
+          // regardless of UI locale (e.g. "Español" stays "Español" in English).
+          words: { exclude: ["English", "Español"] },
         },
       ],
     },

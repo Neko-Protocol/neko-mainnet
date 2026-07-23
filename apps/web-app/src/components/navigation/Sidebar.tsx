@@ -9,6 +9,7 @@ import { SidebarLogo } from "./SidebarLogo";
 import { NavItem } from "./NavItem";
 import { ConnectedCard } from "./ConnectedCard";
 import { SetupCard } from "./SetupCard";
+import { LanguageSelector } from "./LanguageSelector";
 
 export const SIDEBAR_WIDTH = "270px";
 
@@ -46,7 +47,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="p-4 pt-6 overflow-visible">
+      <div className="flex flex-col gap-3 p-4 pt-6 overflow-visible">
         {isConnected && activeAddress ? (
           <ConnectedCard
             address={activeAddress}
@@ -55,6 +56,7 @@ export function Sidebar() {
         ) : (
           <SetupCard />
         )}
+        <LanguageSelector embedded />
       </div>
     </aside>
   );

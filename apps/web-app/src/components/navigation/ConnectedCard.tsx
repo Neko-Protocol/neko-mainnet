@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { ArrowRight, LogOut, ShoppingBag } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { truncateAddress } from "@/lib/utils";
 import { CARD_STYLES, CARD_BUTTON_STYLES } from "./sidebarConfig";
 import { useCartStore } from "@/features/basic/cart/stores/cart.store";
@@ -21,6 +22,7 @@ interface ConnectedCardProps {
 }
 
 export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
+  const t = useTranslations("common");
   const [open, setOpen] = React.useState(false);
   const [referOpen, setReferOpen] = React.useState(false);
   const cartCount = useCartStore((s) => s.items.length);
@@ -31,7 +33,11 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
       {isBasic && (
         <Link
           href="/cart"
-          aria-label={`Cart${cartCount > 0 ? `, ${cartCount} item${cartCount !== 1 ? "s" : ""}` : ""}`}
+          aria-label={
+            cartCount > 0
+              ? t("nav.cartAriaLabelWithCount", { count: cartCount })
+              : t("nav.cartAriaLabel")
+          }
           className="absolute -top-3 -right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-110"
           style={{ backgroundColor: "#229EDF" }}
         >
@@ -45,9 +51,7 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
       )}
 
       <p className="mb-4 text-base font-bold leading-snug text-black">
-        You&apos;re
-        <br />
-        connected with:
+        {t("wallet.connectedWith")}
       </p>
 
       <button
@@ -72,7 +76,7 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
               className={`h-2 w-2 rounded-full ${IS_TESTNET ? "bg-yellow-400" : "bg-green-400"}`}
             />
             <span className="text-xs font-semibold text-black/60">
-              {IS_TESTNET ? "Testnet" : "Mainnet"}
+              {IS_TESTNET ? t("network.testnet") : t("network.mainnet")}
             </span>
           </div>
 
@@ -82,7 +86,7 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
             className="flex items-center gap-2 text-sm font-semibold text-red-600 hover:text-red-700 transition-colors cursor-pointer"
           >
             <LogOut className="h-4 w-4" />
-            Disconnect
+            {t("wallet.disconnect")}
           </button>
         </div>
       </div>
@@ -93,7 +97,9 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
           onClick={() => setReferOpen(true)}
           className="flex w-full items-center justify-between rounded-full bg-[#229EDF] px-5 py-3 text-sm font-semibold text-white cursor-pointer transition-colors hover:bg-[#1e8bc9]"
         >
-          <span className="flex items-center gap-2">Referrals</span>
+          <span className="flex items-center gap-2">
+            {t("wallet.referrals")}
+          </span>
           <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
         </button>
       </div>

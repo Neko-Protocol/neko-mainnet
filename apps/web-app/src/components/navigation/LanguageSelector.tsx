@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useTransition } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   FormControl,
   MenuItem,
@@ -22,6 +22,7 @@ interface LanguageSelectorProps {
 }
 
 export function LanguageSelector({ embedded = false }: LanguageSelectorProps) {
+  const t = useTranslations("common.language");
   const locale = useLocale() as Locale;
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -45,7 +46,7 @@ export function LanguageSelector({ embedded = false }: LanguageSelectorProps) {
         htmlFor="language-selector"
         className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-white/45"
       >
-        Language
+        {t("label")}
       </label>
       <FormControl fullWidth size="small">
         <Select

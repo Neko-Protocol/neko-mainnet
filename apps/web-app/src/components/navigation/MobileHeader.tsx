@@ -5,11 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { X, Menu, LogOut, ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useNavItems } from "@/hooks/useNavItems";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { truncateAddress } from "@/lib/utils";
+import { LanguageSelector } from "./LanguageSelector";
 
 const NETWORK = (
   process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET"
@@ -17,6 +19,7 @@ const NETWORK = (
 const IS_TESTNET = NETWORK === "TESTNET";
 
 export function MobileHeader() {
+  const t = useTranslations("common");
   const [isOpen, setIsOpen] = useState(false);
   const [walletDropdownOpen, setWalletDropdownOpen] = useState(false);
   const pathname = usePathname();
@@ -74,7 +77,7 @@ export function MobileHeader() {
             <Link
               href="/"
               className="flex shrink-0 items-start justify-start bg-blue-500"
-              aria-label="Neko home"
+              aria-label={t("brand.homeAriaLabel")}
             >
               <Image
                 src="/Neko.svg"
@@ -110,7 +113,9 @@ export function MobileHeader() {
                   >
                     <div className="flex items-center gap-3 whitespace-nowrap text-xs">
                       <span className="font-medium text-white/50">
-                        {IS_TESTNET ? "Testnet" : "Mainnet"}
+                        {IS_TESTNET
+                          ? t("network.testnet")
+                          : t("network.mainnet")}
                       </span>
                       <button
                         type="button"
@@ -122,7 +127,7 @@ export function MobileHeader() {
                         role="menuitem"
                       >
                         <LogOut className="h-3.5 w-3.5 shrink-0" />
-                        Disconnect
+                        {t("wallet.disconnect")}
                       </button>
                     </div>
                   </div>
@@ -134,7 +139,7 @@ export function MobileHeader() {
                 onClick={() => void connect()}
                 className="whitespace-nowrap rounded-full self-center bg-[#229EDF] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1a8bc7] transition-colors sm:px-4 sm:py-2 sm:text-sm"
               >
-                Connect Wallet
+                {t("wallet.connectWallet")}
               </button>
             )}
           </div>
@@ -143,7 +148,7 @@ export function MobileHeader() {
             <button
               type="button"
               onClick={() => handleSetIsOpen((v) => !v)}
-              aria-label="Toggle menu"
+              aria-label={t("nav.toggleMenu")}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-white transition-colors hover:bg-white/10 sm:h-12 sm:w-12"
             >
               {effectiveIsOpen ? (
@@ -204,6 +209,9 @@ export function MobileHeader() {
               </Link>
             );
           })}
+          <div className="mt-2 px-2">
+            <LanguageSelector embedded />
+          </div>
         </div>
       </div>
     </>
