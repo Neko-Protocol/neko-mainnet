@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
@@ -20,6 +21,7 @@ import {
 import { auditService } from "@/lib/services/audit.service";
 
 export function useLend() {
+  const t = useTranslations("sharedLending.toasts");
   const searchParams = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeposit, setIsDeposit] = useState(true);
@@ -40,19 +42,19 @@ export function useLend() {
 
   const showError = useCallback(
     (msg: string) =>
-      addNotification("Something went wrong", "error", {
+      addNotification(t("somethingWentWrong"), "error", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
       }),
-    [addNotification]
+    [addNotification, t]
   );
   const showSuccess = useCallback(
     (msg: string) =>
-      addNotification("Success", "success", {
+      addNotification(t("success"), "success", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
       }),
-    [addNotification]
+    [addNotification, t]
   );
 
   const {
@@ -241,15 +243,22 @@ export function useLend() {
         await refetchPools();
         showSuccess(
           isDeposit
-            ? `Successfully deposited ${amount} ${selectedPool.assetCode}`
-            : `Successfully withdrew ${amount} ${selectedPool.assetCode}`
+            ? t("depositSuccess", {
+                amount,
+                symbol: selectedPool.assetCode,
+              })
+            : t("withdrawSuccess", {
+                amount,
+                symbol: selectedPool.assetCode,
+              })
         );
         closeModal();
       } catch (err) {
+        // TODO(i18n/phase5): extractContractErrorOrNull surfaces a raw
+        // backend/contract error string here — left untranslated pending
+        // Phase 5's stable error-code contract.
         const msg = extractContractErrorOrNull(err);
-        showError(
-          typeof msg === "string" ? msg : "An unexpected error occurred."
-        );
+        showError(typeof msg === "string" ? msg : t("unexpectedError"));
       } finally {
         setIsLoading(false);
       }
@@ -263,6 +272,7 @@ export function useLend() {
       closeModal,
       showError,
       showSuccess,
+      t,
     ]
   );
 
