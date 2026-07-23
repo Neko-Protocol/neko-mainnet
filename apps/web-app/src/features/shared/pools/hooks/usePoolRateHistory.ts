@@ -20,6 +20,10 @@ async function fetchPoolRateHistory(poolId: string): Promise<RatePoint[]> {
 
   return (rows ?? []).map((row) => {
     const d = new Date(row.recorded_at);
+    // TODO(i18n): this runs inside a TanStack Query queryFn, outside React's
+    // reactive render context, so it can't call useFormatter/useLocaleFormatter.
+    // Locale isn't part of the query key either, so switching locale won't
+    // re-run this. Left as en-US pending a query-key-threading refactor.
     const label = `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
     return {
       date: label,

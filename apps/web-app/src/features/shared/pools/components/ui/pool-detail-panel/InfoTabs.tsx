@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { PoolDetailPanelPool } from "./types";
 import { ActivityFeed } from "./ActivityFeed";
@@ -41,6 +42,7 @@ function hashToTab(hash: string): InfoTab | null {
 }
 
 export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
+  const t = useTranslations("sharedPools.infoTabs");
   const [activeTab, setActiveTab] = useState<InfoTab>("overview");
   const [pinned, setPinned] = useState(false);
   const [dockRect, setDockRect] = useState<{
@@ -178,9 +180,9 @@ export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
   };
 
   const tabs: { id: InfoTab; label: string }[] = [
-    { id: "overview", label: "Overview" },
-    { id: "advanced", label: "Advanced" },
-    { id: "activity", label: "Activity" },
+    { id: "overview", label: t("overview") },
+    { id: "advanced", label: t("advanced") },
+    { id: "activity", label: t("activity") },
   ];
 
   const isLendingPool = pool.borrowApyLabel != null;
@@ -229,7 +231,7 @@ export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
         <nav
           className="relative z-10 flex gap-6"
           role="tablist"
-          aria-label="Pool info sections"
+          aria-label={t("sectionsAriaLabel")}
         >
           {tabs.map((t) => (
             <button
@@ -269,56 +271,56 @@ export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
         aria-labelledby="pool-detail-tab-overview"
         className={cn("mt-10 pb-2", sectionScrollMargin)}
       >
-        <h2 className="text-white text-xl font-bold mb-6">Overview</h2>
+        <h2 className="text-white text-xl font-bold mb-6">{t("overview")}</h2>
         <h3 className="text-white/50 text-sm font-medium mb-2">
-          Market Attributes
+          {t("marketAttributes")}
         </h3>
         <div>
           {isLendingPool ? (
             <>
-              <MarketAttributeRow label="Collateral">
+              <MarketAttributeRow label={t("collateral")}>
                 <OverviewTokenLabel token={pool.token1} />
               </MarketAttributeRow>
               {hasTwoTokens && (
-                <MarketAttributeRow label="Loan">
+                <MarketAttributeRow label={t("loan")}>
                   <OverviewTokenLabel token={pool.token2} />
                 </MarketAttributeRow>
               )}
               {pool.liquidationLtv > 0 && (
-                <MarketAttributeRow label="Collateral Factor">
+                <MarketAttributeRow label={t("collateralFactor")}>
                   {pool.liquidationLtv}%
                 </MarketAttributeRow>
               )}
               {pool.lFactor != null && (
-                <MarketAttributeRow label="Liability Factor">
+                <MarketAttributeRow label={t("liabilityFactor")}>
                   {Math.round(pool.lFactor * 100)}%
                 </MarketAttributeRow>
               )}
               {pool.utilization && (
-                <MarketAttributeRow label="Utilization">
+                <MarketAttributeRow label={t("utilization")}>
                   {pool.utilization}
                 </MarketAttributeRow>
               )}
             </>
           ) : (
             <>
-              <MarketAttributeRow label="Token 1">
+              <MarketAttributeRow label={t("token1")}>
                 <OverviewTokenLabel token={pool.token1} />
               </MarketAttributeRow>
               {hasTwoTokens && (
-                <MarketAttributeRow label="Token 2">
+                <MarketAttributeRow label={t("token2")}>
                   <OverviewTokenLabel token={pool.token2} />
                 </MarketAttributeRow>
               )}
             </>
           )}
           {pool.oraclePrice && (
-            <MarketAttributeRow label="Oracle price">
+            <MarketAttributeRow label={t("oraclePrice")}>
               {pool.oraclePrice}
             </MarketAttributeRow>
           )}
           {pool.poolType && (
-            <MarketAttributeRow label="Pool type">
+            <MarketAttributeRow label={t("poolType")}>
               {pool.poolType}
               {pool.poolTypeDetail && (
                 <span className="text-white/40 ml-1.5">
@@ -335,7 +337,7 @@ export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
         aria-labelledby="pool-detail-tab-advanced"
         className={cn("mt-16 pb-2", sectionScrollMargin)}
       >
-        <h2 className="text-white text-xl font-bold mb-6">Advanced</h2>
+        <h2 className="text-white text-xl font-bold mb-6">{t("advanced")}</h2>
         <RatesChart
           poolId={pool.id}
           supplyApy={pool.supplyApy}
@@ -348,7 +350,7 @@ export function InfoTabs({ pool }: { pool: PoolDetailPanelPool }) {
         aria-labelledby="pool-detail-tab-activity"
         className={cn("mt-16 pb-16", sectionScrollMargin)}
       >
-        <h2 className="text-white text-xl font-bold mb-6">Activity</h2>
+        <h2 className="text-white text-xl font-bold mb-6">{t("activity")}</h2>
         <ActivityFeed poolId={pool.id} />
       </section>
     </div>

@@ -1,3 +1,134 @@
 {
-  "sharedPools": {}
+  "sharedPools": {
+    "unifiedPage": {
+      "tabPools": "Pools",
+      "tabPositions": "My Positions",
+      "title": "Lend to Pools",
+      "subtitle": "Lend your assets and earn interest",
+      "badge": "Earn yield",
+      "imageAlt": "lending illustration"
+    },
+    "hero": {
+      "networkAlt": "Stellar"
+    },
+    "layout": {
+      "aboutPool": "About the Pool",
+      "actions": "Actions",
+      "actionsAriaLabel": "Pool actions"
+    },
+    "metrics": {
+      "totalLiquidity": "Total Liquidity",
+      "totalBorrowed": "Total Borrowed",
+      "supplyApy": "Supply APY",
+      "borrowApy": "Borrow APY",
+      "poolType": "Pool Type",
+      "issuer": "Issuer"
+    },
+    "skeleton": {
+      "loadingAriaLabel": "Loading pool"
+    },
+    "infoTabs": {
+      "sectionsAriaLabel": "Pool info sections",
+      "overview": "Overview",
+      "advanced": "Advanced",
+      "activity": "Activity",
+      "marketAttributes": "Market Attributes",
+      "collateral": "Collateral",
+      "loan": "Loan",
+      "collateralFactor": "Collateral Factor",
+      "liabilityFactor": "Liability Factor",
+      "utilization": "Utilization",
+      "token1": "Token 1",
+      "token2": "Token 2",
+      "oraclePrice": "Oracle price",
+      "poolType": "Pool type"
+    },
+    "summaryRows": {
+      "network": "Network",
+      "supplied": "Supplied ({pair})",
+      "withdraw": "Withdraw ({pair})",
+      "collateral": "Collateral ({symbol})",
+      "loan": "Loan ({symbol})",
+      "collateralFactor": "Collateral Factor",
+      "liabilityFactor": "Liability Factor",
+      "supplyApy": "Supply APY",
+      "borrowApy": "Borrow APY"
+    },
+    "modeTabs": {
+      "deposit": "Deposit",
+      "withdraw": "Withdraw",
+      "lend": "Lend",
+      "borrow": "Borrow",
+      "lendingBadge": "Lending"
+    },
+    "footer": {
+      "connectHint": "Connect your wallet to sign transactions",
+      "deposit": "Deposit",
+      "depositing": "Depositing…",
+      "withdraw": "Withdraw",
+      "withdrawing": "Withdrawing…",
+      "lend": "Lend",
+      "lending": "Lending…",
+      "borrow": "Borrow",
+      "borrowing": "Borrowing…"
+    },
+    "panel": {
+      "supply": "Supply",
+      "withdraw": "Withdraw",
+      "borrowToken": "Borrow {symbol}",
+      "max": "MAX",
+      "borrowExceedsLimit": "Borrow amount exceeds your collateral limit (~{max} {symbol} max)",
+      "issuerBlend": "Blend",
+      "issuerNeko": "Neko",
+      "issuerAqua": "Aqua"
+    },
+    "amountInput": {
+      "connectWallet": "Connect wallet",
+      "amountPlaceholder": "0.00"
+    },
+    "collateralCard": {
+      "collateral": "Collateral",
+      "max": "MAX",
+      "amountPlaceholder": "0.00",
+      "minCollateralValue": "Minimum collateral value: {value}"
+    },
+    "activityFeed": {
+      "date": "Date",
+      "type": "Type",
+      "user": "User",
+      "loadError": "Could not load activity",
+      "empty": "No recent activity",
+      "loadingAriaLabel": "Loading activity",
+      "viewOnExplorer": "View on Stellar Expert",
+      "pagination": "{page} of {totalPages}"
+    },
+    "errors": {
+      "insufficientBalanceDeposit": "Insufficient balance to deposit",
+      "noSuppliedBalance": "No supplied balance to withdraw",
+      "insufficientSuppliedBalance": "Insufficient supplied balance",
+      "trustlineSetupFailed": "Trustline setup failed: {message}",
+      "trustlineFailedGeneric": "Failed to add trustline",
+      "insufficientPoolPosition": "Insufficient pool position to withdraw",
+      "insufficientAssetsBalance": "Insufficient {assets} balance",
+      "insufficientFunds": "Insufficient funds",
+      "spendableXlm": "spendable XLM",
+      "andJoiner": "and"
+    },
+    "detail": {
+      "backToPools": "← Back to Pools",
+      "notFoundTitle": "Pool not found",
+      "notFoundBody": "Could not load pool data.",
+      "stableSwap": "Stable Swap",
+      "constantProduct": "Constant Product",
+      "baseRewards": "Base {base}% + {rewards}% rewards",
+      "amplification": "A: {amp}"
+    },
+    "ratesChart": {
+      "instantaneousRates": "Instantaneous Rates",
+      "live": "Live",
+      "instantaneousRate": "Instantaneous Rate",
+      "supply": "Supply",
+      "borrow": "Borrow"
+    }
+  }
 }

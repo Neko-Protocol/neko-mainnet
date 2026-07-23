@@ -57,6 +57,7 @@ export default [
       "src/features/shared/ui-mode/**/*.{ts,tsx}",
       "src/features/shared/vault/**/*.{ts,tsx}",
       "src/features/shared/discover/**/*.{ts,tsx}",
+      "src/features/shared/pools/**/*.{ts,tsx}",
     ],
     plugins: { i18next },
     rules: {

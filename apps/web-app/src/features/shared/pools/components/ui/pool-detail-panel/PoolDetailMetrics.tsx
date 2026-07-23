@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { getPoolTokenIcon } from "../../../utils/poolTokenIcons";
 import type { PoolDetailPanelPool } from "./types";
 import { MetricValueText } from "./MetricValueText";
 
 export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
+  const t = useTranslations("sharedPools.metrics");
   const resolvedIssuerIcon =
     pool.issuer.icon ??
     getPoolTokenIcon({ type: "contract", code: pool.issuer.name });
@@ -14,7 +16,7 @@ export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
     <div className="flex flex-wrap justify-between gap-y-7">
       <div>
         <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
-          Total Liquidity
+          {t("totalLiquidity")}
         </p>
         <p className="pool-detail-metric-value">
           <MetricValueText value={pool.totalLiquidity} />
@@ -29,7 +31,7 @@ export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
       {pool.totalBorrowed && (
         <div>
           <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
-            Total Borrowed
+            {t("totalBorrowed")}
           </p>
           <p className="pool-detail-metric-value">
             <MetricValueText value={pool.totalBorrowed} />
@@ -44,7 +46,7 @@ export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
 
       <div>
         <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
-          Supply APY
+          {t("supplyApy")}
         </p>
         <p className="pool-detail-metric-value">
           <MetricValueText value={pool.supplyApy} />
@@ -59,7 +61,7 @@ export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
       {pool.borrowApyLabel != null && (
         <div>
           <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
-            Borrow APY
+            {t("borrowApy")}
           </p>
           <p className="pool-detail-metric-value">
             <MetricValueText value={pool.borrowApyLabel} />
@@ -70,7 +72,7 @@ export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
       {pool.poolType && (
         <div>
           <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
-            Pool Type
+            {t("poolType")}
           </p>
           <p className="pool-detail-metric-value">
             <MetricValueText value={pool.poolType} />
@@ -85,7 +87,7 @@ export function PoolDetailMetrics({ pool }: { pool: PoolDetailPanelPool }) {
 
       <div>
         <p className="text-white/40 text-xs font-medium mb-3 uppercase tracking-wider">
-          Issuer
+          {t("issuer")}
         </p>
         <div className="flex items-center gap-2">
           {resolvedIssuerIcon && (

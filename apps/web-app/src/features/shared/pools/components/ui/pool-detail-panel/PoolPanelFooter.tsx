@@ -1,6 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { CollateralOption } from "./types";
 
 export function PoolPanelFooter({
@@ -54,10 +55,9 @@ export function PoolPanelFooter({
   poolCollateralOptionsLength: number;
   borrowExceedsHf: boolean;
 }) {
+  const t = useTranslations("sharedPools.footer");
   const walletHint = !isWalletConnected && (
-    <p className="text-white/35 text-xs text-center mb-2">
-      Connect your wallet to sign transactions
-    </p>
+    <p className="text-white/35 text-xs text-center mb-2">{t("connectHint")}</p>
   );
 
   const primaryBtn =
@@ -82,10 +82,10 @@ export function PoolPanelFooter({
             className={primaryBtn}
           >
             {isAmmSubmitting
-              ? btnSpinner(isDepositTab ? "Depositing…" : "Withdrawing…")
+              ? btnSpinner(isDepositTab ? t("depositing") : t("withdrawing"))
               : isDepositTab
-                ? "Deposit"
-                : "Withdraw"}
+                ? t("deposit")
+                : t("withdraw")}
           </button>
         </div>
       )}
@@ -107,7 +107,7 @@ export function PoolPanelFooter({
                 }
                 className={primaryBtn}
               >
-                {isLendingActionPending ? btnSpinner("Lending…") : "Lend"}
+                {isLendingActionPending ? btnSpinner(t("lending")) : t("lend")}
               </button>
             )}
             {mode === "withdraw" && canWithdraw && onWithdrawSubmit && (
@@ -123,8 +123,8 @@ export function PoolPanelFooter({
                 className={primaryBtn}
               >
                 {isLendingActionPending
-                  ? btnSpinner("Withdrawing…")
-                  : "Withdraw"}
+                  ? btnSpinner(t("withdrawing"))
+                  : t("withdraw")}
               </button>
             )}
             {mode === "borrow" && canBorrow && onBorrowSubmit && (
@@ -155,7 +155,9 @@ export function PoolPanelFooter({
                 }
                 className={primaryBtn}
               >
-                {isLendingActionPending ? btnSpinner("Borrowing…") : "Borrow"}
+                {isLendingActionPending
+                  ? btnSpinner(t("borrowing"))
+                  : t("borrow")}
               </button>
             )}
           </div>
@@ -175,7 +177,7 @@ export function PoolPanelFooter({
             }
             className={primaryBtn}
           >
-            {isLendingActionPending ? btnSpinner("Lending…") : "Lend"}
+            {isLendingActionPending ? btnSpinner(t("lending")) : t("lend")}
           </button>
         </div>
       )}

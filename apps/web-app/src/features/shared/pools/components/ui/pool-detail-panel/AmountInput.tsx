@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { getPoolTokenIcon } from "../../../utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { PoolDetailPanelToken } from "./types";
@@ -35,6 +36,7 @@ export function AmountInput({
   usdValue?: string;
   pairStyle?: boolean;
 }) {
+  const t = useTranslations("sharedPools.amountInput");
   const resolvedIcon =
     token.icon ?? getPoolTokenIcon({ type: "contract", code: token.symbol });
   const resolvedIcon2 = token2
@@ -74,7 +76,7 @@ export function AmountInput({
           </div>
           <span className="text-white/30 text-xs tabular-nums">
             {disabled
-              ? "Connect wallet"
+              ? t("connectWallet")
               : `${trimBalance(balanceValue)} ${token.symbol}`}
             {!disabled && onMax && (
               <>
@@ -94,7 +96,7 @@ export function AmountInput({
         <input
           type="text"
           inputMode="decimal"
-          placeholder="0.00"
+          placeholder={t("amountPlaceholder")}
           value={value}
           onChange={(e) =>
             readOnly
