@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useSimulatorTokens } from "@/features/simulator/strategies/hooks/useSimulatorTokens";
 import { TokenCard } from "@/features/simulator/strategies/components/ui/TokenCard";
@@ -14,17 +15,14 @@ export function TokenSelectorStep({
   selected,
   onSelect,
 }: TokenSelectorStepProps) {
+  const t = useTranslations("simulator.tokenSelector");
   const { tokens, isLoading } = useSimulatorTokens();
 
   return (
     <section className="flex min-h-0 flex-1 flex-col gap-4">
       <header className="flex shrink-0 flex-col gap-1">
-        <h2 className="text-xl font-semibold text-white">
-          What are you starting with?
-        </h2>
-        <p className="text-sm text-white/60">
-          Choose a token to start exploring how it can earn for you.
-        </p>
+        <h2 className="text-xl font-semibold text-white">{t("header")}</h2>
+        <p className="text-sm text-white/60">{t("subheader")}</p>
       </header>
 
       {isLoading && tokens.length === 0 ? (
@@ -33,7 +31,7 @@ export function TokenSelectorStep({
         </div>
       ) : tokens.length === 0 ? (
         <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-6 text-center text-sm text-white/60">
-          No tokens found. Try again in a moment.
+          {t("empty")}
         </div>
       ) : (
         <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pb-5 pr-1 [scrollbar-gutter:stable]">

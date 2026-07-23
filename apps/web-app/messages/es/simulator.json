@@ -1,0 +1,234 @@
+{
+  "simulator": {
+    "recommendedPage": {
+      "title": "Recomendado por Neko",
+      "subtitle": "Estrategias curadas por el equipo de Neko.",
+      "badge": "Curado",
+      "imageAlt": "Estrategias recomendadas",
+      "toasts": {
+        "connectWalletTitle": "Conecta tu wallet",
+        "connectWalletDescription": "Conecta una wallet para guardar estrategias.",
+        "savedTitle": "Guardado en tus estrategias"
+      },
+      "empty": {
+        "message": "No hay estrategias curadas por ahora. Vuelve pronto.",
+        "backLink": "Volver a estrategias"
+      }
+    },
+    "libraryPage": {
+      "title": "Estrategias",
+      "subtitle": "Planifica tus posiciones. Ejecuta cuando estés listo.",
+      "badge": "Estrategias guardadas",
+      "imageAlt": "Estrategias",
+      "savedCount": "Tus estrategias · {count} guardadas",
+      "buildNew": "Crear nueva estrategia",
+      "noWallet": {
+        "title": "Conecta tu wallet para ver tus estrategias",
+        "subtitle": "Las estrategias se guardan por dirección de wallet."
+      },
+      "empty": {
+        "title": "No hay estrategias guardadas",
+        "subtitle": "Crea una para planificar una posición de rendimiento antes de comprometer fondos.",
+        "cta": "Crea tu primera estrategia"
+      }
+    },
+    "navTabs": {
+      "yourStrategies": "Tus estrategias",
+      "recommended": "Recomendadas"
+    },
+    "destinationCard": {
+      "selected": "Seleccionado",
+      "apy": "APY"
+    },
+    "destinationSelector": {
+      "selected": "Seleccionado",
+      "apy": "APY",
+      "header": "¿Cómo quieres que tu {code} genere rendimiento?",
+      "subheader": "Elige la estrategia que más te convenga.",
+      "tabs": {
+        "pools": "Pools de liquidez",
+        "vaults": "Auto-invertir",
+        "bonds": "Bonos estables",
+        "poolsShort": "Pools",
+        "vaultsShort": "Vaults",
+        "bondsShort": "Bonos"
+      },
+      "emptyGeneric": "Todavía no hay nada disponible para {code}.",
+      "pickAnother": "Elige otro token",
+      "emptyBonds": "No hay opciones de bonos disponibles para {code}.",
+      "emptyPools": "Ningún pool de liquidez acepta {code} todavía. Prueba otra opción.",
+      "emptyVaults": "Ningún vault de auto-inversión acepta {code} todavía. Prueba otra opción."
+    },
+    "projectionTable": {
+      "period": "Período",
+      "youEarn": "Ganas",
+      "totalValue": "Valor total",
+      "disclaimer": "Estimaciones basadas en las tasas actuales. Los retornos reales pueden variar."
+    },
+    "recommendedCard": {
+      "recommended": "Recomendado",
+      "apyPerYear": "APY - por año",
+      "loadingApy": "Cargando APY…",
+      "noData": "Sin datos",
+      "apyUnavailable": "APY no disponible",
+      "route": "Ruta",
+      "protocol": "Protocolo",
+      "amount": "Monto",
+      "setOnExecute": "Se define al ejecutar",
+      "saved": "Guardado",
+      "save": "Guardar",
+      "connectToSaveTitle": "Conecta tu wallet para guardar",
+      "useStrategy": "Usar esta estrategia"
+    },
+    "returnStep": {
+      "apy": "APY",
+      "dash": "-",
+      "projectedAfterYear": "Proyectado después de 1 año",
+      "estimateDisclaimer": "Estimación basada en la tasa actual. Los retornos reales pueden variar.",
+      "headerWithToken": "Mira crecer tu {token}",
+      "headerGeneric": "Mira cuánto podrías ganar",
+      "subheaderSwapDeposit": "Ingresa cuánto {token} quieres usar. Lo cambiaremos por {bondSymbol} y lo depositaremos por ti.",
+      "subheaderSwap": "Ingresa cuánto {token} quieres usar. Lo cambiaremos por {bondSymbol} por ti.",
+      "subheaderGeneric": "Ingresa un monto para ver tus ganancias proyectadas.",
+      "amountLabelWithToken": "¿Cuánto {token}?",
+      "amountLabelGeneric": "¿Cuánto?",
+      "amountPlaceholder": "0.00",
+      "balance": "Saldo: {amount} {token}",
+      "connectToDeposit": "Conecta tu wallet para depositar",
+      "max": "Máx",
+      "fetchingQuote": "Obteniendo estimación del swap…",
+      "quoteError": "No pudimos cotizar {from} → {to}. Prueba con un monto menor o cambia manualmente en la página de Swap.",
+      "quoteSuccess": "≈ <mono>{amount} {symbol}</mono> después del swap (estimado; el resultado real puede variar ligeramente).",
+      "projectionsIn": "Las proyecciones están en {symbol}.",
+      "emptyState": "Ingresa un monto arriba para ver tus ganancias proyectadas.",
+      "back": "Atrás",
+      "saveStrategy": "Guardar estrategia",
+      "gotIt": "Entendido",
+      "cta": {
+        "connectToBuy": "Conecta tu wallet para comprar",
+        "connectToSwapDeposit": "Conecta tu wallet para cambiar y depositar",
+        "connectToDeposit": "Conecta tu wallet para depositar",
+        "swapping": "Cambiando…",
+        "buy": "Comprar {symbol}",
+        "swapDeposit": "Cambiar y depositar",
+        "deposit": "Depositar"
+      }
+    },
+    "saveDialog": {
+      "savedToast": "Estrategia guardada",
+      "title": "Guardar estrategia",
+      "subtitle": "Nómbrala para que la recuerdes.",
+      "placeholder": "Mi estrategia de USDC",
+      "cancel": "Cancelar",
+      "save": "Guardar"
+    },
+    "depositModal": {
+      "confirmLabel": "Confirmar en la wallet",
+      "signing": "Firmando…",
+      "submittedToast": "Depósito enviado",
+      "failedToast": "Depósito fallido",
+      "close": "Cerrar",
+      "amount": "Monto"
+    },
+    "stackStep": {
+      "header": "¿Quieres ganar todavía más?",
+      "body": "Tu <b>{symbol}</b> ya está generando rendimiento del bono. Agrégalo a un pool o vault para sumar una capa extra de retornos, o mantenlo simple.",
+      "keepSimple": "Solo el bono. Lo mantengo simple.",
+      "tabs": {
+        "pools": "Pools de liquidez",
+        "vaults": "Auto-invertir"
+      },
+      "empty": "Ninguna opción acepta {symbol} todavía. Usa el botón de arriba o prueba otra pestaña."
+    },
+    "wizard": {
+      "strategiesLink": "Estrategias",
+      "swapUnavailableTitle": "Swap no disponible",
+      "swapUnavailableDescription": "Configura {stable} y {bond} en assets.",
+      "swapConfirmedTitle": "Swap confirmado",
+      "swapFailedTitle": "El swap falló",
+      "confirmPoolDepositTitle": "Confirmar depósito en pool",
+      "confirmPoolDepositDescription": "Depositar vía orchestrator en {poolName}.",
+      "confirmPoolDepositFallbackName": "este pool",
+      "continue": "Continuar",
+      "seeProjections": "Ver proyecciones"
+    },
+    "stepIndicator": {
+      "stepOf": "Paso {current} de {total}"
+    },
+    "destinationType": {
+      "stacked": "Combinado",
+      "bondHold": "Bono",
+      "autoInvest": "Auto-invertir",
+      "pool": "Pool"
+    },
+    "strategyRow": {
+      "curatedByNeko": "Curado por Neko",
+      "apyPerYear": "APY · por año",
+      "loadingApy": "Cargando APY…",
+      "noData": "Sin datos",
+      "apyUnavailable": "APY no disponible",
+      "route": "Ruta",
+      "amount": "Monto",
+      "setOnExecute": "Se define al ejecutar",
+      "saved": "Guardado",
+      "execute": "Ejecutar estrategia",
+      "deleteAriaLabel": "Eliminar {name}"
+    },
+    "summaryCard": {
+      "current": "actual",
+      "yearlyApy": "{apy}% anual",
+      "emptyState": "Escribe un monto a la izquierda para ver el crecimiento proyectado después de un año.",
+      "holdSentence": "Tienes <amt>{amountValue}</amt> de <dest>{destinationValue}</dest>. Después de 1 año a un crecimiento de <apy>{apyValue}</apy>, tendrías aproximadamente <total>{totalValue}</total>",
+      "depositSentence": "Depositaste <amt>{amountValue}</amt> en <dest>{destinationValue}</dest>. Después de 1 año con ganancias de <apy>{apyValue}</apy>, tendrías aproximadamente <total>{totalValue}</total>"
+    },
+    "tokenCard": {
+      "selected": "Seleccionado",
+      "priceIn": "Precio ({currency})",
+      "loadingPrice": "Cargando precio...",
+      "noData": "Sin datos"
+    },
+    "tokenSelector": {
+      "header": "¿Con qué quieres empezar?",
+      "subheader": "Elige un token para empezar a explorar cómo puede generarte rendimiento.",
+      "empty": "No se encontraron tokens. Intenta de nuevo en un momento."
+    },
+    "vaultDestinationCard": {
+      "selected": "Seleccionado",
+      "supply": "Suministro",
+      "alsoAccepts": "También acepta",
+      "tvl": "TVL",
+      "apy": "APY",
+      "defaultAlt": "Token"
+    },
+    "wizardNav": {
+      "back": "Atrás",
+      "continue": "Continuar"
+    },
+    "labels": {
+      "protocol": {
+        "blend": "Blend",
+        "neko": "Neko",
+        "aqua": "Aqua",
+        "pool": "Pool",
+        "lending": "Préstamos",
+        "amm": "AMM",
+        "staking": "Staking",
+        "rwa": "Activos del mundo real",
+        "vault": "Vault",
+        "sovereignBond": "Bono soberano"
+      },
+      "horizon": {
+        "oneMonth": "1 mes",
+        "sixMonths": "6 meses",
+        "oneYear": "1 año"
+      },
+      "step": {
+        "token": "Tu Token",
+        "destination": "A Dónde Va",
+        "boost": "Aumenta Retornos",
+        "earnings": "Tus Ganancias"
+      },
+      "stellarLumens": "Stellar Lumens"
+    }
+  }
+}

@@ -1,9 +1,10 @@
 import type { Projection } from "@/features/simulator/strategies/types/simulator.types";
 
+/** `label` is a translation key (see messages/{locale}/simulator.json → labels.horizon.*), not display text. */
 export const PROJECTION_HORIZONS: { months: number; label: string }[] = [
-  { months: 1, label: "1 month" },
-  { months: 6, label: "6 months" },
-  { months: 12, label: "1 year" },
+  { months: 1, label: "labels.horizon.oneMonth" },
+  { months: 6, label: "labels.horizon.sixMonths" },
+  { months: 12, label: "labels.horizon.oneYear" },
 ];
 
 /**
@@ -51,7 +52,7 @@ export function computeProjections({
     const totalUsd = principalUsd + earningsUsd;
 
     return {
-      periodLabel: label,
+      periodLabel: label, // translation key, resolve via t() at render time
       months,
       earningsToken,
       earningsUsd,

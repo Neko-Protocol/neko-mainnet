@@ -9,6 +9,7 @@ import {
   getVaultStrategyLabels,
   getYieldTokenHoldExplanation,
   getYieldTokenStrategyLabel,
+  YIELD_TOKEN_PROTOCOL_KEY,
 } from "@/features/simulator/strategies/utils/strategyLabels";
 import {
   ETHERFUSE_BOND_SYMBOLS,
@@ -98,7 +99,7 @@ export function buildDestinationIndex(
       apy,
       tvlUsd: null,
       tvlLabel: "",
-      protocol: "Sovereign Bond",
+      protocol: YIELD_TOKEN_PROTOCOL_KEY,
       strategyLabels: [
         getYieldTokenStrategyLabel(symbol),
         getYieldTokenHoldExplanation(symbol),

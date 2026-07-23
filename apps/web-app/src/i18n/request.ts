@@ -23,6 +23,7 @@ export default getRequestConfig(async () => {
     ...(await import(`../../messages/${locale}/sharedSettings.json`)).default,
     ...(await import(`../../messages/${locale}/sharedDashboard.json`)).default,
     ...(await import(`../../messages/${locale}/sharedAdmin.json`)).default,
+    ...(await import(`../../messages/${locale}/simulator.json`)).default,
     ...(await import(`../../messages/${locale}/validation.json`)).default,
     ...(await import(`../../messages/${locale}/errors.json`)).default,
   };
