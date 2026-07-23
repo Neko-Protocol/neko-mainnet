@@ -62,6 +62,9 @@ export default [
       "src/features/shared/dashboard/**/*.{ts,tsx}",
       "src/features/shared/settings/**/*.{ts,tsx}",
       "src/features/shared/referral/**/*.{ts,tsx}",
+      "src/features/shared/wallet/**/*.{ts,tsx}",
+      "src/features/shared/currency/**/*.{ts,tsx}",
+      "src/features/shared/positions/**/*.{ts,tsx}",
     ],
     plugins: { i18next },
     rules: {

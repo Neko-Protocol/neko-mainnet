@@ -14,6 +14,7 @@ export default getRequestConfig(async () => {
     ...(await import(`../../messages/${locale}/sharedVault.json`)).default,
     ...(await import(`../../messages/${locale}/sharedPools.json`)).default,
     ...(await import(`../../messages/${locale}/sharedLending.json`)).default,
+    ...(await import(`../../messages/${locale}/sharedPositions.json`)).default,
     ...(await import(`../../messages/${locale}/sharedDiscover.json`)).default,
     ...(await import(`../../messages/${locale}/sharedBorrowing.json`)).default,
     ...(await import(`../../messages/${locale}/sharedOnOffRamps.json`)).default,
