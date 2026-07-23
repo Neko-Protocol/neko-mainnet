@@ -18,6 +18,7 @@ import { useAssetInfo } from "@/features/shared/discover/hooks/useAssetInfo";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import {
   CLASS_ACCENT,
+  CLASS_LABEL_KEYS,
   getAssetTaxonomy,
 } from "@/features/shared/discover/utils/assetClass";
 import { InstitutionalNotice } from "@/features/shared/discover/components/ui/InstitutionalNotice";
@@ -35,6 +36,7 @@ export function BasicAssetPriceCard({
   apy,
 }: BasicAssetPriceCardProps) {
   const t = useTranslations("basic.priceCard");
+  const tClassLabels = useTranslations("sharedDiscover.classLabels");
   const codeUpper = tokenCode.toUpperCase();
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
@@ -132,7 +134,9 @@ export function BasicAssetPriceCard({
             <span
               className={`self-start inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${accent.chip}`}
             >
-              {taxonomy.classLabel}
+              {CLASS_LABEL_KEYS[taxonomy.classLabel]
+                ? tClassLabels(CLASS_LABEL_KEYS[taxonomy.classLabel])
+                : taxonomy.classLabel}
             </span>
           )}
         </div>

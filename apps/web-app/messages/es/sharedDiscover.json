@@ -1,3 +1,249 @@
 {
-  "sharedDiscover": {}
+  "sharedDiscover": {
+    "page": {
+      "title": "Descubrir activos",
+      "subtitle": "Explora activos, precios y datos de mercado",
+      "badge": "Datos de mercado",
+      "illustrationAlt": "Descubrir activos",
+      "assetClassAriaLabel": "Clase de activo",
+      "searchPlaceholder": "Buscar por símbolo o nombre...",
+      "clearSearch": "Limpiar búsqueda",
+      "noAssetsConfigured": "No hay activos configurados",
+      "noAssetsMatchFilters": "Ningún activo coincide con tus filtros",
+      "clearFilters": "Limpiar filtros"
+    },
+    "classFilters": {
+      "all": "Todos",
+      "allDescription": "Todos los activos disponibles",
+      "stablecoin": "Stablecoins",
+      "stablecoinDescription": "Monedas digitales ligadas a una moneda fiat",
+      "sovereignBond": "Bonos soberanos",
+      "sovereignBondDescription": "Deuda gubernamental tokenizada (RWA)",
+      "tokenizedFund": "Fondos tokenizados",
+      "tokenizedFundDescription": "Participaciones de fondos regulados emitidas on-chain (RWA)",
+      "structuredCredit": "Crédito estructurado",
+      "structuredCreditDescription": "Pools tokenizados de préstamos corporativos (RWA)",
+      "commodity": "Materias primas",
+      "commodityDescription": "Materias primas físicas tokenizadas (RWA)",
+      "native": "Nativo",
+      "nativeDescription": "Activos nativos de la red"
+    },
+    "classLabels": {
+      "native": "Nativo",
+      "stablecoin": "Stablecoin",
+      "yieldStablecoin": "Stablecoin con rendimiento",
+      "sovereignBond": "Bono soberano",
+      "moneyMarketFund": "Fondo del mercado monetario",
+      "treasuryFund": "Fondo del Tesoro",
+      "aaaCloFund": "Fondo CLO AAA"
+    },
+    "classExplanations": {
+      "native": {
+        "title": "¿Qué es un activo nativo?",
+        "body": "Un activo nativo es la moneda incorporada de una blockchain: no lo emite ninguna empresa ni está respaldado por una reserva fuera de la cadena. Paga las comisiones de transacción, asegura la red y actúa como puente entre otros activos que se operan on-chain."
+      },
+      "stablecoin": {
+        "title": "¿Qué es un stablecoin?",
+        "body": "Un stablecoin es un token diseñado para seguir el valor de una moneda de referencia, como el dólar estadounidense o el euro. Los emisores mantienen reservas (efectivo, deuda gubernamental de corto plazo u otros instrumentos seguros) para que cada token pueda canjearse 1:1, dando a los tenedores estabilidad de precio con la velocidad y alcance global de la liquidación en blockchain."
+      },
+      "sovereignBond": {
+        "title": "¿Qué es un bono soberano tokenizado?",
+        "body": "Un bono soberano tokenizado representa una porción de deuda emitida por un gobierno nacional, por ejemplo, bonos del Tesoro de EE. UU. o Bonos Gubernamentales Mexicanos, envuelta en un token on-chain. Los tenedores obtienen el rendimiento subyacente mientras conservan la liquidez y la transferibilidad 24/7 de un activo digital."
+      },
+      "tokenizedFund": {
+        "title": "¿Qué es un fondo tokenizado?",
+        "body": "Un fondo tokenizado es una participación de un fondo de inversión regulado emitida directamente on-chain, donde el token mismo es el registro de propiedad y no un pagaré sobre uno. El fondo mantiene activos convencionales, típicamente deuda gubernamental de corto plazo, y un agente de transferencias mantiene el registro on-chain sincronizado con los libros del fondo. Algunas clases de participación están restringidas a inversionistas aprobados por el emisor, por lo que pueden rastrearse pero no negociarse libremente."
+      },
+      "commodity": {
+        "title": "¿Qué es una materia prima tokenizada?",
+        "body": "Una materia prima tokenizada representa la propiedad de un activo físico, como el oro, resguardado en bóvedas profesionales, envuelta en un token on-chain. Cada token es canjeable contra la reserva subyacente, verificada por auditorías independientes, de modo que los tenedores obtienen exposición al precio de la materia prima con la liquidez y transferibilidad 24/7 de un activo digital."
+      },
+      "structuredCredit": {
+        "title": "¿Qué es el crédito estructurado?",
+        "body": "El crédito estructurado agrupa muchos préstamos corporativos en un solo vehículo y divide los pagos en tramos ordenados según quién cobra primero. El tramo AAA está en la parte superior, absorbiendo pérdidas al final, por lo que tiene la calificación crediticia más alta de la estructura. Tokenizar ese tramo lleva on-chain un producto de renta fija institucional, aunque la calificación describe solo el riesgo crediticio, no la estabilidad de precio."
+      }
+    },
+    "priceCard": {
+      "loadingPrice": "Cargando precio…",
+      "noData": "Sin datos",
+      "spotIn": "Spot ({currency})",
+      "apy": "~{value}% APY"
+    },
+    "assetDetail": {
+      "backToDiscover": "← Volver a Descubrir",
+      "assetNotFound": "Activo no encontrado",
+      "spotPriceIn": "Precio spot ({currency})",
+      "noData": "Sin datos",
+      "viaSource": "vía {source}",
+      "sourceUnavailable": "Fuente no disponible",
+      "unavailable": "No disponible",
+      "priceTitle": "Precio",
+      "live": "En vivo",
+      "notEnoughData": "Aún no hay suficientes datos",
+      "informationTab": "Información",
+      "overviewTab": "Resumen",
+      "detailsTab": "Detalles",
+      "highlights": "Puntos clave",
+      "symbol": "Símbolo",
+      "name": "Nombre",
+      "class": "Clase",
+      "peg": "Paridad",
+      "region": "Región",
+      "issuer": "Emisor",
+      "apyLabel": "APY",
+      "yieldBearing": "Genera rendimiento",
+      "yes": "Sí",
+      "no": "No",
+      "priceSource": "Fuente del precio",
+      "contract": "Contrato"
+    },
+    "institutionalNotice": {
+      "label": "Se requiere acceso institucional"
+    },
+    "statCard": {
+      "moreInfoAbout": "Más información sobre {label}"
+    },
+    "assetInfo": {
+      "XLM": {
+        "description": "Token nativo de la red Stellar, usado para comisiones y reservas",
+        "summary": "XLM es la moneda nativa de Stellar, una red de pagos descentralizada creada para transferencias transfronterizas rápidas y de bajo costo. Toda cuenta de Stellar debe mantener una reserva mínima en XLM, y cada transacción cuesta una comisión pequeña (~0.00001 XLM). XLM también actúa como moneda puente entre activos que no tienen un par de trading directo en el DEX de Stellar.",
+        "highlights": [
+          "Paga las comisiones y la reserva mínima requerida para mantener abierta una cuenta de Stellar",
+          "Se usa como moneda puente para pagos por ruta (path payments) entre activos sin un par directo",
+          "Suministro limitado, sin inflación desde la votación comunitaria de 2019",
+          "Confirmaciones de 3 a 5 segundos y comisiones de transacción de menos de un centavo"
+        ]
+      },
+      "USDC": {
+        "description": "Stablecoin respaldado en dólares, emitido por Circle, con paridad 1:1 con el USD",
+        "summary": "USDC es un stablecoin en dólares estadounidenses totalmente respaldado, emitido por Circle. Cada USDC está respaldado 1:1 por efectivo y bonos del Tesoro de EE. UU. de corto plazo, mantenidos en cuentas segregadas y auditados mensualmente. En Stellar, Circle emite USDC de forma nativa, permitiendo liquidación de dólares casi instantánea y casi gratuita para pagos, remesas y DeFi. USDC en Stellar cuenta con amplio soporte de billeteras, exchanges y anchors.",
+        "highlights": [
+          "Respaldado 1:1 por efectivo y bonos del Tesoro de EE. UU. de corta duración, en custodios regulados",
+          "Certificaciones mensuales publicadas por Deloitte sobre la composición de las reservas",
+          "Emitido por Circle, un negocio de servicios monetarios regulado en EE. UU.",
+          "Canjeable de forma nativa a través de Circle Mint para cuentas institucionales verificadas"
+        ]
+      },
+      "EURC": {
+        "description": "Stablecoin respaldado en euros, emitido por Circle, con paridad 1:1 con el EUR",
+        "summary": "EURC es el stablecoin en euros de Circle, compatible con MiCA, totalmente respaldado 1:1 por reservas denominadas en euros mantenidas en instituciones financieras reguladas. Es canjeable a la par y está sujeto a certificaciones mensuales. En Stellar, EURC permite pagos y liquidaciones en euros de bajo costo en toda la red global de Stellar.",
+        "highlights": [
+          "Primer stablecoin en euros de importancia autorizado bajo el marco MiCA de la UE",
+          "Reservas mantenidas en cuentas segregadas en bancos europeos regulados",
+          "Certificaciones mensuales de terceros confirman el respaldo 1:1",
+          "Diseñado para pagos en la eurozona, flujos de FX y liquidación on-chain"
+        ]
+      },
+      "USDY": {
+        "description": "Stablecoin con rendimiento, respaldado por letras del Tesoro de EE. UU. y depósitos bancarios",
+        "summary": "USDY es el instrumento tokenizado con rendimiento de Ondo Finance, respaldado por bonos del Tesoro de EE. UU. de corto plazo y depósitos bancarios a la vista. A diferencia de los stablecoins tradicionales, USDY acumula rendimiento diariamente y está diseñado para personas no estadounidenses. El token usa un mecanismo de rebase, por lo que los saldos reflejan automáticamente los intereses acumulados. No disponible para personas de EE. UU.",
+        "highlights": [
+          "Respaldado por bonos del Tesoro de EE. UU. de corta duración y depósitos bancarios a la vista",
+          "El rendimiento se acumula diariamente y se refleja en el precio del token",
+          "Emitido por Ondo USDY LLC, un vehículo de propósito especial remoto a quiebra",
+          "Restringido para personas de EE. UU. bajo la Regulación S"
+        ]
+      },
+      "PYUSD": {
+        "description": "Stablecoin en dólares emitido por PayPal y Paxos, con paridad 1:1 con el USD",
+        "summary": "PYUSD es el stablecoin respaldado en dólares de PayPal, emitido por Paxos Trust Company. Cada token está respaldado 1:1 por depósitos en USD y letras del Tesoro de EE. UU., con certificaciones mensuales publicadas por un auditor independiente. Lanzado originalmente en Ethereum, PYUSD se expandió a Stellar para una liquidación más rápida y económica. Accesible a través de PayPal, Venmo y una lista creciente de billeteras y anchors de Stellar.",
+        "highlights": [
+          "Emitido por Paxos Trust, un trust de propósito limitado autorizado por el estado de Nueva York",
+          "Respaldado 1:1 por depósitos en dólares y letras del Tesoro de corto plazo",
+          "Se guarda y gasta de forma nativa dentro de PayPal y Venmo por cientos de millones de usuarios",
+          "Reportes mensuales de reservas publicados por un auditor independiente"
+        ]
+      },
+      "GYEN": {
+        "description": "Stablecoin en yenes japoneses emitido por GMO-Z.com Trust Company, con paridad 1:1 con el JPY",
+        "summary": "GYEN es el primer stablecoin regulado en yenes japoneses, emitido por GMO-Z.com Trust Company, una sociedad fiduciaria de propósito limitado autorizada por el estado de Nueva York. Cada GYEN está respaldado 1:1 por JPY mantenido en fideicomiso, con auditorías regulares. Ofrece exposición on-chain al JPY para pagos, remesas y DeFi sin el riesgo de contraparte de emisores no regulados.",
+        "highlights": [
+          "Primer stablecoin regulado en JPY, supervisado por el NYDFS",
+          "Reservas mantenidas 1:1 en JPY en bancos japoneses regulados",
+          "Emitido por GMO-Z.com Trust, parte del grupo cotizado en bolsa GMO Internet Group",
+          "Útil para cobertura cambiaria, remesas y DeFi denominado en JPY"
+        ]
+      },
+      "USTRY": {
+        "description": "Bonos del Tesoro de EE. UU. tokenizados que ofrecen rendimiento on-chain vía Etherfuse",
+        "summary": "USTRY es un Stablebond de Etherfuse respaldado 1:1 por bonos del Tesoro de EE. UU. de corto y mediano plazo, emitidos por el Departamento del Tesoro de EE. UU. El token usa un mecanismo de rebase: tu saldo aumenta automáticamente conforme se acumulan los intereses cada día, así que nunca necesitas reclamar el rendimiento manualmente.",
+        "highlights": [
+          "Respaldado 1:1 por bonos del Tesoro de EE. UU. de corta duración, en manos de un custodio regulado",
+          "El rendimiento de los bonos subyacentes se transfiere a los tenedores diariamente",
+          "Emitido por Etherfuse, una plataforma de tokenización registrada para deuda soberana",
+          "Canjeable a la par en USD contra la reserva subyacente"
+        ]
+      },
+      "TESOURO": {
+        "description": "Bonos del gobierno de Brasil tokenizados (Letras do Tesouro Nacional)",
+        "summary": "TESOURO es un Stablebond de Etherfuse respaldado por Letras do Tesouro Nacional (LTN) brasileñas, bonos gubernamentales de cupón cero emitidos por el Tesoro Nacional de Brasil. El rendimiento se acumula hasta el vencimiento y se refleja en el precio del token. Ofrece exposición on-chain a deuda soberana brasileña con acceso transparente las 24 horas, los 7 días de la semana.",
+        "highlights": [
+          "Respaldado por Letras do Tesouro Nacional (LTN), los bonos de cupón cero del gobierno brasileño",
+          "Denominado en BRL, ofrece exposición on-chain a las tasas de interés en reales brasileños",
+          "Bonos custodiados por instituciones brasileñas reguladas",
+          "Históricamente entre los instrumentos soberanos de mayor rendimiento entre las grandes economías"
+        ]
+      },
+      "CETES": {
+        "description": "Certificados de la Tesorería del gobierno mexicano (CETES) tokenizados",
+        "summary": "Los tokens CETES representan Certificados de la Tesorería de la Federación mexicanos en blockchain, instrumentos de deuda gubernamental de corto plazo emitidos por el gobierno federal de México y denominados en MXN. El Stablebond de Etherfuse, autorizado por la CNBV, ofrece exposición transparente y con rendimiento a los CETES con negociación 24/7.",
+        "highlights": [
+          "Respaldado por Certificados de la Tesorería de la Federación (CETES) emitidos por la Tesorería mexicana",
+          "Autorizado por el regulador bancario de México (CNBV) para distribución minorista",
+          "Sigue las tasas de interés de corto plazo en MXN, con vencimientos típicos de 28 a 364 días",
+          "La acumulación diaria del precio refleja el rendimiento hasta el vencimiento, sin reclamo manual"
+        ]
+      },
+      "BENJI": {
+        "description": "Participación del fondo del mercado monetario del gobierno de EE. UU. tokenizado de Franklin Templeton",
+        "summary": "Cada token BENJI es una participación de FOBXX, el OnChain U.S. Government Money Fund de Franklin Templeton, y fue el primer fondo mutuo registrado en EE. UU. en usar una blockchain pública como su registro oficial de propiedad. Stellar fue su cadena de emisión original. El precio de la participación se mantiene en $1.00 y el rendimiento se distribuye como tokens adicionales. Las transferencias están restringidas a inversionistas que Franklin Templeton ha admitido, por lo que BENJI se muestra aquí solo como referencia y no se puede intercambiar dentro de la app.",
+        "highlights": [
+          "Un token equivale a una participación de FOBXX, un fondo del mercado monetario del gobierno de EE. UU. bajo la Ley del 40",
+          "Primer fondo mutuo registrado en EE. UU. en mantener su registro de participaciones en una blockchain pública",
+          "Mantiene valores del gobierno de EE. UU., efectivo y acuerdos de recompra totalmente colateralizados",
+          "Las transferencias están restringidas a una lista de acceso: se adquiere y canjea a través de la app Benji, no on-chain"
+        ]
+      },
+      "JTRSY": {
+        "description": "Fondo tokenizado de letras del Tesoro de EE. UU. de corto plazo, restringido a tenedores autorizados",
+        "summary": "JTRSY es la clase institucional del Janus Henderson Anemoy Treasury Fund, que mantiene letras del Tesoro de EE. UU. de corto plazo. El rendimiento se acumula en el precio del token en lugar de pagarse por separado, por lo que el precio sube con el tiempo en vez de mantenerse en $1.00. Las transferencias están limitadas a direcciones en la lista de acceso de Centrifuge y pueden pausarse por operadores autorizados, por lo que aquí se muestra solo como referencia. deJTRSY es la versión libremente transferible del mismo fondo subyacente.",
+        "highlights": [
+          "Respaldado por letras del Tesoro de EE. UU. de corta duración, gestionadas por Janus Henderson / Anemoy",
+          "Acumulativo: el rendimiento se refleja en un precio de token creciente, no en tokens adicionales",
+          "Transferencias restringidas a direcciones autorizadas y pausables por operadores",
+          "Envuelto como deJTRSY para tenedores que necesitan una versión libremente transferible"
+        ]
+      },
+      "DEJTRSY": {
+        "description": "Envoltorio libremente transferible del fondo tokenizado de letras del Tesoro de EE. UU.",
+        "summary": "deJTRSY es el envoltorio deRWA de Centrifuge sobre JTRSY, el Janus Henderson Anemoy Treasury Fund. Ofrece la misma exposición a letras del Tesoro de EE. UU. de corto plazo, pero sin la lista de acceso, por lo que cualquiera en Stellar puede mantenerlo, negociarlo y usarlo como colateral. Esta es la versión disponible a través de la liquidez de los AMM de Stellar.",
+        "highlights": [
+          "Misma cartera subyacente de letras del Tesoro de EE. UU. de corta duración que JTRSY",
+          "Libremente transferible: sin lista de acceso, negociable y utilizable como colateral en DeFi",
+          "Acumulativo: el rendimiento se refleja en un precio de token creciente",
+          "Emitido por Open Market Foundation y pausable por operadores autorizados"
+        ]
+      },
+      "JAAA": {
+        "description": "Obligaciones de préstamo colateralizadas con calificación AAA tokenizadas, restringidas a tenedores autorizados",
+        "summary": "JAAA es la clase institucional del Janus Henderson Anemoy AAA CLO Fund, que mantiene los tramos con calificación AAA de obligaciones de préstamo colateralizadas, pools de préstamos corporativos senior garantizados. El tramo AAA cobra primero y absorbe pérdidas al final. Las transferencias están limitadas a la lista de acceso de Centrifuge, por lo que aquí se muestra solo como referencia; deJAAA es la versión libremente transferible.",
+        "highlights": [
+          "Mantiene tramos CLO con calificación AAA, el derecho más senior sobre el pool de préstamos corporativos",
+          "Gestionado por Janus Henderson, un gestor consolidado en el mercado de CLO",
+          "Rinde más que los bonos del Tesoro a cambio de riesgo de crédito corporativo y de liquidez",
+          "Transferencias restringidas a direcciones autorizadas; envuelto como deJAAA para acceso abierto"
+        ]
+      },
+      "DEJAAA": {
+        "description": "Envoltorio libremente transferible del fondo CLO tokenizado con calificación AAA",
+        "summary": "deJAAA es el envoltorio deRWA de Centrifuge sobre JAAA, el Janus Henderson Anemoy AAA CLO Fund. Ofrece la misma exposición a tramos de obligaciones de préstamo colateralizadas con calificación AAA sin la lista de acceso, por lo que puede negociarse y usarse como colateral en todo el DeFi de Stellar. Nota: la calificación AAA describe el riesgo crediticio de los préstamos subyacentes, no es una paridad, y el precio del token se mueve.",
+        "highlights": [
+          "Misma exposición a tramos CLO con calificación AAA que JAAA, sin restricciones de transferencia",
+          "Libremente transferible: negociable en los DEX de Stellar y utilizable como colateral en DeFi",
+          "AAA se refiere a la calidad crediticia del pool de préstamos, no a la estabilidad de precio",
+          "Emitido por Open Market Foundation y pausable por operadores autorizados"
+        ]
+      }
+    }
+  }
 }
