@@ -1,3 +1,17 @@
 {
-  "sharedReferral": {}
+  "sharedReferral": {
+    "modal": {
+      "title": "Referidos",
+      "subtitle": "Invita amigos a Neko con tu enlace personal",
+      "close": "Cerrar",
+      "yourLink": "Tu enlace de referido",
+      "copied": "copiado",
+      "shareOn": "Compartir en",
+      "shareTweet": "¡Únete a mí en @NekoProto! Usa mi enlace de referido: {link}",
+      "referred": "Referidos",
+      "swapVolume": "Volumen de swap",
+      "vaultTvl": "TVL de Vault",
+      "explanation": "Un referido cuenta cuando la persona que invitaste conecta una wallet y verifica su correo. Su volumen de swap y depósitos en vaults se registran en tu enlace."
+    }
+  }
 }

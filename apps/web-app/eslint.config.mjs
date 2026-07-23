@@ -61,6 +61,7 @@ export default [
       "src/features/shared/lending/**/*.{ts,tsx}",
       "src/features/shared/dashboard/**/*.{ts,tsx}",
       "src/features/shared/settings/**/*.{ts,tsx}",
+      "src/features/shared/referral/**/*.{ts,tsx}",
     ],
     plugins: { i18next },
     rules: {

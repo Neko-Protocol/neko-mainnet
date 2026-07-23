@@ -1,3 +1,17 @@
 {
-  "sharedReferral": {}
+  "sharedReferral": {
+    "modal": {
+      "title": "Referrals",
+      "subtitle": "Invite friends to Neko with your personal link",
+      "close": "Close",
+      "yourLink": "Your referral link",
+      "copied": "copied",
+      "shareOn": "Share on",
+      "shareTweet": "Join me on @NekoProto! Use my referral link: {link}",
+      "referred": "Referred",
+      "swapVolume": "Swap volume",
+      "vaultTvl": "Vault TVL",
+      "explanation": "A referral counts once the person you invited connects a wallet and verifies their email. Their swap volume and vault deposits are tracked to your link."
+    }
+  }
 }
