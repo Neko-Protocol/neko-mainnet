@@ -1,4 +1,5 @@
 import { useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import type { Token } from "@/lib/helpers/stellar/swap-kit";
 import { getQuote, type QuoteRequest } from "@/lib/helpers/stellar/swap-kit";
 import { formatAmount } from "@/lib/helpers/formatUtils";
@@ -19,6 +20,7 @@ export function useStellarQuote(
   fetchStellarQuote: () => Promise<StellarQuoteResult>;
   cancelStellarQuote: () => void;
 } {
+  const t = useTranslations("sharedSwapEngine.quote");
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const cancelStellarQuote = useCallback(() => {
@@ -71,12 +73,15 @@ export function useStellarQuote(
 
         return {
           amount: null,
-          error: "No liquidity found for this pair",
+          error: t("noLiquidity"),
         };
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError")
           return { amount: null, error: null };
 
+        // TODO(i18n/phase5): errorMessage may be a raw error string from the
+        // swap-kit/anchor API and stays untranslated until Phase 5 maps it
+        // to a stable error code.
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         const errorWithCode = error as { code?: string } | null;
@@ -86,15 +91,15 @@ export function useStellarQuote(
           errorWithCode?.code === "ECONNABORTED";
 
         if (isTimeout) {
-          return { amount: null, error: "Quote request timed out" };
+          return { amount: null, error: t("timeout") };
         }
 
         return {
           amount: null,
-          error: errorMessage || "Failed to get quote",
+          error: errorMessage || t("failedToGetQuote"),
         };
       }
-    }, [amountIn, tokenIn, tokenOut, cancelStellarQuote]);
+    }, [amountIn, tokenIn, tokenOut, cancelStellarQuote, t]);
 
   return { fetchStellarQuote, cancelStellarQuote };
 }

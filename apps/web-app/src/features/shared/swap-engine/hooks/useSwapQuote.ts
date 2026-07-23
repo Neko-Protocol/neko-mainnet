@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import type { Token } from "@/lib/helpers/stellar/swap-kit";
 import { useStellarQuote } from "./useStellarQuote";
 import {
@@ -24,6 +25,7 @@ export function useSwapQuote(
   tokenIn: Token | string,
   tokenOut: Token | string
 ): SwapQuoteState & SwapQuoteActions {
+  const t = useTranslations("sharedSwapEngine.quote");
   const [amountOut, setAmountOut] = useState<string>("0.0");
   const [isLoadingQuote, setIsLoadingQuote] = useState<boolean>(false);
   const [quoteError, setQuoteError] = useState<string | null>(null);
@@ -82,14 +84,14 @@ export function useSwapQuote(
       failureCountRef.current += 1;
       if (failureCountRef.current >= MAX_CONSECUTIVE_FAILURES) {
         setIsLoadingQuote(false);
-        setQuoteError("Failed to get quote - try again");
+        setQuoteError(t("failedRetry"));
         if (quoteIntervalRef.current) {
           clearInterval(quoteIntervalRef.current);
           quoteIntervalRef.current = null;
         }
       }
     }
-  }, [address, amountIn, fetchStellarQuote]);
+  }, [address, amountIn, fetchStellarQuote, t]);
 
   useEffect(() => {
     if (quoteTimeoutRef.current) {

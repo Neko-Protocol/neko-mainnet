@@ -65,6 +65,7 @@ export default [
       "src/features/shared/wallet/**/*.{ts,tsx}",
       "src/features/shared/currency/**/*.{ts,tsx}",
       "src/features/shared/positions/**/*.{ts,tsx}",
+      "src/features/shared/swap-engine/**/*.{ts,tsx}",
     ],
     plugins: { i18next },
     rules: {
