@@ -1,6 +1,7 @@
 "use client";
 
 import { useFormatter } from "next-intl";
+import type { DateTimeFormatOptions } from "use-intl";
 import { APP_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import type { SupportedCurrency } from "@/stores/currency.store";
 
@@ -44,12 +45,24 @@ export function useLocaleFormatter() {
     });
   }
 
+  /** Plain grouped number (no currency symbol) — for raw token amounts. */
+  function formatNumber(
+    amount: number,
+    fractionDigits: number = APP_DISPLAY_DECIMALS
+  ): string {
+    const safeAmount = Number.isFinite(amount) ? amount : 0;
+    return format.number(safeAmount, {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    });
+  }
+
   function formatDate(
     date: Date | number,
-    options?: Parameters<typeof format.dateTime>[1]
+    options?: DateTimeFormatOptions
   ): string {
     return format.dateTime(date, options);
   }
 
-  return { formatCurrency, formatCompactCurrency, formatDate };
+  return { formatCurrency, formatCompactCurrency, formatNumber, formatDate };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { useVaultBalance } from "@/features/shared/vault/hooks/useVaultBalance";
@@ -36,6 +37,8 @@ export function VaultDetailLayout({
   vault,
   initialTab,
 }: VaultDetailLayoutProps) {
+  const t = useTranslations("sharedVault.detail");
+  const tAction = useTranslations("sharedVault.action");
   const [tab, setTab] = useState<VaultActionTab>(initialTab);
   const [amount, setAmount] = useState("");
   const [successModalOpen, setSuccessModalOpen] = useState(false);
@@ -194,7 +197,10 @@ export function VaultDetailLayout({
           setSuccessModalOpen(true);
         } else {
           showSuccess(
-            `Successfully deposited ${amount} ${vault.supplyAsset.symbol}`
+            tAction("depositSuccessToast", {
+              amount,
+              symbol: vault.supplyAsset.symbol,
+            })
           );
         }
       }
@@ -223,6 +229,7 @@ export function VaultDetailLayout({
     handleDeposit,
     handleWithdraw,
     showSuccess,
+    tAction,
   ]);
 
   return (
@@ -258,7 +265,7 @@ export function VaultDetailLayout({
               : "text-white/40 hover:text-white/70"
           }`}
         >
-          About the Vault
+          {t("aboutTab")}
           {mobileTab === "about" && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-white" />
           )}
@@ -272,7 +279,7 @@ export function VaultDetailLayout({
               : "text-white/40 hover:text-white/70"
           }`}
         >
-          Actions
+          {t("actionsTab")}
           {mobileTab === "action" && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-white" />
           )}
@@ -282,7 +289,7 @@ export function VaultDetailLayout({
       {/* Fixed right action panel */}
       <aside
         className={`${mobileTab === "action" ? "block" : "hidden"} lg:block z-30 w-full min-w-0 shrink-0 lg:fixed lg:right-8 lg:top-28 lg:z-40 lg:w-[min(24rem,calc(100vw-4rem))] lg:max-w-[calc(100vw-4rem)] lg:p-0`}
-        aria-label="Vault actions"
+        aria-label={t("actionsAriaLabel")}
       >
         <div className={PANEL_SCROLL_CLASS}>
           <VaultActionPanel

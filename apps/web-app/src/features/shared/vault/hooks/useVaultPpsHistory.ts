@@ -19,6 +19,9 @@ async function fetchVaultPpsHistory(
     `/v1/vault-pps/${encodeURIComponent(vaultId)}`
   );
 
+  // TODO(i18n): runs inside a TanStack Query queryFn, not a React render —
+  // can't call useFormatter here, and locale isn't part of the query key.
+  // See the equivalent note in utils/mapToVaultView.ts.
   const points: VaultPpsPoint[] = (json.data ?? []).map((row) => {
     const d = new Date(row.recorded_at);
     const label = `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;

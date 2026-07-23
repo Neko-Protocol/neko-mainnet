@@ -26,6 +26,9 @@ export const lobstrVaultService = {
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
+        // TODO(i18n/phase5): this fallback string flows into the translated
+        // "lobstrRejected" toast body as raw dynamic content, same as
+        // err.message elsewhere — stays untranslated until Phase 5.
         return { ok: false, error: text || `Lobstr Vault HTTP ${res.status}` };
       }
       return { ok: true };

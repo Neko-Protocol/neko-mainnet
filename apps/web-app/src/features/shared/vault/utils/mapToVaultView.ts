@@ -128,6 +128,15 @@ function buildStrategyAllocations(
   return rows.length ? rows : undefined;
 }
 
+// TODO(i18n): this mapper (and the "Vault with N underlying asset(s)."/
+// "Liquidity depends on..." description strings built in
+// defindexInfoToVaultView below) runs inside useDefindexVaults.ts's
+// TanStack Query queryFn, not a React render — it can't call the
+// useFormatter/useTranslations hooks, and locale isn't part of the query
+// key, so switching locale won't re-run it. Fixing this needs threading
+// locale (and a translator) into the query key/queryFn, which is a
+// separate, larger change than the component-level i18n pass this file
+// was touched in.
 function formatTvl(
   info: VaultInfoResponse,
   priceUsdByAsset: Record<string, number> = {}

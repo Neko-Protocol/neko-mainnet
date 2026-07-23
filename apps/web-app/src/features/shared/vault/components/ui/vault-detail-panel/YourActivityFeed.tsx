@@ -2,14 +2,16 @@
 
 import { useMemo, useState } from "react";
 import { ExternalLink } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 import type { AuditLog } from "@/lib/types/audit.types";
 
 const PAGE_SIZE = 8;
 
-const ACTION_LABELS: Record<string, { label: string; color: string }> = {
-  vaults_deposit: { label: "Deposit", color: "text-emerald-400" },
-  vaults_withdraw: { label: "Withdraw", color: "text-amber-400" },
-  vaults_claim_earnings: { label: "Claim", color: "text-sky-400" },
+const ACTION_LABEL_KEYS: Record<string, { key: string; color: string }> = {
+  vaults_deposit: { key: "actionDeposit", color: "text-emerald-400" },
+  vaults_withdraw: { key: "actionWithdraw", color: "text-amber-400" },
+  vaults_claim_earnings: { key: "actionClaim", color: "text-sky-400" },
 };
 
 function getAmount(log: AuditLog): number | undefined {
@@ -28,6 +30,8 @@ export function YourActivityFeed({
   vaultId: string;
   assetSymbol: string;
 }) {
+  const t = useTranslations("sharedVault.activity");
+  const { formatDate } = useLocaleFormatter();
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
@@ -55,29 +59,28 @@ export function YourActivityFeed({
 
   return (
     <div>
-      <h3 className="text-white/70 text-sm font-medium mb-4">Your Activity</h3>
+      <h3 className="text-white/70 text-sm font-medium mb-4">{t("title")}</h3>
 
       {total === 0 ? (
-        <p className="text-white/30 text-sm text-center py-12">
-          No activity in this vault yet
-        </p>
+        <p className="text-white/30 text-sm text-center py-12">{t("empty")}</p>
       ) : (
         <div className="rounded-xl border border-white/7 overflow-hidden">
           <div className="grid grid-cols-[1.6fr_0.8fr_1fr_2rem] gap-4 px-5 py-3 border-b border-white/7 bg-white/[0.02]">
             <span className="text-white/30 text-xs font-medium uppercase tracking-wider">
-              Date
+              {t("date")}
             </span>
             <span className="text-white/30 text-xs font-medium uppercase tracking-wider">
-              Type
+              {t("type")}
             </span>
             <span className="text-white/30 text-xs font-medium uppercase tracking-wider">
-              Amount
+              {t("amount")}
             </span>
             <span />
           </div>
 
           {pageEvents.map((log) => {
-            const meta = ACTION_LABELS[log.action_type];
+            const meta = ACTION_LABEL_KEYS[log.action_type];
+
             const amount = getAmount(log);
 
             return (
@@ -86,13 +89,13 @@ export function YourActivityFeed({
                 className="grid grid-cols-[1.6fr_0.8fr_1fr_2rem] gap-4 items-center px-5 py-3.5 border-b border-white/5 last:border-0 hover:bg-white/[0.025] transition-colors"
               >
                 <span className="font-mono tabular-nums text-white/50 text-xs">
-                  {new Date(log.created_at).toLocaleString()}
+                  {formatDate(new Date(log.created_at))}
                 </span>
 
                 <span
                   className={`text-sm font-medium ${meta?.color ?? "text-white/60"}`}
                 >
-                  {meta?.label ?? log.action_type}
+                  {meta ? t(meta.key) : log.action_type}
                 </span>
 
                 <span className="text-white/70 text-xs tabular-nums">
@@ -105,7 +108,7 @@ export function YourActivityFeed({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-white/25 hover:text-white/70 transition-colors justify-self-end"
-                    title="View transaction"
+                    title={t("viewTransaction")}
                   >
                     <ExternalLink size={13} />
                   </a>
@@ -139,7 +142,7 @@ export function YourActivityFeed({
                 </svg>
               </button>
               <span className="text-white/40 text-xs tabular-nums px-3 py-1.5 rounded-full bg-white/5">
-                {safePage} of {totalPages}
+                {t("pageOf", { page: safePage, total: totalPages })}
               </span>
               <button
                 type="button"

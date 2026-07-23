@@ -3,8 +3,10 @@
 import React, { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenDisplay";
 import { formatCurrency } from "@/lib/helpers/currency";
+import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 import type { SupportedCurrency } from "@/stores/currency.store";
 import { useMultisigDetection } from "@/features/shared/vault/hooks/useMultisigDetection";
 import { MultisigBanner } from "@/features/shared/vault/components/ui/MultisigBanner";
@@ -91,20 +93,25 @@ function ModeTabs({
   tab,
   onTabChange,
 }: Pick<VaultActionPanelProps, "tab" | "onTabChange">) {
+  const t = useTranslations("sharedVault.actionPanel");
+  const tabs = [
+    { key: "deposit", label: t("depositTab") },
+    { key: "withdraw", label: t("withdrawTab") },
+  ] as const;
   return (
     <div className="flex bg-white/6 rounded-xl p-1 gap-1 mb-4">
-      {(["deposit", "withdraw"] as const).map((t) => (
+      {tabs.map(({ key, label }) => (
         <button
-          key={t}
+          key={key}
           type="button"
-          onClick={() => onTabChange(t)}
+          onClick={() => onTabChange(key)}
           className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors capitalize ${
-            tab === t
+            tab === key
               ? "bg-[#229EDF] text-white"
               : "text-white/50 hover:text-white/80"
           }`}
         >
-          {t}
+          {label}
         </button>
       ))}
     </div>
@@ -182,6 +189,7 @@ function AmountInputCard({
   maxAmount: string;
   hasAmount: boolean;
 }) {
+  const t = useTranslations("sharedVault.actionPanel");
   return (
     <div
       className={`rounded-2xl border p-4 transition-colors ${
@@ -191,7 +199,9 @@ function AmountInputCard({
     >
       <div className="flex items-center justify-between mb-3">
         <span className="text-white/60 text-sm font-medium">
-          {tab === "deposit" ? "Deposit" : "Withdraw"} {supplyLabel}
+          {tab === "deposit"
+            ? t("depositLabel", { symbol: supplyLabel })
+            : t("withdrawLabel", { symbol: supplyLabel })}
         </span>
         <TokenIcon src={supplyIconSrc} alt={supplyLabel} size={28} />
       </div>
@@ -223,7 +233,7 @@ function AmountInputCard({
             onClick={() => onAmountChange(maxAmount)}
             className="px-2.5 py-1 rounded-lg bg-white/10 text-white/60 text-xs font-semibold hover:bg-white/15 transition-colors"
           >
-            MAX
+            {t("max")}
           </button>
         </div>
       </div>
@@ -256,30 +266,31 @@ function DepositSummary({
   projectedYearly: number;
   selectedCurrency: SupportedCurrency;
 }) {
+  const t = useTranslations("sharedVault.actionPanel");
   return (
     <div
       className="rounded-2xl border border-white/5 px-4 py-3.5 space-y-3.5"
       style={{ background: "#1a1a1a" }}
     >
       <InfoRow
-        label="Network"
+        label={t("network")}
         value={
           <div className="flex items-center gap-1.5">
             <Image
               src="/assets/xlm-negro-logo.png"
-              alt="Stellar"
+              alt={t("stellarAlt")}
               width={14}
               height={14}
               unoptimized
               className="w-3.5 h-3.5 rounded-sm invert"
             />
-            <span className="text-white/80 font-medium">Stellar</span>
+            <span className="text-white/80 font-medium">{t("stellar")}</span>
           </div>
         }
       />
 
       <ArrowRow
-        label={`Deposit (${supplyLabel})`}
+        label={t("depositArrowRow", { symbol: supplyLabel })}
         icon={<TokenIcon src={supplyIconSrc} alt={supplyLabel} size={16} />}
         from={formatBalance(currentDeposited)}
         to={formatBalance(newDepositedTotal)}
@@ -287,19 +298,19 @@ function DepositSummary({
       />
 
       {hasInsufficientBalance && (
-        <p className="text-red-400 text-xs">Insufficient balance</p>
+        <p className="text-red-400 text-xs">{t("insufficientBalance")}</p>
       )}
 
       {apyNum != null && (
         <InfoRow
-          label="APY"
+          label={t("apy")}
           value={<span className="text-white font-semibold">{apy}</span>}
         />
       )}
 
       {apyNum != null && (
         <InfoRow
-          label="Projected monthly earnings"
+          label={t("projectedMonthly")}
           value={
             <AnimatedValue
               value={formatCurrency(projectedMonthly, selectedCurrency, 2)}
@@ -311,7 +322,7 @@ function DepositSummary({
 
       {apyNum != null && (
         <InfoRow
-          label="Projected yearly earnings"
+          label={t("projectedYearly")}
           value={
             <AnimatedValue
               value={formatCurrency(projectedYearly, selectedCurrency, 2)}
@@ -343,11 +354,9 @@ function PositionSummaryCard({
   onClaimEarnings?: () => Promise<void>;
   isClaimingEarnings?: boolean;
 }) {
-  const fmt = (n: number) =>
-    n.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  const t = useTranslations("sharedVault.actionPanel");
+  const { formatNumber } = useLocaleFormatter();
+  const fmt = (n: number) => formatNumber(n, 2);
 
   const currency = selectedCurrency as Parameters<typeof formatCurrency>[1];
 
@@ -358,12 +367,12 @@ function PositionSummaryCard({
     >
       <div className="flex items-center">
         <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
-          Your Position
+          {t("yourPosition")}
         </span>
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-white/50 text-sm">Deposited</span>
+        <span className="text-white/50 text-sm">{t("deposited")}</span>
         <span className="text-white font-semibold text-sm tabular-nums">
           {fmt(netDeposited)}{" "}
           <span className="text-white/50 font-normal">{assetSymbol}</span>
@@ -371,7 +380,7 @@ function PositionSummaryCard({
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <span className="text-white/50 text-sm shrink-0">Earnings</span>
+        <span className="text-white/50 text-sm shrink-0">{t("earnings")}</span>
         <div className="flex items-center gap-2">
           <div className="text-right">
             {tokenPrice > 0 ? (
@@ -402,10 +411,10 @@ function PositionSummaryCard({
               {isClaimingEarnings ? (
                 <>
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  Claiming…
+                  {t("claiming")}
                 </>
               ) : (
-                "Claim"
+                t("claim")
               )}
             </button>
           )}
@@ -413,7 +422,7 @@ function PositionSummaryCard({
       </div>
 
       <div className="flex items-center justify-between pt-2 border-t border-white/5">
-        <span className="text-white/50 text-sm">Current Value</span>
+        <span className="text-white/50 text-sm">{t("currentValue")}</span>
         <div className="text-right">
           <p className="text-sm tabular-nums font-semibold">
             <span className="text-green-400">{fmt(currentValue)}</span>
@@ -449,6 +458,7 @@ export function VaultActionPanel({
   onClaimEarnings,
   isClaimingEarnings,
 }: VaultActionPanelProps) {
+  const t = useTranslations("sharedVault.actionPanel");
   const { data: multisigInfo } = useMultisigDetection();
   const supplyLabel = vault.supplyAsset.symbol;
   const hasAmount = !!amount && parseFloat(amount) > 0;
@@ -494,10 +504,10 @@ export function VaultActionPanel({
 
   const ctaLabel =
     multisigInfo?.isMultisig && isWalletConnected
-      ? "Send to Lobstr Vault"
+      ? t("sendToLobstrVault")
       : tab === "deposit"
-        ? `Deposit ${supplyLabel}`
-        : `Withdraw ${supplyLabel}`;
+        ? t("depositSymbol", { symbol: supplyLabel })
+        : t("withdrawSymbol", { symbol: supplyLabel });
 
   return (
     <div className="flex flex-col gap-3">
@@ -523,7 +533,7 @@ export function VaultActionPanel({
       />
 
       {(depositExceedsBalance || withdrawExceedsBalance) && (
-        <p className="text-red-400 text-xs px-1">Insufficient balance</p>
+        <p className="text-red-400 text-xs px-1">{t("insufficientBalance")}</p>
       )}
 
       {tab === "deposit" && (
@@ -564,10 +574,12 @@ export function VaultActionPanel({
         {isLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            {tab === "deposit" ? `Depositing ${supplyLabel}…` : "Withdrawing…"}
+            {tab === "deposit"
+              ? t("depositingSymbol", { symbol: supplyLabel })
+              : t("withdrawing")}
           </>
         ) : !isWalletConnected ? (
-          "Connect wallet"
+          t("connectWallet")
         ) : (
           ctaLabel
         )}
@@ -575,9 +587,7 @@ export function VaultActionPanel({
 
       {isLoading && (
         <p className="text-white/40 text-xs text-center mt-1">
-          {isConfirming
-            ? "Confirming on network…"
-            : "Please confirm in your wallet"}
+          {isConfirming ? t("confirmingOnNetwork") : t("confirmInWallet")}
         </p>
       )}
     </div>

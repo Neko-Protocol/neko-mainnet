@@ -1,3 +1,226 @@
 {
-  "sharedVault": {}
+  "sharedVault": {
+    "tabs": {
+      "vaults": "Vaults",
+      "positions": "My Positions"
+    },
+    "list": {
+      "title": "Vaults",
+      "subtitle": "Put your assets to work and earn yield on Stellar",
+      "badge": "Earn yield",
+      "illustrationAlt": "Vault illustration",
+      "allAssets": "All assets",
+      "fetchingMore": "Fetching more vaults",
+      "noVaultsFound": "No vaults found",
+      "tryAdjustingFilters": "Try adjusting your filters",
+      "errorMissingApiKey": "Set DEFINDEX_API_KEY in .env.local (server-only). DeFindex returns 403 without it.",
+      "errorUnsupportedNetwork": "Unsupported network. DeFindex requires Stellar Mainnet.",
+      "errorNoVaultIds": "Set DEFINDEX_VAULT_IDS or NEXT_PUBLIC_DEFINDEX_VAULT_IDS with vault contract addresses.",
+      "errorFetchFailed": "DeFindex API: {message} (vault {contractId}…). Check DEFINDEX_API_KEY and network."
+    },
+    "card": {
+      "categoryLending": "Lending",
+      "categoryRwa": "RWA",
+      "categoryAmm": "AMM",
+      "categoryStaking": "Staking",
+      "supply": "Supply",
+      "on": "on",
+      "stellarAlt": "Stellar",
+      "createdBy": "Created by",
+      "tvl": "TVL",
+      "apy": "APY",
+      "depositInto": "Deposit into {name}",
+      "withdrawFrom": "Withdraw from {name}",
+      "deposit": "Deposit",
+      "withdraw": "Withdraw"
+    },
+    "detail": {
+      "notFoundTitle": "Vault not found",
+      "notFoundDescription": "Could not load vault data. The vault ID may be invalid or the API may be unavailable.",
+      "backToVaults": "← Back to Vaults",
+      "loadingAriaLabel": "Loading vault",
+      "aboutTab": "About the Vault",
+      "actionsTab": "Actions",
+      "actionsAriaLabel": "Vault actions"
+    },
+    "info": {
+      "liquidity": "Liquidity",
+      "strategyAllocations": "Strategy allocations",
+      "strategyAllocationsDescription": "Amounts deployed per strategy contract from total managed funds.",
+      "paused": "Paused",
+      "assetPrefix": "Asset {symbol}",
+      "contracts": "Contracts",
+      "vault": "Vault",
+      "pools": "Pools",
+      "strategies": "Strategies",
+      "copyAddress": "Copy {label} address",
+      "copyContractAddress": "Copy contract address"
+    },
+    "metrics": {
+      "tvl": "TVL",
+      "apy": "APY",
+      "supplyAsset": "Supply Asset",
+      "createdBy": "Created by"
+    },
+    "modal": {
+      "closeModal": "Close modal",
+      "close": "Close",
+      "apySuffix": "{apy} APY",
+      "tvlPrefix": "TVL {tvl}",
+      "liquidity": "Liquidity",
+      "strategyAllocations": "Strategy allocations",
+      "strategyAllocationsDescription": "Amounts deployed per strategy contract (from total managed funds). The API does not list separate AMM pool addresses — liquidity is routed through these strategies.",
+      "paused": "Paused",
+      "assetPrefix": "Asset {symbol}",
+      "contracts": "Contracts",
+      "vault": "Vault",
+      "pools": "Pools",
+      "strategies": "Strategies",
+      "deposit": "Deposit",
+      "copyAddress": "Copy {label} address",
+      "depositInto": "Deposit into {name}"
+    },
+    "action": {
+      "balanceLabel": "{symbol} Balance",
+      "max": "Max",
+      "slippageTolerance": "Slippage tolerance",
+      "network": "Network",
+      "stellarMainnet": "Stellar Mainnet",
+      "autoInvest": "Auto-invest",
+      "yes": "Yes",
+      "deposit": "Deposit",
+      "withdraw": "Withdraw",
+      "depositingSymbol": "Depositing {symbol}…",
+      "withdrawing": "Withdrawing…",
+      "depositSymbol": "Deposit {symbol}",
+      "processingDeposit": "Processing deposit…",
+      "processingWithdrawal": "Processing withdrawal…",
+      "confirmInWallet": "Please confirm in your wallet",
+      "depositSuccessToast": "Successfully deposited {amount} {symbol}"
+    },
+    "positions": {
+      "connectWallet": "Connect your wallet to see your vault positions",
+      "noPositions": "You don't have any vault positions yet.",
+      "title": "Your Vault Positions",
+      "vault": "Vault",
+      "asset": "Asset",
+      "deposited": "Deposited",
+      "depositedTooltip": "The total amount you have deposited, not including earnings.",
+      "earnings": "Earnings",
+      "earningsTooltip": "The profit you have earned since your first deposit.",
+      "currentValue": "Current Value",
+      "currentValueTooltip": "Your current balance including all earnings generated so far.",
+      "apy": "APY",
+      "apyTooltip": "Annual Percentage Yield — the estimated yearly return based on the last 7 days of vault activity.",
+      "claimEarnings": "Claim Earnings"
+    },
+    "summary": {
+      "title": "Portfolio Summary",
+      "totalDeposited": "Total Deposited",
+      "totalEarnings": "Total Earnings",
+      "netApy": "Net APY",
+      "projectedYield": "Projected Yield / yr"
+    },
+    "activity": {
+      "title": "Your Activity",
+      "empty": "No activity in this vault yet",
+      "date": "Date",
+      "type": "Type",
+      "amount": "Amount",
+      "viewTransaction": "View transaction",
+      "pageOf": "{page} of {total}",
+      "actionDeposit": "Deposit",
+      "actionWithdraw": "Withdraw",
+      "actionClaim": "Claim"
+    },
+    "earningsCard": {
+      "yourEarnings": "Your earnings",
+      "currentValue": "Current value",
+      "earnedSinceFirstDeposit": "earned since first deposit",
+      "value": "Value",
+      "projectedAt": "Projected at {apy}% APY",
+      "projectedDescription": "Estimated from APY until live history accumulates.",
+      "deposited": "Deposited",
+      "effectiveApy": "Effective APY",
+      "effectiveApyTooltip": "This is your annualized return based on actual earnings since your first deposit. This may differ from the vault's current APY, which reflects today's rate. Effective rate averages over your entire holding period, including earlier periods when the rate may have been different.",
+      "effectiveApyAriaLabel": "More information about Effective APY"
+    },
+    "actionPanel": {
+      "depositTab": "Deposit",
+      "withdrawTab": "Withdraw",
+      "depositLabel": "Deposit {symbol}",
+      "withdrawLabel": "Withdraw {symbol}",
+      "max": "MAX",
+      "network": "Network",
+      "stellar": "Stellar",
+      "stellarAlt": "Stellar",
+      "depositArrowRow": "Deposit ({symbol})",
+      "insufficientBalance": "Insufficient balance",
+      "apy": "APY",
+      "projectedMonthly": "Projected monthly earnings",
+      "projectedYearly": "Projected yearly earnings",
+      "yourPosition": "Your Position",
+      "deposited": "Deposited",
+      "earnings": "Earnings",
+      "claiming": "Claiming…",
+      "claim": "Claim",
+      "currentValue": "Current Value",
+      "sendToLobstrVault": "Send to Lobstr Vault",
+      "depositSymbol": "Deposit {symbol}",
+      "withdrawSymbol": "Withdraw {symbol}",
+      "depositingSymbol": "Depositing {symbol}…",
+      "withdrawing": "Withdrawing…",
+      "connectWallet": "Connect wallet",
+      "confirmingOnNetwork": "Confirming on network…",
+      "confirmInWallet": "Please confirm in your wallet"
+    },
+    "claim": {
+      "claiming": "Claiming…",
+      "claim": "Claim"
+    },
+    "multisigBanner": {
+      "detected": "Multisig wallet detected ({signersRequired}-of-{signersCount} signers required)",
+      "description": "After you sign, the transaction will be sent to <lobstr>Lobstr Vault</lobstr> for co-signer approval. Allow up to a few minutes for the other signers to confirm in the Lobstr Vault mobile app."
+    },
+    "multisigPending": {
+      "deposit": "Deposit",
+      "withdrawal": "Withdrawal",
+      "sentTitle": "Sent to Lobstr Vault",
+      "waiting": "Waiting for co-signer approval",
+      "close": "Close",
+      "hash": "Hash",
+      "copied": "copied",
+      "description": "Open the <lobstr>Lobstr Vault</lobstr> app on your co-signers' devices to review and approve. Once the multisig threshold is met, your transaction will execute automatically. You can close this window — we'll update your balance when it confirms.",
+      "openLobstrVault": "Open Lobstr Vault",
+      "stellarExpert": "Stellar Expert"
+    },
+    "shareOnX": {
+      "button": "Share on X"
+    },
+    "depositSuccess": {
+      "close": "Close",
+      "title": "Deposit successful!",
+      "description": "You've made your first deposit into a Neko vault <vault>{vaultName}</vault>. Your assets are now earning yield.",
+      "shareBannerAlt": "Share banner",
+      "done": "Done"
+    },
+    "errors": {
+      "walletPassphraseUnavailable": "Wallet passphrase not available",
+      "transactionRejectedByNetwork": "Transaction rejected by network: {reason}",
+      "networkCongested": "Network is congested. Please try again in a moment.",
+      "transactionFailedOnChain": "Transaction failed on-chain. Please refresh your balance.",
+      "unexpectedError": "An unexpected error occurred.",
+      "noBalanceToWithdraw": "No vault balance available to withdraw",
+      "withdrawalTooSmall": "Withdrawal amount is too small",
+      "withdrawalExceedsBalance": "Withdrawal amount exceeds vault balance",
+      "noEarningsToClaim": "No earnings to claim yet",
+      "lobstrRejected": "Lobstr Vault rejected the transaction: {error}",
+      "genericErrorTitle": "Something went wrong",
+      "successTitle": "Success"
+    },
+    "toasts": {
+      "withdrawSuccess": "Successfully withdrew {amount} {symbol}",
+      "claimSuccess": "Successfully claimed {amount} {symbol}"
+    }
+  }
 }

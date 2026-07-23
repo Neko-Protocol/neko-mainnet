@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import type { VaultView } from "@/features/shared/vault/types/vault";
 import type { SupportedCurrency } from "@/stores/currency.store";
 import { convertUsdDisplayToSelectedCurrency } from "@/lib/helpers/currency";
@@ -56,6 +57,7 @@ export function VaultDetailMetrics({
   fxRate?: number;
   selectedCurrency?: SupportedCurrency;
 }) {
+  const t = useTranslations("sharedVault.metrics");
   const apyDisplay = liveApy ?? vault.apy7d;
   const tvlDisplay = convertUsdDisplayToSelectedCurrency(
     vault.tvl,
@@ -66,15 +68,15 @@ export function VaultDetailMetrics({
 
   return (
     <div className="flex flex-wrap justify-between gap-y-7 mb-10">
-      <MetricBlock label="TVL">
+      <MetricBlock label={t("tvl")}>
         <MetricValue value={tvlDisplay} />
       </MetricBlock>
 
-      <MetricBlock label="APY">
+      <MetricBlock label={t("apy")}>
         <MetricValue value={apyDisplay} green />
       </MetricBlock>
 
-      <MetricBlock label="Supply Asset">
+      <MetricBlock label={t("supplyAsset")}>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 overflow-hidden shrink-0">
             <Image
@@ -93,7 +95,7 @@ export function VaultDetailMetrics({
       </MetricBlock>
 
       {vault.creatorIconSrc && (
-        <MetricBlock label="Created by">
+        <MetricBlock label={t("createdBy")}>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 overflow-hidden shrink-0">
               <Image
