@@ -1,3 +1,86 @@
 {
-  "expert": {}
+  "expert": {
+    "dashboard": {
+      "banner": {
+        "title": "Panel",
+        "subtitle": "Resumen de tu portafolio, pools y actividad del protocolo",
+        "badge": "Bienvenido de nuevo",
+        "imageAlt": "ilustración del panel"
+      },
+      "quickActions": {
+        "getStarted": "Comienza",
+        "connectPrompt": "Conecta tu wallet para empezar a usar el protocolo",
+        "connectWallet": "Conectar Wallet",
+        "connectDescription": "Intercambia tokens, aporta liquidez y explora activos RWA",
+        "title": "Acciones rápidas",
+        "subtitle": "Entra directo al protocolo",
+        "swapLabel": "Intercambiar Tokens",
+        "swapDescription": "Intercambia tokens al instante",
+        "liquidityLabel": "Agregar Liquidez",
+        "liquidityDescription": "Genera rendimiento en pools",
+        "vaultLabel": "Depositar en Vault",
+        "vaultDescription": "Genera rendimiento en vaults",
+        "discoverLabel": "Explorar Activos",
+        "discoverDescription": "Consulta tokens RWA y precios",
+        "liquidationsLabel": "Liquidaciones",
+        "liquidationsDescription": "Subastas de deuda incobrable"
+      }
+    },
+    "discover": {
+      "discoverMoreOn": "Descubre más en",
+      "buyOn": "Comprar en",
+      "swapOnNeko": "Intercambiar en Neko"
+    },
+    "swap": {
+      "banner": {
+        "title": "Intercambiar Divisas",
+        "subtitle": "Selecciona una opción e intercambia tus divisas",
+        "badge": "Conversión",
+        "imageAlt": "ilustración de intercambio"
+      },
+      "connectPrompt": "Conecta tu wallet para empezar a intercambiar",
+      "from": "Desde",
+      "to": "Hacia",
+      "amount": "Monto",
+      "max": "Máx",
+      "yourBalance": "Tu saldo",
+      "loadingBalance": "...",
+      "loadingPrice": "Cargando…",
+      "amountPlaceholder": "0.00",
+      "selectToken": "Selecciona un token",
+      "swapTokensAriaLabel": "Intercambiar tokens",
+      "slippageTolerance": "Tolerancia de deslizamiento",
+      "comingSoon": "Próximamente",
+      "toasts": {
+        "transactionSuccessTitle": "Transacción exitosa",
+        "transactionSuccessDescription": "El swap se completó con éxito.",
+        "viewOnExplorer": "Ver en Stellar Expert",
+        "swapFailedTitle": "El swap falló",
+        "failedToCompleteSwap": "No se pudo completar el swap"
+      },
+      "orderTypeTabs": {
+        "swap": "Swap",
+        "limit": "Límite",
+        "twap": "TWAP"
+      },
+      "button": {
+        "connectWallet": "Conectar Wallet",
+        "enterAmount": "Ingresa un Monto",
+        "insufficientBalance": "Saldo Insuficiente",
+        "swapCompleted": "¡Swap Completado!",
+        "processing": "Procesando swap…",
+        "swap": "Swap"
+      },
+      "tokenSelector": {
+        "title": "Selecciona un token",
+        "close": "Cerrar",
+        "searchPlaceholder": "Buscar tokens",
+        "yourTokens": "Tus tokens",
+        "popularTokens": "Tokens populares",
+        "noTokensFound": "No se encontraron tokens",
+        "tryDifferentTerm": "Intenta buscar con otro término",
+        "perToken": "por token"
+      }
+    }
+  }
 }

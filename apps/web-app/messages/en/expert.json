@@ -1,3 +1,86 @@
 {
-  "expert": {}
+  "expert": {
+    "dashboard": {
+      "banner": {
+        "title": "Dashboard",
+        "subtitle": "Overview of your portfolio, pools, and protocol activity",
+        "badge": "Welcome back",
+        "imageAlt": "Dashboard illustration"
+      },
+      "quickActions": {
+        "getStarted": "Get Started",
+        "connectPrompt": "Connect your wallet to start using the protocol",
+        "connectWallet": "Connect Wallet",
+        "connectDescription": "Swap tokens, provide liquidity, and explore RWA assets",
+        "title": "Quick Actions",
+        "subtitle": "Jump into the protocol",
+        "swapLabel": "Swap Tokens",
+        "swapDescription": "Exchange tokens instantly",
+        "liquidityLabel": "Add Liquidity",
+        "liquidityDescription": "Earn yield in pools",
+        "vaultLabel": "Deposit in Vault",
+        "vaultDescription": "Earn yield in vaults",
+        "discoverLabel": "Explore Assets",
+        "discoverDescription": "Browse RWA tokens & prices",
+        "liquidationsLabel": "Liquidations",
+        "liquidationsDescription": "Bad debt auctions"
+      }
+    },
+    "discover": {
+      "discoverMoreOn": "Discover more on",
+      "buyOn": "Buy on",
+      "swapOnNeko": "Swap on Neko"
+    },
+    "swap": {
+      "banner": {
+        "title": "Swap Currency",
+        "subtitle": "Select an option and swap your currencies",
+        "badge": "Conversion",
+        "imageAlt": "Swap illustration"
+      },
+      "connectPrompt": "Connect your wallet to start swapping",
+      "from": "From",
+      "to": "To",
+      "amount": "Amount",
+      "max": "Max",
+      "yourBalance": "Your balance",
+      "loadingBalance": "...",
+      "loadingPrice": "Loading…",
+      "amountPlaceholder": "0.00",
+      "selectToken": "Select token",
+      "swapTokensAriaLabel": "Swap tokens",
+      "slippageTolerance": "Slippage tolerance",
+      "comingSoon": "Coming soon",
+      "toasts": {
+        "transactionSuccessTitle": "Transaction successful",
+        "transactionSuccessDescription": "Swap completed successfully.",
+        "viewOnExplorer": "View on Stellar Expert",
+        "swapFailedTitle": "Swap failed",
+        "failedToCompleteSwap": "Failed to complete swap"
+      },
+      "orderTypeTabs": {
+        "swap": "Swap",
+        "limit": "Limit",
+        "twap": "TWAP"
+      },
+      "button": {
+        "connectWallet": "Connect Wallet",
+        "enterAmount": "Enter Amount",
+        "insufficientBalance": "Insufficient Balance",
+        "swapCompleted": "Swap Completed!",
+        "processing": "Processing swap…",
+        "swap": "Swap"
+      },
+      "tokenSelector": {
+        "title": "Select a token",
+        "close": "Close",
+        "searchPlaceholder": "Search tokens",
+        "yourTokens": "Your tokens",
+        "popularTokens": "Popular tokens",
+        "noTokensFound": "No tokens found",
+        "tryDifferentTerm": "Try searching with a different term",
+        "perToken": "per token"
+      }
+    }
+  }
 }

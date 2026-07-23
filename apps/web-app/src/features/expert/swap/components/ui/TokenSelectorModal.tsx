@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
@@ -181,6 +182,7 @@ function PopularTokenRow({
   isSelected: boolean;
   onClick: () => void;
 }) {
+  const t = useTranslations("expert.swap.tokenSelector");
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
   const { price, isLoading } = useTokenPrice(code);
@@ -203,7 +205,7 @@ function PopularTokenRow({
       isSelected={isSelected}
       onClick={onClick}
       showBalance
-      bottomLabel="per token"
+      bottomLabel={t("perToken")}
       approximate
     />
   );
@@ -215,6 +217,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
   onSelectToken,
   selectedToken,
 }) => {
+  const t = useTranslations("expert.swap.tokenSelector");
   const { balances } = useWallet();
   const availableTokens = useMemo(() => getSwappableTokens(), []);
   const tokenCodes = Object.keys(availableTokens);
@@ -289,11 +292,11 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10 shrink-0">
-            <h2 className="text-lg font-bold text-white">Select a token</h2>
+            <h2 className="text-lg font-bold text-white">{t("title")}</h2>
             <button
               onClick={handleClose}
               className="text-white/40 hover:text-white transition-colors -mr-1"
-              aria-label="Close"
+              aria-label={t("close")}
             >
               <X className="h-5 w-5" />
             </button>
@@ -317,7 +320,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search tokens"
+                placeholder={t("searchPlaceholder")}
                 className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-white/10 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-[#229EDF]/50 transition-colors"
                 autoFocus
               />
@@ -328,7 +331,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
             {userTokens.length > 0 && (
               <div className="mb-6">
                 <h3 className="text-xs font-semibold text-white/50 mb-3 px-2 uppercase tracking-wider">
-                  Your tokens
+                  {t("yourTokens")}
                 </h3>
                 <div className="flex flex-col gap-3">
                   {userTokens.map((code) => {
@@ -359,7 +362,7 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
             {popularTokens.length > 0 && (
               <div>
                 <h3 className="text-xs font-semibold text-white/50 mb-3 px-2 uppercase tracking-wider">
-                  Popular tokens
+                  {t("popularTokens")}
                 </h3>
                 <div className="flex flex-col gap-3">
                   {popularTokens.map((code) => {
@@ -389,9 +392,9 @@ const TokenSelectorModal: React.FC<TokenSelectorModalProps> = ({
 
             {filteredTokens.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-white/60 text-sm">No tokens found</p>
+                <p className="text-white/60 text-sm">{t("noTokensFound")}</p>
                 <p className="text-white/40 text-xs mt-2">
-                  Try searching with a different term
+                  {t("tryDifferentTerm")}
                 </p>
               </div>
             )}

@@ -10,44 +10,46 @@ import {
   Gavel,
   Vault,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useWallet } from "@/hooks/useWallet";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { stellarNetwork } from "@/lib/constants/network";
 
 const allActions = [
   {
-    label: "Swap Tokens",
-    description: "Exchange tokens instantly",
+    labelKey: "swapLabel",
+    descriptionKey: "swapDescription",
     href: "/swap",
     icon: ArrowLeftRight,
   },
   {
-    label: "Add Liquidity",
-    description: "Earn yield in pools",
+    labelKey: "liquidityLabel",
+    descriptionKey: "liquidityDescription",
     href: "/pools",
     icon: Droplets,
   },
   {
-    label: "Deposit in Vault",
-    description: "Earn yield in vaults",
+    labelKey: "vaultLabel",
+    descriptionKey: "vaultDescription",
     href: "/vaults",
     icon: Vault,
   },
   {
-    label: "Explore Assets",
-    description: "Browse RWA tokens & prices",
+    labelKey: "discoverLabel",
+    descriptionKey: "discoverDescription",
     href: "/discover",
     icon: Compass,
   },
   {
-    label: "Liquidations",
-    description: "Bad debt auctions",
+    labelKey: "liquidationsLabel",
+    descriptionKey: "liquidationsDescription",
     href: "/borrowing?tab=liquidations",
     icon: Gavel,
   },
 ] as const;
 
 const QuickActions: React.FC = () => {
+  const t = useTranslations("expert.dashboard.quickActions");
   const { address } = useWallet();
   const { connect } = useStellarWallet();
 
@@ -62,11 +64,9 @@ const QuickActions: React.FC = () => {
     return (
       <div className="w-full">
         <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
-          Get Started
+          {t("getStarted")}
         </h2>
-        <p className="text-white/40 text-sm mb-5">
-          Connect your wallet to start using the protocol
-        </p>
+        <p className="text-white/40 text-sm mb-5">{t("connectPrompt")}</p>
         <button
           type="button"
           onClick={() => void connect()}
@@ -74,9 +74,11 @@ const QuickActions: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-semibold text-sm">Connect Wallet</p>
+              <p className="text-white font-semibold text-sm">
+                {t("connectWallet")}
+              </p>
               <p className="text-white/40 text-xs mt-1">
-                Swap tokens, provide liquidity, and explore RWA assets
+                {t("connectDescription")}
               </p>
             </div>
             <ArrowRight className="h-5 w-5 text-white/40" />
@@ -89,9 +91,9 @@ const QuickActions: React.FC = () => {
   return (
     <div className="w-full">
       <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
-        Quick Actions
+        {t("title")}
       </h2>
-      <p className="text-white/40 text-sm mb-5">Jump into the protocol</p>
+      <p className="text-white/40 text-sm mb-5">{t("subtitle")}</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         {actions.map((action) => (
           <Link
@@ -103,9 +105,9 @@ const QuickActions: React.FC = () => {
               <action.icon className="h-5 w-5" />
             </div>
             <h3 className="text-white font-semibold text-sm mb-1">
-              {action.label}
+              {t(action.labelKey)}
             </h3>
-            <p className="text-white/40 text-xs">{action.description}</p>
+            <p className="text-white/40 text-xs">{t(action.descriptionKey)}</p>
           </Link>
         ))}
       </div>

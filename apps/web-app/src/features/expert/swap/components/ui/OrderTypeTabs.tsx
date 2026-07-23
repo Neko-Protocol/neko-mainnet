@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslations } from "next-intl";
 
 export type OrderType = "swap" | "limit" | "twap";
 
@@ -11,6 +12,7 @@ export const OrderTypeTabs: React.FC<OrderTypeTabsProps> = ({
   orderType,
   onOrderTypeChange,
 }) => {
+  const t = useTranslations("expert.swap");
   return (
     <div className="flex gap-2 mb-6">
       <button
@@ -21,21 +23,21 @@ export const OrderTypeTabs: React.FC<OrderTypeTabsProps> = ({
             : "text-gray-400 hover:text-gray-300"
         }`}
       >
-        Swap
+        {t("orderTypeTabs.swap")}
       </button>
       <button
         disabled
         className="px-5 py-2.5 text-base font-semibold rounded-lg text-gray-600 cursor-not-allowed opacity-40"
-        title="Coming soon"
+        title={t("comingSoon")}
       >
-        Limit
+        {t("orderTypeTabs.limit")}
       </button>
       <button
         disabled
         className="px-5 py-2.5 text-base font-semibold rounded-lg text-gray-600 cursor-not-allowed opacity-40"
-        title="Coming soon"
+        title={t("comingSoon")}
       >
-        TWAP
+        {t("orderTypeTabs.twap")}
       </button>
     </div>
   );
