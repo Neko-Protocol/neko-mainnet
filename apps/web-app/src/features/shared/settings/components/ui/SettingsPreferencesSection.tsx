@@ -3,6 +3,7 @@
 import React from "react";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { CurrencySelector } from "@/components/navigation/CurrencySelector";
+import { LanguageSelector } from "@/components/navigation/LanguageSelector";
 
 export interface SettingsPreferencesSectionProps {
   open?: boolean;
@@ -23,7 +24,10 @@ export function SettingsPreferencesSection({
       onToggle={onToggle}
       icon={icon}
     >
-      <CurrencySelector embedded />
+      <div className="flex flex-col gap-3">
+        <CurrencySelector embedded />
+        <LanguageSelector embedded />
+      </div>
     </SectionCard>
   );
 }

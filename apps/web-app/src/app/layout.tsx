@@ -1,10 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Analytics } from "@vercel/analytics/next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import "@stellar/design-system/build/styles.min.css";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ReferralCapture } from "@/features/shared/referral/components/ReferralCapture";
 import { DAPP_PUBLIC_ORIGIN, DAPP_SOCIAL_CARD_IMAGE } from "@/lib/share";
+import type { Locale } from "@/i18n/config";
 
 const ROOT_TITLE = "Neko Protocol";
 const ROOT_DESCRIPTION =
@@ -12,62 +15,76 @@ const ROOT_DESCRIPTION =
 
 const SOCIAL_CARD_ALT = "Neko Protocol - Real yield from RWAs on Stellar";
 
+// OG locale tags per BCP 47 region conventions; es maps to es_MX pending
+// confirmation of the primary Spanish-speaking target market.
+const OPEN_GRAPH_LOCALE: Record<Locale, string> = {
+  en: "en_US",
+  es: "es_MX",
+};
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
 
-export const metadata: Metadata = {
-  metadataBase: new URL(DAPP_PUBLIC_ORIGIN),
-  title: ROOT_TITLE,
-  description: ROOT_DESCRIPTION,
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    title: ROOT_TITLE,
-    description: ROOT_DESCRIPTION,
-    url: "/",
-    siteName: ROOT_TITLE,
-    locale: "en_US",
-    type: "website",
-    images: [
-      {
-        url: DAPP_SOCIAL_CARD_IMAGE,
-        width: 1200,
-        height: 630,
-        alt: SOCIAL_CARD_ALT,
-        type: "image/png",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: ROOT_TITLE,
-    description: ROOT_DESCRIPTION,
-    site: "@NekoProto",
-    creator: "@NekoProto",
-    images: [
-      {
-        url: DAPP_SOCIAL_CARD_IMAGE,
-        width: 1200,
-        height: 630,
-        alt: SOCIAL_CARD_ALT,
-        type: "image/png",
-      },
-    ],
-  },
-  robots: { index: true, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = (await getLocale()) as Locale;
 
-export default function RootLayout({
+  return {
+    metadataBase: new URL(DAPP_PUBLIC_ORIGIN),
+    title: ROOT_TITLE,
+    description: ROOT_DESCRIPTION,
+    alternates: {
+      canonical: "/",
+    },
+    openGraph: {
+      title: ROOT_TITLE,
+      description: ROOT_DESCRIPTION,
+      url: "/",
+      siteName: ROOT_TITLE,
+      locale: OPEN_GRAPH_LOCALE[locale] ?? OPEN_GRAPH_LOCALE.en,
+      type: "website",
+      images: [
+        {
+          url: DAPP_SOCIAL_CARD_IMAGE,
+          width: 1200,
+          height: 630,
+          alt: SOCIAL_CARD_ALT,
+          type: "image/png",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ROOT_TITLE,
+      description: ROOT_DESCRIPTION,
+      site: "@NekoProto",
+      creator: "@NekoProto",
+      images: [
+        {
+          url: DAPP_SOCIAL_CARD_IMAGE,
+          width: 1200,
+          height: 630,
+          alt: SOCIAL_CARD_ALT,
+          type: "image/png",
+        },
+      ],
+    },
+    robots: { index: true, follow: true },
+  };
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <head>
         <link
           rel="stylesheet"
@@ -75,10 +92,12 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>
-          <ReferralCapture />
-          {children}
-        </Providers>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <Providers>
+            <ReferralCapture />
+            {children}
+          </Providers>
+        </NextIntlClientProvider>
         <Analytics />
       </body>
     </html>
