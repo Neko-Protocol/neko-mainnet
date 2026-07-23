@@ -11,7 +11,8 @@ import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useToast } from "@/hooks/useToast";
 import { getPaymentTokenForAsset } from "@/lib/constants/buy.config";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenDisplay";
-import { extractContractErrorOrNull } from "@neko/orchestrator";
+import { extractContractError, getGenericErrorCode } from "@neko/orchestrator";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
 export interface BuyFormState {
@@ -35,6 +36,7 @@ export function useBuyForm(
   targetSymbol: string
 ): BuyFormState & BuyFormActions {
   const t = useTranslations("basic");
+  const getErrorMessage = useApiErrorMessage();
   const { address, networkPassphrase, refetchBalances } = useWallet();
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
@@ -107,14 +109,10 @@ export function useBuyForm(
     } catch (err) {
       if (err instanceof Error && err.message === "USER_REJECTED") return;
 
-      const contractError = extractContractErrorOrNull(err);
-      // TODO(i18n/phase5): err.message/contractError are raw backend/contract
-      // strings and stay untranslated until Phase 5 maps them to error codes.
-      const msg = contractError
-        ? t("errors.contractError", { error: contractError })
-        : err instanceof Error
-          ? err.message
-          : t("buyToasts.purchaseFailed");
+      const errorCode = getGenericErrorCode(err);
+      const msg = errorCode
+        ? getErrorMessage(errorCode)
+        : t("errors.contractError", { error: extractContractError(err) });
       addNotification(t("buyToasts.purchaseFailed"), "error", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
@@ -133,6 +131,7 @@ export function useBuyForm(
     refetchBalances,
     queryClient,
     targetSymbol,
+    getErrorMessage,
     t,
   ]);
 

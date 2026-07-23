@@ -3,8 +3,9 @@ import { useTranslations } from "next-intl";
 import type { Token } from "@/lib/helpers/stellar/swap-kit";
 import { getQuote, type QuoteRequest } from "@/lib/helpers/stellar/swap-kit";
 import { formatAmount } from "@/lib/helpers/formatUtils";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit, getGenericErrorCode } from "@neko/orchestrator";
 import { resolveDecimalsForSwapToken } from "@/lib/helpers/auditAssetAmounts";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";
 
 export interface StellarQuoteResult {
@@ -21,6 +22,7 @@ export function useStellarQuote(
   cancelStellarQuote: () => void;
 } {
   const t = useTranslations("sharedSwapEngine.quote");
+  const getErrorMessage = useApiErrorMessage();
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const cancelStellarQuote = useCallback(() => {
@@ -79,9 +81,6 @@ export function useStellarQuote(
         if (error instanceof Error && error.name === "AbortError")
           return { amount: null, error: null };
 
-        // TODO(i18n/phase5): errorMessage may be a raw error string from the
-        // swap-kit/anchor API and stays untranslated until Phase 5 maps it
-        // to a stable error code.
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         const errorWithCode = error as { code?: string } | null;
@@ -94,12 +93,13 @@ export function useStellarQuote(
           return { amount: null, error: t("timeout") };
         }
 
+        const errorCode = getGenericErrorCode(error);
         return {
           amount: null,
-          error: errorMessage || t("failedToGetQuote"),
+          error: errorCode ? getErrorMessage(errorCode) : t("failedToGetQuote"),
         };
       }
-    }, [amountIn, tokenIn, tokenOut, cancelStellarQuote, t]);
+    }, [amountIn, tokenIn, tokenOut, cancelStellarQuote, getErrorMessage, t]);
 
   return { fetchStellarQuote, cancelStellarQuote };
 }

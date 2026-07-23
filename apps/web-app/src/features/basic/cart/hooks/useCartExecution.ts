@@ -11,7 +11,8 @@ import {
   useCartStore,
   type CartItem,
 } from "@/features/basic/cart/stores/cart.store";
-import { extractContractErrorOrNull } from "@neko/orchestrator";
+import { extractContractError, getGenericErrorCode } from "@neko/orchestrator";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
 export type ItemExecutionStatus =
@@ -28,6 +29,7 @@ export interface ItemStatus {
 
 export function useCartExecution() {
   const t = useTranslations("basic");
+  const getErrorMessage = useApiErrorMessage();
   const { address, networkPassphrase, refetchBalances } = useWallet();
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
@@ -87,14 +89,10 @@ export function useCartExecution() {
           break;
         }
 
-        const contractError = extractContractErrorOrNull(err);
-        // TODO(i18n/phase5): err.message/contractError are raw backend/contract
-        // strings and stay untranslated until Phase 5 maps them to error codes.
-        const msg = contractError
-          ? t("errors.contractError", { error: contractError })
-          : err instanceof Error
-            ? err.message
-            : t("errors.transactionFailed");
+        const errorCode = getGenericErrorCode(err);
+        const msg = errorCode
+          ? getErrorMessage(errorCode)
+          : t("errors.contractError", { error: extractContractError(err) });
         setItemStatus(item.id, { status: "error", errorMsg: msg });
       }
     }
@@ -136,6 +134,7 @@ export function useCartExecution() {
     refetchBalances,
     queryClient,
     addNotification,
+    getErrorMessage,
     t,
   ]);
 

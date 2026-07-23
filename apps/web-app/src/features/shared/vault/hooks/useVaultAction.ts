@@ -20,7 +20,11 @@ import {
 import { useMultisigDetection } from "@/features/shared/vault/hooks/useMultisigDetection";
 import { lobstrVaultService } from "@/features/shared/vault/services/lobstr-vault.service";
 import { usePendingMultisigTxsStore } from "@/features/shared/wallet/stores/pendingMultisigTxs.store";
-import { extractContractErrorOrNull } from "@neko/orchestrator";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
+import {
+  extractContractErrorOrNull,
+  getGenericErrorCode,
+} from "@neko/orchestrator";
 import { toSmallestUnit, fromSmallestUnit } from "@neko/orchestrator";
 import {
   applySlippageBps,
@@ -164,6 +168,7 @@ export function useVaultAction(
 ) {
   const t = useTranslations("sharedVault.errors");
   const tToasts = useTranslations("sharedVault.toasts");
+  const getErrorMessage = useApiErrorMessage();
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -328,15 +333,11 @@ export function useVaultAction(
       } catch (err) {
         if (err instanceof Error && err.message === "USER_REJECTED")
           return { success: false, isFirstVaultDeposit: false };
-        // TODO(i18n/phase5): contractMsg/err.message are raw backend/contract
-        // strings and stay untranslated until Phase 5 maps them to error codes.
-        const contractMsg = extractContractErrorOrNull(err);
+        const errorCode = getGenericErrorCode(err);
         showError(
-          typeof contractMsg === "string"
-            ? contractMsg
-            : err instanceof Error
-              ? err.message
-              : t("unexpectedError")
+          errorCode
+            ? getErrorMessage(errorCode)
+            : (extractContractErrorOrNull(err) ?? t("unexpectedError"))
         );
         return { success: false, isFirstVaultDeposit: false };
       } finally {
@@ -355,6 +356,7 @@ export function useVaultAction(
       vaultShareSymbol,
       multisigInfo,
       addPendingMultisig,
+      getErrorMessage,
       t,
     ]
   );
@@ -518,15 +520,11 @@ export function useVaultAction(
       } catch (err) {
         if (err instanceof Error && err.message === "USER_REJECTED")
           return { success: false };
-        // TODO(i18n/phase5): contractMsg/err.message are raw backend/contract
-        // strings and stay untranslated until Phase 5 maps them to error codes.
-        const contractMsg = extractContractErrorOrNull(err);
+        const errorCode = getGenericErrorCode(err);
         showError(
-          typeof contractMsg === "string"
-            ? contractMsg
-            : err instanceof Error
-              ? err.message
-              : t("unexpectedError")
+          errorCode
+            ? getErrorMessage(errorCode)
+            : (extractContractErrorOrNull(err) ?? t("unexpectedError"))
         );
         return { success: false };
       } finally {
@@ -546,6 +544,7 @@ export function useVaultAction(
       vaultShareSymbol,
       multisigInfo,
       addPendingMultisig,
+      getErrorMessage,
       t,
       tToasts,
     ]
@@ -703,15 +702,11 @@ export function useVaultAction(
       } catch (err) {
         if (err instanceof Error && err.message === "USER_REJECTED")
           return { success: false };
-        // TODO(i18n/phase5): contractMsg/err.message are raw backend/contract
-        // strings and stay untranslated until Phase 5 maps them to error codes.
-        const contractMsg = extractContractErrorOrNull(err);
+        const errorCode = getGenericErrorCode(err);
         showError(
-          typeof contractMsg === "string"
-            ? contractMsg
-            : err instanceof Error
-              ? err.message
-              : t("unexpectedError")
+          errorCode
+            ? getErrorMessage(errorCode)
+            : (extractContractErrorOrNull(err) ?? t("unexpectedError"))
         );
         return { success: false };
       } finally {
@@ -731,6 +726,7 @@ export function useVaultAction(
       vaultShareSymbol,
       multisigInfo,
       addPendingMultisig,
+      getErrorMessage,
       t,
       tToasts,
     ]

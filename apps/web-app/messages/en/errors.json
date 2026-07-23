@@ -1,3 +1,113 @@
 {
-  "errors": {}
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "codes": {
+      "ERROR": "Something went wrong. Please try again.",
+      "INTERNAL_SERVER_ERROR": "Something went wrong on our end. Please try again.",
+      "VALIDATION_ERROR": "Some of the information provided is invalid.",
+      "UNAUTHORIZED": "You're not authorized to do that.",
+      "NOT_FOUND": "We couldn't find what you were looking for.",
+      "NOT_CONFIGURED": "This feature isn't available right now.",
+      "DB_ERROR": "Something went wrong saving your data. Please try again.",
+      "NAME_REQUIRED": "A name is required.",
+      "WALLET_REQUIRED": "A wallet address is required.",
+      "INVALID_EMAIL": "Please enter a valid email address.",
+      "INVALID_XDR": "The transaction could not be read. Please try again.",
+      "INVALID_SEGMENT": "That segment is not valid.",
+
+      "BACKEND_PROXY_MISCONFIGURED": "The service is temporarily unavailable. Please try again later.",
+      "BACKEND_UNREACHABLE": "We couldn't reach our servers. Please check your connection and try again.",
+
+      "ETHERFUSE_BOND_YIELDS_UNAVAILABLE": "Bond yield data is temporarily unavailable.",
+
+      "POOL_RATES_FETCH_FAILED": "Pool rates are temporarily unavailable.",
+      "POOL_RATES_INSERT_FAILED": "Pool rates are temporarily unavailable.",
+
+      "INVALID_STACK": "The stacked strategy configuration is invalid.",
+      "INVALID_STACK_KIND": "The stacked strategy type is invalid.",
+      "TOKEN_CODE_REQUIRED": "A token is required.",
+      "INVALID_DESTINATION_KIND": "The destination type is invalid.",
+      "DESTINATION_ID_REQUIRED": "A destination is required.",
+      "RECOMMENDED_CREATE_FAILED": "Couldn't create the recommended strategy.",
+
+      "MISSING_PARAMS": "Some required information is missing.",
+      "INVALID_TOKEN": "This link has expired or is invalid.",
+      "UPDATE_FAILED": "Couldn't save your changes. Please try again.",
+      "EMAIL_SEND_FAILED": "Couldn't send the email. Please try again.",
+
+      "USER_NOT_FOUND": "We couldn't find that user.",
+      "CODE_CREATE_FAILED": "Couldn't create your referral code. Please try again.",
+      "STATS_FAILED": "Couldn't load referral stats. Please try again.",
+      "REFERRED_FAILED": "Couldn't load your referrals. Please try again.",
+      "LEADERBOARD_FAILED": "Couldn't load the leaderboard. Please try again.",
+
+      "INVALID_WALLET": "That wallet address doesn't look right.",
+
+      "NO_EMAILS": "At least one valid email is required.",
+      "CREATE_FAILED": "Couldn't complete the request. Please try again.",
+      "GET_FAILED": "Couldn't load the requested data. Please try again.",
+      "LIST_FAILED": "Couldn't load the list. Please try again.",
+      "ACTIVATION_NOT_FOUND": "Activation not found.",
+      "LIST_PAYABLE_FAILED": "Couldn't load payable participants.",
+      "NOT_MATCHED": "This participant has no matched wallet yet.",
+      "SELF_PAYOUT": "Recipient and paying wallet are the same account.",
+      "UNFUNDED_RECIPIENT": "The recipient account is unfunded and the reward is too small to create it.",
+      "ADMIN_ACCOUNT_NOT_FOUND": "Paying account not found on the network.",
+      "HORIZON_ERROR": "Something went wrong on the network. Please try again.",
+      "SUBMIT_FAILED": "The transaction couldn't be submitted to the network.",
+      "NO_PAYABLE": "No payable participants for this activation.",
+      "SELF_PAYOUT_ONLY": "All participants in this batch pay to the admin wallet.",
+      "ALL_LOCKED": "All eligible participants are already being paid.",
+      "NO_ELIGIBLE": "No participants could be included.",
+      "NOT_PAYING": "This participant isn't currently being paid.",
+      "PARTICIPANT_NOT_FOUND": "Participant not found.",
+      "XDR_MISMATCH": "The signed transaction doesn't match the expected payout.",
+      "ALREADY_PAID": "This participant has already been paid.",
+      "ALREADY_PAYING": "This participant is already being paid.",
+
+      "EMAIL_REQUIRED": "An email address is required.",
+
+      "INVALID_STRATEGY_TYPE": "That strategy type is invalid.",
+      "STRATEGY_CREATE_FAILED": "Couldn't create the strategy. Please try again.",
+      "INVALID_STATUS": "That status is invalid.",
+
+      "NAME_AND_SUBJECT_REQUIRED": "A name and subject are required.",
+      "CAMPAIGN_CREATE_FAILED": "Couldn't create the campaign. Please try again.",
+      "ONLY_DRAFT_EDITABLE": "Only draft campaigns can be edited.",
+      "INVALID_NAME": "That name is invalid.",
+      "INVALID_SUBJECT": "That subject is invalid.",
+      "CAMPAIGN_UPDATE_FAILED": "Couldn't save the campaign. Please try again.",
+      "TVL_UPDATE_FAILED": "Couldn't update the TVL moved. Please try again.",
+      "ALREADY_SENT": "This campaign has already been sent.",
+      "SEND_IN_PROGRESS": "This campaign is already being sent.",
+      "RESEND_NOT_CONFIGURED": "Email sending isn't configured.",
+      "NO_RECIPIENTS": "This segment has no recipients.",
+      "SEND_FAILED": "Couldn't send the campaign. Please try again.",
+
+      "INVITATION_CREATE_FAILED": "Couldn't create the invitation. Please try again.",
+      "INVITATION_ACCEPT_FAILED": "Couldn't accept the invitation. Please try again.",
+
+      "SUBMIT_REJECTED": "This transaction couldn't be submitted. Please try again.",
+      "RPC_ERROR": "We couldn't check the transaction status. Please try again.",
+      "TRANSACTION_FAILED": "The transaction failed on the network.",
+      "DISALLOWED_OPERATION": "This operation isn't allowed.",
+      "PREPARE_REJECTED": "This transaction couldn't be prepared.",
+      "DISALLOWED_CONTRACT": "This contract isn't allowed.",
+
+      "SOROBAN_CONTRACT_ERROR": "The contract rejected this transaction.",
+      "HOST_OBJECT_MISSING": "The transaction referenced data that's no longer available. Please try again.",
+      "INSUFFICIENT_FEE": "The network fee was too low. Please try again.",
+      "BAD_SEQUENCE": "Your account state changed. Please try again.",
+      "SOURCE_ACCOUNT_NOT_FOUND": "Your account wasn't found on the network.",
+      "INSUFFICIENT_BALANCE": "Insufficient balance for this transaction.",
+      "AUTH_FAILED": "Transaction authorization failed.",
+      "SOROBAN_UNKNOWN_ERROR": "The transaction failed. Please try again.",
+
+      "USER_CANCELLED": "Transaction was cancelled.",
+      "INSUFFICIENT_FUNDS": "Insufficient funds for this transaction.",
+      "NETWORK_ERROR": "Network error. Please check your connection and try again.",
+      "SIMULATION_FAILED": "Transaction simulation failed. Please check your inputs and try again.",
+      "UNKNOWN_CONTRACT_ERROR": "Transaction failed. Please try again or contact support if the issue persists."
+    }
+  }
 }

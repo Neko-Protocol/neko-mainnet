@@ -14,7 +14,8 @@ import {
   getSwappableTokens,
   type Token,
 } from "@/lib/helpers/stellar/swap-kit";
-import { extractContractErrorOrNull } from "@neko/orchestrator";
+import { extractContractError, getGenericErrorCode } from "@neko/orchestrator";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import {
   sanitizeAmountInput,
@@ -145,6 +146,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
 
 const Swap: React.FC = () => {
   const t = useTranslations("expert.swap");
+  const getErrorMessage = useApiErrorMessage();
   const { address, network, networkPassphrase, refetchBalances } = useWallet();
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
@@ -297,14 +299,10 @@ const Swap: React.FC = () => {
         return;
       }
 
-      // TODO(i18n/phase5): contractError/err.message are raw backend/contract
-      // strings and stay untranslated until Phase 5 maps them to error codes.
-      const contractError = extractContractErrorOrNull(err);
-      const errorMessage = contractError
-        ? `Contract error: ${contractError}`
-        : err instanceof Error
-          ? err.message
-          : t("toasts.failedToCompleteSwap");
+      const errorCode = getGenericErrorCode(err);
+      const errorMessage = errorCode
+        ? getErrorMessage(errorCode)
+        : t("toasts.contractError", { error: extractContractError(err) });
       addNotification(t("toasts.swapFailedTitle"), "error", {
         ...TOAST_CONFIG.defaultOpts,
         description: errorMessage,

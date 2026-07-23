@@ -1,3 +1,4 @@
+import { ErrorCode } from "@neko/api-contracts";
 import {
   CONTRACT_ERRORS,
   ContractErrorCode,
@@ -40,6 +41,27 @@ function extractContractNameFromError(errorString: string): string | null {
   return null;
 }
 
+function stringifyError(error: unknown): string {
+  if (typeof error === "object" && error !== null) {
+    const errorObj = error as Record<string, unknown>;
+    if (typeof errorObj.message === "string") {
+      return errorObj.message;
+    }
+    if (errorObj.name && errorObj.message) {
+      return `${String(errorObj.name)}: ${String(errorObj.message)}`;
+    }
+    try {
+      const stringified = JSON.stringify(error);
+      return stringified === "{}" || stringified === '{""}'
+        ? "Unknown error"
+        : stringified;
+    } catch {
+      return "An unexpected error occurred";
+    }
+  }
+  return String(error);
+}
+
 export function extractContractError(
   error: unknown,
   contractName?: string
@@ -48,27 +70,7 @@ export function extractContractError(
     return "An unknown error occurred";
   }
 
-  let errorString: string;
-  if (typeof error === "object") {
-    const errorObj = error as Record<string, unknown>;
-    if (typeof errorObj.message === "string") {
-      errorString = errorObj.message;
-    } else if (errorObj.name && errorObj.message) {
-      errorString = `${String(errorObj.name)}: ${String(errorObj.message)}`;
-    } else {
-      try {
-        const stringified = JSON.stringify(error);
-        errorString =
-          stringified === "{}" || stringified === '{""}'
-            ? "Unknown error"
-            : stringified;
-      } catch {
-        errorString = "An unexpected error occurred";
-      }
-    }
-  } else {
-    errorString = String(error);
-  }
+  const errorString = stringifyError(error);
 
   const contractErrorMatch = errorString.match(/Error\(Contract,\s*#(\d+)\)/);
   if (contractErrorMatch) {
@@ -243,4 +245,72 @@ export function extractContractErrorOrNull(
   }
 
   return extractContractError(error, contractName);
+}
+
+/**
+ * Stable error code for the generic (non-catalog) branches of
+ * extractContractError, so callers can localize instead of rendering the
+ * English fallback message directly. Mirrors extractContractError's branch
+ * order so a given error always classifies to the matching code + message
+ * pair. Returns null for a recognized catalog contract error (message is
+ * already specific) or for opaque provider text with no stable meaning.
+ */
+export function getGenericErrorCode(
+  error: unknown,
+  contractName?: string
+): ErrorCode | null {
+  if (!error) return null;
+  if (isUserCancellationError(error)) return ErrorCode.USER_CANCELLED;
+
+  const errorString = stringifyError(error);
+
+  const contractErrorMatch =
+    errorString.match(/Error\(Contract,\s*#(\d+)\)/) ??
+    errorString.match(/HostError:.*Error\(Contract,\s*#(\d+)\)/);
+  if (contractErrorMatch) {
+    const errorCode = parseInt(contractErrorMatch[1], 10);
+    const inferredContract =
+      contractName || extractContractNameFromError(errorString);
+    const known = inferredContract
+      ? getContractError(inferredContract, errorCode)
+      : isValidErrorCode(errorCode)
+        ? CONTRACT_ERRORS[errorCode]
+        : null;
+    return known ? null : ErrorCode.UNKNOWN_CONTRACT_ERROR;
+  }
+
+  if (errorString.includes("simulation failed")) {
+    return ErrorCode.SIMULATION_FAILED;
+  }
+
+  if (
+    errorString.toLowerCase().includes("insufficient funds") ||
+    errorString.toLowerCase().includes("insufficient balance")
+  ) {
+    return ErrorCode.INSUFFICIENT_FUNDS;
+  }
+
+  if (isLikelyTransportError(errorString)) {
+    return ErrorCode.NETWORK_ERROR;
+  }
+
+  const cleanedError = errorString
+    .replace(/Error:/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (
+    cleanedError.length > 150 ||
+    cleanedError.includes("0x") ||
+    cleanedError.includes("wasm")
+  ) {
+    return ErrorCode.UNKNOWN_CONTRACT_ERROR;
+  }
+
+  const finalError = cleanedError || "An unexpected error occurred";
+  if (finalError === "[object Object]" || finalError.includes("[object ")) {
+    return ErrorCode.UNKNOWN_CONTRACT_ERROR;
+  }
+
+  return null;
 }

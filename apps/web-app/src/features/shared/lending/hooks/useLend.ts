@@ -6,7 +6,11 @@ import { useTranslations } from "next-intl";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
-import { extractContractErrorOrNull } from "@neko/orchestrator";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
+import {
+  extractContractErrorOrNull,
+  getGenericErrorCode,
+} from "@neko/orchestrator";
 import { usePools, usePoolAction } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
@@ -22,6 +26,7 @@ import { auditService } from "@/lib/services/audit.service";
 
 export function useLend() {
   const t = useTranslations("sharedLending.toasts");
+  const getErrorMessage = useApiErrorMessage();
   const searchParams = useSearchParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeposit, setIsDeposit] = useState(true);
@@ -254,11 +259,12 @@ export function useLend() {
         );
         closeModal();
       } catch (err) {
-        // TODO(i18n/phase5): extractContractErrorOrNull surfaces a raw
-        // backend/contract error string here — left untranslated pending
-        // Phase 5's stable error-code contract.
-        const msg = extractContractErrorOrNull(err);
-        showError(typeof msg === "string" ? msg : t("unexpectedError"));
+        const errorCode = getGenericErrorCode(err);
+        showError(
+          errorCode
+            ? getErrorMessage(errorCode)
+            : (extractContractErrorOrNull(err) ?? t("unexpectedError"))
+        );
       } finally {
         setIsLoading(false);
       }
@@ -272,6 +278,7 @@ export function useLend() {
       closeModal,
       showError,
       showSuccess,
+      getErrorMessage,
       t,
     ]
   );

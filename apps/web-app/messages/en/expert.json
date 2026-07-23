@@ -56,7 +56,8 @@
         "transactionSuccessDescription": "Swap completed successfully.",
         "viewOnExplorer": "View on Stellar Expert",
         "swapFailedTitle": "Swap failed",
-        "failedToCompleteSwap": "Failed to complete swap"
+        "failedToCompleteSwap": "Failed to complete swap",
+        "contractError": "Contract error: {error}"
       },
       "orderTypeTabs": {
         "swap": "Swap",

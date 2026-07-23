@@ -1,3 +1,113 @@
 {
-  "errors": {}
+  "errors": {
+    "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "codes": {
+      "ERROR": "Algo salió mal. Inténtalo de nuevo.",
+      "INTERNAL_SERVER_ERROR": "Algo salió mal de nuestro lado. Inténtalo de nuevo.",
+      "VALIDATION_ERROR": "Parte de la información proporcionada no es válida.",
+      "UNAUTHORIZED": "No tienes autorización para hacer eso.",
+      "NOT_FOUND": "No pudimos encontrar lo que buscabas.",
+      "NOT_CONFIGURED": "Esta función no está disponible en este momento.",
+      "DB_ERROR": "Algo salió mal al guardar tus datos. Inténtalo de nuevo.",
+      "NAME_REQUIRED": "Se requiere un nombre.",
+      "WALLET_REQUIRED": "Se requiere una dirección de wallet.",
+      "INVALID_EMAIL": "Ingresa un correo electrónico válido.",
+      "INVALID_XDR": "No se pudo leer la transacción. Inténtalo de nuevo.",
+      "INVALID_SEGMENT": "Ese segmento no es válido.",
+
+      "BACKEND_PROXY_MISCONFIGURED": "El servicio no está disponible temporalmente. Inténtalo más tarde.",
+      "BACKEND_UNREACHABLE": "No pudimos conectar con nuestros servidores. Verifica tu conexión e inténtalo de nuevo.",
+
+      "ETHERFUSE_BOND_YIELDS_UNAVAILABLE": "Los datos de rendimiento de bonos no están disponibles temporalmente.",
+
+      "POOL_RATES_FETCH_FAILED": "Las tasas de los pools no están disponibles temporalmente.",
+      "POOL_RATES_INSERT_FAILED": "Las tasas de los pools no están disponibles temporalmente.",
+
+      "INVALID_STACK": "La configuración de la estrategia combinada no es válida.",
+      "INVALID_STACK_KIND": "El tipo de estrategia combinada no es válido.",
+      "TOKEN_CODE_REQUIRED": "Se requiere un token.",
+      "INVALID_DESTINATION_KIND": "El tipo de destino no es válido.",
+      "DESTINATION_ID_REQUIRED": "Se requiere un destino.",
+      "RECOMMENDED_CREATE_FAILED": "No se pudo crear la estrategia recomendada.",
+
+      "MISSING_PARAMS": "Falta información requerida.",
+      "INVALID_TOKEN": "Este enlace expiró o no es válido.",
+      "UPDATE_FAILED": "No se pudieron guardar tus cambios. Inténtalo de nuevo.",
+      "EMAIL_SEND_FAILED": "No se pudo enviar el correo. Inténtalo de nuevo.",
+
+      "USER_NOT_FOUND": "No pudimos encontrar a ese usuario.",
+      "CODE_CREATE_FAILED": "No se pudo crear tu código de referido. Inténtalo de nuevo.",
+      "STATS_FAILED": "No se pudieron cargar las estadísticas de referidos. Inténtalo de nuevo.",
+      "REFERRED_FAILED": "No se pudieron cargar tus referidos. Inténtalo de nuevo.",
+      "LEADERBOARD_FAILED": "No se pudo cargar la tabla de posiciones. Inténtalo de nuevo.",
+
+      "INVALID_WALLET": "Esa dirección de wallet no parece correcta.",
+
+      "NO_EMAILS": "Se requiere al menos un correo electrónico válido.",
+      "CREATE_FAILED": "No se pudo completar la solicitud. Inténtalo de nuevo.",
+      "GET_FAILED": "No se pudieron cargar los datos solicitados. Inténtalo de nuevo.",
+      "LIST_FAILED": "No se pudo cargar la lista. Inténtalo de nuevo.",
+      "ACTIVATION_NOT_FOUND": "Activación no encontrada.",
+      "LIST_PAYABLE_FAILED": "No se pudieron cargar los participantes pagables.",
+      "NOT_MATCHED": "Este participante aún no tiene una wallet vinculada.",
+      "SELF_PAYOUT": "La wallet receptora y la que paga son la misma cuenta.",
+      "UNFUNDED_RECIPIENT": "La cuenta receptora no tiene fondos y la recompensa es muy baja para crearla.",
+      "ADMIN_ACCOUNT_NOT_FOUND": "No se encontró la cuenta pagadora en la red.",
+      "HORIZON_ERROR": "Algo salió mal en la red. Inténtalo de nuevo.",
+      "SUBMIT_FAILED": "No se pudo enviar la transacción a la red.",
+      "NO_PAYABLE": "No hay participantes pagables para esta activación.",
+      "SELF_PAYOUT_ONLY": "Todos los participantes de este lote pagan a la wallet del administrador.",
+      "ALL_LOCKED": "Todos los participantes elegibles ya están siendo pagados.",
+      "NO_ELIGIBLE": "No se pudo incluir a ningún participante.",
+      "NOT_PAYING": "Este participante no está siendo pagado actualmente.",
+      "PARTICIPANT_NOT_FOUND": "Participante no encontrado.",
+      "XDR_MISMATCH": "La transacción firmada no coincide con el pago esperado.",
+      "ALREADY_PAID": "Este participante ya fue pagado.",
+      "ALREADY_PAYING": "Este participante ya está siendo pagado.",
+
+      "EMAIL_REQUIRED": "Se requiere un correo electrónico.",
+
+      "INVALID_STRATEGY_TYPE": "Ese tipo de estrategia no es válido.",
+      "STRATEGY_CREATE_FAILED": "No se pudo crear la estrategia. Inténtalo de nuevo.",
+      "INVALID_STATUS": "Ese estado no es válido.",
+
+      "NAME_AND_SUBJECT_REQUIRED": "Se requieren un nombre y un asunto.",
+      "CAMPAIGN_CREATE_FAILED": "No se pudo crear la campaña. Inténtalo de nuevo.",
+      "ONLY_DRAFT_EDITABLE": "Solo se pueden editar las campañas en borrador.",
+      "INVALID_NAME": "Ese nombre no es válido.",
+      "INVALID_SUBJECT": "Ese asunto no es válido.",
+      "CAMPAIGN_UPDATE_FAILED": "No se pudo guardar la campaña. Inténtalo de nuevo.",
+      "TVL_UPDATE_FAILED": "No se pudo actualizar el TVL movido. Inténtalo de nuevo.",
+      "ALREADY_SENT": "Esta campaña ya fue enviada.",
+      "SEND_IN_PROGRESS": "Esta campaña ya se está enviando.",
+      "RESEND_NOT_CONFIGURED": "El envío de correos no está configurado.",
+      "NO_RECIPIENTS": "Este segmento no tiene destinatarios.",
+      "SEND_FAILED": "No se pudo enviar la campaña. Inténtalo de nuevo.",
+
+      "INVITATION_CREATE_FAILED": "No se pudo crear la invitación. Inténtalo de nuevo.",
+      "INVITATION_ACCEPT_FAILED": "No se pudo aceptar la invitación. Inténtalo de nuevo.",
+
+      "SUBMIT_REJECTED": "Esta transacción no pudo enviarse. Inténtalo de nuevo.",
+      "RPC_ERROR": "No pudimos verificar el estado de la transacción. Inténtalo de nuevo.",
+      "TRANSACTION_FAILED": "La transacción falló en la red.",
+      "DISALLOWED_OPERATION": "Esta operación no está permitida.",
+      "PREPARE_REJECTED": "Esta transacción no pudo prepararse.",
+      "DISALLOWED_CONTRACT": "Este contrato no está permitido.",
+
+      "SOROBAN_CONTRACT_ERROR": "El contrato rechazó esta transacción.",
+      "HOST_OBJECT_MISSING": "La transacción hacía referencia a datos que ya no están disponibles. Inténtalo de nuevo.",
+      "INSUFFICIENT_FEE": "La comisión de red fue demasiado baja. Inténtalo de nuevo.",
+      "BAD_SEQUENCE": "El estado de tu cuenta cambió. Inténtalo de nuevo.",
+      "SOURCE_ACCOUNT_NOT_FOUND": "No se encontró tu cuenta en la red.",
+      "INSUFFICIENT_BALANCE": "Saldo insuficiente para esta transacción.",
+      "AUTH_FAILED": "Falló la autorización de la transacción.",
+      "SOROBAN_UNKNOWN_ERROR": "La transacción falló. Inténtalo de nuevo.",
+
+      "USER_CANCELLED": "Se canceló la transacción.",
+      "INSUFFICIENT_FUNDS": "Fondos insuficientes para esta transacción.",
+      "NETWORK_ERROR": "Error de red. Verifica tu conexión e inténtalo de nuevo.",
+      "SIMULATION_FAILED": "Falló la simulación de la transacción. Verifica los datos ingresados e inténtalo de nuevo.",
+      "UNKNOWN_CONTRACT_ERROR": "La transacción falló. Inténtalo de nuevo o contacta soporte si el problema persiste."
+    }
+  }
 }
