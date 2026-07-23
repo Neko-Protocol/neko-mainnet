@@ -59,6 +59,7 @@ export default [
       "src/features/shared/discover/**/*.{ts,tsx}",
       "src/features/shared/pools/**/*.{ts,tsx}",
       "src/features/shared/lending/**/*.{ts,tsx}",
+      "src/features/shared/dashboard/**/*.{ts,tsx}",
     ],
     plugins: { i18next },
     rules: {

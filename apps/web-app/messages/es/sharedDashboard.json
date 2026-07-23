@@ -1,3 +1,24 @@
 {
-  "sharedDashboard": {}
+  "sharedDashboard": {
+    "discoverAssets": {
+      "title": "Descubre Activos",
+      "spotIn": "Precio spot en {currency} vía Reflector",
+      "viewAll": "Ver todo",
+      "empty": "No hay activos configurados"
+    },
+    "emailNudge": {
+      "title": "Agrega un correo (opcional)",
+      "body": "Mantente al tanto de tu actividad. Solo lo usaremos para contactarte.",
+      "addEmail": "Agregar correo",
+      "dismissAriaLabel": "Descartar"
+    },
+    "mainStats": {
+      "totalPortfolioValue": "Valor Total del Portafolio",
+      "totalPortfolioValueTooltip": "Suma de posiciones en vaults/pools + activos en tu wallet.",
+      "assetsHeld": "Activos en Cartera",
+      "assetsHeldTooltip": "Número total de activos en tu wallet.",
+      "highestVaultApy": "Mayor APY de Vault",
+      "highestVaultApyTooltip": "Mejor APY disponible entre los vaults de Neko."
+    }
+  }
 }
