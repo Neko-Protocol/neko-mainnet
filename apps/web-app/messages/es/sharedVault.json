@@ -4,6 +4,10 @@
       "vaults": "Vaults",
       "positions": "Mis posiciones"
     },
+    "mapper": {
+      "underlyingAssets": "Vault con {count, plural, one {# activo subyacente} other {# activos subyacentes}}.",
+      "liquidityDescription": "La liquidez depende de las estrategias subyacentes y las reglas del vault de DeFindex."
+    },
     "list": {
       "title": "Vaults",
       "subtitle": "Pon tus activos a trabajar y genera rendimiento en Stellar",

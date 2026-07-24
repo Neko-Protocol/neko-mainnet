@@ -11,6 +11,13 @@ import {
 } from "@/features/shared/vault/utils/vaultAssetArt";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import { getTokenIcon } from "@/lib/helpers/tokenDisplay";
+import type { Locale } from "@/i18n/config";
+
+/** Translator scoped to the "sharedVault.mapper" namespace (see useDefindexVaults.ts). */
+export type MapperTranslator = (
+  key: "underlyingAssets" | "liquidityDescription",
+  values?: Record<string, unknown>
+) => string;
 
 // Per-vault static overrides: contractId → fields that differ from the defaults.
 // Merge order: defaults → STATIC_OVERRIDES[contractId] → derived fields.
@@ -128,18 +135,10 @@ function buildStrategyAllocations(
   return rows.length ? rows : undefined;
 }
 
-// TODO(i18n): this mapper (and the "Vault with N underlying asset(s)."/
-// "Liquidity depends on..." description strings built in
-// defindexInfoToVaultView below) runs inside useDefindexVaults.ts's
-// TanStack Query queryFn, not a React render — it can't call the
-// useFormatter/useTranslations hooks, and locale isn't part of the query
-// key, so switching locale won't re-run it. Fixing this needs threading
-// locale (and a translator) into the query key/queryFn, which is a
-// separate, larger change than the component-level i18n pass this file
-// was touched in.
 function formatTvl(
   info: VaultInfoResponse,
-  priceUsdByAsset: Record<string, number> = {}
+  priceUsdByAsset: Record<string, number> = {},
+  locale: Locale
 ): string {
   const funds = info.totalManagedFunds ?? [];
   if (funds.length === 0) return "-";
@@ -153,7 +152,7 @@ function formatTvl(
   if (sum <= 0) return "-";
   if (sum >= 1_000_000) return `$${formatAmount(sum / 1_000_000)}M`;
   if (sum >= 1_000)
-    return `$${sum.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `$${sum.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   return `$${formatAmount(sum)}`;
 }
 
@@ -163,7 +162,9 @@ function formatTvl(
 export function defindexInfoToVaultView(
   contractId: string,
   info: VaultInfoResponse,
-  priceUsdByAsset: Record<string, number> = {}
+  priceUsdByAsset: Record<string, number> = {},
+  locale: Locale,
+  t: MapperTranslator
 ): VaultView {
   const assets = info.assets ?? [];
   const primary = assets[0];
@@ -218,7 +219,7 @@ export function defindexInfoToVaultView(
     featured: true,
     ...overrides,
     detail: {
-      description: `Vault with ${assets.length} underlying asset(s).`,
+      description: t("underlyingAssets", { count: assets.length }),
       strategies: strategiesFlat,
       contracts: {
         vault: contractId,
@@ -226,14 +227,13 @@ export function defindexInfoToVaultView(
         strategies: strategyRecord,
       },
       strategyAllocations,
-      liquidity:
-        "Liquidity depends on underlying strategies and DeFindex vault rules.",
+      liquidity: t("liquidityDescription"),
     },
   };
 
   return {
     ...config,
-    tvl: formatTvl(info, priceUsdByAsset),
+    tvl: formatTvl(info, priceUsdByAsset, locale),
     apy7d: apyStr,
     utilization: "-",
     totalSupply: "-",

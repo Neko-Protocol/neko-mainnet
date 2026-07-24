@@ -4,6 +4,10 @@
       "vaults": "Vaults",
       "positions": "My Positions"
     },
+    "mapper": {
+      "underlyingAssets": "Vault with {count, plural, one {# underlying asset} other {# underlying assets}}.",
+      "liquidityDescription": "Liquidity depends on underlying strategies and DeFindex vault rules."
+    },
     "list": {
       "title": "Vaults",
       "subtitle": "Put your assets to work and earn yield on Stellar",
