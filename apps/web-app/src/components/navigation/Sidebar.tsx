@@ -9,7 +9,6 @@ import { SidebarLogo } from "./SidebarLogo";
 import { NavItem } from "./NavItem";
 import { ConnectedCard } from "./ConnectedCard";
 import { SetupCard } from "./SetupCard";
-import { LanguageSelector } from "./LanguageSelector";
 
 export const SIDEBAR_WIDTH = "270px";
 
@@ -56,7 +55,6 @@ export function Sidebar() {
         ) : (
           <SetupCard />
         )}
-        <LanguageSelector embedded />
       </div>
     </aside>
   );

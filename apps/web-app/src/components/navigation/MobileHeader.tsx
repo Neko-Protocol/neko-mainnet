@@ -11,7 +11,6 @@ import { useNavItems } from "@/hooks/useNavItems";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { truncateAddress } from "@/lib/utils";
-import { LanguageSelector } from "./LanguageSelector";
 
 const NETWORK = (
   process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET"
@@ -209,9 +208,6 @@ export function MobileHeader() {
               </Link>
             );
           })}
-          <div className="mt-2 px-2">
-            <LanguageSelector embedded />
-          </div>
         </div>
       </div>
     </>
