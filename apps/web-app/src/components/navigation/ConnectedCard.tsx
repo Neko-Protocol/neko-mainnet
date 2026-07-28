@@ -5,8 +5,8 @@ import Link from "next/link";
 import { ArrowRight, LogOut, ShoppingBag } from "lucide-react";
 import { truncateAddress } from "@/lib/utils";
 import { CARD_STYLES, CARD_BUTTON_STYLES } from "./sidebarConfig";
-import { useCartStore } from "@/stores/cart.store";
-import { useUIMode } from "@/hooks/useUIMode";
+import { useCartStore } from "@/features/basic/cart/stores/cart.store";
+import { useUIMode } from "@/features/shared/ui-mode/hooks/useUIMode";
 import { ReferEarnModal } from "@/features/shared/referral/components/ReferEarnModal";
 
 const NETWORK = (
@@ -93,9 +93,7 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
           onClick={() => setReferOpen(true)}
           className="flex w-full items-center justify-between rounded-full bg-[#229EDF] px-5 py-3 text-sm font-semibold text-white cursor-pointer transition-colors hover:bg-[#1e8bc9]"
         >
-          <span className="flex items-center gap-2">
-            Referrals
-          </span>
+          <span className="flex items-center gap-2">Referrals</span>
           <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
         </button>
       </div>

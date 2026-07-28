@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { DiscoverPageLayout } from "@/features/shared/discover/components/pages/DiscoverPageLayout";
 import { BasicAssetPriceCard } from "../ui/BasicAssetPriceCard";
-import { useEtherfuseYields } from "@/features/simulator/hooks/useEtherfuseYields";
+import { useEtherfuseYields } from "@/features/shared/yields/hooks/useEtherfuseYields";
 
 export function BasicDiscoverPage() {
   const { data: yields } = useEtherfuseYields();

@@ -37,14 +37,13 @@ import {
 import { ColHeader } from "./ColHeader";
 import type { PoolData } from "../../types/lending";
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { LENDING_PROTOCOL_LABELS } from "../../constants/protocols";
 
 // ── Protocol icon map ──────────────────────────────────────────────────────────
 
 const PROTOCOL_ICONS: Record<string, string> = {
   neko: "/neko-logo.png",
-  soroswap: "/assets/vault-creators/soroswap.jpg",
   aqua: "https://coin-images.coingecko.com/coins/images/20026/small/aqua-logo.png?1696519446",
   blend: "/assets/vault-creators/blend.png",
 };

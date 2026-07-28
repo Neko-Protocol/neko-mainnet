@@ -2,7 +2,7 @@
 
 import React from "react";
 import { ShieldAlert, ShieldCheck, Clock } from "lucide-react";
-import type { KycStatus } from "@/lib/anchors/types";
+import type { KycStatus } from "@/features/shared/on-off-ramps/types/anchors";
 
 interface KycBannerProps {
   status: KycStatus | undefined;

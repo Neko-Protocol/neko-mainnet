@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { usePoolInfo } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
-import { fromSmallestUnit } from "@/lib/helpers/tokenUtils";
+import { fromSmallestUnit } from "@neko/orchestrator";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolDetailView } from "../types/pools";
 
@@ -31,11 +31,7 @@ export function usePoolDetail(contractId: string | undefined) {
     );
     const apyFormatted = pool.apy > 0 ? `${pool.apy.toFixed(4)}%` : "0.0000%";
     const typeLabel =
-      pool.type === "blend" || pool.type === "neko"
-        ? "Lending"
-        : pool.type === "soroswap"
-          ? "AMM"
-          : pool.type;
+      pool.type === "blend" || pool.type === "neko" ? "Lending" : pool.type;
 
     return {
       ...pool,

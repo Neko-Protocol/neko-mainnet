@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { referralsService } from "@/lib/services/referrals.service";
+import { referralsService } from "@/features/shared/referral/services/referrals.service";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 
 export function useReferralStats() {

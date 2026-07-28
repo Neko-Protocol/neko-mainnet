@@ -18,7 +18,6 @@ export {
   computeBlendEmissionsApy,
   type PoolReserve,
 } from "./adapters/blend-emissions.js";
-export { SoroswapPoolAdapter } from "./adapters/SoroswapPoolAdapter.js";
 export { AquaPoolAdapter } from "./adapters/AquaPoolAdapter.js";
 export * from "./adapters/aqua-config.js";
 export {
@@ -27,3 +26,10 @@ export {
   type AuditActionType,
 } from "./utils/buildPoolAuditPayload.js";
 export { throttledRpc } from "./stellar/rpcThrottle.js";
+export * from "./stellar/amount.js";
+export * from "./stellar/transaction.js";
+export * from "./stellar/tokenUtils.js";
+export * from "./stellar/contractErrors.js";
+export * from "./stellar/contract-errors.js";
+export * from "./stellar/sorobanBalance.js";
+export * from "./stellar/aquaDeposit.js";

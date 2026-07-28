@@ -8,6 +8,26 @@ license: MIT
 
 Refactor bloated agent instruction files (AGENTS.md, CLAUDE.md, COPILOT.md, etc.) to follow **progressive disclosure principles** - keeping essentials at root and organizing the rest into linked, categorized files.
 
+## Neko Repo Override
+
+When this skill is used inside `neko-mainnet`, do **not** create new instruction
+files. The repository intentionally keeps the root agent surface in existing
+files:
+
+- `AGENTS.md` should stay a short Cursor/Codex entry point that points to
+  `CLAUDE.md` for detail.
+- `CLAUDE.md` is the canonical project guide for architecture, commands,
+  environment, and agent routing.
+- Existing skills live under `.agents/skills/`, with `.claude/skills` and
+  `.cursor/skills` symlinked to that directory.
+- The web-app vault skill already exists at
+  `apps/web-app/.claude/skills/vault/SKILL.md`; update it in place when needed.
+
+Progressive disclosure in this repo means shortening and correcting existing
+files, linking to existing skills, and deleting stale guidance. Do not add
+`.claude/*.md`, `docs/agent-instructions/*.md`, or copied skill files unless
+the user explicitly overrides the no-new-files policy.
+
 ---
 
 ## Triggers

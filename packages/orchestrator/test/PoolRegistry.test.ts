@@ -41,9 +41,9 @@ describe("PoolRegistry", () => {
   });
   it("resolves by 'type:rawId' prefix", () => {
     const reg = new PoolRegistry();
-    const a = makeAdapter("soroswap");
+    const a = makeAdapter("aqua");
     reg.register(a);
-    expect(reg.resolve("soroswap:XLM-USDC")).toBe(a);
+    expect(reg.resolve("aqua:XLM-USDC")).toBe(a);
   });
   it("throws PoolNotFoundError when no adapter matches", () => {
     const reg = new PoolRegistry();

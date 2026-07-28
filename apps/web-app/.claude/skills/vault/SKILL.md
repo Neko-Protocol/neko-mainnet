@@ -1,15 +1,17 @@
 ---
 name: vault
-description: Guide for adding new vaults and yield-strategy integrations to the Neko DApp vault feature. Use this skill when the user asks to "add a vault", "register a new DeFindex vault", "integrate a new strategy" (Blend, Aquarius, Soroswap, Neko pool, …), wire up APY/invest endpoints for a new vault, expose a new vault in the UI, or extend `features/vault/**` / `lib/defindex/**` / `app/api/defindex/**` / `app/api/vault/**`. Not for Stellar/Soroban contract authoring (use `stellar-dev`) or for generic TanStack Query questions (use `tanstack-query`).
+description: Guide for adding new DeFindex vaults and yield-strategy integrations to the Neko DApp vault feature. Use this skill when the user asks to "add a vault", "register a new DeFindex vault", "integrate a new strategy" (Blend, Aquarius, SoroSwap, or another external strategy), wire up APY/keeper endpoints for a new vault, expose a new vault in the UI, or extend `apps/web-app/src/features/shared/vault/**`, `apps/backend/src/domains/investing/**`, or `packages/keeper/**`. Not for authoring Neko smart contracts (none are used here) or for generic TanStack Query questions (use `tanstack-query`).
 user-invocable: true
 argument-hint: "[new vault contract id or strategy name]"
 ---
 
 # Vault Feature Integration Skill
 
-Purpose: add a **new DeFindex vault** (or a **new strategy under an existing vault**) to the Neko web app, with correct wiring through contracts → server → hooks → UI, without breaking the existing CETES vault.
+Purpose: add a **new DeFindex vault** (or a **new strategy under an existing vault**) to Neko with correct wiring through generated bindings → backend domains → web hooks → UI, without breaking existing vaults.
 
 This skill reflects the actual codebase layout. When something looks off, prefer reading the referenced file over guessing.
+
+This skill is intentionally stored at `apps/web-app/.claude/skills/vault/SKILL.md` and linked from the root agent docs. Do not copy it into `.agents/skills/` unless the user explicitly asks for a new file. This repo does not use Neko-owned smart contracts; for Stellar RPC, wallet signing, or generated DeFindex/Reflector binding behavior, read `stellar-dev` as well.
 
 ---
 
@@ -17,14 +19,15 @@ This skill reflects the actual codebase layout. When something looks off, prefer
 
 The vault feature is a **DeFindex integration**, not a bespoke contract. Everything the UI shows comes from one of:
 
-1. **DeFindex HTTP API** (via `@defindex/sdk`) catalog-style metadata and quoted APY. Called **server-side** from `/api/defindex/vaults` with `DEFINDEX_API_KEY` (returns 403 without it).
-2. **DeFindex Vault Soroban contract** live on-chain numbers (TVL, shares, allocations, idle) and user actions (deposit/withdraw/rebalance/fees). Called via the typed client `new Client(...)` from `@neko/defindex-vault` (package is `packages/contracts/defindex-vault`, TypeScript bindings generated from the Soroban contract).
-3. **Per-strategy APY sources** each strategy (Neko pool, Aquarius AMM, Soroswap, …) has its own APY source (on-chain getter, public HTTP API, or `null` when unavailable). These are aggregated in `app/api/vault/apy/route.ts` into a weighted vault APY.
+1. **NestJS backend endpoints** reached by the web app through `apps/web-app/src/app/api/backend-proxy/[...path]/route.ts` and `backendClient`. The current public reads are `/v1/defindex/vaults`, `/v1/vault/apy?vault=...`, and `/v1/vault-pps/:vaultId`; the keeper trigger is `POST /v1/vault-invest/run-now`.
+2. **DeFindex HTTP API** (via `@defindex/sdk`) catalog-style metadata. Called server-side from `apps/backend/src/domains/investing/defindex/defindex.service.ts` with `DEFINDEX_API_KEY`.
+3. **DeFindex Vault Soroban contract** live on-chain numbers (TVL, shares, allocations, idle) and user actions (deposit/withdraw/rebalance/fees). Called via the generated typed client `new Client(...)` from `@neko/defindex-vault` (package is `packages/contracts/defindex-vault`).
+4. **Per-strategy APY sources** each external strategy (Blend, Aquarius AMM, SoroSwap, DeFindex-provided data, or partner APIs) has its own APY source. These are aggregated in `apps/backend/src/domains/investing/vault-apy/vault-apy.service.ts`.
 
 Two flows to keep straight:
 
 - **User flow (client-signed):** `VaultActionModal` → `useVaultAction` → `DefindexVaultClient.deposit / withdraw` → user signs via Freighter / Stellar Wallets Kit → RPC. No manager key involved.
-- **Manager flow (server-signed):** `/api/vault/invest` → builds `rebalance` / `report` / `lock_fees` / `distribute_fees` txs and signs with `VAULT_MANAGER_SECRET_KEY`. Only the vault manager can do this; protect the route (Vercel cron header or rate-limit is the current mechanism).
+- **Manager flow (server-signed):** `VaultInvestService` → builds rebalance / fee txs and signs with `VAULT_MANAGER_SECRET_KEY`. The controller exposes only `POST /v1/vault-invest/run-now`; scheduled runs happen from `vault-invest.cron.ts`.
 
 ---
 
@@ -34,14 +37,11 @@ Two flows to keep straight:
 apps/web-app/src/
 ├── app/
 │   ├── (app)/vaults/page.tsx                  # Next route → renders <Vault/>
-│   └── api/
-│       ├── defindex/vaults/route.ts           # GET: DeFindex catalog → VaultView[]
-│       └── vault/
-│           ├── apy/route.ts                   # GET: weighted vault APY + per-strategy APY
-│           └── invest/route.ts                # GET state / POST invest+fees (manager-signed)
-├── features/vault/
+│   └── api/backend-proxy/[...path]/route.ts   # Proxies /v1/* to NestJS backend
+├── features/shared/vault/
 │   ├── components/
 │   │   ├── pages/Vault.tsx                    # Top-level page, orchestrates modals
+│   │   ├── pages/VaultDetail.tsx              # Detail route page
 │   │   └── ui/
 │   │       ├── VaultGrid.tsx
 │   │       ├── VaultCard.tsx
@@ -52,23 +52,30 @@ apps/web-app/src/
 │   │       ├── VaultAssetIllustrations.tsx
 │   │       └── VaultOptimizeBanner.tsx
 │   ├── hooks/
-│   │   ├── useDefindexVaults.ts               # GET /api/defindex/vaults
+│   │   ├── useDefindexVaults.ts               # GET /v1/defindex/vaults
 │   │   ├── useVaultData.ts                    # on-chain TVL + shares + price/share
 │   │   ├── useVaultBalance.ts                 # user dfToken balance
 │   │   ├── useVaultAction.ts                  # deposit / withdraw (signs client-side)
-│   │   ├── useVaultApy.ts                     # GET /api/vault/apy
-│   │   └── useVaultInvest.ts                  # GET state + POST /api/vault/invest
+│   │   ├── useVaultApy.ts                     # GET /v1/vault/apy
+│   │   ├── useVaultInvest.ts                  # POST /v1/vault-invest/run-now
+│   │   └── useVaultPpsHistory.ts              # GET /v1/vault-pps/:vaultId
 │   ├── types/vault.ts                         # VaultConfig / VaultStats / VaultView etc.
 │   └── utils/
 │       ├── vault.ts                           # resolveAssetIcon
-│       └── vaultAssetArt.ts                   # symbol → icon asset paths
-└── lib/defindex/
-    ├── env.ts                                 # DEFINDEX_API_KEY reader
-    ├── network.ts                             # stellarNetwork → SupportedNetworks
-    ├── createServerSdk.ts                     # new DefindexSDK({ apiKey })
-    ├── mapToVaultView.ts                      # VaultInfoResponse → VaultView
-    ├── vaultIds.ts                            # **hard-coded vault contract ids**
-    └── vaultContract.ts                       # resolveVaultIdForApi (allow-list guard)
+│       ├── vaultAssetArt.ts                   # symbol → icon asset paths
+│       ├── mapToVaultView.ts                  # VaultInfoResponse → VaultView
+│       └── vaultIds.ts                        # Re-exports vault id helpers from @neko/keeper
+
+apps/backend/src/domains/investing/
+├── defindex/                                  # GET /v1/defindex/vaults
+├── vault-apy/                                 # GET /v1/vault/apy
+├── vault-invest/                              # POST /v1/vault-invest/run-now + cron
+├── vault-pps/                                 # GET /v1/vault-pps/:vaultId
+└── strategy-catalog/                          # Strategy/vault catalog helpers
+
+packages/keeper/src/
+├── assets/                                    # Asset and vault id config
+└── defindex/                                  # DeFindex SDK/network/rebalance helpers
 ```
 
 Contract client package: `@neko/defindex-vault` (aliased in `apps/web-app/package.json` to workspace package `packages/contracts/defindex-vault`). Import as:
@@ -81,26 +88,29 @@ import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 
 ## Scenario A Add a new DeFindex vault (new contract id)
 
-Do these in order. Each step has a single file to touch.
+Do these in order. Keep each step scoped to the smallest existing file or package
+surface that owns the behavior.
 
 ### 1. Register the vault id
 
-`apps/web-app/src/lib/defindex/vaultIds.ts`
+`apps/web-app/src/features/shared/vault/utils/vaultIds.ts`
 
 ```ts
+// Re-exported from @neko/keeper. Add the source id in:
+// packages/keeper/src/defindex/vaultIds.ts
 const MAINNET_VAULT_IDS = [
-  "CCFWKCD52JNSQLN5OS4F7EG6BPDT4IRJV6KODIEIZLWPM35IKHOKT6S2", // CETES
+  "CB3FUMFGCF6DHSFK6N2TOKHRMYXS34HFKQR45UKVORCRUM35AF3ES7WQ", // EURC
   "C... new vault contract id here ...",
 ];
 ```
 
-That's it `/api/defindex/vaults` iterates all ids via `Promise.allSettled`, so one failing vault does not bring the page down. `resolveVaultIdForApi` uses this same list as an allow-list for the `vault` query param on `/api/vault/apy` and `/api/vault/invest`.
+That's it for catalog visibility. `DefindexService.getVaults()` fetches configured ids in throttled batches, so one failing vault does not bring the page down. `resolveVaultIdForApi` uses the same keeper allow-list for `GET /v1/vault/apy?vault=...` and `POST /v1/vault-invest/run-now?vault=...`.
 
-> If you need per-network ids, split `MAINNET_VAULT_IDS` / `TESTNET_VAULT_IDS` and pick based on `defindexNetworkFromEnv()` (see `lib/defindex/network.ts`). Do **not** read ids from `NEXT_PUBLIC_*` env vars unless you also update `parseDefindexVaultIds` the current code ignores them even though the API hint mentions them.
+> If you need per-network ids, update `packages/keeper/src/defindex/vaultIds.ts` and `packages/keeper/src/defindex/network.ts` together. Do **not** read ids from `NEXT_PUBLIC_*` env vars; vault ids are server/app config, not user-facing settings.
 
 ### 2. Make sure icons exist for the supply/collateral symbols
 
-`apps/web-app/src/features/vault/utils/vaultAssetArt.ts`
+`apps/web-app/src/features/shared/vault/utils/vaultAssetArt.ts`
 
 - Default icon is `/assets/vault-assets/usdc.svg`.
 - Unknown symbols render the default, which looks wrong for new assets.
@@ -110,7 +120,7 @@ That's it `/api/defindex/vaults` iterates all ids via `Promise.allSettled`, so o
 
 ### 3. Override static metadata only if needed
 
-`lib/defindex/mapToVaultView.ts` builds a `VaultView` from the DeFindex `VaultInfoResponse` and currently **hard-codes** some fields: `category: "lending"`, `status: "active"`, `createdBy: "DeFindex"`, `creatorIconSrc: "/defindex-logo.svg"`, `variant: "light"`, `featured: true`, plus human-readable `tvl/apy` strings.
+`features/shared/vault/utils/mapToVaultView.ts` builds a `VaultView` from the DeFindex `VaultInfoResponse` and currently **hard-codes** some fields: `category: "lending"`, `status: "active"`, `createdBy: "DeFindex"`, `creatorIconSrc: "/defindex-logo.svg"`, `variant: "light"`, `featured: true`, plus human-readable `tvl/apy` strings.
 
 If the new vault needs different metadata (e.g. `category: "amm"`, different creator), add a branch keyed off `contractId` inside `defindexInfoToVaultView`, or refactor to look up a small static record first:
 
@@ -125,32 +135,31 @@ Keep the merge order: `defaults → STATIC_OVERRIDES[contractId] → { ...config
 
 ### 4. Update the deposit modal if the underlying asset is not CETES
 
-`apps/web-app/src/features/vault/components/ui/VaultActionModal.tsx` has a **hard-coded** `CETES_CONTRACT` and fetches the user's balance of that specific asset. When you add a vault whose supply asset is not CETES:
+`apps/web-app/src/features/shared/vault/components/ui/VaultActionModal.tsx` may need changes when a vault uses a new supply asset. Verify the balance lookup and displayed symbol are derived from the active `VaultView`, not from a legacy CETES-only constant.
 
-1. Extend `VaultConfig.supplyAsset` (in `features/vault/types/vault.ts`) with a `contractAddress: string` field (currently missing), and populate it from DeFindex in `mapToVaultView.ts` using `asset.address`.
-2. Replace the hard-coded `CETES_CONTRACT` in `VaultActionModal.tsx` with the active vault's `supplyAsset.contractAddress`.
-3. Also update the success toast today it says `"Successfully deposited ${amount} CETES"` inside `useVaultAction.ts`. Pass the symbol in or read it from `VaultView`.
+1. Check `VaultConfig.supplyAsset` in `features/shared/vault/types/vault.ts` and populate any missing contract/symbol data in `mapToVaultView.ts` from DeFindex `asset.address`.
+2. Make sure `VaultActionModal.tsx` reads the active vault's supply asset for balances.
+3. Check `useVaultAction.ts` success/error copy so it uses the vault's displayed symbol.
 
 Skipping this step will silently break balance display for non-CETES vaults.
 
 ### 5. Register new strategy APY sources (if the vault routes to new strategies)
 
-`apps/web-app/src/app/api/vault/apy/route.ts` has per-strategy **address constants** (`NEKO_STRATEGY`, `AQUARIUS_STRATEGY`, `SOROSWAP_STRATEGY`) and per-strategy APY getters (`getNekoApy`, `getAquariusApy`, `getSoroswapApy`). The final `strategies` array is hand-built.
+`apps/backend/src/domains/investing/vault-apy/vault-apy.service.ts` has per-strategy address constants and per-strategy APY getters. The final strategy breakdown is built there.
 
 For each new strategy:
 
-- Add an `ADDR_*` constant at the top with the strategy address.
+- Add a constant or keyed config entry with the strategy address.
 - Add a `getXxxApy(): Promise<number | null>` helper. Return `null` when unavailable the UI handles null cleanly (label: "").
-- Push it into the `strategies` array and include it in the `Promise.all([...])` fetch.
-- The weighted vault APY only counts strategies with a known APY (`knownStrategies = strategies.filter(s => s.apy !== null)`) `null` weights are skipped. This is intentional.
+- Include it in the relevant APY path for that vault. Preserve `null` when unavailable; the UI handles missing per-strategy APY cleanly.
 
 ### 6. Register the strategy for the manager-signed invest route
 
-`apps/web-app/src/app/api/vault/invest/route.ts`
+`packages/keeper/src/defindex/rebalanceConfig.ts` and `apps/backend/src/domains/investing/vault-invest/vault-invest.service.ts`
 
-- Add the strategy address to the top-level `STRATEGIES` array. `investIdle` splits idle funds **evenly** across all entries (remainder goes to the first).
-- If the strategy needs a custom harvest (see `harvestAquarius`), add another helper and call it before `investIdle` in the `POST` handler.
-- The route is rate-limited with a 5-minute cooldown (`COOLDOWN_MS`); Vercel cron is allowed through via the `x-vercel-cron: 1` header. Don't weaken either guard.
+- Add or update the vault's `VaultRebalanceConfig` with strategy addresses and `targetBps` values that sum to 10,000.
+- `VaultInvestService` calls `planVaultRebalance`, sends the `rebalance` transaction, and collects fees. Keep the manual 5-minute cooldown and batch timeout budget intact.
+- Scheduled keeper runs live in `vault-invest.cron.ts`; manual runs go through `POST /v1/vault-invest/run-now`.
 
 ### 7. Verify
 
@@ -161,17 +170,17 @@ npm run lint
 npm run build
 ```
 
-Then, with a testnet vault id and `DEFINDEX_API_KEY` / `VAULT_MANAGER_SECRET_KEY` set in `apps/web-app/.env.local`:
+Then, with a vault id and `DEFINDEX_API_KEY` / `VAULT_MANAGER_SECRET_KEY` set for the backend:
 
 ```bash
 npm run dev
 # open http://localhost:3000/vaults  the new card should render
-curl "http://localhost:3000/api/defindex/vaults" | jq
-curl "http://localhost:3000/api/vault/apy?vault=C..." | jq
-curl "http://localhost:3000/api/vault/invest?vault=C..." | jq
+curl "http://localhost:3000/api/backend-proxy/v1/defindex/vaults" | jq
+curl "http://localhost:3000/api/backend-proxy/v1/vault/apy?vault=C..." | jq
+curl -X POST "http://localhost:3000/api/backend-proxy/v1/vault-invest/run-now?vault=C..." | jq
 ```
 
-Expect two-card grid, non-"" TVL once funds are deposited, and APY values matching the underlying strategies.
+Expect the vault card/list item to render, non-empty TVL once funds are deposited, and APY values matching the underlying strategies.
 
 ---
 
@@ -179,9 +188,9 @@ Expect two-card grid, non-"" TVL once funds are deposited, and APY values matchi
 
 This is simpler than A because the vault id, VaultView and deposit modal all stay the same.
 
-1. **On-chain:** the strategy must already be registered on the DeFindex vault contract and allocated through `rebalance`. That's a Soroban concern use the `stellar-dev` skill if authoring the contract. Nothing in the web-app can wire a strategy that the vault doesn't know about.
-2. **APY source:** add a `getXxxApy()` in `app/api/vault/apy/route.ts` (see Scenario A step 5).
-3. **Manager invest:** append the strategy address to `STRATEGIES` in `app/api/vault/invest/route.ts` (see A step 6). If no pre-invest action is needed, no helper is required.
+1. **On-chain:** the strategy must already be registered on the external DeFindex vault contract and allocated through `rebalance`. This repo cannot author or deploy that contract; nothing in the web-app can wire a strategy that the vault doesn't know about.
+2. **APY source:** add or update the relevant APY getter in `apps/backend/src/domains/investing/vault-apy/vault-apy.service.ts` (see Scenario A step 5).
+3. **Manager invest:** update `packages/keeper/src/defindex/rebalanceConfig.ts` so the vault's target strategies and `targetBps` are correct (see A step 6).
 4. **UI:** nothing to change `VaultDetailModal` reads strategies from `info.assets[].strategies[]` via `mapToVaultView.ts`, so the new strategy shows up automatically.
 
 ---
@@ -190,14 +199,14 @@ This is simpler than A because the vault id, VaultView and deposit modal all sta
 
 Several things are globally shared and will hurt you if you add a second active vault without addressing them:
 
-| Concern                                            | Where                                                 | What to do                                                                                                             |
-| -------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `CETES_CONTRACT` hard-coded for balance            | `VaultActionModal.tsx`                                | Resolve via `supplyAsset.contractAddress` per vault                                                                    |
-| `"Successfully deposited … CETES"`                 | `useVaultAction.ts`                                   | Pass in symbol or read `VaultView.supplyAsset.symbol`                                                                  |
-| Strategy addresses as module-level consts          | `api/vault/apy/route.ts`, `api/vault/invest/route.ts` | Keyed-by-vault map, resolved from the `vault` query param                                                              |
-| `STRATEGIES` even-split invest                     | `api/vault/invest/route.ts`                           | Read current allocations from `fetch_total_managed_funds` and rebalance toward target weights instead of uniform split |
-| 5-minute cooldown shared by all vaults             | `api/vault/invest/route.ts`                           | Key `lastInvest` by `vaultId` (`Map<string, number>`)                                                                  |
-| `CETES` assumed in `vaultHeaderIllustrationAssets` | `utils/vaultAssetArt.ts`                              | Generalize the paired-asset inference or pass the pair through `VaultView.detail`                                      |
+| Concern                                            | Where                                             | What to do                                                                        |
+| -------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Balance asset assumptions                          | `VaultActionModal.tsx`                            | Resolve via the active vault's `supplyAsset` per vault                            |
+| Deposit/withdraw copy                              | `useVaultAction.ts`                               | Pass in symbol or read `VaultView.supplyAsset.symbol`                             |
+| Strategy APY constants                             | `vault-apy.service.ts`                            | Key by vault id or strategy config, resolved from the `vault` query param         |
+| Rebalance targets                                  | `packages/keeper/src/defindex/rebalanceConfig.ts` | Use `targetBps` values that sum to 10,000 and reflect the desired allocations     |
+| Manual keeper cooldown                             | `VaultInvestService`                              | Keep `lastInvest` keyed by `vaultId` (`Map<string, number>`)                      |
+| `CETES` assumed in `vaultHeaderIllustrationAssets` | `utils/vaultAssetArt.ts`                          | Generalize the paired-asset inference or pass the pair through `VaultView.detail` |
 
 Don't land a second mainnet vault without handling the first three rows at minimum.
 
@@ -211,8 +220,9 @@ Don't land a second mainnet vault without handling the first three rows at minim
 ["defindex-vaults"]
 ["vaultData", contractId]
 ["vaultBalance", contractId, address]
-["vault-apy", vaultContractId]
+["vault-apy", vaultId]
 ["vault-invest-status", vaultContractId]
+["vault-pps-history", vaultId]
 ["cetesBalance", address]  // inside VaultActionModal
 ```
 
@@ -243,22 +253,30 @@ function unwrapResult<T>(result: unknown, fallback: T): T {
 
 **Price-per-share.** `pricePerShare = tvl * 1e12 / totalShares`. The `1e12` is a scaling factor to avoid integer-division loss; any userValue computation must divide by `ONE_SHARE = 1_000_000_000_000n` again.
 
-**Network awareness.** `defindexNetworkFromEnv()` maps `PUBLIC → MAINNET`, `TESTNET/FUTURENET/LOCAL → TESTNET`. Treat any other value as unsupported and return `error: "unsupported_network"`.
+**Network awareness.** `defindexNetworkFromString()` maps `PUBLIC`/`MAINNET` to `MAINNET`, and `TESTNET`/`FUTURENET`/`LOCAL` to `TESTNET`. Treat any other value as unsupported and return `error: "unsupported_network"`.
 
 ---
 
 ## Environment variables
 
-Required in `apps/web-app/.env.local`:
+Required for the web app in `apps/web-app/.env.local`:
 
-- `NEXT_PUBLIC_STELLAR_NETWORK` `PUBLIC` or `TESTNET` (others yield "unsupported_network")
+- `NEXT_PUBLIC_STELLAR_NETWORK` `PUBLIC`, `MAINNET`, or `TESTNET` (others may yield "unsupported_network" from backend mapping)
 - `NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE`
 - `NEXT_PUBLIC_STELLAR_RPC_URL`
 - `NEXT_PUBLIC_STELLAR_HORIZON_URL`
-- `DEFINDEX_API_KEY` **server-only**, no `NEXT_PUBLIC_` prefix. Without it `/api/defindex/vaults` returns `error: "missing_defindex_api_key"` and the grid stays empty.
-- `VAULT_MANAGER_SECRET_KEY` **server-only** secret key of the vault manager. `/api/vault/invest` (POST) and `/api/vault/apy` (to simulate with a real account) both need it. If missing, invest returns `503 "Not configured"`.
+- `BACKEND_INTERNAL_URL`
+- `BACKEND_INTERNAL_KEY`
 
-Never expose the manager key or DeFindex key with a `NEXT_PUBLIC_` prefix both are read only inside `app/api/...` server routes.
+Required for the backend:
+
+- `STELLAR_NETWORK`
+- `STELLAR_RPC_URL`
+- `STELLAR_NETWORK_PASSPHRASE`
+- `DEFINDEX_API_KEY` **server-only**, no `NEXT_PUBLIC_` prefix. Without it `/v1/defindex/vaults` returns `error: "missing_defindex_api_key"` and the grid stays empty.
+- `VAULT_MANAGER_SECRET_KEY` **server-only** secret key of the vault manager. Keeper runs use it for `POST /v1/vault-invest/run-now` and scheduled cron execution.
+
+Never expose the manager key or DeFindex key with a `NEXT_PUBLIC_` prefix; both belong only in backend/server environments.
 
 ---
 
@@ -266,7 +284,7 @@ Never expose the manager key or DeFindex key with a `NEXT_PUBLIC_` prefix both a
 
 - **Don't** fetch DeFindex directly from the client the API key is server-only and the SDK assumes a Node environment.
 - **Don't** re-hardcode `CETES_CONTRACT` or any strategy address inside hooks or components. If you find yourself about to, the fix belongs in `VaultConfig`/`VaultDetail` and is plumbed through `VaultView`.
-- **Don't** remove the `x-vercel-cron` check or the `COOLDOWN_MS` gate on `/api/vault/invest` without a replacement without them the route is a public "run manager actions" button.
+- **Don't** weaken the `COOLDOWN_MS` gate, throttling, or internal backend proxy protection around `POST /v1/vault-invest/run-now`; without them the route becomes a public "run manager actions" button.
 - **Don't** assume `info.assets[0].symbol` equals the vault's display symbol always go through `toVaultAsset()` and `normalizeVaultSymbol()` to strip padding.
 - **Don't** call `client.signAndSend()` from the client use the simulate + sign + `server.sendTransaction(...)` pattern from `useVaultAction`.
 - **Don't** throw from React Query hooks' `queryFn` without setting `throwOnError: false` or a retry policy; the vault UI prefers stale data over error toasts on read paths.
@@ -277,11 +295,11 @@ Never expose the manager key or DeFindex key with a `NEXT_PUBLIC_` prefix both a
 
 | Symptom                         | Start here                                                                                                               |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| "Empty grid, no vaults"         | `/api/defindex/vaults` response → `error` field → likely `missing_defindex_api_key` or `no_vault_ids`                    |
+| "Empty grid, no vaults"         | `/v1/defindex/vaults` response → `error` field → likely `missing_defindex_api_key` or `no_vault_ids`                     |
 | "Card shows for TVL"            | `useVaultData.ts` contract call `fetch_total_managed_funds` + `total_supply`. Check it's being enabled (`!!contractId`). |
-| "APY shows "                    | `/api/vault/apy` check `VAULT_MANAGER_SECRET_KEY` set, and each `getXxxApy` helper individually.                         |
+| "APY shows "                    | `/v1/vault/apy` response and each `getXxxApy` helper in `vault-apy.service.ts`.                                          |
 | "Deposit does nothing"          | `useVaultAction.ts` + browser console. Usually wallet passphrase mismatch or slippage math.                              |
-| "Invest cron never runs"        | Vercel `vercel.json` cron header + `x-vercel-cron: 1` check in `invest/route.ts`.                                        |
+| "Invest cron never runs"        | Backend `vault-invest.cron.ts`, `VaultInvestService`, and backend scheduler/logs.                                        |
 | "New symbol shows default icon" | `utils/vaultAssetArt.ts` add entry + drop SVG into `public/assets/vault-assets/`.                                        |
 
-When in doubt, read `features/vault/components/pages/Vault.tsx` it's the orchestrator and shows exactly how the pieces are composed.
+When in doubt, read `features/shared/vault/components/pages/Vault.tsx` it's the orchestrator and shows exactly how the pieces are composed.

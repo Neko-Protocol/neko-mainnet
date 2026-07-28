@@ -1,6 +1,6 @@
 import { Horizon } from "@stellar/stellar-sdk";
 import { stellarNetwork, horizonUrl } from "@/lib/constants/network";
-import { getAvailableTokens } from "@/lib/helpers/stellar/soroswap/tokens";
+import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit/tokens";
 import { getBatchedTokenBalances } from "@/lib/helpers/stellar/sorobanBalance";
 import { formatAmount, parseBalance } from "@/lib/helpers/formatUtils";
 import { horizonNativeBalanceToStroops } from "@/lib/helpers/stellar/stellarAccountReserve";

@@ -9,7 +9,7 @@ import {
   Vault,
   ShoppingCart,
 } from "lucide-react";
-import type { UIMode } from "@/stores/ui-mode.store";
+import type { UIMode } from "@/features/shared/ui-mode/stores/ui-mode.store";
 
 export function getNavItems(
   mode: UIMode | null,

@@ -7,16 +7,16 @@ import {
   getOffRampTransaction,
   submitSignedXdr,
 } from "../utils/rampApi";
-import type { AnchorProvider, OffRampTransaction } from "@/lib/anchors/types";
+import type {
+  AnchorProvider,
+  OffRampTransaction,
+} from "@/features/shared/on-off-ramps/types/anchors";
 import {
   POLL_INTERVAL_MS,
   MAX_POLL_DURATION_MS,
 } from "../constants/ramp.config";
 import { TERMINAL_STATUSES } from "../types/ramp";
-import {
-  extractSignedTxXdr,
-  type SignTransactionFn,
-} from "@/lib/helpers/stellar/transaction";
+import { extractSignedTxXdr, type SignTransactionFn } from "@neko/orchestrator";
 
 type OffRampPhase =
   | "idle"

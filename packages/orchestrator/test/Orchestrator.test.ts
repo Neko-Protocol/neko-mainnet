@@ -16,12 +16,12 @@ function stubAdapter(
   over: Partial<BasePoolAdapter> & { type?: PoolType } = {}
 ): BasePoolAdapter {
   const base: BasePoolAdapter = {
-    type: "soroswap",
+    type: "custom",
     getPoolInfo: vi.fn(
       async () =>
         ({
-          id: "soroswap:x",
-          type: "soroswap",
+          id: "custom:x",
+          type: "custom",
           name: "",
           tokens: [],
           tvl: 0n,
@@ -35,7 +35,7 @@ function stubAdapter(
     getUserPosition: vi.fn(
       async () =>
         ({
-          poolId: "soroswap:x",
+          poolId: "custom:x",
           deposited: 0n,
           depositedFormatted: "0",
           rewards: 0n,
@@ -63,7 +63,7 @@ describe("Orchestrator", () => {
     const reg = new PoolRegistry();
     const adapter = stubAdapter();
     reg.register(adapter);
-    await new Orchestrator(reg).deposit("soroswap:XLM-USDC", "G...", 100n);
+    await new Orchestrator(reg).deposit("custom:XLM-USDC", "G...", 100n);
     expect(adapter.deposit).toHaveBeenCalled();
   });
 
@@ -71,7 +71,7 @@ describe("Orchestrator", () => {
     const reg = new PoolRegistry();
     reg.register(stubAdapter());
     await expect(
-      new Orchestrator(reg).borrow("soroswap:x", "G", 1n)
+      new Orchestrator(reg).borrow("custom:x", "G", 1n)
     ).rejects.toBeInstanceOf(UnsupportedActionError);
   });
 
@@ -79,11 +79,11 @@ describe("Orchestrator", () => {
     const reg = new PoolRegistry();
     reg.register(
       stubAdapter({
-        type: "soroswap",
+        type: "custom",
         listPools: vi.fn(async () => [
           {
-            id: "soroswap:a",
-            type: "soroswap",
+            id: "custom:a",
+            type: "custom",
             name: "a",
             tokens: [],
             tvl: 0n,
@@ -105,6 +105,6 @@ describe("Orchestrator", () => {
     );
     const out = await new Orchestrator(reg).getAllPools();
     expect(out).toHaveLength(1);
-    expect(out[0].id).toBe("soroswap:a");
+    expect(out[0].id).toBe("custom:a");
   });
 });

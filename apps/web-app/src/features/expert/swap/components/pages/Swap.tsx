@@ -7,21 +7,20 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
-import { getTokenAddress } from "@/lib/helpers/stellar/soroswap";
+import { getTokenAddress } from "@/lib/helpers/stellar/swap-kit";
 import {
   getTokens,
-  getAvailableTokens,
+  getSwappableTokens,
   type Token,
-} from "@/lib/helpers/stellar/soroswap";
-import { extractContractErrorOrNull } from "@/lib/helpers/stellar/contractErrors";
+} from "@/lib/helpers/stellar/swap-kit";
+import { extractContractErrorOrNull } from "@neko/orchestrator";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import {
   sanitizeAmountInput,
-  fromSmallestUnit,
   getTokenIconFitClass,
   getExplorerUrl,
-} from "@/lib/helpers/tokenUtils";
-import { DEFAULT_SLIPPAGE_BPS } from "@/features/expert/swap/constants/swapConfig";
+} from "@/lib/helpers/tokenDisplay";
+import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";
 import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 import { BannerPage } from "@/components/ui/BannerPage";
@@ -30,8 +29,8 @@ import TokenSelectorModal from "../ui/TokenSelectorModal";
 
 import { useSwapState } from "../../hooks/useSwapState";
 import { useTokenSelection } from "../../hooks/useTokenSelection";
-import { useSwapQuote } from "../../hooks/useSwapQuote";
-import { useSwapExecution } from "../../hooks/useSwapExecution";
+import { useSwapQuote } from "@/features/shared/swap-engine/hooks/useSwapQuote";
+import { useSwapExecution } from "@/features/shared/swap-engine/hooks/useSwapExecution";
 import { useSwapPrices } from "../../hooks/useSwapPrices";
 
 import { SwapButton } from "../ui/SwapButton";
@@ -145,16 +144,18 @@ const Swap: React.FC = () => {
   const queryClient = useQueryClient();
 
   const searchParams = useSearchParams();
-  const availableTokens = getAvailableTokens();
+  const availableTokens = getSwappableTokens();
   const tokenCodes = Object.keys(availableTokens);
   const tokens = getTokens();
 
   const defaultTokenIn = tokens.XLM || "";
   const toParam = searchParams.get("to")?.toUpperCase();
+  // Only honour `?to=` for tradable tokens — a deep link to an institutional
+  // asset must not preload a pair that can never quote.
   const defaultTokenOut =
-    (toParam && tokens[toParam]) ||
-    availableTokens[tokenCodes[1]]?.contract ||
+    (toParam && availableTokens[toParam]?.contract) ||
     tokens.USDC ||
+    availableTokens[tokenCodes[0]]?.contract ||
     "";
 
   const swapState = useSwapState(defaultTokenIn, defaultTokenOut);
@@ -202,7 +203,6 @@ const Swap: React.FC = () => {
     amountOut: quoteAmountOut,
     isLoadingQuote,
     quoteError,
-    platformFee,
   } = useSwapQuote(address, amountIn, tokenIn, tokenOut);
 
   useEffect(() => {
@@ -451,16 +451,8 @@ const Swap: React.FC = () => {
         </div>
       </div>
 
-      {canGetQuote && !isLoadingQuote && platformFee && (
+      {canGetQuote && !isLoadingQuote && (
         <div className="mt-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex flex-col gap-1.5 text-sm">
-          <div className="flex justify-between items-center text-white/60">
-            <span>Platform fee</span>
-            <span className="text-white/80 font-medium">
-              {(platformFee.feeBps / 100).toFixed(4)}%{" · "}
-              {formatAmount(fromSmallestUnit(platformFee.feeAmount, 7))}{" "}
-              {getTokenId(tokenIn)}
-            </span>
-          </div>
           <div className="flex justify-between items-center text-white/60">
             <span>Slippage tolerance</span>
             <span className="text-white/80">

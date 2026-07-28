@@ -14,20 +14,19 @@ import {
   DollarSign,
 } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
-import { useUserPositions } from "@/features/expert/dashboard/hooks/useUserPositions";
+import { useUserPositions } from "@/features/shared/positions/hooks/useUserPositions";
 import { usePoolAction } from "@/lib/orchestrator";
 import { ColHeader } from "./ColHeader";
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { safeParseFloat } from "@/lib/helpers/formatUtils";
-import { atomicToDecimal } from "@/lib/helpers/amount";
+import { atomicToDecimal } from "@neko/orchestrator";
 import { stellarPriceService } from "@/lib/services/stellar-price.service";
 import { BLEND_VAULT_ONLY_RESERVES } from "@/lib/orchestrator/adapters/blend-config";
 
 const PROTOCOL_ICONS: Record<string, string> = {
   neko: "/neko-logo.png",
-  soroswap: "/assets/vault-creators/soroswap.jpg",
   aqua: "https://coin-images.coingecko.com/coins/images/20026/small/aqua-logo.png?1696519446",
   blend: "/assets/vault-creators/blend.png",
 };
@@ -126,7 +125,7 @@ const MyPositions: React.FC = () => {
 
   const aggUnified: UnifiedPosition[] = aggregatedPositions.map((pos) => {
     const withdrawUnit =
-      pos.pool.type === "aqua" || pos.pool.type === "soroswap"
+      pos.pool.type === "aqua"
         ? (pos.position.metadata?.withdrawUnit as
             | "underlying"
             | "lp_shares"
@@ -136,8 +135,7 @@ const MyPositions: React.FC = () => {
       | string[]
       | undefined;
     const secondaryRaw =
-      (pos.pool.type === "aqua" || pos.pool.type === "soroswap") &&
-      withdrawUnit === "underlying"
+      pos.pool.type === "aqua" && withdrawUnit === "underlying"
         ? underlyingAmountsRaw?.[1]
         : undefined;
     const secondaryDecimals = pos.pool.tokens[1]?.decimals ?? 7;
@@ -289,11 +287,7 @@ const MyPositions: React.FC = () => {
                       amount: 0n,
                       audit: {
                         tokens: [auditToken],
-                        poolType: pos.protocolId as
-                          | "blend"
-                          | "aqua"
-                          | "soroswap"
-                          | "neko",
+                        poolType: pos.protocolId as "blend" | "aqua" | "neko",
                         metadata: {},
                       },
                     },

@@ -3,7 +3,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import type { VaultInfoResponse } from "@defindex/sdk";
 import { backendClient } from "@/lib/services/backend-client";
-import { defindexInfoToVaultView } from "@/lib/defindex/mapToVaultView";
+import { defindexInfoToVaultView } from "@/features/shared/vault/utils/mapToVaultView";
 import type { VaultView } from "../types/vault";
 
 export type DefindexVaultsPayload = {

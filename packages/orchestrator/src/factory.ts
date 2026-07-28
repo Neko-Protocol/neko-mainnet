@@ -1,7 +1,6 @@
 import { Orchestrator } from "./core/Orchestrator.js";
 import { PoolRegistry } from "./core/PoolRegistry.js";
 import { BlendPoolAdapter } from "./adapters/BlendPoolAdapter.js";
-import { SoroswapPoolAdapter } from "./adapters/SoroswapPoolAdapter.js";
 import { AquaPoolAdapter } from "./adapters/AquaPoolAdapter.js";
 import { getBlendPoolIds } from "./adapters/blend-config.js";
 import type { OrchestratorConfig } from "./config.js";
@@ -18,7 +17,6 @@ export function createOrchestrator(
   for (const blendPoolId of getBlendPoolIds(config.network.id)) {
     poolRegistry.register(new BlendPoolAdapter(blendPoolId, config));
   }
-  poolRegistry.register(new SoroswapPoolAdapter(config));
   poolRegistry.register(new AquaPoolAdapter(config));
   return { orchestrator: new Orchestrator(poolRegistry), poolRegistry };
 }

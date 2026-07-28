@@ -2,7 +2,6 @@ import type {
   Client as ReflectorClient,
   Asset as ReflectorClientAsset,
 } from "@neko/reflector";
-import type { SoroswapSDK, SupportedNetworks } from "@soroswap/sdk";
 import type {
   AssetConfig,
   AssetPriceSource,
@@ -22,129 +21,23 @@ export interface PricedResult {
 // Resolvers are lazy so the host controls construction order of networked
 // clients (SDKs, oracles) and can swap them between calls.
 export interface StellarPriceServiceDeps {
-  getSoroswapSDK: () => SoroswapSDK | null;
-  getSoroswapApiKey: () => string | null | undefined;
-  getSoroswapNetwork: () => SupportedNetworks;
+  getSwapKitUsdPrice: (
+    contractAddress: string,
+    decimals: number
+  ) => Promise<number>;
   getReflectorClient: () => ReflectorClient | null;
   getAssetConfig: (tokenCode: string) => AssetConfig | undefined;
-}
-
-function soroswapAssetMatches(
-  apiAsset: string | undefined,
-  contractAddress: string
-): boolean {
-  if (typeof apiAsset !== "string" || !apiAsset.length) return false;
-  if (apiAsset === contractAddress) return true;
-  if (apiAsset.length === contractAddress.length) {
-    return apiAsset.toUpperCase() === contractAddress.toUpperCase();
-  }
-  return false;
-}
-
-function positiveUsdFromUnknown(value: unknown): number {
-  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
-    return value;
-  }
-  if (typeof value === "string") {
-    const n = parseFloat(value);
-    return Number.isFinite(n) && n > 0 ? n : 0;
-  }
-  return 0;
-}
-
-/**
- * Soroswap SDK `getPrice()` returns `PriceData[]`: `{ asset, price, timestamp }[]`.
- * Some responses may still be a keyed map or wrapped in `data` / `prices`.
- */
-function parseSoroswapPricePayload(
-  raw: unknown,
-  contractAddress: string
-): number {
-  if (raw == null) return 0;
-  if (typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
-    return raw;
-  }
-  if (typeof raw === "string") {
-    const n = parseFloat(raw);
-    return Number.isFinite(n) && n > 0 ? n : 0;
-  }
-  if (typeof raw !== "object") return 0;
-
-  if (Array.isArray(raw)) {
-    for (const item of raw) {
-      if (!item || typeof item !== "object") continue;
-      const row = item as Record<string, unknown>;
-      const asset = row.asset;
-      if (
-        !soroswapAssetMatches(
-          typeof asset === "string" ? asset : "",
-          contractAddress
-        )
-      ) {
-        continue;
-      }
-      const p = positiveUsdFromUnknown(row.price);
-      if (p > 0) return p;
-    }
-    // Single-asset GET: API may return one row with a non-matching `asset` label but valid `price`.
-    if (raw.length === 1) {
-      const row = raw[0] as Record<string, unknown>;
-      const p = positiveUsdFromUnknown(row.price);
-      if (p > 0) return p;
-    }
-    return 0;
-  }
-
-  const o = raw as Record<string, unknown>;
-
-  if (
-    typeof o.asset === "string" &&
-    soroswapAssetMatches(o.asset, contractAddress)
-  ) {
-    const p = positiveUsdFromUnknown(o.price);
-    if (p > 0) return p;
-  }
-
-  const direct = o[contractAddress];
-  if (typeof direct === "number" && direct > 0) return direct;
-  if (typeof direct === "string") {
-    const n = parseFloat(direct);
-    return Number.isFinite(n) && n > 0 ? n : 0;
-  }
-  if (o.prices && typeof o.prices === "object") {
-    return parseSoroswapPricePayload(o.prices, contractAddress);
-  }
-  if (o.data && typeof o.data === "object") {
-    return parseSoroswapPricePayload(o.data, contractAddress);
-  }
-  for (const v of Object.values(o)) {
-    if (!v || typeof v !== "object") continue;
-    if (!Array.isArray(v) && "asset" in v && "price" in v) {
-      const row = v as Record<string, unknown>;
-      if (
-        typeof row.asset === "string" &&
-        soroswapAssetMatches(row.asset, contractAddress)
-      ) {
-        const p = positiveUsdFromUnknown(row.price);
-        if (p > 0) return p;
-      }
-      continue;
-    }
-    const n = parseSoroswapPricePayload(v, contractAddress);
-    if (n > 0) return n;
-  }
-  return 0;
 }
 
 /**
  * Price feeds in priority order (mainnet):
  *  1. Reflector oracle (on-chain, SEP-40) — for supported assets
- *  2. Soroswap DEX spot price
+ *  2. xBull Swap route to USDC
  *  3. CoinGecko off-chain fallback
  *
  * USDC is the Reflector base asset → always returns 1.00 on mainnet.
  * On testnet/standalone the Reflector client is null, so the chain falls
- * through to Soroswap → CoinGecko as before.
+ * through to xBull Swap → CoinGecko.
  */
 const DEFAULT_CACHE_TTL_MS = 60_000;
 
@@ -191,7 +84,10 @@ export class StellarPriceService {
     }
   }
 
-  async getSoroswapUsdPrice(contractAddress: string): Promise<number> {
+  async getSwapKitUsdPrice(
+    contractAddress: string,
+    decimals: number
+  ): Promise<number> {
     if (
       !contractAddress ||
       !contractAddress.startsWith("C") ||
@@ -200,13 +96,7 @@ export class StellarPriceService {
       return 0;
     }
     try {
-      const apiKey = this.deps.getSoroswapApiKey();
-      if (!apiKey) return 0;
-      const sdk = this.deps.getSoroswapSDK();
-      if (!sdk) return 0;
-      const network = this.deps.getSoroswapNetwork();
-      const raw = await sdk.getPrice(contractAddress, network);
-      return parseSoroswapPricePayload(raw, contractAddress);
+      return await this.deps.getSwapKitUsdPrice(contractAddress, decimals);
     } catch {
       return 0;
     }
@@ -305,10 +195,10 @@ export class StellarPriceService {
             : Promise.resolve(0),
       },
       {
-        key: "soroswap",
+        key: "swap-kit",
         fetch: () =>
           contractAddress
-            ? this.getSoroswapUsdPrice(contractAddress)
+            ? this.getSwapKitUsdPrice(contractAddress, config?.decimals ?? 7)
             : Promise.resolve(0),
       },
       {

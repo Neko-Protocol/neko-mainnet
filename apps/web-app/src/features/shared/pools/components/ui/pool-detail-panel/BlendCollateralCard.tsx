@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { getPoolTokenIcon } from "../../../utils/poolTokenIcons";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { CollateralOption } from "./types";
 import { BLEND_MIN_COLLATERAL_USD } from "./utils";
 

@@ -34,10 +34,7 @@ export class PoolNotFoundError extends OrchestratorError {
 export class AdapterError extends OrchestratorError {
   public readonly userMessage: string;
   constructor(adapterType: string, operation: string, cause: unknown) {
-    const contractHint =
-      adapterType === "aqua" || adapterType === "soroswap"
-        ? adapterType
-        : undefined;
+    const contractHint = adapterType === "aqua" ? adapterType : undefined;
     const friendly = extractor
       ? extractor(cause, contractHint)
       : fallback(cause);

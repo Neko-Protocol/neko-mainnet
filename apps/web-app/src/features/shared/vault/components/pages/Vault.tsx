@@ -19,7 +19,7 @@ import {
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
-import { getTokenIcon } from "@/lib/helpers/tokenUtils";
+import { getTokenIcon } from "@/lib/helpers/tokenDisplay";
 import type { VaultView } from "../../types/vault";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
@@ -133,7 +133,7 @@ const Vault: React.FC = () => {
       enabled: !!address && !!v.detail?.contracts?.vault,
       staleTime: 2 * 60_000,
       gcTime: 10 * 60_000,
-      refetchInterval: false,
+      refetchInterval: false as const,
       refetchOnWindowFocus: false,
       retry: false,
     })),

@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getFiatAccounts, registerFiatAccount } from "../utils/rampApi";
-import type { AnchorProvider } from "@/lib/anchors/types";
+import type { AnchorProvider } from "@/features/shared/on-off-ramps/types/anchors";
 
 export function useFiatAccounts(
   provider: AnchorProvider,

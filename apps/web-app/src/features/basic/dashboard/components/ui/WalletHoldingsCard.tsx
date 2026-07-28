@@ -8,7 +8,7 @@ import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { formatAmount } from "@/lib/helpers/formatUtils";
-import { getTokenIconFitClass } from "@/lib/helpers/tokenUtils";
+import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { WalletHolding } from "@/features/shared/wallet/hooks/useWalletHoldings";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 

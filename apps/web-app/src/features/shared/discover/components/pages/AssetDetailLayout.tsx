@@ -39,11 +39,12 @@ import {
 } from "../../utils/assetClass";
 import type { PriceSource } from "@/lib/services/stellar-price.service";
 import { AttributeRow, CopyAddress, useIsMaxSm } from "../ui/AssetDetailAtoms";
-import { useEtherfuseYields } from "@/features/simulator/hooks/useEtherfuseYields";
+import { useEtherfuseYields } from "@/features/shared/yields/hooks/useEtherfuseYields";
+import { InstitutionalNotice } from "../ui/InstitutionalNotice";
 
 const PRICE_SOURCE_LABEL: Record<PriceSource, string> = {
   reflector: "Reflector",
-  soroswap: "Soroswap",
+  "swap-kit": "xBull Swap",
   coingecko: "CoinGecko",
 };
 
@@ -123,6 +124,7 @@ export function AssetDetailLayout({
 
   const taxonomy = stockInfo?.taxonomy ?? getAssetTaxonomy(symbolUpper);
   const accent = taxonomy ? CLASS_ACCENT[taxonomy.class] : undefined;
+  const isInstitutional = Boolean(taxonomy?.institutional);
   const classExplanation = taxonomy
     ? CLASS_EXPLANATIONS[taxonomy.class]
     : undefined;
@@ -207,7 +209,8 @@ export function AssetDetailLayout({
     if (history.length === 0)
       return { chartData: [] as ChartPoint[], axisTicks: [] as number[] };
     const opt = RANGE_OPTIONS.find((o) => o.id === range)!;
-    const cutoff = Date.now() - opt.ms;
+    const latestTimestamp = history[history.length - 1]?.timestamp ?? 0;
+    const cutoff = latestTimestamp - opt.ms;
     const intraday = range === "3h" || range === "1d";
 
     const points: ChartPoint[] = history
@@ -347,7 +350,7 @@ export function AssetDetailLayout({
               {hasMobileTabs && <div className="h-4" />}
               {/* Header */}
               <div className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between max-sm:items-center">
-                <div className="flex min-w-0 items-start gap-5 max-sm:flex-col max-sm:items-center">
+                <div className="flex min-w-0 flex-1 items-start gap-5 max-sm:flex-col max-sm:items-center">
                   <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-white/10">
                     <Image
                       src={stockInfo.logo || "/assets/xlm-logo.png"}
@@ -357,20 +360,16 @@ export function AssetDetailLayout({
                       className="object-cover scale-110"
                     />
                   </div>
-                  <div className="flex h-20 min-w-0 flex-1 flex-col justify-between max-sm:h-auto max-sm:w-full max-sm:flex-none max-sm:items-center max-sm:justify-start max-sm:gap-2">
-                    <div className="min-h-0 flex items-center gap-3 max-sm:flex-wrap max-sm:justify-center max-sm:gap-x-2 max-sm:gap-y-1">
-                      <h1 className="pool-detail-hero-title truncate max-sm:overflow-visible max-sm:whitespace-normal max-sm:text-center">
+                  <div className="flex min-w-0 flex-1 flex-col max-sm:w-full max-sm:flex-none max-sm:items-center">
+                    <div className="flex min-w-0 items-center gap-2 max-sm:flex-wrap max-sm:justify-center max-sm:gap-y-1">
+                      <h1 className="asset-detail-title pool-detail-hero-title truncate max-sm:overflow-visible max-sm:whitespace-normal max-sm:text-center">
                         {symbolUpper}
                       </h1>
-                      {taxonomy && accent && (
-                        <span
-                          className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium text-white/70 ${accent.bg}`}
-                        >
-                          {taxonomy.classLabel}
-                        </span>
+                      {isInstitutional && (
+                        <InstitutionalNotice className="h-8 w-8 max-sm:h-7 max-sm:w-7" />
                       )}
                     </div>
-                    <div className="min-h-0 flex items-center gap-3 max-sm:flex-col max-sm:items-center max-sm:gap-2">
+                    <div className="mt-1 flex min-w-0 items-center gap-3 max-sm:flex-col max-sm:items-center max-sm:gap-2">
                       <span className="truncate text-base font-medium leading-snug text-white/70 max-sm:max-w-full max-sm:overflow-visible max-sm:whitespace-normal max-sm:text-center">
                         {stockInfo.name}
                       </span>
@@ -378,6 +377,15 @@ export function AssetDetailLayout({
                         <CopyAddress address={cfg!.contract} />
                       </span>
                     </div>
+                    {taxonomy && accent && (
+                      <div className="mt-3 flex max-sm:justify-center">
+                        <span
+                          className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium text-white/70 ${accent.bg}`}
+                        >
+                          {taxonomy.classLabel}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 

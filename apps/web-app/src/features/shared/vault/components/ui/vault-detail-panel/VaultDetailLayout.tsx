@@ -16,7 +16,7 @@ import {
   atomicToDecimal,
   decimalToAtomic,
   mulDivFloor,
-} from "@/lib/helpers/amount";
+} from "@neko/orchestrator";
 import { VaultDetailHero } from "./VaultDetailHero";
 import { VaultDetailMetrics } from "./VaultDetailMetrics";
 import { VaultDetailInfo } from "./VaultDetailInfo";

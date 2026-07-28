@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { createOnRamp, getOnRampTransaction } from "../utils/rampApi";
-import type { AnchorProvider, OnRampTransaction } from "@/lib/anchors/types";
+import type {
+  AnchorProvider,
+  OnRampTransaction,
+} from "@/features/shared/on-off-ramps/types/anchors";
 import {
   POLL_INTERVAL_MS,
   MAX_POLL_DURATION_MS,

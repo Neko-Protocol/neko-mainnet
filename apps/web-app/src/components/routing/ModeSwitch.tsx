@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
-import { useUIMode } from "@/hooks/useUIMode";
+import { useUIMode } from "@/features/shared/ui-mode/hooks/useUIMode";
 
 interface ModeSwitchProps {
   basic: ReactNode;

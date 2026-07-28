@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { X, RefreshCw } from "lucide-react";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { formatAmount } from "@/lib/helpers/formatUtils";
-import { decimalToAtomic } from "@/lib/helpers/amount";
+import { decimalToAtomic } from "@neko/orchestrator";
 import type { PoolData } from "../../types/lending";
 
 interface LendModalProps {
@@ -35,10 +35,7 @@ export function LendModal({
   const isAggregated = !!pool.isAggregated;
   const isPairPool =
     !!pool.token2 && pool.token2 !== "Lending" && pool.token2 !== pool.token1;
-  const isPairWithdraw =
-    !isDeposit &&
-    (pool.protocolId === "aqua" || pool.protocolId === "soroswap") &&
-    isPairPool;
+  const isPairWithdraw = !isDeposit && pool.protocolId === "aqua" && isPairPool;
   const pairLabel = isPairPool
     ? `${pool.token1} / ${pool.token2}`
     : pool.token1;
