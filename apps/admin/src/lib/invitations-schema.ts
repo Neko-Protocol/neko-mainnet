@@ -1,11 +1,11 @@
 /** Pure types/constants for invitations (safe to import from client UI). */
 
 export const INVITATION_TYPES = [
-  { id: "user", label: "User", color: "#229EDF" },
-  { id: "beta", label: "Beta Tester", color: "#A78BFA" },
-  { id: "vip", label: "VIP", color: "#F59E0B" },
-  { id: "partner", label: "Partner", color: "#4ADE80" },
-  { id: "press", label: "Press / Media", color: "#F472B6" },
+  { id: "user", label: "User", color: "var(--color-neko-blue)" },
+  { id: "beta", label: "Beta Tester", color: "var(--color-neko-muted)" },
+  { id: "vip", label: "VIP", color: "var(--color-neko-cream)" },
+  { id: "partner", label: "Partner", color: "var(--color-neko-accent)" },
+  { id: "press", label: "Press / Media", color: "var(--color-neko-border)" },
 ] as const;
 
 export type InvitationType = (typeof INVITATION_TYPES)[number]["id"];
