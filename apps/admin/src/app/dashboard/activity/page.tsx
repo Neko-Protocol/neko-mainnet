@@ -39,10 +39,14 @@ export default async function DashboardActivityPage() {
     : undefined;
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="admin-page">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold text-white">Activity</h1>
-        <p className="text-sm text-white/50">Transaction mix and liquidity</p>
+        <h1 className="font-klein text-3xl text-admin-text text-balance">
+          Activity
+        </h1>
+        <p className="text-sm text-admin-muted">
+          Transaction mix and liquidity
+        </p>
       </header>
 
       <div className="mb-8 grid gap-4 md:grid-cols-3">
@@ -63,40 +67,40 @@ export default async function DashboardActivityPage() {
           title="Most used action"
           value={mostUsedDisplay}
           subtitle={mostUsedSub}
-          accent="green"
+          accent="subtle"
           icon={<BarChart3 className="size-5" />}
         />
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+        <section className="rounded-xl border border-admin-border bg-admin-surface p-5">
           <h2 className="mb-1 text-lg font-semibold text-white">
             Transactions by type
           </h2>
-          <p className="mb-2 text-xs text-white/45">Horizontal bars</p>
+          <p className="mb-2 text-xs text-admin-subtle">Horizontal bars</p>
           <SimpleBarChart data={txBarData} height={280} />
         </section>
-        <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+        <section className="rounded-xl border border-admin-border bg-admin-surface p-5">
           <h2 className="mb-1 text-lg font-semibold text-white">
             Daily transactions (30d)
           </h2>
-          <p className="mb-4 text-xs text-white/45">Volume of events</p>
+          <p className="mb-4 text-xs text-admin-subtle">Volume of events</p>
           <SimpleLineChart data={lineData} height={280} />
         </section>
       </div>
 
-      <section className="mb-8 rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+      <section className="mb-8 rounded-xl border border-admin-border bg-admin-surface p-5">
         <h2 className="mb-1 text-lg font-semibold text-white">
           Top assets (touch count)
         </h2>
-        <p className="mb-2 text-xs text-white/45">
+        <p className="mb-2 text-xs text-admin-subtle">
           Touch count is the reliable activity signal; aggregated volume from
           asset_volume_stats can mix raw unit amounts for non-stable outputs.
         </p>
         <SimpleBarChart data={assetBarData} height={260} />
       </section>
 
-      <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+      <section className="rounded-xl border border-admin-border bg-admin-surface p-5">
         <h2 className="mb-4 text-lg font-semibold text-white">
           Recent activity
         </h2>

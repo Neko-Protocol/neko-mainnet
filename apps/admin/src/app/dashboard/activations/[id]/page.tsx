@@ -23,9 +23,9 @@ import { stellarExpertTxUrl, truncate } from "@/lib/stellar-format";
 
 const STATUS_BADGE: Record<ParticipantStatus, string> = {
   pending: "bg-white/10 text-white/55",
-  payable: "bg-amber-400/15 text-amber-300",
-  paying: "bg-[#229EDF]/15 text-[#229EDF]",
-  paid: "bg-emerald-400/15 text-emerald-300",
+  payable: "bg-admin-warning/15 text-admin-warning",
+  paying: "bg-neko-accent/15 text-neko-blue",
+  paid: "bg-neko-blue/15 text-neko-blue",
 };
 
 export default function ActivationDetailPage() {
@@ -163,8 +163,8 @@ export default function ActivationDetailPage() {
 
   if (error) {
     return (
-      <div className="p-6 lg:p-8">
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+      <div className="admin-page">
+        <div className="rounded-lg border border-admin-danger/30 bg-admin-danger/10 px-3 py-2 text-sm text-admin-danger">
           {error}
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function ActivationDetailPage() {
   }
 
   if (!activation) {
-    return <p className="p-6 text-sm text-white/50 lg:p-8">Loading…</p>;
+    return <p className="p-6 text-sm text-admin-muted lg:p-8">Loading…</p>;
   }
 
   const payableCount = activation.participants.filter(
@@ -183,20 +183,20 @@ export default function ActivationDetailPage() {
   ).length;
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="admin-page">
       <div className="mb-8">
         <Link
           href="/dashboard/activations"
-          className="text-sm text-[#229EDF] hover:underline"
+          className="text-sm text-neko-blue hover:underline"
         >
           ← Back to activations
         </Link>
         <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-white">
+            <h1 className="font-klein text-3xl text-admin-text text-balance">
               {activation.name}
             </h1>
-            <p className="mt-1 text-sm text-white/50">
+            <p className="mt-1 text-sm text-admin-muted">
               {activation.reward_xlm} XLM per participant ·{" "}
               {expired ? "Expired" : "Expires"}{" "}
               {new Date(activation.expires_at).toLocaleString("en-US", {
@@ -221,7 +221,7 @@ export default function ActivationDetailPage() {
                   )
                 );
               }}
-              className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-4 py-1.5 text-xs text-white/80 transition hover:bg-white/5"
+              className="inline-flex items-center gap-1.5 rounded-full border border-admin-border-strong px-4 py-1.5 text-xs text-admin-text transition hover:bg-white/5"
             >
               <Download className="size-3.5" aria-hidden />
               Download PDF
@@ -231,7 +231,7 @@ export default function ActivationDetailPage() {
                 type="button"
                 onClick={() => void payAll()}
                 disabled={payingAll || payingId !== null}
-                className="inline-flex items-center justify-center rounded-full bg-[#229EDF] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-lg bg-neko-accent px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-neko-navy-hover disabled:opacity-50"
               >
                 {payingAll
                   ? "Paying all…"
@@ -241,12 +241,12 @@ export default function ActivationDetailPage() {
             <button
               type="button"
               onClick={() => void resendInvites()}
-              className="text-xs text-white/50 transition hover:text-white"
+              className="text-xs text-admin-muted transition hover:text-white"
             >
               Resend invites
             </button>
             {inviteStatus ? (
-              <span className="text-xs text-white/45">{inviteStatus}</span>
+              <span className="text-xs text-admin-subtle">{inviteStatus}</span>
             ) : null}
             <AdminWalletButton
               address={wallet.address}
@@ -259,14 +259,14 @@ export default function ActivationDetailPage() {
       </div>
 
       {payError ? (
-        <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+        <div className="mb-4 rounded-lg border border-admin-danger/30 bg-admin-danger/10 px-3 py-2 text-sm text-admin-danger">
           {payError}
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#1C1C1C]">
+      <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-surface">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-white/8 text-xs uppercase tracking-wide text-white/45">
+          <thead className="border-b border-admin-border text-xs uppercase tracking-wide text-admin-subtle">
             <tr>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Status</th>
@@ -289,7 +289,7 @@ export default function ActivationDetailPage() {
                     {p.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 font-mono text-xs text-white/70">
+                <td className="px-4 py-3 font-mono text-xs text-admin-muted">
                   {p.matched_wallet ? truncate(p.matched_wallet) : "—"}
                 </td>
                 <td className="px-4 py-3">
@@ -298,13 +298,13 @@ export default function ActivationDetailPage() {
                       href={stellarExpertTxUrl(p.paid_tx_hash)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-[#229EDF] hover:underline"
+                      className="inline-flex items-center gap-1 text-xs text-neko-blue hover:underline"
                     >
                       {p.paid_amount_xlm ?? activation.reward_xlm} XLM
                       <ExternalLink className="size-3" />
                     </a>
                   ) : (
-                    <span className="text-xs text-white/40">—</span>
+                    <span className="text-xs text-admin-subtle">—</span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-right">
@@ -315,7 +315,7 @@ export default function ActivationDetailPage() {
                       disabled={
                         !wallet.address || payingId !== null || payingAll
                       }
-                      className="inline-flex items-center justify-center rounded-full bg-[#229EDF] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-50"
+                      className="inline-flex items-center justify-center rounded-lg bg-neko-accent px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-neko-navy-hover disabled:opacity-50"
                       title={
                         wallet.address
                           ? undefined

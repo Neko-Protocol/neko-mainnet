@@ -29,10 +29,12 @@ export default async function DashboardOverviewPage() {
   const txData = dailyTx.map((d) => ({ date: d.date, value: d.count }));
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="admin-page">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold text-white">Overview</h1>
-        <p className="text-sm text-white/50">Last updated: {now}</p>
+        <h1 className="font-klein text-3xl text-admin-text text-balance">
+          Overview
+        </h1>
+        <p className="mt-1 text-sm text-admin-muted">Last updated {now}</p>
       </header>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -46,7 +48,7 @@ export default async function DashboardOverviewPage() {
           title="New this week"
           value={stats.newUsersThisWeek.toLocaleString()}
           subtitle="Signup velocity"
-          accent="green"
+          accent="subtle"
           icon={<TrendingUp className="size-5" />}
         />
         <MetricCard
@@ -65,27 +67,33 @@ export default async function DashboardOverviewPage() {
           title="Active wallets (7d)"
           value={stats.activeWalletsThisWeek.toLocaleString()}
           subtitle="Unique wallets"
-          accent="green"
+          accent="subtle"
           icon={<Wallet className="size-5" />}
         />
       </div>
 
       <div className="mb-8 grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+        <section className="admin-card p-5">
           <h2 className="mb-1 text-lg font-semibold text-white">User growth</h2>
-          <p className="mb-4 text-xs text-white/45">Daily new users (30d)</p>
-          <SimpleLineChart data={userGrowthData} color="#229EDF" height={220} />
+          <p className="mb-4 text-xs text-admin-subtle">
+            Daily new users (30d)
+          </p>
+          <SimpleLineChart data={userGrowthData} height={220} />
         </section>
-        <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+        <section className="admin-card p-5">
           <h2 className="mb-1 text-lg font-semibold text-white">
             Daily transactions
           </h2>
-          <p className="mb-4 text-xs text-white/45">Count per day (30d)</p>
-          <SimpleLineChart data={txData} color="#4ADE80" height={220} />
+          <p className="mb-4 text-xs text-admin-subtle">Count per day (30d)</p>
+          <SimpleLineChart
+            data={txData}
+            color="var(--color-neko-accent)"
+            height={220}
+          />
         </section>
       </div>
 
-      <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+      <section className="admin-card p-5">
         <h2 className="mb-4 text-lg font-semibold text-white">
           Recent activity
         </h2>
