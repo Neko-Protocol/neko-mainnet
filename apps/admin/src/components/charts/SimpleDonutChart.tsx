@@ -12,17 +12,17 @@ import {
 type Row = { label: string; value: number };
 
 const PALETTE = [
-  "#229EDF",
-  "#4ADE80",
-  "#F472B6",
-  "#FBBF24",
-  "#A78BFA",
-  "#FB7185",
+  "var(--color-neko-blue)",
+  "var(--color-neko-accent)",
+  "var(--color-neko-muted)",
+  "var(--color-neko-border)",
+  "var(--color-neko-navy-hover)",
+  "var(--color-neko-cream)",
 ];
 
 const tooltipStyles = {
-  backgroundColor: "#242424",
-  border: "1px solid rgba(255,255,255,.08)",
+  backgroundColor: "var(--admin-elevated)",
+  border: "1px solid var(--admin-border)",
   borderRadius: 8,
 };
 
@@ -54,7 +54,7 @@ export function SimpleDonutChart({
               align="right"
               wrapperStyle={{
                 paddingLeft: 12,
-                color: "rgba(255,255,255,0.65)",
+                color: "var(--admin-muted)",
                 fontSize: 12,
               }}
             />
@@ -81,8 +81,8 @@ export function SimpleDonutChart({
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
-            TOTAL
+          <p className="font-label text-[10px] font-semibold uppercase tracking-widest text-admin-subtle">
+            Total
           </p>
           <p className="text-2xl font-bold text-white">{total}</p>
         </div>

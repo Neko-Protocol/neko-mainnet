@@ -43,36 +43,38 @@ export default function ActivationsPage() {
   }, []);
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="admin-page">
       <div className="mb-8 flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Activations</h1>
-          <p className="text-sm text-white/50">
+          <h1 className="font-klein text-3xl text-admin-text text-balance">
+            Activations
+          </h1>
+          <p className="text-sm text-admin-muted">
             XLM reward programs for verified participant emails.
           </p>
         </div>
         <Link
           href="/dashboard/activations/new"
-          className="inline-flex items-center justify-center rounded-full bg-[#229EDF] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1a8bc7]"
+          className="inline-flex items-center justify-center rounded-lg bg-neko-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-neko-navy-hover"
         >
           New activation
         </Link>
       </div>
 
       {error ? (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+        <div className="rounded-lg border border-admin-danger/30 bg-admin-danger/10 px-3 py-2 text-sm text-admin-danger">
           {error}
         </div>
       ) : activations === null ? (
-        <p className="text-sm text-white/50">Loading…</p>
+        <p className="text-sm text-admin-muted">Loading…</p>
       ) : activations.length === 0 ? (
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-8 text-center text-sm text-white/50">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-8 text-center text-sm text-admin-muted">
           No activations yet. Create one to start tracking a program.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#1C1C1C]">
+        <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-surface">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-white/8 text-xs uppercase tracking-wide text-white/45">
+            <thead className="border-b border-admin-border text-xs uppercase tracking-wide text-admin-subtle">
               <tr>
                 <th className="px-4 py-3">Name</th>
                 <th className="px-4 py-3">Reward</th>
@@ -95,33 +97,33 @@ export default function ActivationsPage() {
                     <td className="px-4 py-3 font-medium text-white">
                       {a.name}
                     </td>
-                    <td className="px-4 py-3 text-white/70">
+                    <td className="px-4 py-3 text-admin-muted">
                       {a.reward_xlm} XLM
                     </td>
                     <td className="px-4 py-3">
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${
                           expired
-                            ? "bg-white/10 text-white/50"
-                            : "bg-emerald-400/10 text-emerald-300"
+                            ? "bg-white/10 text-admin-muted"
+                            : "bg-neko-blue/10 text-neko-blue"
                         }`}
                       >
                         {expired ? "Expired" : formatDate(a.expires_at)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-white/70">
+                    <td className="px-4 py-3 text-admin-muted">
                       {completed} / {a.counts.total}
                     </td>
-                    <td className="px-4 py-3 text-amber-300">
+                    <td className="px-4 py-3 text-admin-warning">
                       {a.counts.payable}
                     </td>
-                    <td className="px-4 py-3 text-emerald-300">
+                    <td className="px-4 py-3 text-neko-blue">
                       {a.counts.paid}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link
                         href={`/dashboard/activations/${a.id}`}
-                        className="text-sm text-[#229EDF] hover:underline"
+                        className="text-sm text-neko-blue hover:underline"
                       >
                         View
                       </Link>

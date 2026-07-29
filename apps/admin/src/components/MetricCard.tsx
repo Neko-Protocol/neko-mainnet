@@ -7,37 +7,39 @@ export function MetricCard(props: {
   subtitle?: string;
   trend?: { value: number; label: string };
   icon?: ReactNode;
-  accent?: "blue" | "green" | "white";
+  accent?: "blue" | "subtle" | "white";
 }) {
   const { title, value, subtitle, trend, icon, accent = "white" } = props;
-  const accentRing =
+  const accentBorder =
     accent === "blue"
-      ? "ring-1 ring-[#229EDF]/30"
-      : accent === "green"
-        ? "ring-1 ring-[#4ADE80]/30"
-        : "ring-1 ring-white/5";
+      ? "border-neko-border/60"
+      : accent === "subtle"
+        ? "border-neko-blue/25"
+        : "border-admin-border";
 
   return (
     <div
-      className={`relative rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ${accentRing}`}
+      className={`relative rounded-xl border bg-admin-surface p-5 ${accentBorder}`}
     >
       <div className="flex justify-between gap-2">
-        <p className="text-sm font-medium text-white/50">{title}</p>
-        {icon ? <div className="text-white/40">{icon}</div> : null}
+        <p className="font-label text-xs font-medium uppercase tracking-wide text-admin-muted">
+          {title}
+        </p>
+        {icon ? <div className="text-neko-blue">{icon}</div> : null}
       </div>
-      <p className="mt-2 break-words text-3xl font-bold leading-tight text-white">
+      <p className="mt-4 break-words text-3xl font-semibold leading-none text-admin-text tabular-nums">
         {value}
       </p>
       {subtitle ? (
-        <p className="mt-1 text-xs text-white/45">{subtitle}</p>
+        <p className="mt-2 text-xs text-admin-subtle">{subtitle}</p>
       ) : null}
       {trend ? (
         <div className="mt-3 flex items-center gap-1 text-xs">
           <span
             className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 font-medium ${
               trend.value >= 0
-                ? "bg-emerald-500/15 text-[#4ADE80]"
-                : "bg-red-500/15 text-red-400"
+                ? "bg-neko-blue/15 text-neko-blue"
+                : "bg-admin-danger/15 text-admin-danger"
             }`}
           >
             {trend.value >= 0 ? (
@@ -47,7 +49,7 @@ export function MetricCard(props: {
             )}
             {Math.abs(trend.value)}%
           </span>
-          <span className="text-white/40">{trend.label}</span>
+          <span className="text-admin-subtle">{trend.label}</span>
         </div>
       ) : null}
     </div>

@@ -1,12 +1,24 @@
 /** Pure types/constants for strategies (safe to import from client UI). */
 
 export const STRATEGY_TYPES = [
-  { id: "acquisition", label: "User Acquisition", color: "#229EDF" },
-  { id: "partnership", label: "Partnership", color: "#4ADE80" },
-  { id: "beta", label: "Beta Program", color: "#A78BFA" },
-  { id: "vip", label: "VIP / High-value", color: "#F59E0B" },
-  { id: "press", label: "Press & Media", color: "#F472B6" },
-  { id: "reactivation", label: "Reactivation", color: "#FB923C" },
+  {
+    id: "acquisition",
+    label: "User Acquisition",
+    color: "var(--color-neko-blue)",
+  },
+  {
+    id: "partnership",
+    label: "Partnership",
+    color: "var(--color-neko-accent)",
+  },
+  { id: "beta", label: "Beta Program", color: "var(--color-neko-muted)" },
+  { id: "vip", label: "VIP / High-value", color: "var(--color-neko-cream)" },
+  { id: "press", label: "Press & Media", color: "var(--color-neko-border)" },
+  {
+    id: "reactivation",
+    label: "Reactivation",
+    color: "var(--color-neko-navy-hover)",
+  },
 ] as const;
 
 export type StrategyType = (typeof STRATEGY_TYPES)[number]["id"];

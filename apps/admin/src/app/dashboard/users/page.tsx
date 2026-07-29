@@ -41,10 +41,12 @@ export default async function DashboardUsersPage() {
     : undefined;
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="admin-page">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold text-white">Users</h1>
-        <p className="text-sm text-white/50">Acquisition and preferences</p>
+        <h1 className="font-klein text-3xl text-admin-text text-balance">
+          Users
+        </h1>
+        <p className="text-sm text-admin-muted">Acquisition and preferences</p>
       </header>
 
       <div className="mb-8 grid gap-4 md:grid-cols-3">
@@ -58,7 +60,7 @@ export default async function DashboardUsersPage() {
           title="Email verified"
           value={`${emailPct}%`}
           subtitle={`${emailStats.verifiedCount.toLocaleString()} of ${emailStats.totalCount.toLocaleString()}`}
-          accent="green"
+          accent="subtle"
           icon={<MailCheck className="size-5" />}
         />
         <MetricCard
@@ -69,18 +71,18 @@ export default async function DashboardUsersPage() {
         />
       </div>
 
-      <section className="mb-8 rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+      <section className="mb-8 rounded-xl border border-admin-border bg-admin-surface p-5">
         <h2 className="mb-1 text-lg font-semibold text-white">
           User growth (30d)
         </h2>
-        <p className="mb-4 text-xs text-white/45">
+        <p className="mb-4 text-xs text-admin-subtle">
           Users who joined per day from Supabase signup timestamps
         </p>
         <SimpleLineChart data={userGrowthData} height={240} />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+        <section className="rounded-xl border border-admin-border bg-admin-surface p-5">
           <h2 className="mb-4 text-lg font-semibold text-white">
             Wallet providers
           </h2>
@@ -92,7 +94,7 @@ export default async function DashboardUsersPage() {
             }))}
           />
         </section>
-        <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+        <section className="rounded-xl border border-admin-border bg-admin-surface p-5">
           <h2 className="mb-4 text-lg font-semibold text-white">
             Email verification
           </h2>
@@ -107,7 +109,7 @@ export default async function DashboardUsersPage() {
             ]}
           />
         </section>
-        <section className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
+        <section className="rounded-xl border border-admin-border bg-admin-surface p-5">
           <h2 className="mb-4 text-lg font-semibold text-white">
             Currency preference
           </h2>

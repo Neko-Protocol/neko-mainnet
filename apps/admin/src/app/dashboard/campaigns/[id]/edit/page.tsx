@@ -99,16 +99,16 @@ export default function EditCampaignPage() {
   }
 
   if (!id) {
-    return <div className="p-6 text-white/60">Invalid campaign id.</div>;
+    return <div className="p-6 text-admin-muted">Invalid campaign id.</div>;
   }
 
   if (loadError) {
     return (
-      <div className="p-6 lg:p-8">
-        <p className="text-red-300">{loadError}</p>
+      <div className="admin-page">
+        <p className="text-admin-danger">{loadError}</p>
         <Link
           href={`/dashboard/campaigns/${id}`}
-          className="mt-4 inline-block text-[#229EDF]"
+          className="mt-4 inline-block text-neko-blue"
         >
           Back to campaign
         </Link>
@@ -117,58 +117,58 @@ export default function EditCampaignPage() {
   }
 
   if (!initial) {
-    return <div className="p-6 text-white/60">Loading…</div>;
+    return <div className="p-6 text-admin-muted">Loading…</div>;
   }
 
   const countLabel = countLoading ? (
-    <span className="text-white/45"> (loading…)</span>
+    <span className="text-admin-subtle"> (loading…)</span>
   ) : count !== null ? (
-    <span className="text-white/45"> ({count.toLocaleString()})</span>
+    <span className="text-admin-subtle"> ({count.toLocaleString()})</span>
   ) : (
-    <span className="text-white/45"> (—)</span>
+    <span className="text-admin-subtle"> (—)</span>
   );
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="admin-page">
       <div className="mb-8">
         <Link
           href={`/dashboard/campaigns/${id}`}
-          className="text-sm text-[#229EDF] hover:underline"
+          className="text-sm text-neko-blue hover:underline"
         >
           ← Back to campaign
         </Link>
         <h1 className="mt-4 text-2xl font-semibold text-white">
           Edit campaign
         </h1>
-        <p className="text-sm text-white/50">
+        <p className="text-sm text-admin-muted">
           Update draft content and segment.
         </p>
       </div>
 
       <form
         onSubmit={submit}
-        className="max-w-4xl space-y-6 rounded-2xl border border-white/8 bg-[#1C1C1C] p-6"
+        className="max-w-4xl space-y-6 rounded-xl border border-admin-border bg-admin-surface p-6"
       >
         {error ? (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+          <div className="rounded-lg border border-admin-danger/30 bg-admin-danger/10 px-3 py-2 text-sm text-admin-danger">
             {error}
           </div>
         ) : null}
 
-        <div className="rounded-xl border border-[#229EDF]/35 bg-[#242424]/80 px-4 py-3 text-sm text-white/70">
-          <span className="font-medium text-[#229EDF]">Tip:</span> Use{" "}
-          <code className="rounded bg-black/40 px-1 py-0.5 text-xs text-white/90">
+        <div className="rounded-xl border border-neko-blue/35 bg-admin-elevated/80 px-4 py-3 text-sm text-admin-muted">
+          <span className="font-medium text-neko-blue">Tip:</span> Use{" "}
+          <code className="rounded bg-black/40 px-1 py-0.5 text-xs text-admin-text">
             {`{{wallet_address}}`}
           </code>{" "}
           in your HTML to personalize. Images must be hosted externally.
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-white/70">
+          <label className="mb-1 block text-sm font-medium text-admin-muted">
             Name
           </label>
           <input
-            className="w-full rounded-lg border border-white/10 bg-[#121212] px-3 py-2 text-white outline-none placeholder:text-white/35 focus:border-[#229EDF]/60"
+            className="w-full rounded-lg border border-admin-border bg-admin-canvas px-3 py-2 text-white outline-none placeholder:text-white/35 focus:border-neko-blue/60"
             value={name}
             onChange={(ev) => setName(ev.target.value)}
             required
@@ -176,11 +176,11 @@ export default function EditCampaignPage() {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-white/70">
+          <label className="mb-1 block text-sm font-medium text-admin-muted">
             Subject
           </label>
           <input
-            className="w-full rounded-lg border border-white/10 bg-[#121212] px-3 py-2 text-white outline-none placeholder:text-white/35 focus:border-[#229EDF]/60"
+            className="w-full rounded-lg border border-admin-border bg-admin-canvas px-3 py-2 text-white outline-none placeholder:text-white/35 focus:border-neko-blue/60"
             value={subject}
             onChange={(ev) => setSubject(ev.target.value)}
             required
@@ -188,7 +188,7 @@ export default function EditCampaignPage() {
         </div>
 
         <fieldset className="space-y-3">
-          <legend className="mb-2 text-sm font-medium text-white/70">
+          <legend className="mb-2 text-sm font-medium text-admin-muted">
             Segment {countLabel}
           </legend>
           <div className="flex flex-col gap-3">
@@ -197,8 +197,8 @@ export default function EditCampaignPage() {
                 key={s.id}
                 className={`flex cursor-pointer gap-3 rounded-xl border px-4 py-3 transition ${
                   segment === s.id
-                    ? "border-[#229EDF]/55 bg-[#242424]"
-                    : "border-white/10 bg-[#121212] hover:border-white/20"
+                    ? "border-neko-blue/55 bg-admin-elevated"
+                    : "border-admin-border bg-admin-canvas hover:border-white/20"
                 }`}
               >
                 <input
@@ -213,7 +213,7 @@ export default function EditCampaignPage() {
                     {s.label}
                     {segment === s.id ? countLabel : null}
                   </span>
-                  <span className="mt-1 block text-sm text-white/50">
+                  <span className="mt-1 block text-sm text-admin-muted">
                     {s.description}
                   </span>
                 </span>
@@ -223,18 +223,18 @@ export default function EditCampaignPage() {
         </fieldset>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-white/70">
+          <label className="mb-1 block text-sm font-medium text-admin-muted">
             Email body (HTML)
           </label>
           <textarea
-            className="w-full min-h-[200px] rounded-lg border border-white/10 bg-[#121212] px-3 py-2 font-mono text-sm text-white outline-none placeholder:text-white/35 focus:border-[#229EDF]/60"
+            className="w-full min-h-[200px] rounded-lg border border-admin-border bg-admin-canvas px-3 py-2 font-mono text-sm text-white outline-none placeholder:text-white/35 focus:border-neko-blue/60"
             value={bodyHtml}
             onChange={(ev) => setBodyHtml(ev.target.value)}
             required
           />
           <iframe
             title="Email preview"
-            className="mt-4 h-64 w-full rounded-lg border border-white/10 bg-white"
+            className="mt-4 h-64 w-full rounded-lg border border-admin-border bg-white"
             srcDoc={bodyHtml || "<p />"}
             sandbox="allow-same-origin"
           />
@@ -244,13 +244,13 @@ export default function EditCampaignPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="inline-flex items-center justify-center rounded-full bg-[#229EDF] px-6 py-2 text-sm font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-60"
+            className="inline-flex items-center justify-center rounded-lg bg-neko-accent px-6 py-2 text-sm font-semibold text-white transition hover:bg-neko-navy-hover disabled:opacity-60"
           >
             {submitting ? "Saving…" : "Save changes"}
           </button>
           <Link
             href={`/dashboard/campaigns/${id}`}
-            className="text-sm text-white/50 hover:text-white"
+            className="text-sm text-admin-muted hover:text-white"
           >
             Cancel
           </Link>

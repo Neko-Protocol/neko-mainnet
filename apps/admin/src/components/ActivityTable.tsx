@@ -27,15 +27,15 @@ function formatTokenAmount(n: number): string {
 
 function badgeClass(actionType: string): string {
   if (actionType === "swap") {
-    return "bg-[#229EDF]/18 text-[#229EDF] border-[#229EDF]/35";
+    return "bg-neko-accent/18 text-neko-blue border-neko-blue/35";
   }
   if (actionType.endsWith("_deposit") || actionType === "on_ramp") {
-    return "bg-[#4ADE80]/14 text-[#4ADE80] border-[#4ADE80]/30";
+    return "bg-neko-blue/14 text-neko-blue border-neko-blue/30";
   }
   if (actionType.endsWith("_withdraw") || actionType === "off_ramp") {
-    return "bg-red-400/14 text-red-300 border-red-400/35";
+    return "bg-admin-danger/14 text-admin-danger border-admin-danger/35";
   }
-  return "bg-white/8 text-white/70 border-white/15";
+  return "bg-white/8 text-admin-muted border-admin-border-strong";
 }
 
 function isPositiveNumber(n: number | null): n is number {
@@ -45,33 +45,33 @@ function isPositiveNumber(n: number | null): n is number {
 function AmountCell({ log }: { log: AuditLog }) {
   if (isPositiveNumber(log.amount_in)) {
     return (
-      <td className="whitespace-nowrap px-3 py-2 font-medium text-[#4ADE80]">
+      <td className="whitespace-nowrap px-3 py-2 font-medium text-neko-blue">
         ${log.amount_in.toFixed(2)}
       </td>
     );
   }
   if (isPositiveNumber(log.token_amount_in)) {
     return (
-      <td className="whitespace-nowrap px-3 py-2 text-white/70">
+      <td className="whitespace-nowrap px-3 py-2 text-admin-muted">
         {formatTokenAmount(log.token_amount_in)} {log.asset_in ?? ""}
       </td>
     );
   }
   if (isPositiveNumber(log.amount_out)) {
     return (
-      <td className="whitespace-nowrap px-3 py-2 text-white/70">
+      <td className="whitespace-nowrap px-3 py-2 text-admin-muted">
         {formatTokenAmount(log.amount_out)} {log.asset_out ?? ""}
       </td>
     );
   }
-  return <td className="whitespace-nowrap px-3 py-2 text-white/45">—</td>;
+  return <td className="whitespace-nowrap px-3 py-2 text-admin-subtle">—</td>;
 }
 
 export function ActivityTable({ logs }: { logs: AuditLog[] }) {
   return (
-    <div className="overflow-auto rounded-xl border border-white/8 bg-[#1C1C1C]">
+    <div className="overflow-auto rounded-xl border border-admin-border bg-admin-surface">
       <table className="w-full min-w-[760px] border-collapse text-xs">
-        <thead className="sticky top-0 z-10 bg-[#242424] text-left text-[11px] font-semibold uppercase tracking-wide text-white/45 shadow-[0_1px_0_rgba(255,255,255,0.08)]">
+        <thead className="sticky top-0 z-10 bg-admin-elevated text-left text-[11px] font-semibold uppercase tracking-wide text-admin-subtle shadow-[0_1px_0_rgba(255,255,255,0.08)]">
           <tr>
             <th className="px-3 py-2 font-medium">Time</th>
             <th className="px-3 py-2 font-medium">Wallet</th>
@@ -85,7 +85,10 @@ export function ActivityTable({ logs }: { logs: AuditLog[] }) {
         <tbody>
           {logs.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-3 py-8 text-center text-white/45">
+              <td
+                colSpan={7}
+                className="px-3 py-8 text-center text-admin-subtle"
+              >
                 No activity yet.
               </td>
             </tr>
@@ -93,12 +96,12 @@ export function ActivityTable({ logs }: { logs: AuditLog[] }) {
             logs.map((log) => (
               <tr
                 key={log.id}
-                className="border-t border-white/8 hover:bg-white/[0.03]"
+                className="border-t border-admin-border hover:bg-white/[0.03]"
               >
-                <td className="whitespace-nowrap px-3 py-2 text-white/60">
+                <td className="whitespace-nowrap px-3 py-2 text-admin-muted">
                   {formatRelative(log.created_at)}
                 </td>
-                <td className="px-3 py-2 font-mono text-white/85">
+                <td className="px-3 py-2 font-mono text-admin-text">
                   {truncateWallet(log.wallet_address)}
                 </td>
                 <td className="px-3 py-2">
@@ -108,14 +111,14 @@ export function ActivityTable({ logs }: { logs: AuditLog[] }) {
                     {log.action_type.replaceAll("_", " ")}
                   </span>
                 </td>
-                <td className="max-w-[120px] truncate px-3 py-2 text-white/60">
+                <td className="max-w-[120px] truncate px-3 py-2 text-admin-muted">
                   {log.asset_in ?? "—"}
                 </td>
-                <td className="max-w-[120px] truncate px-3 py-2 text-white/60">
+                <td className="max-w-[120px] truncate px-3 py-2 text-admin-muted">
                   {log.asset_out ?? "—"}
                 </td>
                 <AmountCell log={log} />
-                <td className="px-3 py-2 text-white/60">{log.network}</td>
+                <td className="px-3 py-2 text-admin-muted">{log.network}</td>
               </tr>
             ))
           )}

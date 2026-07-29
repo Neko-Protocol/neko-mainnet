@@ -26,16 +26,16 @@ function CopyBlock({ text, label }: { text: string; label: string }) {
   return (
     <div>
       <div className="mb-1 flex items-center justify-between gap-2">
-        <p className="text-xs text-white/50">{label}</p>
+        <p className="text-xs text-admin-muted">{label}</p>
         <button
           type="button"
           onClick={() => void copy()}
-          className="text-xs font-medium text-[#229EDF] hover:text-[#1f8ec9]"
+          className="text-xs font-medium text-neko-blue hover:text-[#1f8ec9]"
         >
           {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all rounded-lg border border-white/10 bg-[#2A2A2A] p-3 font-mono text-xs text-white/90">
+      <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-all rounded-lg border border-admin-border bg-admin-elevated p-3 font-mono text-xs text-admin-text">
         {text}
       </pre>
     </div>
@@ -65,22 +65,22 @@ export default function SetupTotpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] px-4 py-16 text-white">
+    <div className="min-h-screen bg-admin-canvas px-4 py-16 text-white">
       <div className="mx-auto flex max-w-lg flex-col gap-10">
-        <section className="rounded-2xl border border-white/10 bg-[#1C1C1C] p-8">
+        <section className="rounded-xl border border-admin-border bg-admin-surface p-8">
           <h1 className="text-xl font-semibold text-white">
             Provision TOTP secret
           </h1>
-          <p className="mt-2 text-sm text-white/70">
+          <p className="mt-2 text-sm text-admin-muted">
             Generate a one-time QR and secret for a new admin row in{" "}
-            <span className="font-mono text-white/85">admin_users</span>.
+            <span className="font-mono text-admin-text">admin_users</span>.
           </p>
 
           <form onSubmit={onGenerateQr} className="mt-6 flex flex-col gap-4">
             <div>
               <label
                 htmlFor="provision-email"
-                className="mb-1 block text-sm text-white/60"
+                className="mb-1 block text-sm text-admin-muted"
               >
                 Email address
               </label>
@@ -93,25 +93,25 @@ export default function SetupTotpPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
                 required
-                className="w-full rounded-xl border border-white/10 bg-[#2A2A2A] px-4 py-3 text-white outline-none focus:border-[#229EDF]"
+                className="w-full rounded-xl border border-admin-border bg-admin-elevated px-4 py-3 text-white outline-none focus:border-neko-blue"
               />
             </div>
             {error ? (
-              <p className="text-sm text-red-400" role="alert">
+              <p className="text-sm text-admin-danger" role="alert">
                 {error}
               </p>
             ) : null}
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-[#229EDF] py-3 font-semibold text-white transition hover:bg-[#1f8ec9] disabled:opacity-50"
+              className="w-full rounded-lg bg-neko-accent py-3 font-semibold text-white transition hover:bg-neko-navy-hover disabled:opacity-50"
             >
               {loading ? "Generating…" : "Generate QR"}
             </button>
           </form>
 
           {data ? (
-            <div className="mt-8 space-y-6 border-t border-white/10 pt-8">
+            <div className="mt-8 space-y-6 border-t border-admin-border pt-8">
               <div className="flex justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -131,9 +131,9 @@ export default function SetupTotpPage() {
           ) : null}
         </section>
 
-        <section className="rounded-2xl border border-white/10 bg-[#1C1C1C] p-8">
+        <section className="rounded-xl border border-admin-border bg-admin-surface p-8">
           <h2 className="text-lg font-semibold text-white">Instructions</h2>
-          <ol className="mt-4 list-inside list-decimal space-y-3 text-sm text-white/75">
+          <ol className="mt-4 list-inside list-decimal space-y-3 text-sm text-admin-muted">
             <li>Enter your email above and click Generate QR.</li>
             <li>
               Scan the QR code with Google Authenticator or Authy (or use the
@@ -141,13 +141,13 @@ export default function SetupTotpPage() {
             </li>
             <li>
               Hash your password with bcrypt using the command shown (replace{" "}
-              <span className="font-mono text-white/90">YOUR_PASSWORD</span>).
+              <span className="font-mono text-admin-text">YOUR_PASSWORD</span>).
             </li>
             <li>
               In Supabase dashboard → Table Editor →{" "}
-              <span className="font-mono text-white/90">admin_users</span> →
+              <span className="font-mono text-admin-text">admin_users</span> →
               insert row, for example:
-              <pre className="mt-2 whitespace-pre-wrap break-all rounded-lg border border-white/10 bg-[#2A2A2A] p-3 font-mono text-xs text-white/85">
+              <pre className="mt-2 whitespace-pre-wrap break-all rounded-lg border border-admin-border bg-admin-elevated p-3 font-mono text-xs text-admin-text">
                 {`INSERT INTO admin_users (email, password_hash, totp_secret)
 VALUES ('you@example.com', '$2b$10$...your_hash...', 'YOUR_BASE32_SECRET');`}
               </pre>
@@ -156,7 +156,7 @@ VALUES ('you@example.com', '$2b$10$...your_hash...', 'YOUR_BASE32_SECRET');`}
               Sign in at{" "}
               <Link
                 href="/login"
-                className="font-medium text-[#229EDF] hover:text-[#1f8ec9]"
+                className="font-medium text-neko-blue hover:text-[#1f8ec9]"
               >
                 /login
               </Link>
@@ -165,7 +165,7 @@ VALUES ('you@example.com', '$2b$10$...your_hash...', 'YOUR_BASE32_SECRET');`}
           </ol>
           <Link
             href="/login"
-            className="mt-8 inline-block text-sm font-medium text-[#229EDF] hover:text-[#1f8ec9]"
+            className="mt-8 inline-block text-sm font-medium text-neko-blue hover:text-[#1f8ec9]"
           >
             ← Back to login
           </Link>
