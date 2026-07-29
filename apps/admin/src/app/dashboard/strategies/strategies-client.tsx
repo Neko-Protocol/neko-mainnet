@@ -50,11 +50,14 @@ function ProgressBar({ pct, color }: { pct: number; color: string }) {
 function typeBadge(strategyType: StrategyType) {
   const meta = STRATEGY_TYPES.find((x) => x.id === strategyType);
   const label = meta?.label ?? strategyType;
-  const color = meta?.color ?? "#229EDF";
+  const color = meta?.color ?? "var(--color-neko-blue)";
   return (
     <span
       className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-white/15"
-      style={{ color, backgroundColor: `${color}22` }}
+      style={{
+        color,
+        backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`,
+      }}
     >
       {label}
     </span>
@@ -66,13 +69,13 @@ function statusBadgeCls(status: StrategyStatus) {
     "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium";
   switch (status) {
     case "active":
-      return `${base} bg-[#4ADE80]/15 text-[#4ADE80]`;
+      return `${base} bg-neko-blue/15 text-neko-blue`;
     case "paused":
-      return `${base} bg-amber-500/15 text-amber-200`;
+      return `${base} bg-admin-warning/15 text-admin-warning`;
     case "completed":
-      return `${base} bg-[#229EDF]/15 text-[#229EDF]`;
+      return `${base} bg-neko-accent/15 text-neko-blue`;
     default:
-      return `${base} bg-white/10 text-white/40`;
+      return `${base} bg-white/10 text-admin-subtle`;
   }
 }
 
@@ -94,7 +97,7 @@ type Props = {
 };
 
 const CHIP =
-  "inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[11px] text-white/70";
+  "inline-flex items-center rounded-full border border-admin-border bg-white/[0.06] px-2.5 py-1 text-[11px] text-admin-muted";
 
 export default function StrategiesClient(props: Props) {
   const router = useRouter();
@@ -167,17 +170,19 @@ export default function StrategiesClient(props: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] p-6 lg:p-8">
+    <div className="admin-page">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">Strategies</h1>
-          <p className="text-sm text-white/50">
+          <h1 className="font-klein text-3xl text-admin-text text-balance">
+            Strategies
+          </h1>
+          <p className="text-sm text-admin-muted">
             Outreach plans and invitation pipelines
           </p>
         </div>
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-full bg-[#229EDF] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1a8bc7]"
+          className="inline-flex items-center justify-center rounded-lg bg-neko-accent px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-neko-navy-hover"
           onClick={() => {
             setError(null);
             setModalOpen(true);
@@ -188,29 +193,29 @@ export default function StrategiesClient(props: Props) {
       </header>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-white/5">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-white/5">
           <div className="flex justify-between gap-2">
-            <p className="text-sm font-medium text-white/50">
+            <p className="text-sm font-medium text-admin-muted">
               Total Strategies
             </p>
-            <Target className="size-5 text-white/40" aria-hidden />
+            <Target className="size-5 text-admin-subtle" aria-hidden />
           </div>
           <p className="mt-2 text-3xl font-bold text-white">
             {stratStats.total.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-[#4ADE80]/25">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-neko-blue/25">
           <div className="flex justify-between gap-2">
-            <p className="text-sm font-medium text-white/50">Active</p>
-            <Layers className="size-5 text-[#4ADE80]/60" aria-hidden />
+            <p className="text-sm font-medium text-admin-muted">Active</p>
+            <Layers className="size-5 text-neko-blue/60" aria-hidden />
           </div>
           <p className="mt-2 text-3xl font-bold text-white">
             {stratStats.active.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-white/5">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-white/5">
           <div className="flex justify-between gap-2">
-            <p className="text-sm font-medium text-white/50">
+            <p className="text-sm font-medium text-admin-muted">
               Total Invitations Sent
             </p>
             <Target className="size-5 text-white/35" aria-hidden />
@@ -219,12 +224,12 @@ export default function StrategiesClient(props: Props) {
             {aggregates.totalInvited.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-[#229EDF]/25">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-neko-blue/25">
           <div className="flex justify-between gap-2">
-            <p className="text-sm font-medium text-white/50">
+            <p className="text-sm font-medium text-admin-muted">
               Avg. Acceptance Rate
             </p>
-            <TrendingUp className="size-5 text-[#229EDF]/55" aria-hidden />
+            <TrendingUp className="size-5 text-neko-blue/55" aria-hidden />
           </div>
           <p className="mt-2 text-3xl font-bold text-white">
             {`${aggregates.avgAcceptance.toFixed(
@@ -232,12 +237,12 @@ export default function StrategiesClient(props: Props) {
             )}%`}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-[#229EDF]/20 sm:col-span-2 lg:col-span-1">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-neko-blue/20 sm:col-span-2 lg:col-span-1">
           <div className="flex justify-between gap-2">
-            <p className="text-sm font-medium text-white/50">
+            <p className="text-sm font-medium text-admin-muted">
               Total vol. moved
             </p>
-            <DollarSign className="size-5 text-[#229EDF]/55" aria-hidden />
+            <DollarSign className="size-5 text-neko-blue/55" aria-hidden />
           </div>
           <p className="mt-2 text-3xl font-bold text-white tabular-nums">
             {fmtUsd(totalVolumeMoved)}
@@ -246,13 +251,13 @@ export default function StrategiesClient(props: Props) {
       </div>
 
       {error ? (
-        <p className="mb-4 text-sm text-red-400" role="alert">
+        <p className="mb-4 text-sm text-admin-danger" role="alert">
           {error}
         </p>
       ) : null}
 
       {strategies.length === 0 ? (
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] px-6 py-16 text-center text-white/60">
+        <div className="rounded-xl border border-admin-border bg-admin-surface px-6 py-16 text-center text-admin-muted">
           No strategies yet. Create one to organize invitations.
         </div>
       ) : (
@@ -281,7 +286,7 @@ export default function StrategiesClient(props: Props) {
             return (
               <div
                 key={s.id}
-                className="flex flex-col gap-4 rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 transition-colors hover:border-white/[0.14]"
+                className="flex flex-col gap-4 rounded-xl border border-admin-border bg-admin-surface p-5 transition-colors hover:border-white/[0.14]"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <h2 className="min-w-0 flex-1 text-base font-bold text-white">
@@ -297,13 +302,15 @@ export default function StrategiesClient(props: Props) {
                   {desc ? (
                     desc
                   ) : (
-                    <span className="italic text-white/40">No description</span>
+                    <span className="italic text-admin-subtle">
+                      No description
+                    </span>
                   )}
                 </p>
 
                 <div className="flex items-center gap-2">
                   <span
-                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/12 text-xs font-semibold uppercase text-white/90 ring-1 ring-white/15"
+                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/12 text-xs font-semibold uppercase text-admin-text ring-1 ring-white/15"
                     title={s.assigned_to ?? "Unassigned"}
                   >
                     {initialsFromEmail(s.assigned_to)}
@@ -316,7 +323,7 @@ export default function StrategiesClient(props: Props) {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="min-w-0 space-y-1.5">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-                      <span className="text-xs font-medium text-white/85">
+                      <span className="text-xs font-medium text-admin-text">
                         {s.target_count > 0 ? (
                           <>
                             Users · {s.accepted.toLocaleString()} /{" "}
@@ -332,15 +339,17 @@ export default function StrategiesClient(props: Props) {
                     </div>
                     <ProgressBar
                       pct={s.target_count > 0 ? pctUsers : 0}
-                      color="#4ADE80"
+                      color="var(--color-neko-blue)"
                     />
                     {s.target_count === 0 ? (
-                      <p className="text-[11px] text-white/40">No target set</p>
+                      <p className="text-[11px] text-admin-subtle">
+                        No target set
+                      </p>
                     ) : null}
                   </div>
                   <div className="min-w-0 space-y-1.5">
                     <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
-                      <span className="text-xs font-medium text-white/85">
+                      <span className="text-xs font-medium text-admin-text">
                         {s.target_volume > 0 ? (
                           <>
                             Volume ·{" "}
@@ -362,15 +371,17 @@ export default function StrategiesClient(props: Props) {
                     </div>
                     <ProgressBar
                       pct={s.target_volume > 0 ? pctVolume : 0}
-                      color="#229EDF"
+                      color="var(--color-neko-accent)"
                     />
                     {s.target_volume === 0 ? (
-                      <p className="text-[11px] text-white/40">No target set</p>
+                      <p className="text-[11px] text-admin-subtle">
+                        No target set
+                      </p>
                     ) : null}
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 border-t border-white/8 pt-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="flex flex-col gap-3 border-t border-admin-border pt-4 sm:flex-row sm:items-end sm:justify-between">
                   <div className="flex flex-wrap gap-2">
                     <span className={CHIP}>
                       Total invited · {s.total_invitations.toLocaleString()}
@@ -386,7 +397,7 @@ export default function StrategiesClient(props: Props) {
                   </div>
                   <Link
                     href={`/dashboard/strategies/${s.id}`}
-                    className="shrink-0 self-end text-sm font-medium text-[#229EDF] hover:underline"
+                    className="shrink-0 self-end text-sm font-medium text-neko-blue hover:underline"
                   >
                     Manage →
                   </Link>
@@ -404,7 +415,7 @@ export default function StrategiesClient(props: Props) {
           aria-modal="true"
           aria-labelledby="strat-modal-title"
         >
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#1C1C1C] p-6 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-admin-border bg-admin-surface p-6 shadow-xl">
             <h2
               id="strat-modal-title"
               className="text-lg font-semibold text-white"
@@ -415,16 +426,16 @@ export default function StrategiesClient(props: Props) {
               <div>
                 <label
                   htmlFor="strat-name"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
-                  Name<span className="text-red-400">*</span>
+                  Name<span className="text-admin-danger">*</span>
                 </label>
                 <input
                   id="strat-name"
                   required
                   value={formName}
                   onChange={(e) => setFormName(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-neko-blue/50 focus:ring-neko-blue/25"
                   placeholder='e.g. "VIP Partner Q2"'
                 />
               </div>
@@ -432,7 +443,7 @@ export default function StrategiesClient(props: Props) {
               <div>
                 <label
                   htmlFor="strat-desc"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Description
                 </label>
@@ -441,13 +452,15 @@ export default function StrategiesClient(props: Props) {
                   rows={3}
                   value={formDescription}
                   onChange={(e) => setFormDescription(e.target.value)}
-                  className="mt-1 w-full resize-y rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full resize-y rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-neko-blue/50 focus:ring-neko-blue/25"
                   placeholder="Outreach objective and audience"
                 />
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-medium text-white/50">Type</p>
+                <p className="mb-2 text-xs font-medium text-admin-muted">
+                  Type
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {STRATEGY_TYPES.map((t) => {
                     const sel = formType === t.id;
@@ -458,8 +471,8 @@ export default function StrategiesClient(props: Props) {
                         onClick={() => setFormType(t.id)}
                         className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition ${
                           sel
-                            ? "border-[#229EDF] text-white shadow-[inset_0_0_0_1px_rgba(34,158,223,0.35)]"
-                            : "border-white/10 text-white/70 hover:border-white/20"
+                            ? "border-neko-blue text-white shadow-[inset_0_0_0_1px_rgba(34,158,223,0.35)]"
+                            : "border-admin-border text-admin-muted hover:border-white/20"
                         }`}
                       >
                         <span
@@ -478,7 +491,7 @@ export default function StrategiesClient(props: Props) {
                 <div>
                   <label
                     htmlFor="strat-target-users"
-                    className="block text-xs font-medium text-white/50"
+                    className="block text-xs font-medium text-admin-muted"
                   >
                     Target users
                   </label>
@@ -488,13 +501,13 @@ export default function StrategiesClient(props: Props) {
                     min={0}
                     value={formTarget}
                     onChange={(e) => setFormTarget(Number(e.target.value) || 0)}
-                    className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                    className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="strat-target-volume"
-                    className="block text-xs font-medium text-white/50"
+                    className="block text-xs font-medium text-admin-muted"
                   >
                     Target volume (USD)
                   </label>
@@ -505,7 +518,7 @@ export default function StrategiesClient(props: Props) {
                     step="any"
                     value={formTargetVolume}
                     onChange={(e) => setFormTargetVolume(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                    className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                   />
                 </div>
               </div>
@@ -513,7 +526,7 @@ export default function StrategiesClient(props: Props) {
               <div>
                 <label
                   htmlFor="strat-assigned"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Assigned to
                 </label>
@@ -521,7 +534,7 @@ export default function StrategiesClient(props: Props) {
                   id="strat-assigned"
                   value={formAssigned}
                   onChange={(e) => setFormAssigned(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                 >
                   <option value="">Unassigned</option>
                   {adminEmails.map((em) => (
@@ -535,7 +548,7 @@ export default function StrategiesClient(props: Props) {
               <div>
                 <label
                   htmlFor="strat-status"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Status
                 </label>
@@ -545,7 +558,7 @@ export default function StrategiesClient(props: Props) {
                   onChange={(e) =>
                     setFormStatus(e.target.value as StrategyStatus)
                   }
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                 >
                   <option value="active">active</option>
                   <option value="paused">paused</option>
@@ -556,7 +569,7 @@ export default function StrategiesClient(props: Props) {
               <div className="flex flex-wrap justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white/70 hover:bg-white/5"
+                  className="rounded-xl border border-admin-border px-4 py-2 text-sm font-medium text-admin-muted hover:bg-white/5"
                   onClick={() => setModalOpen(false)}
                   disabled={submitting}
                 >
@@ -565,7 +578,7 @@ export default function StrategiesClient(props: Props) {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#229EDF] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-neko-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-neko-navy-hover disabled:opacity-50"
                 >
                   {submitting ? (
                     <>

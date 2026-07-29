@@ -12,14 +12,14 @@ import {
 type Row = { label: string; value: number };
 
 const tooltipStyles = {
-  backgroundColor: "#242424",
-  border: "1px solid rgba(255,255,255,.08)",
+  backgroundColor: "var(--admin-elevated)",
+  border: "1px solid var(--admin-border)",
   borderRadius: 8,
 };
 
 export function SimpleBarChart({
   data,
-  color = "#229EDF",
+  color = "var(--color-neko-blue)",
   height = 250,
 }: {
   data: Row[];
@@ -38,13 +38,13 @@ export function SimpleBarChart({
           type="category"
           dataKey="label"
           width={120}
-          tick={{ fill: "rgba(255,255,255,0.5)", fontSize: 11 }}
+          tick={{ fill: "var(--admin-muted)", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
         />
         <Tooltip
           contentStyle={tooltipStyles}
-          labelStyle={{ color: "rgba(255,255,255,0.75)" }}
+          labelStyle={{ color: "var(--admin-muted)" }}
           formatter={(value: number) => [value, "count"]}
         />
         <Bar dataKey="value" fill={color} radius={[0, 6, 6, 0]} barSize={18} />

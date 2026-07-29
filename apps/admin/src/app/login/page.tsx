@@ -61,9 +61,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] px-4">
-      <div className="mx-auto mt-32 w-full max-w-sm rounded-2xl border border-white/10 bg-[#1C1C1C] p-8">
-        <h1 className="mb-6 text-center text-xl font-semibold text-white">
+    <main className="grid min-h-dvh place-items-center px-4 py-12">
+      <div className="admin-card w-full max-w-sm p-8">
+        <h1 className="mb-6 text-center font-klein text-3xl text-white">
           Neko Admin
         </h1>
 
@@ -72,7 +72,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="mb-1 block text-sm text-white/60"
+                className="mb-1 block text-sm text-admin-muted"
               >
                 Email
               </label>
@@ -83,14 +83,14 @@ export default function LoginPage() {
                 autoComplete="username"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#2A2A2A] px-4 py-3 text-white outline-none focus:border-[#229EDF]"
+                className="admin-input px-4 py-3"
                 required
               />
             </div>
             <div>
               <label
                 htmlFor="password"
-                className="mb-1 block text-sm text-white/60"
+                className="mb-1 block text-sm text-admin-muted"
               >
                 Password
               </label>
@@ -101,26 +101,26 @@ export default function LoginPage() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-[#2A2A2A] px-4 py-3 text-white outline-none focus:border-[#229EDF]"
+                className="admin-input px-4 py-3"
                 required
               />
             </div>
             {error ? (
-              <p className="text-sm text-red-400" role="alert">
+              <p className="text-sm text-admin-danger" role="alert">
                 {error}
               </p>
             ) : null}
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-[#229EDF] py-3 font-semibold text-white transition hover:bg-[#1f8ec9] disabled:opacity-50"
+              className="admin-button-primary w-full py-3"
             >
               {loading ? "Signing in…" : "Sign in"}
             </button>
           </form>
         ) : (
           <form onSubmit={onSubmitStep2} className="flex flex-col gap-4">
-            <p className="text-center text-sm text-white/70">
+            <p className="text-center text-sm text-admin-muted">
               Enter the 6-digit code from your authenticator app
             </p>
             <input
@@ -136,31 +136,31 @@ export default function LoginPage() {
               onChange={(e) =>
                 setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
               }
-              className="w-full rounded-xl border border-white/10 bg-[#2A2A2A] px-4 py-3 text-center font-mono text-3xl tracking-[0.35em] text-white outline-none focus:border-[#229EDF]"
+              className="admin-input px-4 py-3 text-center font-label text-3xl tracking-[0.35em]"
               required
             />
             {error ? (
-              <p className="text-sm text-red-400" role="alert">
+              <p className="text-sm text-admin-danger" role="alert">
                 {error}
               </p>
             ) : null}
             <button
               type="submit"
               disabled={loading || code.length !== 6}
-              className="w-full rounded-xl bg-[#229EDF] py-3 font-semibold text-white transition hover:bg-[#1f8ec9] disabled:opacity-50"
+              className="admin-button-primary w-full py-3"
             >
               {loading ? "Verifying…" : "Verify"}
             </button>
             <button
               type="button"
               onClick={goBack}
-              className="text-center text-sm text-white/60 underline-offset-4 hover:text-white hover:underline"
+              className="text-center text-sm text-admin-muted underline-offset-4 hover:text-white hover:underline"
             >
               ← Back
             </button>
           </form>
         )}
       </div>
-    </div>
+    </main>
   );
 }

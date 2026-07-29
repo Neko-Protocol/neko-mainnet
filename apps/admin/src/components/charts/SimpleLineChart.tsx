@@ -12,14 +12,14 @@ import {
 type Point = { date: string; value: number };
 
 const tooltipStyles = {
-  backgroundColor: "#242424",
-  border: "1px solid rgba(255,255,255,.08)",
+  backgroundColor: "var(--admin-elevated)",
+  border: "1px solid var(--admin-border)",
   borderRadius: 8,
 };
 
 export function SimpleLineChart({
   data,
-  color = "#229EDF",
+  color = "var(--color-neko-blue)",
   height = 200,
 }: {
   data: Point[];
@@ -36,7 +36,7 @@ export function SimpleLineChart({
       <LineChart data={chartData}>
         <XAxis
           dataKey="short"
-          tick={{ fill: "rgba(255,255,255,0.45)", fontSize: 11 }}
+          tick={{ fill: "var(--admin-subtle)", fontSize: 11 }}
           axisLine={{ stroke: "transparent" }}
           tickLine={false}
           interval="preserveStartEnd"
@@ -45,7 +45,7 @@ export function SimpleLineChart({
         <YAxis hide width={0} axisLine={{ stroke: "transparent" }} />
         <Tooltip
           contentStyle={tooltipStyles}
-          labelStyle={{ color: "rgba(255,255,255,0.75)" }}
+          labelStyle={{ color: "var(--admin-muted)" }}
           formatter={(value: number) => [value, "count"]}
           labelFormatter={(label: string | number | undefined, payload) => {
             const first = payload?.[0]?.payload as Point | undefined;

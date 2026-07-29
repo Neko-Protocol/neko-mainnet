@@ -60,11 +60,14 @@ function relativeFromExpiry(iso: string): string {
 function stratTypeBadge(strategyType: StrategyType) {
   const meta = STRATEGY_TYPES.find((x) => x.id === strategyType);
   const label = meta?.label ?? strategyType;
-  const color = meta?.color ?? "#229EDF";
+  const color = meta?.color ?? "var(--color-neko-blue)";
   return (
     <span
       className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-white/15"
-      style={{ color, backgroundColor: `${color}22` }}
+      style={{
+        color,
+        backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`,
+      }}
     >
       {label}
     </span>
@@ -76,24 +79,27 @@ function stratStatusBadgeCls(status: StrategyStatus) {
     "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium";
   switch (status) {
     case "active":
-      return `${base} bg-[#4ADE80]/15 text-[#4ADE80]`;
+      return `${base} bg-neko-blue/15 text-neko-blue`;
     case "paused":
-      return `${base} bg-amber-500/15 text-amber-200`;
+      return `${base} bg-admin-warning/15 text-admin-warning`;
     case "completed":
-      return `${base} bg-[#229EDF]/15 text-[#229EDF]`;
+      return `${base} bg-neko-accent/15 text-neko-blue`;
     default:
-      return `${base} bg-white/10 text-white/40`;
+      return `${base} bg-white/10 text-admin-subtle`;
   }
 }
 
 function invTypeBadge(type: InvitationType) {
   const meta = INVITATION_TYPES.find((x) => x.id === type);
   const label = meta?.label ?? type;
-  const color = meta?.color ?? "#229EDF";
+  const color = meta?.color ?? "var(--color-neko-blue)";
   return (
     <span
       className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-white/15"
-      style={{ color, backgroundColor: `${color}22` }}
+      style={{
+        color,
+        backgroundColor: `color-mix(in srgb, ${color} 14%, transparent)`,
+      }}
     >
       {label}
     </span>
@@ -107,11 +113,11 @@ function invStatusBadge(status: Invitation["status"]) {
     case "pending":
       return `${base} bg-yellow-500/15 text-yellow-400`;
     case "accepted":
-      return `${base} bg-green-500/15 text-green-400`;
+      return `${base} bg-neko-blue/15 text-neko-blue`;
     case "expired":
-      return `${base} bg-white/10 text-white/40`;
+      return `${base} bg-white/10 text-admin-subtle`;
     default:
-      return `${base} bg-white/10 text-white/40`;
+      return `${base} bg-white/10 text-admin-subtle`;
   }
 }
 
@@ -287,15 +293,15 @@ export default function StrategyDetailPage() {
         )
       : 0;
 
-  let progressHue: "green" | "blue" | "yellow" = "yellow";
-  if (pctTarget > 80) progressHue = "green";
-  else if (pctTarget >= 40) progressHue = "blue";
+  let progressTone: "strong" | "medium" | "warning" = "warning";
+  if (pctTarget > 80) progressTone = "strong";
+  else if (pctTarget >= 40) progressTone = "medium";
 
   const progressBg =
-    progressHue === "green"
-      ? "bg-[#4ADE80]"
-      : progressHue === "blue"
-        ? "bg-[#229EDF]"
+    progressTone === "strong"
+      ? "bg-neko-blue"
+      : progressTone === "medium"
+        ? "bg-neko-accent"
         : "bg-amber-400";
 
   async function handlePatchStrategy(e: React.FormEvent) {
@@ -432,27 +438,27 @@ export default function StrategyDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#121212] p-6 lg:p-8 animate-pulse">
+      <div className="min-h-screen bg-admin-canvas p-6 lg:p-8 animate-pulse">
         <div className="mb-2 h-4 w-24 rounded-full bg-white/10" />
         <div className="mt-4 mb-8 h-8 w-64 rounded-xl bg-white/10" />
         <div className="mb-6 grid gap-4 md:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-2xl bg-white/[0.06] h-28" />
+            <div key={i} className="rounded-xl bg-white/[0.06] h-28" />
           ))}
         </div>
-        <div className="mb-6 rounded-2xl bg-white/[0.06] h-32" />
-        <div className="rounded-2xl bg-white/[0.06] h-64" />
+        <div className="mb-6 rounded-xl bg-white/[0.06] h-32" />
+        <div className="rounded-xl bg-white/[0.06] h-64" />
       </div>
     );
   }
 
   if (!strategy) {
     return (
-      <div className="min-h-screen bg-[#121212] p-6 text-white lg:p-8">
-        <p className="text-white/70">{error ?? "Strategy not found."}</p>
+      <div className="min-h-screen bg-admin-canvas p-6 text-white lg:p-8">
+        <p className="text-admin-muted">{error ?? "Strategy not found."}</p>
         <Link
           href="/dashboard/strategies"
-          className="mt-4 inline-block text-[#229EDF] hover:underline"
+          className="mt-4 inline-block text-neko-blue hover:underline"
         >
           ← Back to strategies
         </Link>
@@ -461,17 +467,17 @@ export default function StrategyDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#121212] p-6 lg:p-8">
+    <div className="admin-page">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Link
             href="/dashboard/strategies"
-            className="text-sm text-[#229EDF] hover:underline"
+            className="text-sm text-neko-blue hover:underline"
           >
             ← Back to strategies
           </Link>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold text-white">
+            <h1 className="font-klein text-3xl text-admin-text text-balance">
               {strategy.name}
             </h1>
             {stratTypeBadge(strategy.type)}
@@ -479,13 +485,15 @@ export default function StrategyDetailPage() {
               {strategy.status}
             </span>
           </div>
-          <p className="mt-2 text-xs text-white/40">
+          <p className="mt-2 text-xs text-admin-subtle">
             {strategy.status === "completed" && strategy.completed_at
               ? `Ran for ${strategyDuration(strategy.created_at, strategy.completed_at)} · closed ${new Date(strategy.completed_at).toLocaleDateString()}`
               : `Active for ${strategyDuration(strategy.created_at, null)}`}
           </p>
           {strategy.description ? (
-            <p className="mt-2 text-sm text-white/50">{strategy.description}</p>
+            <p className="mt-2 text-sm text-admin-muted">
+              {strategy.description}
+            </p>
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -494,7 +502,7 @@ export default function StrategyDetailPage() {
               type="button"
               disabled={closingStrategy}
               onClick={() => void handleCloseStrategy()}
-              className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-sm font-medium text-white/80 ring-1 ring-white/10 transition hover:bg-white/10 disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-full border border-admin-border-strong bg-white/[0.06] px-4 py-2 text-sm font-medium text-admin-text ring-1 ring-white/10 transition hover:bg-white/10 disabled:opacity-50"
             >
               {closingStrategy ? "Closing…" : "Close strategy"}
             </button>
@@ -523,41 +531,41 @@ export default function StrategyDetailPage() {
       </div>
 
       {error ? (
-        <p className="mb-4 text-sm text-red-400" role="alert">
+        <p className="mb-4 text-sm text-admin-danger" role="alert">
           {error}
         </p>
       ) : null}
 
       <div className="mb-6 grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5">
-          <p className="text-sm text-white/50">Invited</p>
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5">
+          <p className="text-sm text-admin-muted">Invited</p>
           <p className="mt-2 text-3xl font-bold text-white">
             {totals.total.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-[#4ADE80]/25">
-          <p className="text-sm text-white/50">Accepted</p>
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-neko-blue/25">
+          <p className="text-sm text-admin-muted">Accepted</p>
           <p className="mt-2 text-3xl font-bold text-white">
             {totals.accepted.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-amber-500/20">
-          <p className="text-sm text-white/50">Pending</p>
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-admin-warning/20">
+          <p className="text-sm text-admin-muted">Pending</p>
           <p className="mt-2 text-3xl font-bold text-white">
             {totals.pending.toLocaleString()}
           </p>
         </div>
-        <div className="flex flex-col justify-center rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-[#229EDF]/25">
-          <p className="text-sm text-white/50">Acceptance rate</p>
-          <p className="mt-1 text-5xl font-bold tracking-tight text-[#229EDF]">
+        <div className="flex flex-col justify-center rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-neko-blue/25">
+          <p className="text-sm text-admin-muted">Acceptance rate</p>
+          <p className="mt-1 text-5xl font-bold tracking-tight text-neko-blue">
             {totals.acceptanceRate.toFixed(
               totals.acceptanceRate % 1 === 0 ? 0 : 1
             )}
             %
           </p>
         </div>
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-emerald-500/15">
-          <div className="flex items-center gap-1.5 text-sm text-white/50">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-neko-blue/15">
+          <div className="flex items-center gap-1.5 text-sm text-admin-muted">
             <DollarSign className="size-4 shrink-0 opacity-70" aria-hidden />
             Vol. moved
           </div>
@@ -565,9 +573,9 @@ export default function StrategyDetailPage() {
             {fmtUsd(totalVolumeMoved)}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-[#4ADE80]/20">
-          <p className="text-sm text-white/50">Real TVL (on-chain)</p>
-          <p className="mt-2 text-3xl font-bold text-[#4ADE80]">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-neko-blue/20">
+          <p className="text-sm text-admin-muted">Real TVL (on-chain)</p>
+          <p className="mt-2 text-3xl font-bold text-neko-blue">
             {realTvlLoading ? (
               <span className="inline-block h-8 w-24 animate-pulse rounded-lg bg-white/10" />
             ) : realTvl != null ? (
@@ -582,13 +590,13 @@ export default function StrategyDetailPage() {
         </div>
       </div>
 
-      <section className="mb-8 rounded-2xl border border-white/8 bg-[#1C1C1C] p-6">
+      <section className="mb-8 rounded-xl border border-admin-border bg-admin-surface p-6">
         <h2 className="mb-5 text-lg font-semibold text-white">Progress</h2>
         <div className="space-y-5">
           <div>
             <div className="mb-2 flex items-center justify-between text-sm">
               <span className="font-medium text-white">Users</span>
-              <span className="text-white/50">
+              <span className="text-admin-muted">
                 {totals.accepted} / {strategy.target_count} target
                 {strategy.target_count > 0 ? ` · ${pctTarget}%` : ""}
               </span>
@@ -604,7 +612,7 @@ export default function StrategyDetailPage() {
           <div>
             <div className="mb-2 flex items-center justify-between text-sm">
               <span className="font-medium text-white">Volume moved</span>
-              <span className="text-white/50">
+              <span className="text-admin-muted">
                 {fmtUsd(totalVolumeMoved)}
                 {strategy.target_volume > 0
                   ? ` / ${fmtUsd(strategy.target_volume)} · ${pctVolume}%`
@@ -613,15 +621,15 @@ export default function StrategyDetailPage() {
             </div>
             <div className="h-2 rounded-full bg-white/10">
               <div
-                className="h-2 rounded-full bg-[#229EDF] transition-[width]"
+                className="h-2 rounded-lg bg-neko-accent transition-[width]"
                 style={{ width: `${pctVolume}%` }}
                 role="presentation"
               />
             </div>
             {realTvl != null ? (
-              <p className="mt-2 text-xs text-white/40">
+              <p className="mt-2 text-xs text-admin-subtle">
                 On-chain:{" "}
-                <span className="text-white/70">{fmtUsd(realTvl)}</span>
+                <span className="text-admin-muted">{fmtUsd(realTvl)}</span>
                 {strategy.target_volume > 0
                   ? ` · ${Math.min(
                       100,
@@ -644,7 +652,7 @@ export default function StrategyDetailPage() {
           <h2 className="text-lg font-semibold text-white">Invitations</h2>
           <button
             type="button"
-            className="inline-flex items-center justify-center rounded-full bg-[#229EDF] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1a8bc7]"
+            className="inline-flex items-center justify-center rounded-lg bg-neko-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-neko-navy-hover"
             onClick={() => {
               setError(null);
               setInviteOpen(true);
@@ -654,18 +662,18 @@ export default function StrategyDetailPage() {
           </button>
         </div>
         {markedAcceptedBanner ? (
-          <p className="mb-4 text-sm text-[#4ADE80]" role="status">
+          <p className="mb-4 text-sm text-neko-blue" role="status">
             {markedAcceptedBanner}
           </p>
         ) : null}
 
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-xs text-white/50">
+          <label className="flex items-center gap-2 text-xs text-admin-muted">
             <span className="whitespace-nowrap">Status</span>
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-xl border border-white/10 bg-[#1C1C1C] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+              className="rounded-xl border border-admin-border bg-admin-surface px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
             >
               <option value="">All</option>
               <option value="pending">Pending</option>
@@ -676,15 +684,15 @@ export default function StrategyDetailPage() {
         </div>
 
         {displayed.length === 0 ? (
-          <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] px-6 py-16 text-center text-white/55">
+          <div className="rounded-xl border border-admin-border bg-admin-surface px-6 py-16 text-center text-white/55">
             {invitations.length === 0
               ? "No invitations yet in this strategy."
               : "No invitations match this filter."}
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-white/8 bg-[#1C1C1C]">
+          <div className="overflow-x-auto rounded-xl border border-admin-border bg-admin-surface">
             <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-white/8 text-white/50">
+              <thead className="border-b border-admin-border text-admin-muted">
                 <tr>
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Type</th>
@@ -696,9 +704,9 @@ export default function StrategyDetailPage() {
                   <th className="px-4 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/8">
+              <tbody className="divide-y divide-admin-border">
                 {displayed.map((inv) => (
-                  <tr key={inv.id} className="text-white/85">
+                  <tr key={inv.id} className="text-admin-text">
                     <td className="whitespace-nowrap px-4 py-3 font-medium text-white">
                       {inv.email}
                     </td>
@@ -708,18 +716,18 @@ export default function StrategyDetailPage() {
                         {inv.status}
                       </span>
                     </td>
-                    <td className="max-w-[12rem] truncate px-4 py-3 text-white/70">
+                    <td className="max-w-[12rem] truncate px-4 py-3 text-admin-muted">
                       {inv.assigned_to ?? "—"}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-white/60">
+                    <td className="whitespace-nowrap px-4 py-3 text-admin-muted">
                       {relativeFromExpiry(inv.expires_at)}
                     </td>
-                    <td className="max-w-[14rem] px-4 py-3 text-white/70">
+                    <td className="max-w-[14rem] px-4 py-3 text-admin-muted">
                       {inv.status === "accepted"
                         ? truncateActivityNotes(inv.accepted_notes)
                         : "—"}
                     </td>
-                    <td className="whitespace-nowrap px-4 py-3 text-white/70">
+                    <td className="whitespace-nowrap px-4 py-3 text-admin-muted">
                       {inv.status === "accepted"
                         ? formatVolumeUsd(inv.volume_moved)
                         : "—"}
@@ -729,7 +737,7 @@ export default function StrategyDetailPage() {
                         {inv.status === "pending" ? (
                           <button
                             type="button"
-                            className="inline-flex items-center rounded-lg bg-[#4ADE80]/15 px-3 py-1 text-xs font-semibold text-[#4ADE80] hover:bg-[#4ADE80]/25"
+                            className="inline-flex items-center rounded-lg bg-neko-blue/15 px-3 py-1 text-xs font-semibold text-neko-blue hover:bg-neko-blue/25"
                             onClick={() => openAcceptModal(inv)}
                           >
                             Accept
@@ -737,7 +745,7 @@ export default function StrategyDetailPage() {
                         ) : null}
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 rounded-lg bg-red-500/10 px-2 py-1 text-xs font-medium text-red-300 transition hover:bg-red-500/20"
+                          className="inline-flex items-center gap-1 rounded-lg bg-admin-danger/10 px-2 py-1 text-xs font-medium text-admin-danger transition hover:bg-admin-danger/20"
                           onClick={() => handleDeleteInvitation(inv)}
                         >
                           <Trash2 className="size-3.5 shrink-0" aria-hidden />
@@ -760,7 +768,7 @@ export default function StrategyDetailPage() {
           aria-modal="true"
           aria-labelledby="edit-strat-title"
         >
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#1C1C1C] p-6 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-admin-border bg-admin-surface p-6 shadow-xl">
             <h2
               id="edit-strat-title"
               className="text-lg font-semibold text-white"
@@ -771,23 +779,23 @@ export default function StrategyDetailPage() {
               <div>
                 <label
                   htmlFor="e-name"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
-                  Name<span className="text-red-400">*</span>
+                  Name<span className="text-admin-danger">*</span>
                 </label>
                 <input
                   id="e-name"
                   required
                   value={eName}
                   onChange={(e) => setEName(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="e-desc"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Description
                 </label>
@@ -796,12 +804,14 @@ export default function StrategyDetailPage() {
                   rows={3}
                   value={eDesc}
                   onChange={(e) => setEDesc(e.target.value)}
-                  className="mt-1 w-full resize-y rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full resize-y rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                 />
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-medium text-white/50">Type</p>
+                <p className="mb-2 text-xs font-medium text-admin-muted">
+                  Type
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {STRATEGY_TYPES.map((t) => {
                     const sel = eType === t.id;
@@ -812,8 +822,8 @@ export default function StrategyDetailPage() {
                         onClick={() => setEType(t.id)}
                         className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition ${
                           sel
-                            ? "border-[#229EDF] text-white shadow-[inset_0_0_0_1px_rgba(34,158,223,0.35)]"
-                            : "border-white/10 text-white/70 hover:border-white/20"
+                            ? "border-neko-blue text-white shadow-[inset_0_0_0_1px_rgba(34,158,223,0.35)]"
+                            : "border-admin-border text-admin-muted hover:border-white/20"
                         }`}
                       >
                         <span
@@ -832,7 +842,7 @@ export default function StrategyDetailPage() {
                 <div>
                   <label
                     htmlFor="e-target"
-                    className="block text-xs font-medium text-white/50"
+                    className="block text-xs font-medium text-admin-muted"
                   >
                     Target users
                   </label>
@@ -842,13 +852,13 @@ export default function StrategyDetailPage() {
                     min={0}
                     value={eTarget}
                     onChange={(e) => setETarget(Number(e.target.value) || 0)}
-                    className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                    className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                   />
                 </div>
                 <div>
                   <label
                     htmlFor="e-target-vol"
-                    className="block text-xs font-medium text-white/50"
+                    className="block text-xs font-medium text-admin-muted"
                   >
                     Target volume (USD)
                   </label>
@@ -859,7 +869,7 @@ export default function StrategyDetailPage() {
                     step="any"
                     value={eTargetVolume}
                     onChange={(e) => setETargetVolume(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                    className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                   />
                 </div>
               </div>
@@ -867,7 +877,7 @@ export default function StrategyDetailPage() {
               <div>
                 <label
                   htmlFor="e-assigned"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Assigned to
                 </label>
@@ -875,7 +885,7 @@ export default function StrategyDetailPage() {
                   id="e-assigned"
                   value={eAssigned}
                   onChange={(e) => setEAssigned(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                 >
                   <option value="">Unassigned</option>
                   {adminEmails.map((em) => (
@@ -889,7 +899,7 @@ export default function StrategyDetailPage() {
               <div>
                 <label
                   htmlFor="e-status"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Status
                 </label>
@@ -897,7 +907,7 @@ export default function StrategyDetailPage() {
                   id="e-status"
                   value={eStatus}
                   onChange={(e) => setEStatus(e.target.value as StrategyStatus)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                 >
                   <option value="active">active</option>
                   <option value="paused">paused</option>
@@ -908,7 +918,7 @@ export default function StrategyDetailPage() {
               <div className="flex flex-wrap justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white/70 hover:bg-white/5"
+                  className="rounded-xl border border-admin-border px-4 py-2 text-sm font-medium text-admin-muted hover:bg-white/5"
                   onClick={() => setEditOpen(false)}
                   disabled={submittingEdit}
                 >
@@ -917,7 +927,7 @@ export default function StrategyDetailPage() {
                 <button
                   type="submit"
                   disabled={submittingEdit}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#229EDF] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-neko-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-neko-navy-hover disabled:opacity-50"
                 >
                   {submittingEdit ? (
                     <>
@@ -941,7 +951,7 @@ export default function StrategyDetailPage() {
           aria-modal="true"
           aria-labelledby="add-inv-modal-title"
         >
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#1C1C1C] p-6 shadow-xl">
+          <div className="w-full max-w-md rounded-xl border border-admin-border bg-admin-surface p-6 shadow-xl">
             <h2
               id="add-inv-modal-title"
               className="text-lg font-semibold text-white"
@@ -952,9 +962,9 @@ export default function StrategyDetailPage() {
               <div>
                 <label
                   htmlFor="inv-email2"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
-                  Email<span className="text-red-400">*</span>
+                  Email<span className="text-admin-danger">*</span>
                 </label>
                 <input
                   id="inv-email2"
@@ -962,13 +972,15 @@ export default function StrategyDetailPage() {
                   required
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-neko-blue/50 focus:ring-neko-blue/25"
                   placeholder="name@company.com"
                 />
               </div>
 
               <div>
-                <p className="mb-2 text-xs font-medium text-white/50">Type</p>
+                <p className="mb-2 text-xs font-medium text-admin-muted">
+                  Type
+                </p>
                 <div className="flex flex-wrap gap-2">
                   {INVITATION_TYPES.map((t) => {
                     const sel = formType === t.id;
@@ -979,8 +991,8 @@ export default function StrategyDetailPage() {
                         onClick={() => setFormType(t.id)}
                         className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium transition ${
                           sel
-                            ? "border-[#229EDF] text-white shadow-[inset_0_0_0_1px_rgba(34,158,223,0.35)]"
-                            : "border-white/10 text-white/70 hover:border-white/20"
+                            ? "border-neko-blue text-white shadow-[inset_0_0_0_1px_rgba(34,158,223,0.35)]"
+                            : "border-admin-border text-admin-muted hover:border-white/20"
                         }`}
                       >
                         <span
@@ -998,7 +1010,7 @@ export default function StrategyDetailPage() {
               <div>
                 <label
                   htmlFor="inv-assigned2"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Assigned to
                 </label>
@@ -1006,7 +1018,7 @@ export default function StrategyDetailPage() {
                   id="inv-assigned2"
                   value={formAssigned}
                   onChange={(e) => setFormAssigned(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                 >
                   <option value="">Unassigned</option>
                   {adminEmails.map((em) => (
@@ -1020,7 +1032,7 @@ export default function StrategyDetailPage() {
               <div>
                 <label
                   htmlFor="inv-notes2"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Notes
                 </label>
@@ -1029,7 +1041,7 @@ export default function StrategyDetailPage() {
                   rows={3}
                   value={formNotes}
                   onChange={(e) => setFormNotes(e.target.value)}
-                  className="mt-1 w-full resize-y rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full resize-y rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-neko-blue/50 focus:ring-neko-blue/25"
                   placeholder="Optional notes for internal follow-up"
                 />
               </div>
@@ -1037,7 +1049,7 @@ export default function StrategyDetailPage() {
               <div>
                 <label
                   htmlFor="inv-expires2"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Expires in
                 </label>
@@ -1047,7 +1059,7 @@ export default function StrategyDetailPage() {
                   onChange={(e) =>
                     setFormExpiresDays(Number(e.target.value) as 7 | 14 | 30)
                   }
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                 >
                   <option value={7}>7 days</option>
                   <option value={14}>14 days</option>
@@ -1058,7 +1070,7 @@ export default function StrategyDetailPage() {
               <div className="flex flex-wrap justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white/70 hover:bg-white/5"
+                  className="rounded-xl border border-admin-border px-4 py-2 text-sm font-medium text-admin-muted hover:bg-white/5"
                   onClick={() => setInviteOpen(false)}
                   disabled={submitInvite}
                 >
@@ -1067,7 +1079,7 @@ export default function StrategyDetailPage() {
                 <button
                   type="submit"
                   disabled={submitInvite}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#229EDF] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-neko-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-neko-navy-hover disabled:opacity-50"
                 >
                   {submitInvite ? (
                     <>
@@ -1091,14 +1103,14 @@ export default function StrategyDetailPage() {
           aria-modal="true"
           aria-labelledby="accept-inv-title"
         >
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#1C1C1C] p-6 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-admin-border bg-admin-surface p-6 shadow-xl">
             <h2
               id="accept-inv-title"
               className="text-lg font-semibold text-white"
             >
               Mark as accepted
             </h2>
-            <p className="mt-1 text-sm text-white/50">
+            <p className="mt-1 text-sm text-admin-muted">
               {acceptingInvitation.email}
             </p>
 
@@ -1106,7 +1118,7 @@ export default function StrategyDetailPage() {
               <div>
                 <label
                   htmlFor="accept-notes"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   What did they do?
                 </label>
@@ -1114,7 +1126,7 @@ export default function StrategyDetailPage() {
                   id="accept-notes"
                   value={acceptedNotes}
                   onChange={(e) => setAcceptedNotes(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent focus:border-neko-blue/50 focus:ring-neko-blue/25"
                 >
                   <option value="">— Select action —</option>
                   {ACTIVITY_OPTIONS.map((o) => (
@@ -1127,7 +1139,7 @@ export default function StrategyDetailPage() {
               <div>
                 <label
                   htmlFor="accept-volume"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Volume moved (USD)
                 </label>
@@ -1138,15 +1150,15 @@ export default function StrategyDetailPage() {
                   value={volumeMoved}
                   onChange={(e) => setVolumeMoved(e.target.value)}
                   placeholder="0.00"
-                  className="mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25"
+                  className="mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-neko-blue/50 focus:ring-neko-blue/25"
                 />
               </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-white/8 pt-4">
+            <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-admin-border pt-4">
               <button
                 type="button"
-                className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white/70 hover:bg-white/5"
+                className="rounded-xl border border-admin-border px-4 py-2 text-sm font-medium text-admin-muted hover:bg-white/5"
                 onClick={() => {
                   if (!acceptLoading) setAcceptingInvitation(null);
                 }}
@@ -1158,7 +1170,7 @@ export default function StrategyDetailPage() {
                 type="button"
                 disabled={acceptLoading}
                 onClick={() => void handleConfirmAcceptInvitation()}
-                className="inline-flex items-center gap-2 rounded-xl bg-[#4ADE80] px-5 py-2 text-sm font-semibold text-[#121212] transition hover:bg-[#6ee793] disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-neko-blue px-5 py-2 text-sm font-semibold text-neko-dark hover:bg-neko-muted disabled:opacity-50"
               >
                 {acceptLoading ? (
                   <>

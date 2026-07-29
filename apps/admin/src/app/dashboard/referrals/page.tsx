@@ -65,11 +65,13 @@ function ReferredUsersPanel({ wallet }: { wallet: string }) {
   }, [wallet]);
 
   const content = (() => {
-    if (error) return <p className="text-xs text-red-400">{error}</p>;
+    if (error) return <p className="text-xs text-admin-danger">{error}</p>;
     if (users === null)
-      return <p className="text-xs text-white/40">Loading…</p>;
+      return <p className="text-xs text-admin-subtle">Loading…</p>;
     if (users.length === 0)
-      return <p className="text-xs text-white/40">No referred users yet.</p>;
+      return (
+        <p className="text-xs text-admin-subtle">No referred users yet.</p>
+      );
     return (
       <div className="grid grid-cols-3 gap-x-8">
         <div className="text-[10px] font-medium uppercase tracking-wide text-white/35 pb-2">
@@ -85,7 +87,7 @@ function ReferredUsersPanel({ wallet }: { wallet: string }) {
           <>
             <div
               key={`${u.referred_wallet}-w`}
-              className="font-mono text-xs text-white/80 border-white/5"
+              className="font-mono text-xs text-admin-text border-white/5"
             >
               {truncate(u.referred_wallet)}
             </div>
@@ -93,8 +95,8 @@ function ReferredUsersPanel({ wallet }: { wallet: string }) {
               <span
                 className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                   u.status === "confirmed"
-                    ? "bg-emerald-500/15 text-emerald-400"
-                    : "bg-amber-500/15 text-amber-400"
+                    ? "bg-neko-blue/15 text-neko-blue"
+                    : "bg-admin-warning/15 text-admin-warning"
                 }`}
               >
                 {u.status}
@@ -102,7 +104,7 @@ function ReferredUsersPanel({ wallet }: { wallet: string }) {
             </div>
             <div
               key={`${u.referred_wallet}-c`}
-              className="text-xs text-white/50 border-white/5"
+              className="text-xs text-admin-muted border-white/5"
             >
               {formatDate(u.confirmed_at)}
             </div>
@@ -166,17 +168,19 @@ export default function ReferralsPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="admin-page">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-white">Referrals</h1>
-        <p className="text-sm text-white/50">
+        <h1 className="font-klein text-3xl text-admin-text text-balance">
+          Referrals
+        </h1>
+        <p className="text-sm text-admin-muted">
           Confirmed referrals (email verified) and the volume each referrer
           brought: swap volume plus vault TVL.
         </p>
       </div>
 
       <div className="mb-4 flex flex-wrap items-center gap-2">
-        <span className="text-xs uppercase tracking-wide text-white/45">
+        <span className="text-xs uppercase tracking-wide text-admin-subtle">
           Rank by
         </span>
         {SORT_OPTIONS.map(({ key, label }) => (
@@ -186,8 +190,8 @@ export default function ReferralsPage() {
             onClick={() => setSortKey(key)}
             className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
               sortKey === key
-                ? "border-[#229EDF]/55 bg-[#229EDF]/15 text-[#229EDF]"
-                : "border-white/10 text-white/60 hover:border-white/25 hover:text-white"
+                ? "border-neko-blue/55 bg-neko-accent/15 text-neko-blue"
+                : "border-admin-border text-admin-muted hover:border-admin-border-strong hover:text-white"
             }`}
           >
             {label}
@@ -196,36 +200,36 @@ export default function ReferralsPage() {
       </div>
 
       {error ? (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+        <div className="rounded-lg border border-admin-danger/30 bg-admin-danger/10 px-3 py-2 text-sm text-admin-danger">
           {error}
         </div>
       ) : sortedRows === null ? (
-        <p className="text-sm text-white/50">Loading…</p>
+        <p className="text-sm text-admin-muted">Loading…</p>
       ) : sortedRows.length === 0 ? (
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-8 text-center text-sm text-white/50">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-8 text-center text-sm text-admin-muted">
           No confirmed referrals yet.
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#1C1C1C]">
+        <div className="overflow-hidden rounded-xl border border-admin-border bg-admin-surface">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-white/8 text-xs uppercase tracking-wide text-white/45">
+            <thead className="border-b border-admin-border text-xs uppercase tracking-wide text-admin-subtle">
               <tr>
                 <th className="px-4 py-3 w-8"></th>
                 <th className="px-4 py-3">#</th>
                 <th className="px-4 py-3">Referrer</th>
                 <th className="px-4 py-3">Code</th>
                 <th
-                  className={`px-4 py-3 ${sortKey === "users" ? "text-[#229EDF]" : ""}`}
+                  className={`px-4 py-3 ${sortKey === "users" ? "text-neko-blue" : ""}`}
                 >
                   Referred
                 </th>
                 <th
-                  className={`px-4 py-3 ${sortKey === "swap_volume" ? "text-[#229EDF]" : ""}`}
+                  className={`px-4 py-3 ${sortKey === "swap_volume" ? "text-neko-blue" : ""}`}
                 >
                   Swap volume
                 </th>
                 <th
-                  className={`px-4 py-3 ${sortKey === "vault_tvl" ? "text-[#229EDF]" : ""}`}
+                  className={`px-4 py-3 ${sortKey === "vault_tvl" ? "text-neko-blue" : ""}`}
                 >
                   Vault TVL
                 </th>
@@ -241,21 +245,23 @@ export default function ReferralsPage() {
                       className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] cursor-pointer"
                       onClick={() => toggleExpand(row.referrer_wallet)}
                     >
-                      <td className="px-4 py-3 text-white/40">
+                      <td className="px-4 py-3 text-admin-subtle">
                         {isExpanded ? (
                           <ChevronDown size={14} />
                         ) : (
                           <ChevronRight size={14} />
                         )}
                       </td>
-                      <td className="px-4 py-3 text-white/45">{index + 1}</td>
+                      <td className="px-4 py-3 text-admin-subtle">
+                        {index + 1}
+                      </td>
                       <td className="px-4 py-3 font-mono text-xs text-white">
                         {truncate(row.referrer_wallet)}
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-white/70">
+                      <td className="px-4 py-3 font-mono text-xs text-admin-muted">
                         {row.code}
                       </td>
-                      <td className="px-4 py-3 text-white/70">
+                      <td className="px-4 py-3 text-admin-muted">
                         {row.confirmed_count}
                       </td>
                       <td className="px-4 py-3 text-white">

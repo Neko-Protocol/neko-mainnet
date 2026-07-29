@@ -23,10 +23,10 @@ type Props = {
 };
 
 const CHIP =
-  "inline-flex items-center rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[11px] text-white/70";
+  "inline-flex items-center rounded-full border border-admin-border bg-white/[0.06] px-2.5 py-1 text-[11px] text-admin-muted";
 
 const INPUT_CLS =
-  "mt-1 w-full rounded-xl border border-white/10 bg-[#121212] px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-[#229EDF]/50 focus:ring-[#229EDF]/25";
+  "mt-1 w-full rounded-xl border border-admin-border bg-admin-canvas px-3 py-2 text-sm text-white outline-none ring-1 ring-transparent placeholder:text-white/35 focus:border-neko-blue/50 focus:ring-neko-blue/25";
 
 const SELECT_CLS = INPUT_CLS;
 
@@ -46,8 +46,8 @@ function typeButtonCls(selected: boolean, disabled: boolean): string {
     return `${TYPE_BUTTON_BASE} cursor-not-allowed border-white/5 text-white/25 opacity-50`;
   }
   return selected
-    ? `${TYPE_BUTTON_BASE} border-[#229EDF] text-white shadow-[inset_0_0_0_1px_rgba(34,158,223,0.35)]`
-    : `${TYPE_BUTTON_BASE} border-white/10 text-white/70 hover:border-white/20`;
+    ? `${TYPE_BUTTON_BASE} border-neko-blue text-white shadow-[inset_0_0_0_1px_rgba(34,158,223,0.35)]`
+    : `${TYPE_BUTTON_BASE} border-admin-border text-admin-muted hover:border-white/20`;
 }
 
 function destinationLabel(d: CatalogDestination): string {
@@ -67,8 +67,8 @@ function activeBadgeCls(isActive: boolean): string {
   const base =
     "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium";
   return isActive
-    ? `${base} bg-[#4ADE80]/15 text-[#4ADE80]`
-    : `${base} bg-white/10 text-white/40`;
+    ? `${base} bg-neko-blue/15 text-neko-blue`
+    : `${base} bg-white/10 text-admin-subtle`;
 }
 
 type FormState = {
@@ -296,20 +296,20 @@ export default function RecommendedClient({ recommendations }: Props) {
   const activeCount = recommendations.filter((r) => r.is_active).length;
 
   return (
-    <div className="min-h-screen bg-[#121212] p-6 lg:p-8">
+    <div className="admin-page">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">
+          <h1 className="font-klein text-3xl text-admin-text text-balance">
             Recommended Strategies
           </h1>
-          <p className="text-sm text-white/50">
+          <p className="text-sm text-admin-muted">
             Curated recipes shown in the web-app &ldquo;Recommended by
             Neko&rdquo; section
           </p>
         </div>
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-full bg-[#229EDF] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1a8bc7]"
+          className="inline-flex items-center justify-center rounded-lg bg-neko-accent px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-neko-navy-hover"
           onClick={openCreate}
         >
           New recommendation
@@ -317,36 +317,36 @@ export default function RecommendedClient({ recommendations }: Props) {
       </header>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-white/5">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-white/5">
           <div className="flex justify-between gap-2">
-            <p className="text-sm font-medium text-white/50">Total</p>
-            <Sparkles className="size-5 text-white/40" aria-hidden />
+            <p className="text-sm font-medium text-admin-muted">Total</p>
+            <Sparkles className="size-5 text-admin-subtle" aria-hidden />
           </div>
           <p className="mt-2 text-3xl font-bold text-white">
             {recommendations.length.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-[#4ADE80]/25">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-neko-blue/25">
           <div className="flex justify-between gap-2">
-            <p className="text-sm font-medium text-white/50">Active</p>
-            <Sparkles className="size-5 text-[#4ADE80]/60" aria-hidden />
+            <p className="text-sm font-medium text-admin-muted">Active</p>
+            <Sparkles className="size-5 text-neko-blue/60" aria-hidden />
           </div>
           <p className="mt-2 text-3xl font-bold text-white">
             {activeCount.toLocaleString()}
           </p>
         </div>
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 ring-1 ring-[#229EDF]/25 sm:col-span-2 lg:col-span-1">
+        <div className="rounded-xl border border-admin-border bg-admin-surface p-5 ring-1 ring-neko-blue/25 sm:col-span-2 lg:col-span-1">
           <div className="flex justify-between gap-2">
-            <p className="text-sm font-medium text-white/50">
+            <p className="text-sm font-medium text-admin-muted">
               Catalog destinations
             </p>
-            <Sparkles className="size-5 text-[#229EDF]/55" aria-hidden />
+            <Sparkles className="size-5 text-neko-blue/55" aria-hidden />
           </div>
           <p className="mt-2 text-3xl font-bold text-white">
             {catalogLoaded ? catalog.length.toLocaleString() : "…"}
           </p>
           {noCatalog ? (
-            <p className="mt-1 text-[11px] text-amber-200/80">
+            <p className="mt-1 text-[11px] text-admin-warning/80">
               Empty — run the catalog sync
             </p>
           ) : null}
@@ -354,13 +354,13 @@ export default function RecommendedClient({ recommendations }: Props) {
       </div>
 
       {error ? (
-        <p className="mb-4 text-sm text-red-400" role="alert">
+        <p className="mb-4 text-sm text-admin-danger" role="alert">
           {error}
         </p>
       ) : null}
 
       {recommendations.length === 0 ? (
-        <div className="rounded-2xl border border-white/8 bg-[#1C1C1C] px-6 py-16 text-center text-white/60">
+        <div className="rounded-xl border border-admin-border bg-admin-surface px-6 py-16 text-center text-admin-muted">
           No recommendations yet. Create one to curate the strategies library.
         </div>
       ) : (
@@ -388,7 +388,7 @@ export default function RecommendedClient({ recommendations }: Props) {
             return (
               <div
                 key={r.id}
-                className="flex flex-col gap-4 rounded-2xl border border-white/8 bg-[#1C1C1C] p-5 transition-colors hover:border-white/[0.14]"
+                className="flex flex-col gap-4 rounded-xl border border-admin-border bg-admin-surface p-5 transition-colors hover:border-white/[0.14]"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <h2 className="min-w-0 flex-1 text-base font-bold text-white">
@@ -406,7 +406,9 @@ export default function RecommendedClient({ recommendations }: Props) {
                   {r.description?.trim() ? (
                     r.description
                   ) : (
-                    <span className="italic text-white/40">No description</span>
+                    <span className="italic text-admin-subtle">
+                      No description
+                    </span>
                   )}
                 </p>
 
@@ -417,12 +419,12 @@ export default function RecommendedClient({ recommendations }: Props) {
                   <span className={CHIP}>Snapshot APY · {apyLabel}</span>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 border-t border-white/8 pt-4">
+                <div className="flex flex-wrap items-center gap-2 border-t border-admin-border pt-4">
                   <button
                     type="button"
                     disabled={busy}
                     onClick={() => toggleActive(r)}
-                    className="rounded-xl border border-white/10 px-3 py-1.5 text-xs font-medium text-white/70 transition hover:bg-white/5 disabled:opacity-50"
+                    className="rounded-xl border border-admin-border px-3 py-1.5 text-xs font-medium text-admin-muted transition hover:bg-white/5 disabled:opacity-50"
                   >
                     {busy ? (
                       <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -436,7 +438,7 @@ export default function RecommendedClient({ recommendations }: Props) {
                     type="button"
                     disabled={busy}
                     onClick={() => openEdit(r)}
-                    className="rounded-xl border border-white/10 px-3 py-1.5 text-xs font-medium text-[#229EDF] transition hover:bg-[#229EDF]/10 disabled:opacity-50"
+                    className="rounded-xl border border-admin-border px-3 py-1.5 text-xs font-medium text-neko-blue transition hover:bg-neko-accent/10 disabled:opacity-50"
                   >
                     Edit
                   </button>
@@ -444,7 +446,7 @@ export default function RecommendedClient({ recommendations }: Props) {
                     type="button"
                     disabled={busy}
                     onClick={() => handleDelete(r)}
-                    className="rounded-xl border border-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-500/10 disabled:opacity-50"
+                    className="rounded-xl border border-admin-danger/20 px-3 py-1.5 text-xs font-medium text-admin-danger transition hover:bg-admin-danger/10 disabled:opacity-50"
                   >
                     Delete
                   </button>
@@ -462,7 +464,7 @@ export default function RecommendedClient({ recommendations }: Props) {
           aria-modal="true"
           aria-labelledby="rec-modal-title"
         >
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-white/10 bg-[#1C1C1C] p-6 shadow-xl">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-admin-border bg-admin-surface p-6 shadow-xl">
             <h2
               id="rec-modal-title"
               className="text-lg font-semibold text-white"
@@ -473,9 +475,9 @@ export default function RecommendedClient({ recommendations }: Props) {
               <div>
                 <label
                   htmlFor="rec-name"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
-                  Name<span className="text-red-400">*</span>
+                  Name<span className="text-admin-danger">*</span>
                 </label>
                 <input
                   id="rec-name"
@@ -492,7 +494,7 @@ export default function RecommendedClient({ recommendations }: Props) {
               <div>
                 <label
                   htmlFor="rec-desc"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Description
                 </label>
@@ -511,9 +513,9 @@ export default function RecommendedClient({ recommendations }: Props) {
               <div>
                 <label
                   htmlFor="rec-token"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
-                  Token<span className="text-red-400">*</span>
+                  Token<span className="text-admin-danger">*</span>
                 </label>
                 <select
                   id="rec-token"
@@ -544,8 +546,8 @@ export default function RecommendedClient({ recommendations }: Props) {
               </div>
 
               <div>
-                <p className="text-xs font-medium text-white/50">
-                  Destination type<span className="text-red-400">*</span>
+                <p className="text-xs font-medium text-admin-muted">
+                  Destination type<span className="text-admin-danger">*</span>
                 </p>
                 <div className="mt-1 flex flex-wrap gap-2">
                   {DESTINATION_KINDS.map((kind) => {
@@ -568,7 +570,7 @@ export default function RecommendedClient({ recommendations }: Props) {
                         className={typeButtonCls(selected, disabled)}
                       >
                         {DESTINATION_KIND_LABELS[kind]}
-                        <span className="ml-1 tabular-nums text-white/45">
+                        <span className="ml-1 tabular-nums text-admin-subtle">
                           · {count}
                         </span>
                       </button>
@@ -576,7 +578,7 @@ export default function RecommendedClient({ recommendations }: Props) {
                   })}
                 </div>
                 {!form.tokenCode && !noCatalog ? (
-                  <p className="mt-1.5 text-[11px] text-white/40">
+                  <p className="mt-1.5 text-[11px] text-admin-subtle">
                     Select a token first
                   </p>
                 ) : null}
@@ -585,9 +587,9 @@ export default function RecommendedClient({ recommendations }: Props) {
               <div>
                 <label
                   htmlFor="rec-dest"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
-                  Destination<span className="text-red-400">*</span>
+                  Destination<span className="text-admin-danger">*</span>
                 </label>
                 <select
                   id="rec-dest"
@@ -622,7 +624,7 @@ export default function RecommendedClient({ recommendations }: Props) {
               <div>
                 <label
                   htmlFor="rec-stack"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Optional stack venue
                 </label>
@@ -655,7 +657,7 @@ export default function RecommendedClient({ recommendations }: Props) {
               <div>
                 <label
                   htmlFor="rec-apy"
-                  className="block text-xs font-medium text-white/50"
+                  className="block text-xs font-medium text-admin-muted"
                 >
                   Snapshot APY (%)
                 </label>
@@ -678,7 +680,7 @@ export default function RecommendedClient({ recommendations }: Props) {
                 <div>
                   <label
                     htmlFor="rec-position"
-                    className="block text-xs font-medium text-white/50"
+                    className="block text-xs font-medium text-admin-muted"
                   >
                     Position
                   </label>
@@ -697,7 +699,7 @@ export default function RecommendedClient({ recommendations }: Props) {
                   />
                 </div>
                 <div className="flex items-end pb-2">
-                  <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-white/70">
+                  <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-admin-muted">
                     <input
                       type="checkbox"
                       checked={form.isActive}
@@ -707,7 +709,7 @@ export default function RecommendedClient({ recommendations }: Props) {
                           isActive: e.target.checked,
                         }))
                       }
-                      className="size-4 rounded border-white/20 bg-[#121212] text-[#229EDF] focus:ring-[#229EDF]/40"
+                      className="size-4 rounded border-white/20 bg-admin-canvas text-neko-blue focus:ring-neko-blue/40"
                     />
                     Active
                   </label>
@@ -717,7 +719,7 @@ export default function RecommendedClient({ recommendations }: Props) {
               <div className="flex flex-wrap justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-white/70 hover:bg-white/5"
+                  className="rounded-xl border border-admin-border px-4 py-2 text-sm font-medium text-admin-muted hover:bg-white/5"
                   onClick={closeModal}
                   disabled={submitting}
                 >
@@ -726,7 +728,7 @@ export default function RecommendedClient({ recommendations }: Props) {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#229EDF] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1a8bc7] disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-lg bg-neko-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-neko-navy-hover disabled:opacity-50"
                 >
                   {submitting ? (
                     <>

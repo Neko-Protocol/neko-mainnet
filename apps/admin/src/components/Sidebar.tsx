@@ -38,18 +38,24 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex h-screen w-56 flex-col bg-[#161616] border-r border-white/8">
-      <div className="border-b border-white/8 px-4 py-5">
+    <aside className="sticky top-0 z-40 flex w-full shrink-0 border-b border-admin-border bg-admin-sidebar/95 backdrop-blur-xl lg:h-dvh lg:w-64 lg:flex-col lg:border-b-0 lg:border-r">
+      <div className="flex h-16 shrink-0 items-center border-admin-border px-4 lg:h-20 lg:border-b lg:px-5">
         <Image
           src="/Neko.svg"
           alt="Neko"
           width={96}
           height={32}
-          className="h-8 w-auto object-contain"
+          className="h-7 w-auto object-contain lg:h-8"
           priority
         />
+        <span className="ml-3 border-l border-admin-border pl-3 font-label text-[10px] font-medium uppercase tracking-[0.18em] text-admin-muted">
+          Admin
+        </span>
       </div>
-      <nav className="flex flex-col gap-0.5 p-2 flex-1">
+      <nav
+        aria-label="Admin navigation"
+        className="flex min-w-0 flex-1 gap-1 overflow-x-auto px-3 pb-3 lg:flex-col lg:overflow-y-auto lg:p-3"
+      >
         {links.map(({ href, label, icon: Icon }) => {
           const isActive =
             href === "/dashboard"
@@ -59,11 +65,12 @@ export function Sidebar() {
             <Link
               key={href}
               href={href}
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
+              className={`flex shrink-0 items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium focus-visible:bg-white/[0.06] focus-visible:text-neko-blue focus-visible:outline-none ${
                 isActive
-                  ? "bg-white/8 text-[#229EDF]"
-                  : "text-white/65 hover:bg-white/5 hover:text-white"
+                  ? "bg-white/[0.045] text-neko-blue"
+                  : "text-admin-muted hover:bg-white/[0.035] hover:text-admin-text"
               }`}
+              aria-current={isActive ? "page" : undefined}
             >
               <Icon className="size-4 shrink-0" aria-hidden />
               {label}
@@ -71,11 +78,11 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="border-t border-white/8 p-2">
+      <div className="hidden border-t border-admin-border p-3 lg:block">
         <button
           type="button"
           onClick={() => void handleLogout()}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/65 transition hover:bg-red-500/10 hover:text-red-300"
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-admin-muted hover:bg-admin-danger/10 hover:text-admin-danger"
         >
           <LogOut className="size-4" aria-hidden />
           Log out
