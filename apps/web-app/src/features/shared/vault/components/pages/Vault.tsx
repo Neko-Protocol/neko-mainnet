@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, {
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
@@ -38,6 +44,8 @@ function vaultAssetFilterIconSrc(v: VaultView): string {
 
 const VALID_VAULT_TABS: VaultTabKey[] = ["vaults", "positions"];
 
+const emptySubscribe = () => () => {};
+
 const Vault: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -63,6 +71,12 @@ const Vault: React.FC = () => {
   const [assetFilter, setAssetFilter] = useState<string | null>(null);
   const [assetDropdownOpen, setAssetDropdownOpen] = useState(false);
   const assetDropdownRef = useRef<HTMLDivElement>(null);
+
+  const hydrated = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -240,7 +254,7 @@ const Vault: React.FC = () => {
 
       <div className="mb-6 w-full min-w-0 flex items-center justify-between gap-4">
         <VaultTabs activeTab={activeTab} onChange={handleTabChange} />
-        {activeTab === "vaults" && assetOptions.length >= 2 && (
+        {hydrated && activeTab === "vaults" && assetOptions.length >= 2 && (
           <div ref={assetDropdownRef} className="relative shrink-0">
             <button
               onClick={() => setAssetDropdownOpen((o) => !o)}
