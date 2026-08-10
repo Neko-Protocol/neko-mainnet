@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useMemo, useState, useRef, useEffect } from "react";
+import React, {
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
@@ -38,6 +44,8 @@ function vaultAssetFilterIconSrc(v: VaultView): string {
 
 const VALID_VAULT_TABS: VaultTabKey[] = ["vaults", "positions"];
 
+const emptySubscribe = () => () => {};
+
 const Vault: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -64,6 +72,16 @@ const Vault: React.FC = () => {
   const [assetDropdownOpen, setAssetDropdownOpen] = useState(false);
   const assetDropdownRef = useRef<HTMLDivElement>(null);
 
+  const hydrated = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
+  // useSearchParams() is empty during the prerender, so a ?tab= deep link would
+  // otherwise select a different tab on the client than the HTML carries.
+  const effectiveTab: VaultTabKey = hydrated ? activeTab : "vaults";
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (
@@ -78,10 +96,16 @@ const Vault: React.FC = () => {
   }, []);
 
   const { data: defindexPayload, isPending, isFetching } = useDefindexVaults();
-  const vaultsFromApi = defindexPayload?.vaults ?? [];
+  // /vaults is prerendered at build time with an empty query cache, so its HTML
+  // is always the loading state. Withholding the data until hydration keeps the
+  // first client render identical to it — everything below derives from here.
+  const vaultsFromApi = useMemo(
+    () => (hydrated ? (defindexPayload?.vaults ?? []) : []),
+    [hydrated, defindexPayload]
+  );
 
   const isVaultListInitialLoad =
-    isPending || (isFetching && vaultsFromApi.length === 0);
+    !hydrated || isPending || (isFetching && vaultsFromApi.length === 0);
 
   const emptyVaultSubtitle = useMemo(() => {
     if (defindexPayload?.error === "missing_defindex_api_key") {
@@ -239,8 +263,8 @@ const Vault: React.FC = () => {
       />
 
       <div className="mb-6 w-full min-w-0 flex items-center justify-between gap-4">
-        <VaultTabs activeTab={activeTab} onChange={handleTabChange} />
-        {activeTab === "vaults" && assetOptions.length >= 2 && (
+        <VaultTabs activeTab={effectiveTab} onChange={handleTabChange} />
+        {effectiveTab === "vaults" && assetOptions.length >= 2 && (
           <div ref={assetDropdownRef} className="relative shrink-0">
             <button
               onClick={() => setAssetDropdownOpen((o) => !o)}
@@ -306,7 +330,7 @@ const Vault: React.FC = () => {
         )}
       </div>
 
-      {activeTab === "vaults" ? (
+      {effectiveTab === "vaults" ? (
         <VaultGrid
           vaults={filteredVaults}
           isLoading={isVaultListInitialLoad}

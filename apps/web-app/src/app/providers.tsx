@@ -7,7 +7,8 @@ import {
 } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
 import { ToastProvider } from "@/providers/ToastProvider";
-import { ReactNode, useState } from "react";
+import { useCurrencyStore } from "@/stores/currency.store";
+import { ReactNode, useEffect, useState } from "react";
 
 // Bumping this evicts ALL persisted cache for users on next load. Bump when
 // query shapes change in incompatible ways or to force a hard refresh.
@@ -45,6 +46,10 @@ export function Providers({ children }: { children: ReactNode }) {
           throttleTime: 1000,
         })
   );
+
+  useEffect(() => {
+    void useCurrencyStore.persist.rehydrate();
+  }, []);
 
   return (
     <PersistQueryClientProvider
