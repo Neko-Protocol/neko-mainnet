@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { rpc } from "@stellar/stellar-sdk";
 import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
 import type { Token } from "@/lib/helpers/stellar/swap-kit";
@@ -31,6 +32,7 @@ export interface SwapExecutionResult {
 }
 
 export function useSwapExecution() {
+  const t = useTranslations("sharedSwapEngine.execution");
   const { signTransaction, networkPassphrase } = useWallet();
 
   const executeSwap = useCallback(
@@ -38,11 +40,11 @@ export function useSwapExecution() {
       const { amountIn, tokenIn, tokenOut, address } = params;
 
       if (!amountIn || parseFloat(amountIn) <= 0 || !address) {
-        throw new Error("Invalid amount or address");
+        throw new Error(t("invalidAmountOrAddress"));
       }
 
       if (!networkPassphrase) {
-        throw new Error("Wallet not connected");
+        throw new Error(t("walletNotConnected"));
       }
 
       const quoteRequest: QuoteRequest = {
@@ -56,9 +58,7 @@ export function useSwapExecution() {
       const newQuote = await getQuote(quoteRequest);
 
       if (!newQuote) {
-        throw new Error(
-          "No liquidity found for this pair  try a different token combination"
-        );
+        throw new Error(t("noLiquidityRetry"));
       }
 
       const outDecimals = resolveDecimalsForSwapToken(tokenOut);
@@ -106,7 +106,7 @@ export function useSwapExecution() {
           attempts: 30,
         });
         if (confirmed.status !== "SUCCESS") {
-          throw new Error(`Swap failed on-chain (status: ${confirmed.status})`);
+          throw new Error(t("swapFailedOnChain", { status: confirmed.status }));
         }
 
         auditService.log({
@@ -131,9 +131,9 @@ export function useSwapExecution() {
         return { orderId: sendResult.txHash, txHash: sendResult.txHash };
       }
 
-      throw new Error("Transaction failed");
+      throw new Error(t("transactionFailed"));
     },
-    [signTransaction, networkPassphrase]
+    [signTransaction, networkPassphrase, t]
   );
 
   return { executeSwap };

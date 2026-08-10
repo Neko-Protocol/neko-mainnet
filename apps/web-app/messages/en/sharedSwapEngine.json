@@ -1,0 +1,17 @@
+{
+  "sharedSwapEngine": {
+    "quote": {
+      "noLiquidity": "No liquidity found for this pair",
+      "timeout": "Quote request timed out",
+      "failedToGetQuote": "Failed to get quote",
+      "failedRetry": "Failed to get quote - try again"
+    },
+    "execution": {
+      "invalidAmountOrAddress": "Invalid amount or address",
+      "walletNotConnected": "Wallet not connected",
+      "noLiquidityRetry": "No liquidity found for this pair — try a different token combination",
+      "swapFailedOnChain": "Swap failed on-chain (status: {status})",
+      "transactionFailed": "Transaction failed"
+    }
+  }
+}

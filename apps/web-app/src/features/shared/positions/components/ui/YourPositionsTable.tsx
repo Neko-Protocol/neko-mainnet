@@ -5,12 +5,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { UserPositionWithPool } from "@/features/shared/positions/hooks/useUserPositions";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
 import type { PoolInfo } from "@/lib/orchestrator/types/pool.types";
 import { formatAmount, safeParseFloat } from "@/lib/helpers/formatUtils";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
+import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 
 const DEFAULT_MAX_ROWS = 4;
 
@@ -81,6 +83,7 @@ function PoolValueCell({
   depositedFormatted: string;
 }) {
   const { price } = useTokenPrice(tokenCode);
+  const { formatCurrency } = useLocaleFormatter();
   const amount = safeParseFloat(depositedFormatted);
 
   if (!price || amount === 0) {
@@ -91,7 +94,7 @@ function PoolValueCell({
 
   return (
     <span className="text-white font-semibold text-sm tabular-nums">
-      ${(amount * price).toFixed(2)}
+      {formatCurrency(amount * price, "USD", 2)}
     </span>
   );
 }
@@ -105,6 +108,7 @@ export function YourPositionsTable({
   positions,
   maxRows = DEFAULT_MAX_ROWS,
 }: YourPositionsTableProps) {
+  const t = useTranslations("sharedPositions.table");
   const router = useRouter();
   const tableRows = positions.slice(0, maxRows);
   const hiddenCount = positions.length - tableRows.length;
@@ -117,13 +121,13 @@ export function YourPositionsTable({
     <div className="rounded-2xl border border-white/5 bg-[#1C1C1C] overflow-hidden">
       <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
         <span className="text-white/30 text-xs font-semibold uppercase tracking-wide">
-          Pools
+          {t("pools")}
         </span>
         <Link
           href="/pools"
           className="flex items-center gap-1 text-xs text-white/30 hover:text-white transition-colors"
         >
-          Manage
+          {t("manage")}
           <ArrowRight className="h-3 w-3" />
         </Link>
       </div>
@@ -132,16 +136,16 @@ export function YourPositionsTable({
           <thead>
             <tr className="border-b border-white/5">
               <th className="px-4 py-3 text-left text-xs font-medium text-white/30 uppercase tracking-wide w-16">
-                Asset
+                {t("colAsset")}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-white/30 uppercase tracking-wide">
-                Position
+                {t("colPosition")}
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-white/30 uppercase tracking-wide">
-                Deposited
+                {t("colDeposited")}
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-white/30 uppercase tracking-wide">
-                Value
+                {t("colValue")}
               </th>
             </tr>
           </thead>
@@ -163,7 +167,7 @@ export function YourPositionsTable({
                     {pool.tokens.map((t) => t.code).join(" / ")}
                     {pool.apy > 0 && (
                       <span className="ml-1.5 text-[#76C464]">
-                        {pool.apy.toFixed(2)}% APY
+                        {t("apySuffix", { value: pool.apy.toFixed(2) })}
                       </span>
                     )}
                   </p>
@@ -180,12 +184,12 @@ export function YourPositionsTable({
                   </p>
                   {position.rewards > 0n && (
                     <p className="text-[#76C464] text-xs font-semibold mt-0.5">
-                      +
-                      {formatAmount(
-                        safeParseFloat(position.rewardsFormatted),
-                        2
-                      )}{" "}
-                      rewards
+                      {t("rewardsSuffix", {
+                        value: formatAmount(
+                          safeParseFloat(position.rewardsFormatted),
+                          2
+                        ),
+                      })}
                     </p>
                   )}
                 </td>
@@ -206,7 +210,7 @@ export function YourPositionsTable({
             href="/lending"
             className="text-xs text-white/40 hover:text-white transition-colors"
           >
-            +{hiddenCount} more on Lending
+            {t("moreOnLending", { count: hiddenCount })}
           </Link>
         </div>
       )}

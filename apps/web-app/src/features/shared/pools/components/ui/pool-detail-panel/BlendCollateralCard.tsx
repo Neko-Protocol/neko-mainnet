@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { getPoolTokenIcon } from "../../../utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { CollateralOption } from "./types";
@@ -29,9 +30,10 @@ export function BlendCollateralCard({
   onCollateralInputChange: (value: string) => void;
   collateralInputUsd: number;
 }) {
+  const t = useTranslations("sharedPools.collateralCard");
   return (
     <div className="rounded-xl p-4 flex flex-col gap-3">
-      <p className="text-white/50 text-xs font-medium">Collateral</p>
+      <p className="text-white/50 text-xs font-medium">{t("collateral")}</p>
 
       <div className="flex flex-wrap gap-3">
         {options.map((opt) => {
@@ -84,7 +86,7 @@ export function BlendCollateralCard({
           <input
             type="text"
             inputMode="decimal"
-            placeholder="0.00"
+            placeholder={t("amountPlaceholder")}
             value={collateralInputAmount}
             onChange={(e) =>
               onCollateralInputChange(
@@ -112,18 +114,19 @@ export function BlendCollateralCard({
                 }
                 className="text-[#229EDF] text-xs font-semibold hover:text-[#1a8bc7] transition-colors uppercase tracking-wide"
               >
-                MAX
+                {t("max")}
               </button>
             </div>
           </div>
 
           {collateralBelowMinimum && (
             <p className="text-xs text-amber-400/80">
-              Minimum collateral value:{" "}
-              {formatUsdValue(
-                (minCollateralUsd ?? BLEND_MIN_COLLATERAL_USD) /
-                  (selectedCollateral.cFactor ?? 1)
-              )}
+              {t("minCollateralValue", {
+                value: formatUsdValue(
+                  (minCollateralUsd ?? BLEND_MIN_COLLATERAL_USD) /
+                    (selectedCollateral.cFactor ?? 1)
+                ),
+              })}
             </p>
           )}
         </>

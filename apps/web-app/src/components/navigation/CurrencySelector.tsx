@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import {
   FormControl,
   MenuItem,
@@ -18,6 +19,7 @@ interface CurrencySelectorProps {
 }
 
 export function CurrencySelector({ embedded = false }: CurrencySelectorProps) {
+  const t = useTranslations("common.currency");
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const setSelectedCurrency = useCurrencyStore(
     (state) => state.setSelectedCurrency
@@ -39,7 +41,7 @@ export function CurrencySelector({ embedded = false }: CurrencySelectorProps) {
         htmlFor="currency-selector"
         className="mb-2 block text-[11px] font-semibold uppercase tracking-wider text-white/45"
       >
-        Display currency
+        {t("label")}
       </label>
       <FormControl fullWidth size="small">
         <Select

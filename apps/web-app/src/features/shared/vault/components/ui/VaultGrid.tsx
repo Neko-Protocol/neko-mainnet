@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Vault } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { parseDefindexVaultIds } from "@/features/shared/vault/utils/vaultIds";
 import type { VaultView } from "../../types/vault";
 import { VaultCard } from "./VaultCard";
@@ -63,8 +64,9 @@ export function VaultGrid({
   onDetailsClick,
   onDepositClick,
   onWithdrawClick,
-  emptySubtitle = "Try adjusting your filters",
+  emptySubtitle,
 }: VaultGridProps) {
+  const t = useTranslations("sharedVault.list");
   const configuredVaultCount = parseDefindexVaultIds().length;
 
   if (isLoading && vaults.length === 0) {
@@ -85,8 +87,10 @@ export function VaultGrid({
           <Vault className="h-7 w-7 text-white/20" />
         </div>
         <div className="text-center">
-          <p className="text-white/50 font-medium mb-1">No vaults found</p>
-          <p className="text-white/25 text-sm">{emptySubtitle}</p>
+          <p className="text-white/50 font-medium mb-1">{t("noVaultsFound")}</p>
+          <p className="text-white/25 text-sm">
+            {emptySubtitle ?? t("tryAdjustingFilters")}
+          </p>
         </div>
       </div>
     );

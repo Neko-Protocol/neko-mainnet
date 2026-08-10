@@ -2,6 +2,7 @@
 
 import { Suspense, useMemo, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { useLend } from "@/features/shared/lending/hooks/useLend";
@@ -14,6 +15,7 @@ type LendTab = "pools" | "positions";
 const VALID_TABS: LendTab[] = ["pools", "positions"];
 
 function LendingPanel() {
+  const t = useTranslations("sharedPools.unifiedPage");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -36,10 +38,10 @@ function LendingPanel() {
   const lendTabs = useMemo(
     () =>
       [
-        { key: "pools" as const, label: "Pools" },
-        { key: "positions" as const, label: "My Positions" },
+        { key: "pools" as const, label: t("tabPools") },
+        { key: "positions" as const, label: t("tabPositions") },
       ] as const,
-    []
+    [t]
   );
   const {
     pools,
@@ -140,14 +142,15 @@ function SubTabs<T extends string>({
 }
 
 export default function UnifiedPoolsPage() {
+  const t = useTranslations("sharedPools.unifiedPage");
   return (
     <PageContainer maxWidth="7xl">
       <BannerPage
-        title="Lend to Pools"
-        subtitle="Lend your assets and earn interest"
-        badge="Earn yield"
+        title={t("title")}
+        subtitle={t("subtitle")}
+        badge={t("badge")}
         imageSrc="/banners/lend.svg"
-        imageAlt="lending illustration"
+        imageAlt={t("imageAlt")}
         imageLayoutClassName="right-0 top-3 h-full w-[75%] opacity-60 sm:top-0 sm:w-[55%] sm:opacity-100"
         className="mb-8"
       />

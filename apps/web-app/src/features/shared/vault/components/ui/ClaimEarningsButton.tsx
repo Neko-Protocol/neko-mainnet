@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useVaultAction } from "@/features/shared/vault/hooks/useVaultAction";
 
 const MIN_CLAIMABLE = 0.001;
@@ -19,6 +20,7 @@ export function ClaimEarningsButton({
   netDepositedTokens,
   supplyAssetSymbol,
 }: ClaimEarningsButtonProps) {
+  const t = useTranslations("sharedVault.claim");
   const { isLoading, hasWallet, handleClaimEarnings } = useVaultAction(
     vaultContractId,
     supplyAssetSymbol
@@ -41,10 +43,10 @@ export function ClaimEarningsButton({
       {isLoading ? (
         <>
           <Loader2 className="h-3 w-3 animate-spin" />
-          Claiming…
+          {t("claiming")}
         </>
       ) : (
-        "Claim"
+        t("claim")
       )}
     </button>
   );

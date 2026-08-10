@@ -1,5 +1,6 @@
 export function generateRateHistory(
   baseRate: number,
+  formatDate: (date: Date) => string,
   days = 7,
   points = 84
 ): { date: string; value: number }[] {
@@ -17,7 +18,6 @@ export function generateRateHistory(
   return raw.map((value, i) => {
     const ts = now - (points - i) * step;
     const d = new Date(ts);
-    const label = `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
-    return { date: label, value: parseFloat(value.toFixed(4)) };
+    return { date: formatDate(d), value: parseFloat(value.toFixed(4)) };
   });
 }

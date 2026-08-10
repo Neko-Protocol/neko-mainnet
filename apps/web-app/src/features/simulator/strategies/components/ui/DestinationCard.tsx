@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { SimulatorDestination } from "@/features/simulator/strategies/types/simulator.types";
@@ -16,6 +17,7 @@ export function DestinationCard({
   isSelected,
   onSelect,
 }: DestinationCardProps) {
+  const t = useTranslations("simulator.destinationCard");
   const apy = destination.apy;
   const hasPositiveApy =
     apy !== null && apy !== undefined && !Number.isNaN(apy) && apy > 0;
@@ -84,7 +86,7 @@ export function DestinationCard({
         </h3>
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <span className="inline-flex items-center rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/50">
-            {destination.protocol}
+            {t(destination.protocol)}
           </span>
           {destination.tvlLabel ? (
             <span className="text-[10px] text-white/35">
@@ -103,7 +105,7 @@ export function DestinationCard({
       <div className="shrink-0 text-right">
         {isSelected ? (
           <span className="mb-1.5 inline-block rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#229EDF]">
-            Selected
+            {t("selected")}
           </span>
         ) : null}
         {hasPositiveApy ? (
@@ -112,14 +114,14 @@ export function DestinationCard({
               {apy!.toFixed(2)}%
             </p>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
-              APY
+              {t("apy")}
             </p>
           </>
         ) : (
           <>
             <p className="text-xl font-bold tabular-nums text-white/30">-</p>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
-              APY
+              {t("apy")}
             </p>
           </>
         )}

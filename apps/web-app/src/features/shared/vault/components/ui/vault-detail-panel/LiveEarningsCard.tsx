@@ -11,9 +11,11 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Info, TrendingUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { AppTooltip } from "@/components/ui/AppTooltip";
 import { fromSmallestUnit } from "@neko/orchestrator";
 import { formatCurrency } from "@/lib/helpers/currency";
+import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 import type { SupportedCurrency } from "@/stores/currency.store";
 import { useVaultPpsHistory } from "@/features/shared/vault/hooks/useVaultPpsHistory";
 
@@ -22,9 +24,11 @@ const MS_PER_YEAR = 365 * 24 * 60 * 60 * 1000;
 const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
 const INTRO_DURATION_MS = 1200;
 
-function formatChartLabel(t: number): string {
-  const d = new Date(t);
-  return `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
+function formatChartLabel(
+  t: number,
+  formatDate: ReturnType<typeof useLocaleFormatter>["formatDate"]
+): string {
+  return formatDate(new Date(t), { day: "numeric", month: "short" });
 }
 
 function easeOutCubic(p: number): number {
@@ -89,6 +93,8 @@ export function LiveEarningsCard({
   tokenPriceInCurrency?: number;
   selectedCurrency?: SupportedCurrency;
 }) {
+  const t = useTranslations("sharedVault.earningsCard");
+  const { formatDate } = useLocaleFormatter();
   const prefersReduced =
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -213,13 +219,13 @@ export function LiveEarningsCard({
       const p = historyPoints[i];
       if (modeled && i === historyPoints.length - 1) {
         rows.push({
-          label: formatChartLabel(p.t),
+          label: formatChartLabel(p.t, formatDate),
           actual: currentValue,
           projected: currentValue,
         });
       } else {
         rows.push({
-          label: formatChartLabel(p.t),
+          label: formatChartLabel(p.t, formatDate),
           actual: p.value,
           projected: null,
         });
@@ -228,18 +234,18 @@ export function LiveEarningsCard({
 
     if (!modeled) {
       rows.push({
-        label: formatChartLabel(now),
+        label: formatChartLabel(now, formatDate),
         actual: currentValue,
         projected: currentValue,
       });
     }
 
     for (let i = 1; i < projectionCount; i++) {
-      const t = now + (i / (projectionCount - 1)) * projectionSpan;
-      const yearsForward = (t - now) / MS_PER_YEAR;
+      const projectedTs = now + (i / (projectionCount - 1)) * projectionSpan;
+      const yearsForward = (projectedTs - now) / MS_PER_YEAR;
       const value = currentValue * (1 + apyDecimal * yearsForward);
       rows.push({
-        label: formatChartLabel(t),
+        label: formatChartLabel(projectedTs, formatDate),
         actual: null,
         projected: value,
       });
@@ -253,6 +259,7 @@ export function LiveEarningsCard({
     netDeposited,
     firstDepositMs,
     apyDecimal,
+    formatDate,
   ]);
 
   const tickIndices = useMemo(
@@ -286,7 +293,9 @@ export function LiveEarningsCard({
   return (
     <div className="animate-in fade-in">
       <div className="flex items-center gap-2 mb-4">
-        <h3 className="text-white/70 text-sm font-medium">Your earnings</h3>
+        <h3 className="text-white/70 text-sm font-medium">
+          {t("yourEarnings")}
+        </h3>
         <Info size={13} className="text-white/30" />
       </div>
 
@@ -295,7 +304,7 @@ export function LiveEarningsCard({
         style={{ background: "#1a1a1a" }}
       >
         <div className="mb-5">
-          <p className="text-white/40 text-xs mb-1">Current value</p>
+          <p className="text-white/40 text-xs mb-1">{t("currentValue")}</p>
           <p className="text-white text-3xl sm:text-4xl font-bold tabular-nums leading-none [font-variant-numeric:tabular-nums]">
             {displayValue.toFixed(6)} {assetSymbol}
           </p>
@@ -325,7 +334,7 @@ export function LiveEarningsCard({
               {assetSymbol}
             </span>
             <span className="text-white/30 text-xs">
-              earned since first deposit
+              {t("earnedSinceFirstDeposit")}
             </span>
           </div>
         </div>
@@ -372,7 +381,7 @@ export function LiveEarningsCard({
               }}
               formatter={(v: number) => [
                 `${v.toFixed(4)} ${assetSymbol}`,
-                "Value",
+                t("value"),
               ]}
               labelStyle={{
                 color: "rgba(255,255,255,0.5)",
@@ -409,11 +418,11 @@ export function LiveEarningsCard({
               className="inline-block w-4 h-0 border-t-2 border-dashed border-emerald-500"
               aria-hidden
             />
-            Projected at {apyPercent.toFixed(2)}% APY
+            {t("projectedAt", { apy: apyPercent.toFixed(2) })}
           </span>
           {isModeled && (
             <span className="text-white/25 text-xs">
-              Estimated from APY until live history accumulates.
+              {t("projectedDescription")}
             </span>
           )}
         </div>
@@ -425,7 +434,7 @@ export function LiveEarningsCard({
             className={statEnterClass}
             style={prefersReduced ? undefined : { animationDelay: "60ms" }}
           >
-            <p className="text-white/40 text-xs mb-1">Deposited</p>
+            <p className="text-white/40 text-xs mb-1">{t("deposited")}</p>
             <p className="text-white font-bold text-sm tabular-nums">
               {depositedAnim.toFixed(2)} {assetSymbol}
             </p>
@@ -435,15 +444,15 @@ export function LiveEarningsCard({
             style={prefersReduced ? undefined : { animationDelay: "120ms" }}
           >
             <div className="flex items-center gap-1 mb-1">
-              <p className="text-white/40 text-xs">Effective APY</p>
+              <p className="text-white/40 text-xs">{t("effectiveApy")}</p>
               <AppTooltip
-                content="This is your annualized return based on actual earnings since your first deposit. This may differ from the vault's current APY, which reflects today's rate. Effective rate averages over your entire holding period, including earlier periods when the rate may have been different."
+                content={t("effectiveApyTooltip")}
                 widthClassName="w-64"
                 position="top"
               >
                 <button
                   type="button"
-                  aria-label="More information about Effective APY"
+                  aria-label={t("effectiveApyAriaLabel")}
                   className="inline-flex h-4 w-4 items-center justify-center rounded-full text-white/40 hover:text-white/70 transition-colors"
                 >
                   <Info className="h-3 w-3" />

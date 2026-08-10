@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { BasicBuyForm, type BuyConfirmPayload } from "./BasicBuyForm";
 import { useCartStore } from "@/features/basic/cart/stores/cart.store";
@@ -20,6 +21,7 @@ export function AddToCartModal({
   isOpen,
   onClose,
 }: AddToCartModalProps) {
+  const t = useTranslations("basic");
   const addItem = useCartStore((s) => s.addItem);
 
   if (!isOpen) return null;
@@ -67,7 +69,7 @@ export function AddToCartModal({
               type="button"
               onClick={onClose}
               className="text-white/40 hover:text-white transition-colors"
-              aria-label="Close"
+              aria-label={t("addToCartModal.close")}
             >
               <X className="h-5 w-5" />
             </button>
@@ -75,7 +77,7 @@ export function AddToCartModal({
 
           <BasicBuyForm
             symbol={symbol}
-            confirmLabel="Add to cart"
+            confirmLabel={t("buyForm.addToCart")}
             onConfirm={handleConfirm}
           />
         </div>

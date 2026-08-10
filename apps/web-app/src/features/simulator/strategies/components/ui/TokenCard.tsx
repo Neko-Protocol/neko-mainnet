@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
@@ -22,6 +23,7 @@ interface TokenCardProps {
 }
 
 export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
+  const t = useTranslations("simulator.tokenCard");
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
   const { price, isLoading: priceLoading } = useTokenPrice(token.code);
@@ -83,7 +85,7 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
 
         {isSelected ? (
           <span className="shrink-0 rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#229EDF]">
-            Selected
+            {t("selected")}
           </span>
         ) : null}
       </div>
@@ -91,12 +93,12 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
       <div className="relative flex flex-1 flex-col justify-between gap-2">
         <div>
           <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-widest text-white/40">
-            Price ({selectedCurrency})
+            {t("priceIn", { currency: selectedCurrency })}
           </p>
           {priceLoading ? (
             <div className="flex min-h-9 items-center gap-2">
               <LoadingSpinner variant="dots" size="sm" />
-              <span className="text-xs text-white/40">Loading price...</span>
+              <span className="text-xs text-white/40">{t("loadingPrice")}</span>
             </div>
           ) : (
             <p
@@ -105,7 +107,7 @@ export function TokenCard({ token, isSelected, onSelect }: TokenCardProps) {
                 price > 0 ? "text-white" : "text-white/40"
               )}
             >
-              {price > 0 ? priceLabel : "No data"}
+              {price > 0 ? priceLabel : t("noData")}
             </p>
           )}
         </div>

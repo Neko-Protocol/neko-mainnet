@@ -1,9 +1,11 @@
 import { useRef, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import type { Token } from "@/lib/helpers/stellar/swap-kit";
 import { getQuote, type QuoteRequest } from "@/lib/helpers/stellar/swap-kit";
 import { formatAmount } from "@/lib/helpers/formatUtils";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit, getGenericErrorCode } from "@neko/orchestrator";
 import { resolveDecimalsForSwapToken } from "@/lib/helpers/auditAssetAmounts";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";
 
 export interface StellarQuoteResult {
@@ -19,6 +21,8 @@ export function useStellarQuote(
   fetchStellarQuote: () => Promise<StellarQuoteResult>;
   cancelStellarQuote: () => void;
 } {
+  const t = useTranslations("sharedSwapEngine.quote");
+  const getErrorMessage = useApiErrorMessage();
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const cancelStellarQuote = useCallback(() => {
@@ -71,7 +75,7 @@ export function useStellarQuote(
 
         return {
           amount: null,
-          error: "No liquidity found for this pair",
+          error: t("noLiquidity"),
         };
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError")
@@ -86,15 +90,16 @@ export function useStellarQuote(
           errorWithCode?.code === "ECONNABORTED";
 
         if (isTimeout) {
-          return { amount: null, error: "Quote request timed out" };
+          return { amount: null, error: t("timeout") };
         }
 
+        const errorCode = getGenericErrorCode(error);
         return {
           amount: null,
-          error: errorMessage || "Failed to get quote",
+          error: errorCode ? getErrorMessage(errorCode) : t("failedToGetQuote"),
         };
       }
-    }, [amountIn, tokenIn, tokenOut, cancelStellarQuote]);
+    }, [amountIn, tokenIn, tokenOut, cancelStellarQuote, getErrorMessage, t]);
 
   return { fetchStellarQuote, cancelStellarQuote };
 }

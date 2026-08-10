@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 import { usePools } from "@/lib/orchestrator/hooks/usePools";
 import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
@@ -13,6 +14,7 @@ import {
   getVaultStrategyLabels,
   getYieldTokenHoldExplanation,
   getYieldTokenStrategyLabel,
+  YIELD_TOKEN_PROTOCOL_KEY,
 } from "@/features/simulator/strategies/utils/strategyLabels";
 import type {
   SimulatorDestination,
@@ -59,6 +61,7 @@ export function isEtherfuseBondToken(code: string): boolean {
  * selected token (step 1).
  */
 export function useFilteredDestinations(token: SimulatorToken | null) {
+  const { formatCompactCurrency } = useLocaleFormatter();
   const pools = usePools(Boolean(token));
   const vaults = useDefindexVaults();
   const yieldsQuery = useEtherfuseYields();
@@ -84,12 +87,7 @@ export function useFilteredDestinations(token: SimulatorToken | null) {
           name: pool.name,
           apy: typeof pool.apy === "number" ? pool.apy : null,
           tvlUsd: tvlNumber,
-          tvlLabel: tvlNumber.toLocaleString("en-US", {
-            style: "currency",
-            currency: "USD",
-            notation: "compact",
-            maximumFractionDigits: 2,
-          }),
+          tvlLabel: formatCompactCurrency(tvlNumber, "USD", 2),
           protocol: getPoolProtocolLabel(pool),
           strategyLabels: getPoolStrategyLabels(pool),
           acceptedTokenCodes: pool.tokens.map((t) => t.code),
@@ -141,7 +139,7 @@ export function useFilteredDestinations(token: SimulatorToken | null) {
         apy,
         tvlUsd: null,
         tvlLabel: "",
-        protocol: "Sovereign Bond",
+        protocol: YIELD_TOKEN_PROTOCOL_KEY,
         strategyLabels: [
           getYieldTokenStrategyLabel(symbol),
           getYieldTokenHoldExplanation(symbol),
@@ -156,6 +154,10 @@ export function useFilteredDestinations(token: SimulatorToken | null) {
     }
 
     return { pools: matchingPools, vaults: matchingVaults, yieldTokens };
+    // formatCompactCurrency is a fresh closure every render; omitted from
+    // deps on purpose so this memo doesn't recompute every render — it only
+    // depends on the ambient locale, which already re-renders this hook.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, pools.data, vaults.data, yieldsData]);
 
   return {

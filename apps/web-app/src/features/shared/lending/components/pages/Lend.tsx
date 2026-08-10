@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { useLend } from "../../hooks/useLend";
@@ -12,6 +13,7 @@ import MyLendingPositions from "../ui/MyLendingPositions";
 type PageTab = "pools" | "positions";
 
 const Lend: React.FC = () => {
+  const t = useTranslations("sharedLending.page");
   const [activeTab, setActiveTab] = useState<PageTab>("pools");
   const {
     pools,
@@ -43,11 +45,11 @@ const Lend: React.FC = () => {
   return (
     <PageContainer maxWidth="6xl">
       <BannerPage
-        title="Lend to Pools"
-        subtitle="Supply liquidity to pools and earn interest on your assets"
-        badge="Use your actives"
+        title={t("title")}
+        subtitle={t("subtitle")}
+        badge={t("badge")}
         imageSrc="/banners/lend.svg"
-        imageAlt="Lend illustration"
+        imageAlt={t("imageAlt")}
         className="mb-8"
       />
 
@@ -61,7 +63,7 @@ const Lend: React.FC = () => {
                 : "text-white/40 hover:text-white/70"
             }`}
           >
-            Pools
+            {t("tabPools")}
           </button>
           <button
             onClick={() => setActiveTab("positions")}
@@ -71,7 +73,7 @@ const Lend: React.FC = () => {
                 : "text-white/40 hover:text-white/70"
             }`}
           >
-            My Positions
+            {t("tabPositions")}
           </button>
         </div>
         {activeTab === "pools" && protocolOptions.length > 0 && (

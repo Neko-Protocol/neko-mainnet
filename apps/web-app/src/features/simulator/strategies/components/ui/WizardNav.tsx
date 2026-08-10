@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface WizardNavProps {
@@ -17,12 +18,13 @@ export function WizardNav({
   onBack,
   onContinue,
   continueDisabled = false,
-  continueLabel = "Continue",
+  continueLabel,
   showBack = true,
   showContinue = true,
   rightSlot,
   className,
 }: WizardNavProps) {
+  const t = useTranslations("simulator.wizardNav");
   return (
     <div
       className={cn(
@@ -39,7 +41,7 @@ export function WizardNav({
             }}
             className="rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-sm font-medium text-white/70 transition-all hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
           >
-            Back
+            {t("back")}
           </button>
         )}
       </div>
@@ -61,7 +63,7 @@ export function WizardNav({
                 : "bg-[#229EDF] text-white hover:bg-[#1a8ac9] active:scale-[0.98]"
             )}
           >
-            {continueLabel}
+            {continueLabel ?? t("continue")}
           </button>
         )}
       </div>

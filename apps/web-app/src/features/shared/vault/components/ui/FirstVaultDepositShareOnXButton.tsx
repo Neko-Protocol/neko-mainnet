@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { generateVaultDepositShareIntentUrl } from "@/lib/share";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,7 @@ export function FirstVaultDepositShareOnXButton({
   apy,
   className,
 }: FirstVaultDepositShareOnXButtonProps) {
+  const t = useTranslations("sharedVault.shareOnX");
   const handleClick = useCallback(() => {
     const url = generateVaultDepositShareIntentUrl({ vaultName, apy });
     window.open(url, "_blank", "noopener,noreferrer");
@@ -33,7 +35,7 @@ export function FirstVaultDepositShareOnXButton({
         className
       )}
     >
-      Share on X
+      {t("button")}
     </button>
   );
 }

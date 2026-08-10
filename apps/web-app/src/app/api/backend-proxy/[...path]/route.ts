@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ErrorCode } from "@neko/api-contracts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -24,7 +25,7 @@ async function forward(
   const key = process.env.BACKEND_INTERNAL_KEY;
   if (!baseUrl || !key) {
     return NextResponse.json(
-      { code: "BACKEND_PROXY_MISCONFIGURED" },
+      { code: ErrorCode.BACKEND_PROXY_MISCONFIGURED },
       { status: 500 }
     );
   }
@@ -57,7 +58,10 @@ async function forward(
       cache: isReadOnly ? "default" : "no-store",
     });
   } catch {
-    return NextResponse.json({ code: "BACKEND_UNREACHABLE" }, { status: 502 });
+    return NextResponse.json(
+      { code: ErrorCode.BACKEND_UNREACHABLE },
+      { status: 502 }
+    );
   }
 
   const responseHeaders = new Headers();

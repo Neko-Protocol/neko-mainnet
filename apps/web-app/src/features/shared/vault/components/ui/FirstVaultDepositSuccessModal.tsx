@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Check, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { FirstVaultDepositShareOnXButton } from "./FirstVaultDepositShareOnXButton";
 
@@ -20,6 +21,7 @@ export function FirstVaultDepositSuccessModal({
   apy,
   onClose,
 }: FirstVaultDepositSuccessModalProps) {
+  const t = useTranslations("sharedVault.depositSuccess");
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -57,7 +59,7 @@ export function FirstVaultDepositSuccessModal({
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            aria-label="Close"
+            aria-label={t("close")}
             onClick={handleClose}
             className="absolute top-3 right-3 z-10 p-1.5 rounded-lg hover:bg-white/10 text-white/30 hover:text-white transition-colors"
           >
@@ -80,12 +82,15 @@ export function FirstVaultDepositSuccessModal({
 
             <div className="text-center space-y-1.5">
               <p className="text-white font-semibold text-xl leading-snug">
-                Deposit successful!
+                {t("title")}
               </p>
               <p className="text-white/45 text-base leading-relaxed">
-                You&apos;ve made your first deposit into a Neko vault {" "}
-                <span className="text-white/70 font-medium">{vaultName}</span>.
-                Your assets are now earning yield.
+                {t.rich("description", {
+                  vaultName,
+                  vault: (chunks) => (
+                    <span className="text-white/70 font-medium">{chunks}</span>
+                  ),
+                })}
               </p>
             </div>
 
@@ -94,7 +99,7 @@ export function FirstVaultDepositSuccessModal({
             <div className="w-full overflow-hidden rounded-xl border border-white/8">
               <Image
                 src={BANNER_PATH}
-                alt="Share banner"
+                alt={t("shareBannerAlt")}
                 width={400}
                 height={200}
                 unoptimized
@@ -103,14 +108,17 @@ export function FirstVaultDepositSuccessModal({
             </div>
 
             <div className="w-full flex flex-col gap-2">
-              <FirstVaultDepositShareOnXButton vaultName={vaultName} apy={apy} />
+              <FirstVaultDepositShareOnXButton
+                vaultName={vaultName}
+                apy={apy}
+              />
 
               <button
                 type="button"
                 onClick={handleClose}
                 className="w-full py-2 rounded-xl text-sm font-medium text-white/40 hover:text-white/70 transition-colors"
               >
-                Done
+                {t("done")}
               </button>
             </div>
           </div>

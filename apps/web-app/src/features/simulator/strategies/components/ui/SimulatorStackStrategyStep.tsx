@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useFilteredDestinations } from "@/features/simulator/strategies/hooks/useFilteredDestinations";
@@ -41,6 +42,7 @@ export function SimulatorStackStrategyStep({
   selectedVenue,
   onSelectVenue,
 }: SimulatorStackStrategyStepProps) {
+  const t = useTranslations("simulator.stackStep");
   const bondSymbol =
     bondDestination.bondSymbol ?? bondDestination.acceptedTokenCodes[0] ?? "";
 
@@ -65,13 +67,12 @@ export function SimulatorStackStrategyStep({
   return (
     <section className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <header className="shrink-0 flex flex-col gap-1">
-        <h2 className="text-xl font-semibold text-white">
-          Want to earn even more?
-        </h2>
+        <h2 className="text-xl font-semibold text-white">{t("header")}</h2>
         <p className="text-sm text-white/60">
-          Your <span className="text-white/80">{bondSymbol}</span> is already
-          earning bond yield. Add it to a pool or vault to stack an extra layer
-          of returns on top, or keep it simple.
+          {t.rich("body", {
+            symbol: bondSymbol,
+            b: (chunks) => <span className="text-white/80">{chunks}</span>,
+          })}
         </p>
       </header>
 
@@ -85,7 +86,7 @@ export function SimulatorStackStrategyStep({
             : "border-white/10 bg-[#2A2A2A] text-white/75 hover:border-white/20"
         )}
       >
-        Just the bond. Keep it simple.
+        {t("keepSimple")}
       </button>
 
       <div className="flex shrink-0 flex-wrap items-center gap-2 self-start rounded-full bg-[#2A2A2A] p-1">
@@ -93,29 +94,29 @@ export function SimulatorStackStrategyStep({
           [
             {
               id: "pools" as const,
-              label: "Liquidity Pools",
+              label: t("tabs.pools"),
               count: pools.length,
             },
             {
               id: "vaults" as const,
-              label: "Auto-Invest",
+              label: t("tabs.vaults"),
               count: vaults.length,
             },
           ] as const
-        ).map((t) => (
+        ).map((tabItem) => (
           <button
-            key={t.id}
+            key={tabItem.id}
             type="button"
-            onClick={() => setTabOverride(t.id)}
+            onClick={() => setTabOverride(tabItem.id)}
             className={cn(
               "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-              tab === t.id
+              tab === tabItem.id
                 ? "bg-[#229EDF] text-white"
                 : "text-white/60 hover:text-white"
             )}
           >
-            {t.label}
-            <span className="ml-2 text-xs text-white/50">{t.count}</span>
+            {tabItem.label}
+            <span className="ml-2 text-xs text-white/50">{tabItem.count}</span>
           </button>
         ))}
       </div>
@@ -127,8 +128,7 @@ export function SimulatorStackStrategyStep({
           </div>
         ) : visible.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-6 text-center text-sm text-white/60">
-            No options accept {bondSymbol} yet. Use the button above or try
-            another tab.
+            {t("empty", { symbol: bondSymbol })}
           </div>
         ) : (
           <div className="flex flex-col gap-3 pb-1">

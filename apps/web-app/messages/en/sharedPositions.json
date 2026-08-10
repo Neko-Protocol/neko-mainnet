@@ -1,0 +1,42 @@
+{
+  "sharedPositions": {
+    "yourPositions": {
+      "title": "Your Positions",
+      "loadingSection": "Loading {label}...",
+      "loadingPositions": "Loading positions...",
+      "emptyTitle": "No active positions",
+      "emptySubtitle": "Deposit into a pool or vault to start earning yield",
+      "explorePools": "Explore Pools",
+      "poolsErrorTitle": "Couldn't load pool positions",
+      "poolsErrorSubtitle": "Network error — please try again",
+      "retry": "Retry",
+      "sectionPools": "Pools",
+      "sectionVaults": "Vaults",
+      "sectionBearingYield": "Bearing Yield Assets"
+    },
+    "table": {
+      "pools": "Pools",
+      "manage": "Manage",
+      "colAsset": "Asset",
+      "colPosition": "Position",
+      "colDeposited": "Deposited",
+      "colValue": "Value",
+      "apySuffix": "{value}% APY",
+      "rewardsSuffix": "+{value} rewards",
+      "moreOnLending": "+{count} more on Lending"
+    },
+    "assetBreakdown": {
+      "title": "Top Pools",
+      "subtitle": "Overview of the most active pools",
+      "viewAllPools": "View all pools"
+    },
+    "bearingYield": {
+      "colAsset": "Asset",
+      "colYieldBearingAsset": "Yield-Bearing Asset",
+      "colBalance": "Balance",
+      "colValue": "Value",
+      "apyApprox": "~{value}% APY",
+      "depositedIn": "· deposited in {name}"
+    }
+  }
+}

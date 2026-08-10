@@ -4,6 +4,7 @@ import React, { useMemo, useState, useCallback } from "react";
 import { use } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   orchestrator,
@@ -54,10 +55,10 @@ interface PoolDetailProps {
   params: Promise<{ contractid: string }>;
 }
 
-const ISSUER_LABELS: Record<string, string> = {
-  blend: "Blend",
-  neko: "Neko",
-  aqua: "Aqua",
+const ISSUER_LABEL_KEYS: Record<string, string> = {
+  blend: "issuerBlend",
+  neko: "issuerNeko",
+  aqua: "issuerAqua",
 };
 
 const ISSUER_ICONS: Record<string, string> = {
@@ -69,6 +70,9 @@ const ISSUER_ICONS: Record<string, string> = {
 const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
   const { contractid: rawId } = use(params);
   const contractid = decodeURIComponent(rawId);
+  const t = useTranslations("sharedPools.detail");
+  const tPanel = useTranslations("sharedPools.panel");
+  const tErrors = useTranslations("sharedPools.errors");
 
   const {
     address,
@@ -592,7 +596,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       const n = parseFloat(supplyAmount);
       if (isNaN(n) || n <= 0) return;
       if (n > parseFloat(token1Balance ?? "0") + 1e-10) {
-        addNotification("Insufficient balance to deposit", "error");
+        addNotification(tErrors("insufficientBalanceDeposit"), "error");
         return;
       }
       const amountBigInt = decimalToAtomic(supplyAmount, decimals);
@@ -605,6 +609,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       runPoolAction,
       token1Balance,
       addNotification,
+      tErrors,
     ]
   );
 
@@ -615,11 +620,11 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       if (isNaN(n) || n <= 0) return;
       const amountBigInt = decimalToAtomic(withdrawAmount, decimals);
       if (withdrawableRaw <= 0n) {
-        addNotification("No supplied balance to withdraw", "error");
+        addNotification(tErrors("noSuppliedBalance"), "error");
         return;
       }
       if (amountBigInt > withdrawableRaw) {
-        addNotification("Insufficient supplied balance", "error");
+        addNotification(tErrors("insufficientSuppliedBalance"), "error");
         return;
       }
       await executePoolAction({
@@ -644,6 +649,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       contractid,
       refetchAfterTx,
       addNotification,
+      tErrors,
     ]
   );
 
@@ -670,8 +676,13 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
         } catch (err) {
           if (isUserCancellationError(err)) return;
           const msg =
-            err instanceof Error ? err.message : "Failed to add trustline";
-          addNotification(`Trustline setup failed: ${msg}`, "error");
+            err instanceof Error
+              ? err.message
+              : tErrors("trustlineFailedGeneric");
+          addNotification(
+            tErrors("trustlineSetupFailed", { message: msg }),
+            "error"
+          );
           return;
         }
       }
@@ -712,6 +723,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       runPoolAction,
       refetchAfterTx,
       addNotification,
+      tErrors,
     ]
   );
 
@@ -738,19 +750,21 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     }
     if (!ammInsufficientFunds) return null;
     if (ammTab === "withdraw") {
-      return "Insufficient pool position to withdraw";
+      return tErrors("insufficientPoolPosition");
     }
     const missingAssets = [
       ammFirstLegDepositInsufficient ? pool?.tokens[0]?.code : null,
       secondTokenInsufficient ? pool?.tokens[1]?.code : null,
     ]
       .filter((symbol): symbol is string => Boolean(symbol))
-      .map((symbol) => (symbol === "XLM" ? "spendable XLM" : symbol));
+      .map((symbol) => (symbol === "XLM" ? tErrors("spendableXlm") : symbol));
 
     if (missingAssets.length > 0) {
-      return `Insufficient ${missingAssets.join(" and ")} balance`;
+      return tErrors("insufficientAssetsBalance", {
+        assets: missingAssets.join(` ${tErrors("andJoiner")} `),
+      });
     }
-    return "Insufficient funds";
+    return tErrors("insufficientFunds");
   }, [
     depositWithdrawMode,
     isActionPending,
@@ -760,6 +774,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     ammFirstLegDepositInsufficient,
     secondTokenInsufficient,
     pool?.tokens,
+    tErrors,
   ]);
 
   const panelPool = useMemo<PoolDetailPanelPool | null>(() => {
@@ -857,18 +872,21 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       const totalApy = pool.apy;
       supplyApyDisplay = `${Number.isFinite(totalApy) ? totalApy.toFixed(2) : "0.00"}%`;
       if (rewards > 0.0001) {
-        supplyApySub = `Base ${baseSup.toFixed(2)}% + ${rewards.toFixed(2)}% rewards`;
+        supplyApySub = t("baseRewards", {
+          base: baseSup.toFixed(2),
+          rewards: rewards.toFixed(2),
+        });
       }
       const aquaPoolType = pool.metadata.aquaPoolType as string | undefined;
       if (aquaPoolType === "stable_swap" || aquaPoolType === "stable") {
-        poolTypeLabel = "Stable Swap";
+        poolTypeLabel = t("stableSwap");
         const amp = pool.metadata.amplificationFactor as
           | number
           | null
           | undefined;
-        if (amp != null) poolTypeDetail = `A: ${amp}`;
+        if (amp != null) poolTypeDetail = t("amplification", { amp });
       } else if (aquaPoolType === "constant_product") {
-        poolTypeLabel = "Constant Product";
+        poolTypeLabel = t("constantProduct");
       }
       if (primaryTokenPrice > 0 && t1?.code) {
         oraclePrice = `${t1.code} = ${formatCurrency(
@@ -937,7 +955,9 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       oraclePrice,
       utilization,
       issuer: {
-        name: ISSUER_LABELS[pool.type] ?? pool.type,
+        name: ISSUER_LABEL_KEYS[pool.type]
+          ? tPanel(ISSUER_LABEL_KEYS[pool.type])
+          : pool.type,
         icon: ISSUER_ICONS[pool.type] ?? null,
       },
       token1Balance: token1AvailableBalance,
@@ -969,6 +989,8 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
     selectedCurrency,
     withdrawableFormatted,
     secondaryWithdrawableFormatted,
+    t,
+    tPanel,
   ]);
 
   if (isLoading) {
@@ -979,7 +1001,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
             href="/pools"
             className="inline-flex items-center gap-1 text-white/60 hover:text-white font-medium text-sm transition-colors"
           >
-            &larr; Back to Pools
+            {t("backToPools")}
           </Link>
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-4">
@@ -994,18 +1016,16 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
       <div className="w-full flex items-center justify-center px-4 py-8 h-dvh">
         <div className="max-w-2xl w-full rounded-2xl bg-red-500/10 border border-red-500/20 p-8 text-center">
           <h1 className="text-xl font-bold text-red-400 mb-2">
-            Pool not found
+            {t("notFoundTitle")}
           </h1>
           <p className="text-red-400/70 text-sm mb-6">
-            {error instanceof Error
-              ? error.message
-              : "Could not load pool data."}
+            {error instanceof Error ? error.message : t("notFoundBody")}
           </p>
           <Link
             href="/pools"
             className="text-[#229EDF] font-semibold text-sm hover:underline"
           >
-            &larr; Back to Pools
+            {t("backToPools")}
           </Link>
         </div>
       </div>
@@ -1019,7 +1039,7 @@ const PoolDetail: React.FC<PoolDetailProps> = ({ params }) => {
           href="/pools"
           className="inline-flex items-center gap-1 text-white/60 hover:text-white font-medium text-sm transition-colors"
         >
-          &larr; Back to Pools
+          {t("backToPools")}
         </Link>
       </div>
 

@@ -107,40 +107,59 @@ export function getAssetTaxonomy(code: string): AssetTaxonomy | undefined {
   return ASSET_TAXONOMY[code.toUpperCase()];
 }
 
+/**
+ * Maps the literal English `classLabel` values above to
+ * `sharedDiscover.classLabels` translation keys. classLabel itself stays
+ * English-only data (consumed by features/basic and features/simulator too,
+ * out of scope for this pass) — only the shared/discover consumers that
+ * already call useTranslations look values up through this map.
+ */
+export const CLASS_LABEL_KEYS: Record<string, string> = {
+  Native: "native",
+  Stablecoin: "stablecoin",
+  "Yield Stablecoin": "yieldStablecoin",
+  "Sovereign Bond": "sovereignBond",
+  "Money Market Fund": "moneyMarketFund",
+  "Treasury Fund": "treasuryFund",
+  "AAA CLO Fund": "aaaCloFund",
+};
+
 export interface AssetClassDef {
   id: AssetClass | "all";
-  label: string;
-  description: string;
+  /** Translation key into sharedDiscover.classFilters.<labelKey>. */
+  labelKey: string;
+  /** Translation key into sharedDiscover.classFilters.<descriptionKey>. */
+  descriptionKey: string;
 }
 
 export const ASSET_CLASS_FILTERS: AssetClassDef[] = [
-  { id: "all", label: "All", description: "Every supported asset" },
+  { id: "all", labelKey: "all", descriptionKey: "allDescription" },
   {
     id: "stablecoin",
-    label: "Stablecoins",
-    description: "Fiat-pegged digital currencies",
+    labelKey: "stablecoin",
+    descriptionKey: "stablecoinDescription",
   },
   {
     id: "sovereign-bond",
-    label: "Sovereign Bonds",
-    description: "Tokenized government debt (RWA)",
+    labelKey: "sovereignBond",
+    descriptionKey: "sovereignBondDescription",
   },
   {
     id: "tokenized-fund",
-    label: "Tokenized Funds",
-    description: "Regulated fund shares issued on-chain (RWA)",
+    labelKey: "tokenizedFund",
+    descriptionKey: "tokenizedFundDescription",
   },
   {
     id: "structured-credit",
-    label: "Structured Credit",
-    description: "Tokenized pools of corporate loans (RWA)",
+    labelKey: "structuredCredit",
+    descriptionKey: "structuredCreditDescription",
   },
   {
     id: "commodity",
-    label: "Commodities",
-    description: "Tokenized physical commodities (RWA)",
+    labelKey: "commodity",
+    descriptionKey: "commodityDescription",
   },
-  { id: "native", label: "Native", description: "Network-native assets" },
+  { id: "native", labelKey: "native", descriptionKey: "nativeDescription" },
 ];
 
 /** Visual accents per class, used by cards and badges. */
@@ -186,33 +205,16 @@ export const CLASS_ACCENT: Record<
   },
 };
 
-/** Plain-language explanation of each asset class, shown on detail pages. */
-export const CLASS_EXPLANATIONS: Record<
-  AssetClass,
-  { title: string; body: string }
-> = {
-  native: {
-    title: "What is a native asset?",
-    body: "A native asset is the built-in currency of a blockchain, it isn't issued by a company or backed by an off-chain reserve. It pays for transaction fees, secures the network, and acts as a bridge between other assets traded on-chain.",
-  },
-  stablecoin: {
-    title: "What is a stablecoin?",
-    body: "A stablecoin is a token designed to track the value of a reference currency such as the US dollar or the euro. Issuers hold reserves (cash, short-term government debt, or other safe instruments) so that each token can be redeemed 1:1, giving holders price stability with the speed and global reach of blockchain settlement.",
-  },
-  "sovereign-bond": {
-    title: "What is a tokenized sovereign bond?",
-    body: "A tokenized sovereign bond represents a share of debt issued by a national government,for instance, US Treasuries or Mexican Government Bonds, wrapped into an on-chain token. Holders earn the underlying yield while keeping the liquidity and 24/7 transferability of a digital asset.",
-  },
-  "tokenized-fund": {
-    title: "What is a tokenized fund?",
-    body: "A tokenized fund is a share of a regulated investment fund issued directly on-chain, where the token itself is the record of ownership rather than an IOU for one. The fund holds conventional assets, typically short-term government debt, and a transfer agent keeps the on-chain register in sync with the fund's books. Some share classes are restricted to investors the issuer has approved, so they can be tracked but not freely traded.",
-  },
-  commodity: {
-    title: "What is a tokenized commodity?",
-    body: "A tokenized commodity represents ownership of a physical asset, such as gold, held in professional vaults, wrapped into an on-chain token. Each token is redeemable against the underlying reserve, which is verified by independent audits, so holders get commodity price exposure with the liquidity and 24/7 transferability of a digital asset.",
-  },
-  "structured-credit": {
-    title: "What is structured credit?",
-    body: "Structured credit pools many corporate loans into a single vehicle and splits the repayments into tranches ranked by who gets paid first. The AAA tranche sits at the top, absorbing losses last, which is why it carries the highest credit rating in the structure. Tokenizing that tranche puts an institutional fixed-income product on-chain, though the rating describes credit risk only, not price stability.",
-  },
+/**
+ * Translation key into sharedDiscover.classExplanations.<key> for each asset
+ * class's plain-language explanation, shown on detail pages. The prose
+ * itself lives in messages/{en,es}/sharedDiscover.json, not here.
+ */
+export const CLASS_EXPLANATION_KEYS: Record<AssetClass, string> = {
+  native: "native",
+  stablecoin: "stablecoin",
+  "sovereign-bond": "sovereignBond",
+  "tokenized-fund": "tokenizedFund",
+  commodity: "commodity",
+  "structured-credit": "structuredCredit",
 };

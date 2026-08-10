@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { WizardPhaseId } from "@/features/simulator/strategies/types/simulator.types";
 
@@ -34,6 +35,7 @@ function CheckIcon({ className }: { className?: string }) {
 }
 
 export function StepIndicator({ steps, currentPhase }: StepIndicatorProps) {
+  const t = useTranslations("simulator");
   const activeIdx = Math.max(
     0,
     steps.findIndex((s) => s.phase === currentPhase)
@@ -48,10 +50,13 @@ export function StepIndicator({ steps, currentPhase }: StepIndicatorProps) {
       <div className="flex flex-col gap-2 sm:hidden">
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/40">
-            Step {activeIdx + 1} of {steps.length}
+            {t("stepIndicator.stepOf", {
+              current: activeIdx + 1,
+              total: steps.length,
+            })}
           </span>
           <span className="text-xs font-semibold text-white">
-            {steps[activeIdx]?.label}
+            {steps[activeIdx] ? t(steps[activeIdx].label) : null}
           </span>
         </div>
         <div className="relative h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
@@ -106,7 +111,7 @@ export function StepIndicator({ steps, currentPhase }: StepIndicatorProps) {
                   !isActive && !isDone && "text-white/35"
                 )}
               >
-                {step.label}
+                {t(step.label)}
               </span>
             </li>
           );

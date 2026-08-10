@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { getTokens, getTokenAddress } from "@/lib/helpers/stellar/swap-kit";
 import { useSwapQuote } from "@/features/shared/swap-engine/hooks/useSwapQuote";
@@ -10,7 +11,8 @@ import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useToast } from "@/hooks/useToast";
 import { getPaymentTokenForAsset } from "@/lib/constants/buy.config";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenDisplay";
-import { extractContractErrorOrNull } from "@neko/orchestrator";
+import { extractContractError, getGenericErrorCode } from "@neko/orchestrator";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
 export interface BuyFormState {
@@ -33,6 +35,8 @@ export interface BuyFormActions {
 export function useBuyForm(
   targetSymbol: string
 ): BuyFormState & BuyFormActions {
+  const t = useTranslations("basic");
+  const getErrorMessage = useApiErrorMessage();
   const { address, networkPassphrase, refetchBalances } = useWallet();
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
@@ -79,9 +83,9 @@ export function useBuyForm(
       if (result.txHash) {
         setTxHash(result.txHash);
         setPaymentAmount("");
-        addNotification("Purchase complete", "success", {
+        addNotification(t("buyToasts.purchaseComplete"), "success", {
           ...TOAST_CONFIG.defaultOpts,
-          description: `${targetSymbol} added to your wallet`,
+          description: t("buyToasts.addedToWallet", { symbol: targetSymbol }),
         });
 
         void refetchBalances();
@@ -105,13 +109,11 @@ export function useBuyForm(
     } catch (err) {
       if (err instanceof Error && err.message === "USER_REJECTED") return;
 
-      const contractError = extractContractErrorOrNull(err);
-      const msg = contractError
-        ? `Contract error: ${contractError}`
-        : err instanceof Error
-          ? err.message
-          : "Purchase failed";
-      addNotification("Purchase failed", "error", {
+      const errorCode = getGenericErrorCode(err);
+      const msg = errorCode
+        ? getErrorMessage(errorCode)
+        : t("errors.contractError", { error: extractContractError(err) });
+      addNotification(t("buyToasts.purchaseFailed"), "error", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
       });
@@ -129,6 +131,8 @@ export function useBuyForm(
     refetchBalances,
     queryClient,
     targetSymbol,
+    getErrorMessage,
+    t,
   ]);
 
   return {

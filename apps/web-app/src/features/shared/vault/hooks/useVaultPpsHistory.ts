@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocale } from "next-intl";
 import { backendClient } from "@/lib/services/backend-client";
+import type { Locale } from "@/i18n/config";
 
 export interface VaultPpsPoint {
   date: string;
@@ -13,7 +15,8 @@ interface VaultPpsHistoryResponse {
 }
 
 async function fetchVaultPpsHistory(
-  vaultId: string
+  vaultId: string,
+  locale: Locale
 ): Promise<{ points: VaultPpsPoint[]; apy7d: number | null }> {
   const json = await backendClient.get<VaultPpsHistoryResponse>(
     `/v1/vault-pps/${encodeURIComponent(vaultId)}`
@@ -21,7 +24,7 @@ async function fetchVaultPpsHistory(
 
   const points: VaultPpsPoint[] = (json.data ?? []).map((row) => {
     const d = new Date(row.recorded_at);
-    const label = `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
+    const label = `${d.getDate()} ${d.toLocaleString(locale, { month: "short" })}`;
     return {
       date: label,
       pps: row.pps,
@@ -33,9 +36,10 @@ async function fetchVaultPpsHistory(
 }
 
 export function useVaultPpsHistory(vaultId: string | null | undefined) {
+  const locale = useLocale() as Locale;
   return useQuery({
-    queryKey: ["vault-pps-history", vaultId],
-    queryFn: () => fetchVaultPpsHistory(vaultId!),
+    queryKey: ["vault-pps-history", vaultId, locale],
+    queryFn: () => fetchVaultPpsHistory(vaultId!, locale),
     enabled: !!vaultId,
     staleTime: 60 * 60 * 1000, // 1 hour — matches cron frequency
     retry: false,

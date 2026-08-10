@@ -1,5 +1,6 @@
 import React from "react";
 import { Loader2, CheckCircle2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export type OrderType = "swap" | "limit" | "twap";
 
@@ -27,10 +28,11 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
   isInsufficientBalance,
   onClick,
 }) => {
+  const t = useTranslations("expert.swap");
   if (!address) {
     return (
       <button disabled className={`${baseClass} bg-white/10 text-white/40`}>
-        Connect Wallet
+        {t("button.connectWallet")}
       </button>
     );
   }
@@ -38,7 +40,7 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
   if (orderType !== "swap") {
     return (
       <button disabled className={`${baseClass} bg-white/10 text-white/40`}>
-        Coming soon
+        {t("comingSoon")}
       </button>
     );
   }
@@ -46,7 +48,7 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
   if (!canGetQuote) {
     return (
       <button disabled className={`${baseClass} bg-[#229EDF]/40 text-white/60`}>
-        Enter Amount
+        {t("button.enterAmount")}
       </button>
     );
   }
@@ -54,7 +56,7 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
   if (isInsufficientBalance) {
     return (
       <button disabled className={`${baseClass} bg-red-500/20 text-red-400`}>
-        Insufficient Balance
+        {t("button.insufficientBalance")}
       </button>
     );
   }
@@ -66,7 +68,7 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
         className={`${baseClass} bg-green-500/20 text-green-400`}
       >
         <CheckCircle2 className="h-5 w-5" />
-        Swap Completed!
+        {t("button.swapCompleted")}
       </button>
     );
   }
@@ -78,7 +80,7 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
         className={`${baseClass} bg-[#229EDF] text-white shadow-lg shadow-[#229EDF]/20`}
       >
         <Loader2 className="h-5 w-5 animate-spin" />
-        Processing swap…
+        {t("button.processing")}
       </button>
     );
   }
@@ -89,7 +91,7 @@ export const SwapButton: React.FC<SwapButtonProps> = ({
       disabled={isLoadingQuote}
       className={`${baseClass} bg-[#229EDF] hover:bg-[#1a8bc7] text-white shadow-lg shadow-[#229EDF]/20`}
     >
-      Swap
+      {t("button.swap")}
     </button>
   );
 };

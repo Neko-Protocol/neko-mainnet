@@ -10,6 +10,7 @@ import React, {
 import Image from "next/image";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useQueries } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { BannerPage } from "@/components/ui/BannerPage";
@@ -47,6 +48,7 @@ const VALID_VAULT_TABS: VaultTabKey[] = ["vaults", "positions"];
 const emptySubscribe = () => () => {};
 
 const Vault: React.FC = () => {
+  const t = useTranslations("sharedVault.list");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -109,19 +111,13 @@ const Vault: React.FC = () => {
 
   const emptyVaultSubtitle = useMemo(() => {
     if (defindexPayload?.error === "missing_defindex_api_key") {
-      return (
-        defindexPayload.hint ??
-        "Set DEFINDEX_API_KEY in .env.local (server-only). DeFindex returns 403 without it."
-      );
+      return defindexPayload.hint ?? t("errorMissingApiKey");
     }
     if (defindexPayload?.error === "unsupported_network") {
-      return "Unsupported network. DeFindex requires Stellar Mainnet.";
+      return t("errorUnsupportedNetwork");
     }
     if (defindexPayload?.error === "no_vault_ids") {
-      return (
-        defindexPayload.hint ??
-        "Set DEFINDEX_VAULT_IDS or NEXT_PUBLIC_DEFINDEX_VAULT_IDS with vault contract addresses."
-      );
+      return defindexPayload.hint ?? t("errorNoVaultIds");
     }
     if (
       vaultsFromApi.length === 0 &&
@@ -129,10 +125,13 @@ const Vault: React.FC = () => {
       defindexPayload.fetchErrors.length > 0
     ) {
       const first = defindexPayload.fetchErrors[0];
-      return `DeFindex API: ${first.message} (vault ${first.contractId.slice(0, 8)}…). Check DEFINDEX_API_KEY and network.`;
+      return t("errorFetchFailed", {
+        message: first.message,
+        contractId: first.contractId.slice(0, 8),
+      });
     }
-    return "Try adjusting your filters";
-  }, [defindexPayload, vaultsFromApi.length]);
+    return t("tryAdjustingFilters");
+  }, [defindexPayload, vaultsFromApi.length, t]);
 
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
@@ -234,7 +233,7 @@ const Vault: React.FC = () => {
       isFetching && vaultsFromApi.length > 0 && !isPending;
 
     if (anyBalanceStillLoading || listStillRefreshing) {
-      return "Fetching more vaults";
+      return t("fetchingMore");
     }
     return null;
   }, [
@@ -244,6 +243,7 @@ const Vault: React.FC = () => {
     isFetching,
     vaultsFromApi.length,
     isPending,
+    t,
   ]);
 
   const navigateToVault = (v: VaultView, tab: "deposit" | "withdraw") => {
@@ -253,11 +253,11 @@ const Vault: React.FC = () => {
   return (
     <PageContainer maxWidth="7xl">
       <BannerPage
-        title="Vaults"
-        subtitle="Put your assets to work and earn yield on Stellar"
-        badge="Earn yield"
+        title={t("title")}
+        subtitle={t("subtitle")}
+        badge={t("badge")}
         imageSrc="/banners/vault.svg"
-        imageAlt="Vault illustration"
+        imageAlt={t("illustrationAlt")}
         imageLayoutClassName="-right-10 top-5 h-[96%] w-[70%] opacity-60 sm:right-0 sm:top-0 sm:h-full sm:w-[55%] sm:opacity-100"
         className="mb-8"
       />
@@ -286,7 +286,7 @@ const Vault: React.FC = () => {
                   <span>{assetFilter}</span>
                 </>
               ) : (
-                <span>All assets</span>
+                <span>{t("allAssets")}</span>
               )}
               <ChevronDown
                 className={`h-3.5 w-3.5 text-white/40 transition-transform ${assetDropdownOpen ? "rotate-180" : ""}`}
@@ -302,7 +302,7 @@ const Vault: React.FC = () => {
                   }}
                   className={`w-full flex items-center gap-2 px-3 py-2.5 text-xs transition-colors hover:bg-white/5 ${!assetFilter ? "text-white" : "text-white/50"}`}
                 >
-                  All assets
+                  {t("allAssets")}
                 </button>
                 {assetOptions.map(({ symbol, iconSrc }) => (
                   <button

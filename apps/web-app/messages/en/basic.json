@@ -1,0 +1,94 @@
+{
+  "basic": {
+    "assetDetail": {
+      "institutionalTitle": "Institutional access required",
+      "institutionalDescription": "{symbol} is shown for reference and cannot be bought in-app.",
+      "discoverMoreOn": "Discover more on {platform}",
+      "mobilePanelDiscover": "Discover {symbol}",
+      "mobilePanelBuy": "Buy {symbol}"
+    },
+    "buyForm": {
+      "processing": "Processing…",
+      "buySymbol": "Buy {symbol}",
+      "youAreBuying": "You're buying {symbol}",
+      "youPay": "You pay",
+      "loadingBalance": "Loading balance…",
+      "balance": "Balance: {amount} {token}",
+      "insufficientBalance": "Insufficient {token} balance",
+      "youReceive": "You receive (estimated)",
+      "calculating": "Calculating…",
+      "connectWalletToContinue": "Connect your wallet to continue",
+      "purchaseConfirmed": "Purchase confirmed",
+      "addToCart": "Add to cart"
+    },
+    "addToCartModal": {
+      "close": "Close"
+    },
+    "errors": {
+      "contractError": "Contract error: {error}",
+      "transactionFailed": "Transaction failed"
+    },
+    "buyToasts": {
+      "purchaseComplete": "Purchase complete",
+      "addedToWallet": "{symbol} added to your wallet",
+      "purchaseFailed": "Purchase failed"
+    },
+    "cartToasts": {
+      "allComplete": "All purchases complete",
+      "itemsAddedToWallet": "{count, plural, one {# item} other {# items}} added to your wallet",
+      "partialComplete": "{success} of {total} purchases complete"
+    },
+    "priceCard": {
+      "noData": "No data",
+      "loadingPrice": "Loading price…",
+      "priceIn": "Price ({currency})",
+      "apy": "~{value}% APY",
+      "discoverMore": "Discover More",
+      "buyAsset": "Buy Asset",
+      "shoppingCart": "Shopping Cart"
+    },
+    "cart": {
+      "title": "Your Cart",
+      "subtitle": "Review your pending purchases and confirm them all at once.",
+      "badge": "Checkout",
+      "illustrationAlt": "Cart illustration",
+      "emptyTitle": "Your cart is empty",
+      "emptyDescription": "Browse assets in <link>Discover</link> and add items to your cart.",
+      "removeItem": "Remove {symbol}",
+      "transactionRejected": "Transaction rejected in wallet",
+      "estimatedTotalSpend": "Estimated total spend",
+      "estimatesDisclaimer": "Amounts shown are estimates at the time of adding to cart. Final amounts are determined at execution using live quotes.",
+      "connectWalletToConfirm": "Connect your wallet to confirm purchases",
+      "processing": "Processing…",
+      "confirmAll": "Confirm all ({count, plural, one {# item} other {# items}})"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Overview of your portfolio and assets",
+      "badge": "Welcome back",
+      "illustrationAlt": "Dashboard illustration"
+    },
+    "quickActions": {
+      "getStarted": "Get Started",
+      "connectToStart": "Connect your wallet to start using the protocol",
+      "connectWallet": "Connect Wallet",
+      "connectWalletDescription": "Explore assets, add liquidity, and manage your portfolio",
+      "title": "Quick Actions",
+      "subtitle": "Jump into the protocol",
+      "exploreAssetsLabel": "Explore Assets",
+      "exploreAssetsDescription": "Browse RWA tokens & prices",
+      "addLiquidityLabel": "Add Liquidity",
+      "addLiquidityDescription": "Earn yield in pools",
+      "yourCartLabel": "Your Cart",
+      "yourCartDescription": "Review pending purchases"
+    },
+    "walletHoldings": {
+      "title": "Your Holdings",
+      "subtitle": "Assets in your wallet",
+      "exploreAssets": "Explore assets",
+      "noAssetsYet": "No assets yet",
+      "browseDiscover": "Browse Discover to find assets you can add to your portfolio",
+      "exploreAssetsButton": "Explore Assets"
+    }
+  }
+}

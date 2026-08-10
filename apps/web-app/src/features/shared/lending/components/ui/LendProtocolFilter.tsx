@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface LendProtocolFilterProps {
   value: string;
@@ -18,6 +19,7 @@ export function LendProtocolFilter({
   disabled = false,
   id = "lend-protocol-filter",
 }: LendProtocolFilterProps) {
+  const t = useTranslations("sharedLending.table");
   if (options.length === 0) return null;
 
   return (
@@ -29,7 +31,7 @@ export function LendProtocolFilter({
         disabled={disabled}
         className="min-w-[140px] w-max max-w-full appearance-none rounded-lg border border-white/10 bg-[#1C1C1C] py-2 pl-3 pr-7 text-sm text-white/90 outline-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <option value="all">All protocols</option>
+        <option value="all">{t("allProtocols")}</option>
         {options.map((o) => (
           <option key={o.id} value={o.id}>
             {o.label}

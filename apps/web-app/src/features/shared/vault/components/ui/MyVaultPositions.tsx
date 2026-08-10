@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { fromSmallestUnit } from "@neko/orchestrator";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { Wallet, Coins, Info } from "lucide-react";
@@ -12,6 +13,7 @@ import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
+import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 import { useVaultEarningsCard } from "../../hooks/useVaultEarningsCard";
 import { ClaimEarningsButton } from "./ClaimEarningsButton";
 import type { VaultView } from "../../types/vault";
@@ -104,6 +106,7 @@ function VaultPositionRow({
   earningsTokens,
   onOpen,
 }: VaultPositionRowProps) {
+  const { formatNumber } = useLocaleFormatter();
   const { deposited, usdValue, formatTokensAsCurrency } = useVaultPosition(
     vault.id,
     rawBalance,
@@ -114,7 +117,7 @@ function VaultPositionRow({
 
   const depositedDisplay =
     netDepositedTokens !== null
-      ? `${netDepositedTokens.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${sym}`
+      ? `${formatNumber(netDepositedTokens, 2)} ${sym}`
       : null;
 
   return (
@@ -224,6 +227,7 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
   vaults,
   userBalances,
 }) => {
+  const t = useTranslations("sharedVault.positions");
   const router = useRouter();
   const { address } = useWallet();
   const openVault = (vault: VaultView) => {
@@ -237,9 +241,7 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
     return (
       <div className="w-full rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
         <Wallet className="h-8 w-8 text-white/20 mx-auto mb-3" />
-        <p className="text-white/40 text-sm">
-          Connect your wallet to see your vault positions
-        </p>
+        <p className="text-white/40 text-sm">{t("connectWallet")}</p>
       </div>
     );
   }
@@ -248,9 +250,7 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
     return (
       <div className="w-full rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
         <Coins className="h-8 w-8 text-white/20 mx-auto mb-3" />
-        <p className="text-white/40 text-sm">
-          You don&apos;t have any vault positions yet.
-        </p>
+        <p className="text-white/40 text-sm">{t("noPositions")}</p>
       </div>
     );
   }
@@ -273,7 +273,7 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
     <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
       <div className="flex items-center px-4 py-3 border-b border-white/5">
         <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
-          Your Vault Positions
+          {t("title")}
         </span>
       </div>
 
@@ -283,49 +283,46 @@ const MyVaultPositions: React.FC<MyVaultPositionsProps> = ({
             <tr className="border-b border-white/5">
               <th className="px-4 py-3 text-left">
                 <span className="text-white/40 text-sm font-semibold">
-                  Vault
+                  {t("vault")}
                 </span>
               </th>
               <th className="px-4 py-3 text-left">
                 <span className="text-white/40 text-sm font-semibold">
-                  Asset
+                  {t("asset")}
                 </span>
               </th>
               <th className="px-4 py-3 text-center">
                 <span className="text-white/40 text-sm font-semibold">
                   <ColTooltip
-                    label="Deposited"
-                    tip="The total amount you have deposited, not including earnings."
+                    label={t("deposited")}
+                    tip={t("depositedTooltip")}
                   />
                 </span>
               </th>
               <th className="px-4 py-3 text-center">
                 <span className="text-white/40 text-sm font-semibold">
                   <ColTooltip
-                    label="Earnings"
-                    tip="The profit you have earned since your first deposit."
+                    label={t("earnings")}
+                    tip={t("earningsTooltip")}
                   />
                 </span>
               </th>
               <th className="px-4 py-3 text-center">
                 <span className="text-white/40 text-sm font-semibold">
                   <ColTooltip
-                    label="Current Value"
-                    tip="Your current balance including all earnings generated so far."
+                    label={t("currentValue")}
+                    tip={t("currentValueTooltip")}
                   />
                 </span>
               </th>
               <th className="px-4 py-3 text-center">
                 <span className="text-white/40 text-sm font-semibold">
-                  <ColTooltip
-                    label="APY"
-                    tip="Annual Percentage Yield — the estimated yearly return based on the last 7 days of vault activity."
-                  />
+                  <ColTooltip label={t("apy")} tip={t("apyTooltip")} />
                 </span>
               </th>
               <th className="px-4 py-3 text-center">
                 <span className="text-white/40 text-sm font-semibold">
-                  Claim Earnings
+                  {t("claimEarnings")}
                 </span>
               </th>
             </tr>

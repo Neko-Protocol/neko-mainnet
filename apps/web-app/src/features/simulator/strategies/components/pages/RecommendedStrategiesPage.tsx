@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
@@ -14,6 +15,7 @@ import { useToast } from "@/hooks/useToast";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
 export default function RecommendedStrategiesPage() {
+  const t = useTranslations("simulator.recommendedPage");
   const { strategies, save, setPendingRecommended } = useStrategiesStore();
   const { address } = useStellarWalletStore();
   const router = useRouter();
@@ -43,9 +45,9 @@ export default function RecommendedStrategiesPage() {
 
   const handleSaveRecommended = (item: (typeof recommended)[number]) => {
     if (!address) {
-      addNotification("Connect your wallet", "error", {
+      addNotification(t("toasts.connectWalletTitle"), "error", {
         ...TOAST_CONFIG.defaultOpts,
-        description: "Connect a wallet to save strategies.",
+        description: t("toasts.connectWalletDescription"),
       });
       return;
     }
@@ -64,7 +66,7 @@ export default function RecommendedStrategiesPage() {
       sourceRecommendationId: item.dto.id,
     });
     addNotification(
-      "Saved to your strategies",
+      t("toasts.savedTitle"),
       "success",
       TOAST_CONFIG.defaultOpts
     );
@@ -76,11 +78,11 @@ export default function RecommendedStrategiesPage() {
       className="flex h-full min-h-0 w-full flex-col"
     >
       <BannerPage
-        title="Recommended by Neko"
-        subtitle="Curated strategies picked by the Neko team."
-        badge="Curated"
+        title={t("title")}
+        subtitle={t("subtitle")}
+        badge={t("badge")}
         imageSrc="/banners/strategy-builder.svg"
-        imageAlt="Recommended strategies"
+        imageAlt={t("imageAlt")}
         className="mb-6 shrink-0 min-h-[128px] sm:min-h-[170px]"
         imageLayoutClassName="right-0 -bottom-10 h-[125%] w-[55%]"
         imageObjectClassName="object-contain object-right object-bottom"
@@ -114,14 +116,14 @@ export default function RecommendedStrategiesPage() {
         ) : (
           <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 text-center">
             <p className="text-base font-medium text-white/50">
-              No curated strategies right now. Check back soon.
+              {t("empty.message")}
             </p>
             <Link
               href="/strategies"
               className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-6 py-2.5 text-sm font-medium text-white/60 transition-colors hover:border-white/30 hover:text-white"
             >
               <ArrowLeft size={14} />
-              Back to strategies
+              {t("empty.backLink")}
             </Link>
           </div>
         )}

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { squeezeSummaryDecimals } from "@/lib/helpers/formatUtils";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { VaultView, VaultCategory } from "../../types/vault";
@@ -17,11 +18,11 @@ interface VaultCardProps {
   onWithdrawClick?: (vault: VaultView) => void;
 }
 
-const CATEGORY_LABEL: Record<VaultCategory, string> = {
-  lending: "Lending",
-  rwa: "RWA",
-  amm: "AMM",
-  staking: "Staking",
+const CATEGORY_LABEL_KEY: Record<VaultCategory, string> = {
+  lending: "categoryLending",
+  rwa: "categoryRwa",
+  amm: "categoryAmm",
+  staking: "categoryStaking",
 };
 
 export const VaultCard: React.FC<VaultCardProps> = ({
@@ -32,8 +33,9 @@ export const VaultCard: React.FC<VaultCardProps> = ({
   onDepositClick,
   onWithdrawClick,
 }) => {
+  const t = useTranslations("sharedVault.card");
   const isLight = (vault.variant ?? "light") === "light";
-  const categoryLabel = CATEGORY_LABEL[vault.category];
+  const categoryLabel = t(CATEGORY_LABEL_KEY[vault.category]);
   const hasPosition = userBalance && userBalance > 0n;
   const cardHeaderArt = React.useMemo(
     () => vaultArtForSymbol(vault.supplyAsset.symbol),
@@ -124,7 +126,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
       >
         <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-white/40 text-xs">Supply</span>
+            <span className="text-white/40 text-xs">{t("supply")}</span>
             <div className="w-4 h-4 rounded-full overflow-hidden shrink-0">
               <Image
                 src={vault.supplyAsset.logoSrc}
@@ -138,11 +140,11 @@ export const VaultCard: React.FC<VaultCardProps> = ({
             <span className="text-white/80 text-xs font-medium">
               {vault.supplyAsset.symbol}
             </span>
-            <span className="text-white/40 text-xs">on</span>
+            <span className="text-white/40 text-xs">{t("on")}</span>
             <div className="w-6 h-6 rounded-full overflow-hidden shrink-0">
               <Image
                 src="/assets/xlm-logo.png"
-                alt="Stellar"
+                alt={t("stellarAlt")}
                 width={24}
                 height={24}
                 unoptimized
@@ -155,7 +157,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-white/40 text-xs">Created by</span>
+            <span className="text-white/40 text-xs">{t("createdBy")}</span>
             {vault.creatorIconSrc && (
               <div className="w-4 h-4 rounded-full overflow-hidden shrink-0">
                 <Image
@@ -178,7 +180,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
 
         <div className="flex flex-col justify-center gap-0.5 shrink-0">
           <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
-            TVL
+            {t("tvl")}
           </span>
           {isLoading ? (
             <div className="h-5 w-16 rounded bg-white/10" />
@@ -193,7 +195,7 @@ export const VaultCard: React.FC<VaultCardProps> = ({
 
         <div className="flex flex-col justify-center gap-0.5 shrink-0">
           <span className="text-white/40 text-[10px] font-medium uppercase tracking-wide">
-            APY
+            {t("apy")}
           </span>
           {isLoading ? (
             <div className="h-5 w-14 rounded bg-white/10" />
@@ -210,24 +212,24 @@ export const VaultCard: React.FC<VaultCardProps> = ({
         style={{ background: isLight ? "#141414" : "#181818" }}
       >
         <button
-          aria-label={`Deposit into ${vault.name}`}
+          aria-label={t("depositInto", { name: vault.name })}
           onClick={(e) => {
             e.stopPropagation();
             onDepositClick?.(vault);
           }}
           className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-[#229EDF]/50 hover:border-[#229EDF] text-[#229EDF] hover:text-white hover:bg-[#229EDF]/10 bg-transparent"
         >
-          Deposit
+          {t("deposit")}
         </button>
         <button
-          aria-label={`Withdraw from ${vault.name}`}
+          aria-label={t("withdrawFrom", { name: vault.name })}
           onClick={(e) => {
             e.stopPropagation();
             onWithdrawClick?.(vault);
           }}
           className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all duration-200 border border-white/15 hover:border-white/35 text-white/60 hover:text-white bg-transparent"
         >
-          Withdraw
+          {t("withdraw")}
         </button>
       </div>
     </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { X, Copy, Check, Droplets, FileText, Coins } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import type { VaultView } from "../../types/vault";
 
@@ -20,6 +21,7 @@ function CopyableAddress({
   label: string;
   address: string;
 }) {
+  const t = useTranslations("sharedVault.modal");
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -40,7 +42,7 @@ function CopyableAddress({
           {short}
         </span>
         <button
-          aria-label={`Copy ${label} address`}
+          aria-label={t("copyAddress", { label })}
           onClick={handleCopy}
           className="shrink-0 p-1 rounded-md hover:bg-white/10 transition-colors text-white/30 hover:text-white/70"
         >
@@ -60,6 +62,7 @@ export function VaultDetailModal({
   onClose,
   onDeposit,
 }: VaultDetailModalProps) {
+  const t = useTranslations("sharedVault.modal");
   const detail = vault.detail;
   const [visible, setVisible] = useState(false);
 
@@ -100,7 +103,7 @@ export function VaultDetailModal({
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            aria-label="Close modal"
+            aria-label={t("closeModal")}
             onClick={handleClose}
             className="absolute top-3 right-3 z-10 p-1.5 rounded-lg hover:bg-white/10 text-white/30 hover:text-white transition-colors"
           >
@@ -124,9 +127,13 @@ export function VaultDetailModal({
                 {vault.name}
               </h2>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-white/40 text-xs">{vault.apy7d} APY</span>
+                <span className="text-white/40 text-xs">
+                  {t("apySuffix", { apy: vault.apy7d })}
+                </span>
                 <span className="text-white/20 text-xs">·</span>
-                <span className="text-white/40 text-xs">TVL {vault.tvl}</span>
+                <span className="text-white/40 text-xs">
+                  {t("tvlPrefix", { tvl: vault.tvl })}
+                </span>
               </div>
             </div>
           </div>
@@ -146,7 +153,7 @@ export function VaultDetailModal({
                 <div className="flex items-center gap-2 mb-2">
                   <Droplets className="h-3.5 w-3.5 text-[#229EDF]" />
                   <h3 className="text-white text-sm font-semibold">
-                    Liquidity
+                    {t("liquidity")}
                   </h3>
                 </div>
                 <p className="text-white/50 text-xs leading-relaxed">
@@ -161,13 +168,11 @@ export function VaultDetailModal({
                   <div className="flex items-center gap-2 mb-2">
                     <Coins className="h-3.5 w-3.5 text-[#229EDF]" />
                     <h3 className="text-white text-sm font-semibold">
-                      Strategy allocations
+                      {t("strategyAllocations")}
                     </h3>
                   </div>
                   <p className="text-white/35 text-[11px] leading-relaxed mb-3">
-                    Amounts deployed per strategy contract (from total managed
-                    funds). The API does not list separate AMM pool addresses
-                    liquidity is routed through these strategies.
+                    {t("strategyAllocationsDescription")}
                   </p>
                   <div className="rounded-xl bg-white/3 border border-white/5 overflow-hidden divide-y divide-white/5">
                     {detail.strategyAllocations.map((row) => (
@@ -181,12 +186,12 @@ export function VaultDetailModal({
                               {row.strategyName}
                               {row.paused && (
                                 <span className="ml-2 text-amber-400/90 text-[10px] font-medium">
-                                  Paused
+                                  {t("paused")}
                                 </span>
                               )}
                             </p>
                             <p className="text-white/35 text-[10px] mt-0.5">
-                              Asset {row.assetSymbol}
+                              {t("assetPrefix", { symbol: row.assetSymbol })}
                             </p>
                           </div>
                           <span className="text-white text-xs font-mono tabular-nums shrink-0">
@@ -194,7 +199,7 @@ export function VaultDetailModal({
                           </span>
                         </div>
                         <CopyableAddress
-                          label="strategy"
+                          label={t("strategies")}
                           address={row.strategyAddress}
                         />
                       </div>
@@ -209,22 +214,22 @@ export function VaultDetailModal({
                 <div className="flex items-center gap-2 mb-3">
                   <FileText className="h-3.5 w-3.5 text-[#229EDF]" />
                   <h3 className="text-white text-sm font-semibold">
-                    Contracts
+                    {t("contracts")}
                   </h3>
                 </div>
                 <div className="rounded-xl bg-white/3 border border-white/5 px-4 py-1 mb-2">
                   <p className="text-white/20 text-[10px] font-medium uppercase tracking-wide pt-2 pb-1">
-                    Vault
+                    {t("vault")}
                   </p>
                   <CopyableAddress
-                    label="vault"
+                    label={t("vault")}
                     address={detail.contracts.vault}
                   />
                 </div>
                 {Object.keys(detail.contracts.pools).length > 0 && (
                   <div className="rounded-xl bg-white/3 border border-white/5 px-4 py-1 mb-2">
                     <p className="text-white/20 text-[10px] font-medium uppercase tracking-wide pt-2 pb-1">
-                      Pools
+                      {t("pools")}
                     </p>
                     {Object.entries(detail.contracts.pools).map(
                       ([name, addr]) => (
@@ -239,7 +244,7 @@ export function VaultDetailModal({
                 )}
                 <div className="rounded-xl bg-white/3 border border-white/5 px-4 py-1">
                   <p className="text-white/20 text-[10px] font-medium uppercase tracking-wide pt-2 pb-1">
-                    Strategies
+                    {t("strategies")}
                   </p>
                   {Object.entries(detail.contracts.strategies).map(
                     ([name, addr]) => (
@@ -254,11 +259,11 @@ export function VaultDetailModal({
           {/* ── FOOTER ── */}
           <div className="px-5 py-4 border-t border-white/5 shrink-0">
             <button
-              aria-label={`Deposit into ${vault.name}`}
+              aria-label={t("depositInto", { name: vault.name })}
               onClick={onDeposit}
               className="w-full py-3 rounded-xl text-sm font-bold text-white transition-colors duration-200 bg-[#229EDF] hover:bg-[#1a8bc7]"
             >
-              Deposit
+              {t("deposit")}
             </button>
           </div>
         </div>

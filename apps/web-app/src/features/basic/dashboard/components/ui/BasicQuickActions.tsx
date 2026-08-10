@@ -3,31 +3,33 @@
 import React from "react";
 import Link from "next/link";
 import { Droplets, Compass, ShoppingBag, ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useWallet } from "@/hooks/useWallet";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 
 const BASIC_ACTIONS = [
   {
-    label: "Explore Assets",
-    description: "Browse RWA tokens & prices",
+    labelKey: "exploreAssetsLabel",
+    descriptionKey: "exploreAssetsDescription",
     href: "/discover",
     icon: Compass,
   },
   {
-    label: "Add Liquidity",
-    description: "Earn yield in pools",
+    labelKey: "addLiquidityLabel",
+    descriptionKey: "addLiquidityDescription",
     href: "/pools",
     icon: Droplets,
   },
   {
-    label: "Your Cart",
-    description: "Review pending purchases",
+    labelKey: "yourCartLabel",
+    descriptionKey: "yourCartDescription",
     href: "/cart",
     icon: ShoppingBag,
   },
 ] as const;
 
 const BasicQuickActions: React.FC = () => {
+  const t = useTranslations("basic.quickActions");
   const { address } = useWallet();
   const { connect } = useStellarWallet();
 
@@ -35,11 +37,9 @@ const BasicQuickActions: React.FC = () => {
     return (
       <div className="w-full">
         <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
-          Get Started
+          {t("getStarted")}
         </h2>
-        <p className="text-white/40 text-sm mb-5">
-          Connect your wallet to start using the protocol
-        </p>
+        <p className="text-white/40 text-sm mb-5">{t("connectToStart")}</p>
         <button
           type="button"
           onClick={() => void connect()}
@@ -47,9 +47,11 @@ const BasicQuickActions: React.FC = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white font-semibold text-sm">Connect Wallet</p>
+              <p className="text-white font-semibold text-sm">
+                {t("connectWallet")}
+              </p>
               <p className="text-white/40 text-xs mt-1">
-                Explore assets, add liquidity, and manage your portfolio
+                {t("connectWalletDescription")}
               </p>
             </div>
             <ArrowRight className="h-5 w-5 text-white/40" />
@@ -62,9 +64,9 @@ const BasicQuickActions: React.FC = () => {
   return (
     <div className="w-full">
       <h2 className="text-xl sm:text-2xl font-bold text-white mb-1">
-        Quick Actions
+        {t("title")}
       </h2>
-      <p className="text-white/40 text-sm mb-5">Jump into the protocol</p>
+      <p className="text-white/40 text-sm mb-5">{t("subtitle")}</p>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
         {BASIC_ACTIONS.map((action) => (
           <Link
@@ -76,9 +78,9 @@ const BasicQuickActions: React.FC = () => {
               <action.icon className="h-5 w-5" />
             </div>
             <h3 className="text-white font-semibold text-sm mb-1">
-              {action.label}
+              {t(action.labelKey)}
             </h3>
-            <p className="text-white/40 text-xs">{action.description}</p>
+            <p className="text-white/40 text-xs">{t(action.descriptionKey)}</p>
           </Link>
         ))}
       </div>

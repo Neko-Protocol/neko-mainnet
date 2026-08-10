@@ -1,9 +1,14 @@
 "use client";
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useLocale, useTranslations } from "next-intl";
 import type { VaultInfoResponse } from "@defindex/sdk";
 import { backendClient } from "@/lib/services/backend-client";
-import { defindexInfoToVaultView } from "@/features/shared/vault/utils/mapToVaultView";
+import {
+  defindexInfoToVaultView,
+  type MapperTranslator,
+} from "@/features/shared/vault/utils/mapToVaultView";
+import type { Locale } from "@/i18n/config";
 import type { VaultView } from "../types/vault";
 
 export type DefindexVaultsPayload = {
@@ -21,7 +26,10 @@ interface RawDefindexVaultsResponse {
   hint?: string;
 }
 
-async function fetchDefindexVaults(): Promise<DefindexVaultsPayload> {
+async function fetchDefindexVaults(
+  locale: Locale,
+  t: MapperTranslator
+): Promise<DefindexVaultsPayload> {
   const data = await backendClient.get<RawDefindexVaultsResponse>(
     "/v1/defindex/vaults"
   );
@@ -31,7 +39,7 @@ async function fetchDefindexVaults(): Promise<DefindexVaultsPayload> {
   const vaults: VaultView[] = [];
   for (const { contractId, info } of data.vaults ?? []) {
     try {
-      vaults.push(defindexInfoToVaultView(contractId, info, prices));
+      vaults.push(defindexInfoToVaultView(contractId, info, prices, locale, t));
     } catch (err) {
       fetchErrors.push({
         contractId,
@@ -49,9 +57,11 @@ async function fetchDefindexVaults(): Promise<DefindexVaultsPayload> {
 }
 
 export function useDefindexVaults() {
+  const locale = useLocale() as Locale;
+  const t = useTranslations("sharedVault.mapper") as MapperTranslator;
   return useQuery({
-    queryKey: ["defindex-vaults"],
-    queryFn: fetchDefindexVaults,
+    queryKey: ["defindex-vaults", locale],
+    queryFn: () => fetchDefindexVaults(locale, t),
     staleTime: 5 * 60_000,
     gcTime: 15 * 60_000,
     refetchInterval: 5 * 60_000,

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { SimulatorDestination } from "@/features/simulator/strategies/types/simulator.types";
@@ -21,6 +22,7 @@ export function VaultDestinationCard({
   isSelected,
   onSelect,
 }: VaultDestinationCardProps) {
+  const t = useTranslations("simulator.vaultDestinationCard");
   const codes = destination.acceptedTokenCodes;
   const primaryCode = codes[0];
   const primaryIconSrc = primaryCode ? getTokenIcon(primaryCode) : null;
@@ -61,7 +63,7 @@ export function VaultDestinationCard({
             {primaryIconSrc ? (
               <Image
                 src={primaryIconSrc}
-                alt={primaryCode ?? "Token"}
+                alt={primaryCode ?? t("defaultAlt")}
                 width={48}
                 height={48}
                 unoptimized
@@ -86,7 +88,7 @@ export function VaultDestinationCard({
                 background: "rgba(34,158,223,0.1)",
               }}
             >
-              {destination.protocol}
+              {t(destination.protocol)}
             </span>
           </div>
         </div>
@@ -123,7 +125,7 @@ export function VaultDestinationCard({
 
         {isSelected ? (
           <span className="absolute top-3 right-3 z-20 rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#229EDF]">
-            Selected
+            {t("selected")}
           </span>
         ) : null}
       </div>
@@ -134,7 +136,7 @@ export function VaultDestinationCard({
       >
         <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-white/40 text-xs">Supply</span>
+            <span className="text-white/40 text-xs">{t("supply")}</span>
             {primaryCode ? (
               <>
                 <div className="w-4 h-4 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-white">
@@ -162,7 +164,7 @@ export function VaultDestinationCard({
 
           {codes.length > 1 ? (
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-              <span className="text-white/40 text-xs">Also accepts</span>
+              <span className="text-white/40 text-xs">{t("alsoAccepts")}</span>
               <span className="text-white/80 text-xs font-medium">
                 {codes.slice(1).join(", ")}
               </span>
@@ -175,7 +177,7 @@ export function VaultDestinationCard({
         {tvlLabel ? (
           <div className="flex flex-col justify-center gap-0.5 shrink-0">
             <span className="text-white/40 text-[10px] font-semibold uppercase tracking-widest">
-              TVL
+              {t("tvl")}
             </span>
             <span className="text-white text-xl font-bold tabular-nums">
               {tvlLabel}
@@ -187,7 +189,7 @@ export function VaultDestinationCard({
 
         <div className="flex flex-col justify-center gap-0.5 shrink-0">
           <span className="text-white/40 text-[10px] font-semibold uppercase tracking-widest">
-            APY
+            {t("apy")}
           </span>
           {hasPositiveApy ? (
             <span className="text-[#4ADE80] text-xl font-bold tabular-nums">
