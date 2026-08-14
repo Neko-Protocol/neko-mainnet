@@ -28,6 +28,7 @@ const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
 const INTRO_DURATION_MS = 1200;
 const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 const HISTORY_BUCKET_MS = 4 * 60 * 60 * 1000;
+const MAX_PROJECTION_MS = 7 * 24 * 60 * 60 * 1000;
 const EMPTY_PPS_POINTS: VaultPpsPoint[] = [];
 
 function formatChartLabel(
@@ -219,9 +220,12 @@ export function LiveEarningsCard({
       }
     }
 
-    const projectionCount = 20;
-    const projectionEnd = now + 30 * 86400000;
-    const projectionSpan = projectionEnd - now;
+    const projectionCount = 12;
+    const firstHistoryTimestamp = historyPoints[0]?.t ?? historyStart;
+    const projectionSpan = Math.min(
+      MAX_PROJECTION_MS,
+      Math.max(now - firstHistoryTimestamp, 1)
+    );
 
     const rows: {
       timestamp: number;
@@ -400,8 +404,6 @@ export function LiveEarningsCard({
                   day: "numeric",
                   month: "short",
                   year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
                 })
               }
               labelStyle={{
