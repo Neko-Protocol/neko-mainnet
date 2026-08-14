@@ -10,7 +10,8 @@
       "tabAppMode": "App Mode",
       "tabEmail": "Email",
       "tabWallet": "Wallet",
-      "tabNetwork": "Network"
+      "tabNetwork": "Network",
+      "tabSupport": "Support"
     },
     "preferences": {
       "title": "Preferences"
@@ -59,6 +60,10 @@
       "changeModeBody": "You're switching to <mode>{mode}</mode>. {description}",
       "cancel": "Cancel",
       "confirm": "Confirm"
+    },
+    "support": {
+      "title": "Support",
+      "notice": "Need help or found a bug? Send us an email and include any details that may help us investigate."
     },
     "clipboard": {
       "copiedToast": "Copied to clipboard"

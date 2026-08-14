@@ -10,7 +10,8 @@
       "tabAppMode": "Modo de App",
       "tabEmail": "Correo",
       "tabWallet": "Wallet",
-      "tabNetwork": "Red"
+      "tabNetwork": "Red",
+      "tabSupport": "Soporte"
     },
     "preferences": {
       "title": "Preferencias"
@@ -59,6 +60,10 @@
       "changeModeBody": "Estás cambiando a <mode>{mode}</mode>. {description}",
       "cancel": "Cancelar",
       "confirm": "Confirmar"
+    },
+    "support": {
+      "title": "Soporte",
+      "notice": "¿Necesitas ayuda o encontraste un error? Envíanos un correo e incluye cualquier detalle que pueda ayudarnos a investigarlo."
     },
     "clipboard": {
       "copiedToast": "Copiado al portapapeles"
