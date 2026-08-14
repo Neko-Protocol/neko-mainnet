@@ -88,10 +88,10 @@ export function useVaultData(contractId: string | null | undefined) {
         tvlFormatted: formatTvl(tvl),
       };
     },
-    staleTime: 5 * 60_000,
+    staleTime: 60_000,
     gcTime: 15 * 60_000,
-    refetchInterval: 5 * 60_000,
-    refetchOnWindowFocus: false,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
     retry: false,
     throwOnError: false,
     enabled: !!contractId && !!client,
