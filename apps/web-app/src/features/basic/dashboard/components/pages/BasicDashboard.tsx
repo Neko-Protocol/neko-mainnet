@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import MainStats from "@/features/shared/dashboard/components/ui/MainStats";
-import BasicQuickActions from "@/features/basic/dashboard/components/ui/BasicQuickActions";
 import { WalletHoldingsCard } from "@/features/basic/dashboard/components/ui/WalletHoldingsCard";
 import DiscoverAssets from "@/features/shared/dashboard/components/ui/DiscoverAssets";
 import { EmailNudgeBanner } from "@/features/shared/dashboard/components/ui/EmailNudgeBanner";
@@ -32,7 +31,6 @@ const BasicDashboard: React.FC = () => {
         <MainStats />
         <WalletHoldingsCard holdings={holdings} isLoading={isLoading} />
         <YourPositions />
-        <BasicQuickActions />
         <AssetBreakdown />
         <DiscoverAssets />
       </PageContainer>
