@@ -58,16 +58,43 @@ function priceSourceLabel(source: PriceSource | null): string | null {
 type InfoTab = "overview" | "details";
 
 const RANGE_OPTIONS = [
-  { id: "3h", label: "3H", ms: 3 * 60 * 60 * 1000 },
-  { id: "1d", label: "1D", ms: 24 * 60 * 60 * 1000 },
-  { id: "3d", label: "3D", ms: 3 * 24 * 60 * 60 * 1000 },
-  { id: "7d", label: "7D", ms: 7 * 24 * 60 * 60 * 1000 },
+  {
+    id: "1d",
+    label: "1D",
+    ms: 24 * 60 * 60 * 1000,
+    bucketMs: 60 * 60 * 1000,
+  },
+  {
+    id: "7d",
+    label: "1W",
+    ms: 7 * 24 * 60 * 60 * 1000,
+    bucketMs: 4 * 60 * 60 * 1000,
+  },
+  {
+    id: "30d",
+    label: "1M",
+    ms: 30 * 24 * 60 * 60 * 1000,
+    bucketMs: 24 * 60 * 60 * 1000,
+  },
 ] as const;
 type RangeId = (typeof RANGE_OPTIONS)[number]["id"];
 
+function subtractCalendarMonth(timestamp: number): number {
+  const date = new Date(timestamp);
+  const originalDay = date.getDate();
+  date.setDate(1);
+  date.setMonth(date.getMonth() - 1);
+  const lastDayOfMonth = new Date(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    0
+  ).getDate();
+  date.setDate(Math.min(originalDay, lastDayOfMonth));
+  return date.getTime();
+}
+
 interface ChartPoint {
   timestamp: number;
-  tick: string;
   fullLabel: string;
   value: number;
 }
@@ -223,57 +250,60 @@ export function AssetDetailLayout({
     (e) => e.symbol.toUpperCase() === symbolUpper
   );
 
-  const [range, setRange] = useState<RangeId>("7d");
+  const [range, setRange] = useState<RangeId>("30d");
 
-  const { chartData, axisTicks } = useMemo(() => {
+  const { chartData, axisTicks, xDomain } = useMemo(() => {
     const history = priceHistory ?? [];
     if (history.length === 0)
-      return { chartData: [] as ChartPoint[], axisTicks: [] as number[] };
+      return {
+        chartData: [] as ChartPoint[],
+        axisTicks: [] as number[],
+        xDomain: [0, 0] as [number, number],
+      };
     const opt = RANGE_OPTIONS.find((o) => o.id === range)!;
-    const latestTimestamp = history[history.length - 1]?.timestamp ?? 0;
-    const cutoff = latestTimestamp - opt.ms;
-    const intraday = range === "3h" || range === "1d";
-
-    const points: ChartPoint[] = history
-      .filter((point) => point.timestamp >= cutoff)
-      .map((point) => {
-        const d = new Date(point.timestamp);
-        const tick = intraday
-          ? formatDate(d, { hour: "2-digit", minute: "2-digit" })
-          : formatDate(d, { day: "numeric", month: "short" });
-        const fullLabel = formatDate(d, {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        return {
-          timestamp: point.timestamp,
-          tick,
-          fullLabel,
-          value: convertUsdToSelected(point.price, fxRate),
-        };
-      });
-
-    // One axis tick per distinct bucket (per day for multi-day ranges, per
-    // hour:minute for intraday) so a day with many points shows its date once.
-    const seen = new Set<string>();
-    const ticks: number[] = [];
-    for (const p of points) {
-      if (!seen.has(p.tick)) {
-        seen.add(p.tick);
-        ticks.push(p.timestamp);
-      }
+    const sortedHistory = [...history].sort(
+      (a, b) => a.timestamp - b.timestamp
+    );
+    const latestTimestamp =
+      sortedHistory[sortedHistory.length - 1]?.timestamp ?? 0;
+    const cutoff = (() => {
+      if (range !== "30d") return latestTimestamp - opt.ms;
+      return subtractCalendarMonth(latestTimestamp);
+    })();
+    const sampledByBucket = new Map<number, (typeof sortedHistory)[number]>();
+    for (const point of sortedHistory) {
+      if (point.timestamp < cutoff || !Number.isFinite(point.price)) continue;
+      const bucket = Math.floor(point.timestamp / opt.bucketMs);
+      sampledByBucket.set(bucket, point);
     }
 
-    return { chartData: points, axisTicks: ticks };
-  }, [priceHistory, fxRate, range, formatDate]);
+    const points: ChartPoint[] = [...sampledByBucket.values()].map((point) => {
+      const d = new Date(point.timestamp);
+      const fullLabel = formatDate(d, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return {
+        timestamp: point.timestamp,
+        fullLabel,
+        value: convertUsdToSelected(point.price, fxRate),
+      };
+    });
 
-  const tickLabelByTimestamp = useMemo(() => {
-    const map = new Map<number, string>();
-    for (const p of chartData) map.set(p.timestamp, p.tick);
-    return map;
-  }, [chartData]);
+    const ticks: number[] = [];
+    const tickCount = 6;
+    for (let i = 0; i < tickCount; i++) {
+      ticks.push(cutoff + (i * (latestTimestamp - cutoff)) / (tickCount - 1));
+    }
+
+    return {
+      chartData: points,
+      axisTicks: ticks,
+      xDomain: [cutoff, latestTimestamp] as [number, number],
+    };
+  }, [priceHistory, fxRate, range, formatDate]);
 
   const hasHistory = (priceHistory?.length ?? 0) > 0;
 
@@ -461,12 +491,6 @@ export function AssetDetailLayout({
                         ))}
                       </div>
                     )}
-                    {chartData.length > 0 && (
-                      <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-300">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        {t("live")}
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -483,11 +507,20 @@ export function AssetDetailLayout({
                           dataKey="timestamp"
                           type="number"
                           scale="time"
-                          domain={["dataMin", "dataMax"]}
+                          domain={xDomain}
                           ticks={axisTicks}
-                          tickFormatter={(ts) =>
-                            tickLabelByTimestamp.get(Number(ts)) ?? ""
-                          }
+                          tickFormatter={(timestamp) => {
+                            const date = new Date(Number(timestamp));
+                            return range === "1d"
+                              ? formatDate(date, {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : formatDate(date, {
+                                  day: "numeric",
+                                  month: "short",
+                                });
+                          }}
                           tick={{
                             fill: "rgba(255,255,255,0.55)",
                             fontSize: 12,

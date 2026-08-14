@@ -1,7 +1,14 @@
 "use client";
 
 import React from "react";
-import { Wallet, Mail, Sliders, LayoutGrid, Network } from "lucide-react";
+import {
+  Wallet,
+  Mail,
+  Sliders,
+  LayoutGrid,
+  Network,
+  LifeBuoy,
+} from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { BannerPage } from "@/components/ui/BannerPage";
@@ -12,8 +19,15 @@ import { SettingsNetworkSection } from "../ui/SettingsNetworkSection";
 import { SettingsPreferencesSection } from "../ui/SettingsPreferencesSection";
 import { SettingsUIModeSection } from "../ui/SettingsUIModeSection";
 import { SettingsEmailSection } from "../ui/SettingsEmailSection";
+import { SettingsSupportSection } from "../ui/SettingsSupportSection";
 
-type SectionId = "wallet" | "email" | "preferences" | "uiMode" | "network";
+type SectionId =
+  | "wallet"
+  | "email"
+  | "preferences"
+  | "uiMode"
+  | "network"
+  | "support";
 
 const VALID_SECTION_IDS: SectionId[] = [
   "preferences",
@@ -21,6 +35,7 @@ const VALID_SECTION_IDS: SectionId[] = [
   "email",
   "wallet",
   "network",
+  "support",
 ];
 
 const TABS: { id: SectionId; labelKey: string; Icon: React.ElementType }[] = [
@@ -29,6 +44,7 @@ const TABS: { id: SectionId; labelKey: string; Icon: React.ElementType }[] = [
   { id: "email", labelKey: "tabEmail", Icon: Mail },
   { id: "wallet", labelKey: "tabWallet", Icon: Wallet },
   { id: "network", labelKey: "tabNetwork", Icon: Network },
+  { id: "support", labelKey: "tabSupport", Icon: LifeBuoy },
 ];
 
 export default function Settings() {
@@ -120,6 +136,9 @@ export default function Settings() {
             icon={Network}
             open
           />
+        )}
+        {active === "support" && (
+          <SettingsSupportSection icon={LifeBuoy} open />
         )}
       </div>
     </PageContainer>

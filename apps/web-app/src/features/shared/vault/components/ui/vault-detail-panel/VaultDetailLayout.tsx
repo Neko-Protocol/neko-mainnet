@@ -39,6 +39,7 @@ export function VaultDetailLayout({
 }: VaultDetailLayoutProps) {
   const t = useTranslations("sharedVault.detail");
   const tAction = useTranslations("sharedVault.action");
+  const [calculationNow] = useState(Date.now);
   const [tab, setTab] = useState<VaultActionTab>(initialTab);
   const [amount, setAmount] = useState("");
   const [successModalOpen, setSuccessModalOpen] = useState(false);
@@ -103,11 +104,11 @@ export function VaultDetailLayout({
 
   const { data: auditLogs } = useQuery({
     queryKey: ["vaultAuditActivity", address],
-    queryFn: () => auditService.getActivity(address!, 50),
+    queryFn: () => auditService.getVaultActivity(address!),
     enabled: !!address,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
   const positionSummary = (() => {
@@ -140,19 +141,12 @@ export function VaultDetailLayout({
           l.action_type === "vaults_withdraw" ||
           l.action_type === "vaults_claim_earnings")
     );
-    const deposits = vaultLogs.filter(
-      (l) => l.action_type === "vaults_deposit"
-    );
-    if (deposits.length === 0) return null;
-    return deposits.reduce((earliest, l) => {
-      const ts = new Date(l.created_at).getTime();
-      return ts < earliest ? ts : earliest;
-    }, new Date(deposits[0].created_at).getTime());
+    return computeCurrentVaultSession(vaultLogs).startedAt;
   })();
 
   const effectiveApy = (() => {
     if (!positionSummary || firstDepositMs == null) return null;
-    const holdingDays = (Date.now() - firstDepositMs) / 86400000;
+    const holdingDays = (calculationNow - firstDepositMs) / 86400000;
     if (positionSummary.netDeposited <= 0 || holdingDays < 1) {
       return null;
     }

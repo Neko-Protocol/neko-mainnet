@@ -23,6 +23,7 @@ const ONE_SHARE = 1_000_000_000_000n;
 export function computeCurrentVaultSession(logs: AuditLog[]): {
   netDeposited: number;
   hasData: boolean;
+  startedAt: number | null;
 } {
   const sorted = [...logs].sort(
     (a, b) =>
@@ -32,6 +33,7 @@ export function computeCurrentVaultSession(logs: AuditLog[]): {
   let sessionDeposited = 0;
   let sessionWithdrawn = 0;
   let pendingReset = false;
+  let startedAt: number | null = null;
 
   for (const log of sorted) {
     if (log.action_type === "vaults_deposit") {
@@ -39,7 +41,9 @@ export function computeCurrentVaultSession(logs: AuditLog[]): {
         sessionDeposited = 0;
         sessionWithdrawn = 0;
         pendingReset = false;
+        startedAt = null;
       }
+      if (startedAt == null) startedAt = new Date(log.created_at).getTime();
       sessionDeposited += log.token_amount_in ?? 0;
     } else if (log.action_type === "vaults_withdraw") {
       sessionWithdrawn += log.amount_out ?? 0;
@@ -55,6 +59,7 @@ export function computeCurrentVaultSession(logs: AuditLog[]): {
   return {
     netDeposited: Math.max(0, sessionDeposited - sessionWithdrawn),
     hasData: sessionDeposited > 0,
+    startedAt,
   };
 }
 
@@ -133,7 +138,8 @@ export function useVaultEarningsCard(
       },
       staleTime: 5 * 60_000,
       gcTime: 15 * 60_000,
-      refetchOnWindowFocus: false,
+      refetchInterval: 60_000,
+      refetchOnWindowFocus: true,
       retry: false,
       throwOnError: false,
       enabled: !!v.id,
@@ -142,11 +148,11 @@ export function useVaultEarningsCard(
 
   const { data: logs, isLoading: logsLoading } = useQuery({
     queryKey: ["vaultAuditActivity", address],
-    queryFn: () => auditService.getActivity(address!, 50),
+    queryFn: () => auditService.getVaultActivity(address!),
     enabled: !!address,
     staleTime: 60_000,
     gcTime: 5 * 60_000,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
   const isLoading = logsLoading || vaultDataQueries.some((q) => q.isLoading);
