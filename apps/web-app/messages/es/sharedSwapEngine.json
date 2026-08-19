@@ -1,0 +1,17 @@
+{
+  "sharedSwapEngine": {
+    "quote": {
+      "noLiquidity": "No se encontró liquidez para este par",
+      "timeout": "La solicitud de cotización expiró",
+      "failedToGetQuote": "No se pudo obtener la cotización",
+      "failedRetry": "No se pudo obtener la cotización - intenta de nuevo"
+    },
+    "execution": {
+      "invalidAmountOrAddress": "Monto o dirección inválidos",
+      "walletNotConnected": "Wallet no conectada",
+      "noLiquidityRetry": "No se encontró liquidez para este par — intenta con otra combinación de tokens",
+      "swapFailedOnChain": "El swap falló en la blockchain (estado: {status})",
+      "transactionFailed": "La transacción falló"
+    }
+  }
+}

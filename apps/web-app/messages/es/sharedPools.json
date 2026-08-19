@@ -1,0 +1,134 @@
+{
+  "sharedPools": {
+    "unifiedPage": {
+      "tabPools": "Pools",
+      "tabPositions": "Mis posiciones",
+      "title": "Presta en Pools",
+      "subtitle": "Presta tus activos y gana intereses",
+      "badge": "Gana rendimiento",
+      "imageAlt": "ilustración de préstamos"
+    },
+    "hero": {
+      "networkAlt": "Stellar"
+    },
+    "layout": {
+      "aboutPool": "Sobre el Pool",
+      "actions": "Acciones",
+      "actionsAriaLabel": "Acciones del pool"
+    },
+    "metrics": {
+      "totalLiquidity": "Liquidez Total",
+      "totalBorrowed": "Total Prestado",
+      "supplyApy": "APY de Depósito",
+      "borrowApy": "APY de Préstamo",
+      "poolType": "Tipo de Pool",
+      "issuer": "Emisor"
+    },
+    "skeleton": {
+      "loadingAriaLabel": "Cargando pool"
+    },
+    "infoTabs": {
+      "sectionsAriaLabel": "Secciones de información del pool",
+      "overview": "Resumen",
+      "advanced": "Avanzado",
+      "activity": "Actividad",
+      "marketAttributes": "Atributos del Mercado",
+      "collateral": "Garantía",
+      "loan": "Préstamo",
+      "collateralFactor": "Factor de Garantía",
+      "liabilityFactor": "Factor de Pasivo",
+      "utilization": "Utilización",
+      "token1": "Token 1",
+      "token2": "Token 2",
+      "oraclePrice": "Precio del oráculo",
+      "poolType": "Tipo de pool"
+    },
+    "summaryRows": {
+      "network": "Red",
+      "supplied": "Depositado ({pair})",
+      "withdraw": "Retirar ({pair})",
+      "collateral": "Garantía ({symbol})",
+      "loan": "Préstamo ({symbol})",
+      "collateralFactor": "Factor de Garantía",
+      "liabilityFactor": "Factor de Pasivo",
+      "supplyApy": "APY de Depósito",
+      "borrowApy": "APY de Préstamo"
+    },
+    "modeTabs": {
+      "deposit": "Depositar",
+      "withdraw": "Retirar",
+      "lend": "Prestar",
+      "borrow": "Pedir prestado",
+      "lendingBadge": "Préstamo"
+    },
+    "footer": {
+      "connectHint": "Conecta tu wallet para firmar transacciones",
+      "deposit": "Depositar",
+      "depositing": "Depositando…",
+      "withdraw": "Retirar",
+      "withdrawing": "Retirando…",
+      "lend": "Prestar",
+      "lending": "Prestando…",
+      "borrow": "Pedir prestado",
+      "borrowing": "Pidiendo prestado…"
+    },
+    "panel": {
+      "supply": "Depositar",
+      "withdraw": "Retirar",
+      "borrowToken": "Pedir prestado {symbol}",
+      "max": "MÁX",
+      "borrowExceedsLimit": "El monto a pedir prestado excede tu límite de garantía (~{max} {symbol} máx)",
+      "issuerBlend": "Blend",
+      "issuerNeko": "Neko",
+      "issuerAqua": "Aqua"
+    },
+    "amountInput": {
+      "connectWallet": "Conecta tu wallet",
+      "amountPlaceholder": "0.00"
+    },
+    "collateralCard": {
+      "collateral": "Garantía",
+      "max": "MÁX",
+      "amountPlaceholder": "0.00",
+      "minCollateralValue": "Valor mínimo de garantía: {value}"
+    },
+    "activityFeed": {
+      "date": "Fecha",
+      "type": "Tipo",
+      "user": "Usuario",
+      "loadError": "No se pudo cargar la actividad",
+      "empty": "Sin actividad reciente",
+      "loadingAriaLabel": "Cargando actividad",
+      "viewOnExplorer": "Ver en Stellar Expert",
+      "pagination": "{page} de {totalPages}"
+    },
+    "errors": {
+      "insufficientBalanceDeposit": "Saldo insuficiente para depositar",
+      "noSuppliedBalance": "No hay saldo depositado para retirar",
+      "insufficientSuppliedBalance": "Saldo depositado insuficiente",
+      "trustlineSetupFailed": "Error al configurar la trustline: {message}",
+      "trustlineFailedGeneric": "No se pudo agregar la trustline",
+      "insufficientPoolPosition": "Posición insuficiente en el pool para retirar",
+      "insufficientAssetsBalance": "Saldo insuficiente de {assets}",
+      "insufficientFunds": "Fondos insuficientes",
+      "spendableXlm": "XLM disponible",
+      "andJoiner": "y"
+    },
+    "detail": {
+      "backToPools": "← Volver a Pools",
+      "notFoundTitle": "Pool no encontrado",
+      "notFoundBody": "No se pudieron cargar los datos del pool.",
+      "stableSwap": "Stable Swap",
+      "constantProduct": "Producto Constante",
+      "baseRewards": "Base {base}% + {rewards}% en recompensas",
+      "amplification": "A: {amp}"
+    },
+    "ratesChart": {
+      "instantaneousRates": "Tasas Instantáneas",
+      "live": "En vivo",
+      "instantaneousRate": "Tasa Instantánea",
+      "supply": "Depósito",
+      "borrow": "Préstamo"
+    }
+  }
+}

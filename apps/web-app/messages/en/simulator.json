@@ -1,0 +1,234 @@
+{
+  "simulator": {
+    "recommendedPage": {
+      "title": "Recommended by Neko",
+      "subtitle": "Curated strategies picked by the Neko team.",
+      "badge": "Curated",
+      "imageAlt": "Recommended strategies",
+      "toasts": {
+        "connectWalletTitle": "Connect your wallet",
+        "connectWalletDescription": "Connect a wallet to save strategies.",
+        "savedTitle": "Saved to your strategies"
+      },
+      "empty": {
+        "message": "No curated strategies right now. Check back soon.",
+        "backLink": "Back to strategies"
+      }
+    },
+    "libraryPage": {
+      "title": "Strategies",
+      "subtitle": "Plan your positions. Execute when ready.",
+      "badge": "Saved strategies",
+      "imageAlt": "Strategies",
+      "savedCount": "Your strategies · {count} saved",
+      "buildNew": "Build new strategy",
+      "noWallet": {
+        "title": "Connect your wallet to see your strategies",
+        "subtitle": "Strategies are saved per wallet address."
+      },
+      "empty": {
+        "title": "No saved strategies",
+        "subtitle": "Build one to plan a yield position before committing funds.",
+        "cta": "Build your first strategy"
+      }
+    },
+    "navTabs": {
+      "yourStrategies": "Your strategies",
+      "recommended": "Recommended"
+    },
+    "destinationCard": {
+      "selected": "Selected",
+      "apy": "APY"
+    },
+    "destinationSelector": {
+      "selected": "Selected",
+      "apy": "APY",
+      "header": "How do you want your {code} to earn?",
+      "subheader": "Pick the strategy that fits you best.",
+      "tabs": {
+        "pools": "Liquidity Pools",
+        "vaults": "Auto-Invest",
+        "bonds": "Stable Bonds",
+        "poolsShort": "Pools",
+        "vaultsShort": "Vaults",
+        "bondsShort": "Bonds"
+      },
+      "emptyGeneric": "Nothing available for {code} yet.",
+      "pickAnother": "Pick another token",
+      "emptyBonds": "No bond options are available for {code}.",
+      "emptyPools": "No liquidity pools accept {code} yet. Try another option.",
+      "emptyVaults": "No auto-invest vaults accept {code} yet. Try another option."
+    },
+    "projectionTable": {
+      "period": "Period",
+      "youEarn": "You earn",
+      "totalValue": "Total value",
+      "disclaimer": "Estimates based on current rates. Actual returns will vary."
+    },
+    "recommendedCard": {
+      "recommended": "Recommended",
+      "apyPerYear": "APY - per year",
+      "loadingApy": "Loading APY…",
+      "noData": "No data",
+      "apyUnavailable": "APY unavailable",
+      "route": "Route",
+      "protocol": "Protocol",
+      "amount": "Amount",
+      "setOnExecute": "Set on execute",
+      "saved": "Saved",
+      "save": "Save",
+      "connectToSaveTitle": "Connect your wallet to save",
+      "useStrategy": "Use this strategy"
+    },
+    "returnStep": {
+      "apy": "APY",
+      "dash": "-",
+      "projectedAfterYear": "Projected after 1 year",
+      "estimateDisclaimer": "Estimate based on current rate. Actual returns will vary.",
+      "headerWithToken": "Watch your {token} grow",
+      "headerGeneric": "See what you could earn",
+      "subheaderSwapDeposit": "Enter how much {token} to use. We'll swap it to {bondSymbol} and deposit it for you.",
+      "subheaderSwap": "Enter how much {token} to use. We'll swap it to {bondSymbol} for you.",
+      "subheaderGeneric": "Enter an amount to see your projected earnings.",
+      "amountLabelWithToken": "How much {token}?",
+      "amountLabelGeneric": "How much?",
+      "amountPlaceholder": "0.00",
+      "balance": "Balance: {amount} {token}",
+      "connectToDeposit": "Connect wallet to deposit",
+      "max": "Max",
+      "fetchingQuote": "Fetching swap estimate…",
+      "quoteError": "Could not price {from} → {to}. Try a smaller amount or swap manually on the Swap page.",
+      "quoteSuccess": "≈ <mono>{amount} {symbol}</mono> after swap (estimate; actual output may differ slightly).",
+      "projectionsIn": "Projections are in {symbol}.",
+      "emptyState": "Enter an amount above to see your projected earnings.",
+      "back": "Back",
+      "saveStrategy": "Save strategy",
+      "gotIt": "Got it",
+      "cta": {
+        "connectToBuy": "Connect wallet to buy",
+        "connectToSwapDeposit": "Connect wallet to swap & deposit",
+        "connectToDeposit": "Connect wallet to deposit",
+        "swapping": "Swapping…",
+        "buy": "Buy {symbol}",
+        "swapDeposit": "Swap & deposit",
+        "deposit": "Deposit"
+      }
+    },
+    "saveDialog": {
+      "savedToast": "Strategy saved",
+      "title": "Save strategy",
+      "subtitle": "Name it so you remember it.",
+      "placeholder": "My USDC strategy",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "depositModal": {
+      "confirmLabel": "Confirm in wallet",
+      "signing": "Signing…",
+      "submittedToast": "Deposit submitted",
+      "failedToast": "Deposit failed",
+      "close": "Close",
+      "amount": "Amount"
+    },
+    "stackStep": {
+      "header": "Want to earn even more?",
+      "body": "Your <b>{symbol}</b> is already earning bond yield. Add it to a pool or vault to stack an extra layer of returns on top, or keep it simple.",
+      "keepSimple": "Just the bond. Keep it simple.",
+      "tabs": {
+        "pools": "Liquidity Pools",
+        "vaults": "Auto-Invest"
+      },
+      "empty": "No options accept {symbol} yet. Use the button above or try another tab."
+    },
+    "wizard": {
+      "strategiesLink": "Strategies",
+      "swapUnavailableTitle": "Swap unavailable",
+      "swapUnavailableDescription": "Configure {stable} and {bond} in assets.",
+      "swapConfirmedTitle": "Swap confirmed",
+      "swapFailedTitle": "Swap failed",
+      "confirmPoolDepositTitle": "Confirm pool deposit",
+      "confirmPoolDepositDescription": "Deposit via orchestrator into {poolName}.",
+      "confirmPoolDepositFallbackName": "this pool",
+      "continue": "Continue",
+      "seeProjections": "See projections"
+    },
+    "stepIndicator": {
+      "stepOf": "Step {current} of {total}"
+    },
+    "destinationType": {
+      "stacked": "Stacked",
+      "bondHold": "Bond hold",
+      "autoInvest": "Auto-invest",
+      "pool": "Pool"
+    },
+    "strategyRow": {
+      "curatedByNeko": "Curated by Neko",
+      "apyPerYear": "APY · per year",
+      "loadingApy": "Loading APY…",
+      "noData": "No data",
+      "apyUnavailable": "APY unavailable",
+      "route": "Route",
+      "amount": "Amount",
+      "setOnExecute": "Set on execute",
+      "saved": "Saved",
+      "execute": "Execute strategy",
+      "deleteAriaLabel": "Delete {name}"
+    },
+    "summaryCard": {
+      "current": "current",
+      "yearlyApy": "{apy}% yearly",
+      "emptyState": "Type an amount on the left to see projected growth after a year.",
+      "holdSentence": "You hold <amt>{amountValue}</amt> of <dest>{destinationValue}</dest>. After 1 year at <apy>{apyValue}</apy> growth, you'd have approximately <total>{totalValue}</total>",
+      "depositSentence": "You put <amt>{amountValue}</amt> into <dest>{destinationValue}</dest>. After 1 year at <apy>{apyValue}</apy> earnings, you'd have approximately <total>{totalValue}</total>"
+    },
+    "tokenCard": {
+      "selected": "Selected",
+      "priceIn": "Price ({currency})",
+      "loadingPrice": "Loading price...",
+      "noData": "No data"
+    },
+    "tokenSelector": {
+      "header": "What are you starting with?",
+      "subheader": "Choose a token to start exploring how it can earn for you.",
+      "empty": "No tokens found. Try again in a moment."
+    },
+    "vaultDestinationCard": {
+      "selected": "Selected",
+      "supply": "Supply",
+      "alsoAccepts": "Also accepts",
+      "tvl": "TVL",
+      "apy": "APY",
+      "defaultAlt": "Token"
+    },
+    "wizardNav": {
+      "back": "Back",
+      "continue": "Continue"
+    },
+    "labels": {
+      "protocol": {
+        "blend": "Blend",
+        "neko": "Neko",
+        "aqua": "Aqua",
+        "pool": "Pool",
+        "lending": "Lending",
+        "amm": "AMM",
+        "staking": "Staking",
+        "rwa": "Real-world assets",
+        "vault": "Vault",
+        "sovereignBond": "Sovereign Bond"
+      },
+      "horizon": {
+        "oneMonth": "1 month",
+        "sixMonths": "6 months",
+        "oneYear": "1 year"
+      },
+      "step": {
+        "token": "Your Token",
+        "destination": "Where It Goes",
+        "boost": "Boost Returns",
+        "earnings": "Your Earnings"
+      },
+      "stellarLumens": "Stellar Lumens"
+    }
+  }
+}

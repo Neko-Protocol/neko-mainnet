@@ -3,9 +3,11 @@
 import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useVaultData } from "@/features/shared/vault/hooks/useVaultData";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
+import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 import { fromSmallestUnit } from "@neko/orchestrator";
 import type { BearingYieldPosition } from "../../hooks/useBearingYieldPositions";
 import type { VaultPositionEntry } from "../../hooks/useDashboardVaultPositions";
@@ -14,11 +16,12 @@ const ONE_SHARE = 1_000_000_000_000n;
 
 function WalletValueCell({ code, balance }: { code: string; balance: string }) {
   const { price } = useTokenPrice(code);
+  const { formatCurrency } = useLocaleFormatter();
   const value = price > 0 ? price * parseFloat(balance) : null;
   return (
     <td className="px-4 py-3.5 align-middle text-right">
       <p className="text-white font-semibold text-sm tabular-nums">
-        {value != null ? `$${value.toFixed(2)}` : "—"}
+        {value != null ? formatCurrency(value, "USD", 2) : "—"}
       </p>
     </td>
   );
@@ -35,6 +38,7 @@ function VaultBalanceAndValue({
 }) {
   const { data } = useVaultData(vaultEntry.vault.id);
   const { price } = useTokenPrice(assetSymbol);
+  const { formatCurrency } = useLocaleFormatter();
 
   if (!data?.pricePerShare || vaultEntry.userShares === 0n) {
     return (
@@ -70,7 +74,7 @@ function VaultBalanceAndValue({
       </td>
       <td className="px-4 py-3.5 align-middle text-right">
         <p className="text-white font-semibold text-sm tabular-nums">
-          {value != null ? `$${value.toFixed(2)}` : "—"}
+          {value != null ? formatCurrency(value, "USD", 2) : "—"}
         </p>
       </td>
     </>
@@ -84,6 +88,7 @@ export function BearingYieldTable({
   positions: BearingYieldPosition[];
   yieldsMap: Record<string, number>;
 }) {
+  const t = useTranslations("sharedPositions.bearingYield");
   const router = useRouter();
 
   return (
@@ -93,16 +98,16 @@ export function BearingYieldTable({
           <thead>
             <tr className="border-b border-white/5">
               <th className="px-4 py-3 text-left text-xs font-medium text-white/30 uppercase tracking-wide w-16">
-                Asset
+                {t("colAsset")}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-white/30 uppercase tracking-wide">
-                Yield-Bearing Asset
+                {t("colYieldBearingAsset")}
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-white/30 uppercase tracking-wide">
-                Balance
+                {t("colBalance")}
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-white/30 uppercase tracking-wide">
-                Value
+                {t("colValue")}
               </th>
             </tr>
           </thead>
@@ -144,12 +149,14 @@ export function BearingYieldTable({
                       {pos.asset.code}
                       {apy != null && (
                         <span className="ml-1.5 text-[#76C464]">
-                          ~{apy.toFixed(2)}% APY
+                          {t("apyApprox", { value: apy.toFixed(2) })}
                         </span>
                       )}
                       {isVault && (
                         <span className="ml-1.5 text-white/25 truncate">
-                          · deposited in {pos.vaultEntry.vault.name}
+                          {t("depositedIn", {
+                            name: pos.vaultEntry.vault.name,
+                          })}
                         </span>
                       )}
                     </p>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PoolInfo } from "@/lib/orchestrator";
@@ -12,7 +13,12 @@ import { useSwapExecution } from "@/features/shared/swap-engine/hooks/useSwapExe
 import { useToast } from "@/hooks/useToast";
 import { useWallet } from "@/hooks/useWallet";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
-import { isUserCancellationError } from "@neko/orchestrator";
+import {
+  extractContractError,
+  getGenericErrorCode,
+  isUserCancellationError,
+} from "@neko/orchestrator";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
 import type { Token } from "@/lib/types/swapTypes";
 import { useStrategiesStore } from "@/features/simulator/strategies/stores/strategies.store";
@@ -37,6 +43,8 @@ type DepositIntent =
   | null;
 
 export function SimulatorWizard() {
+  const t = useTranslations("simulator.wizard");
+  const getErrorMessage = useApiErrorMessage();
   const {
     state,
     selectToken,
@@ -114,12 +122,12 @@ export function SimulatorWizard() {
   const continueLabel =
     state.phase === "select_destination" &&
     stepsMeta.some((s) => s.phase === "optional_stack")
-      ? "Continue"
+      ? t("continue")
       : state.phase === "select_destination"
-        ? "See projections"
+        ? t("seeProjections")
         : state.phase === "optional_stack"
-          ? "See projections"
-          : "Continue";
+          ? t("seeProjections")
+          : t("continue");
 
   const handleStartDepositVault = useCallback((vault: VaultView) => {
     setDepositIntent({ kind: "vault", vault });
@@ -149,9 +157,12 @@ export function SimulatorWizard() {
       const sInfo = tokens[stableCode.toUpperCase()];
       const bInfo = tokens[bondSymbol.toUpperCase()];
       if (!sInfo?.contract || !bInfo?.contract) {
-        addNotification("Swap unavailable", "error", {
+        addNotification(t("swapUnavailableTitle"), "error", {
           ...TOAST_CONFIG.defaultOpts,
-          description: `Configure ${stableCode} and ${bondSymbol} in assets.`,
+          description: t("swapUnavailableDescription", {
+            stable: stableCode,
+            bond: bondSymbol,
+          }),
         });
         return;
       }
@@ -177,7 +188,11 @@ export function SimulatorWizard() {
           networkPassphrase,
         });
 
-        addNotification("Swap confirmed", "success", TOAST_CONFIG.defaultOpts);
+        addNotification(
+          t("swapConfirmedTitle"),
+          "success",
+          TOAST_CONFIG.defaultOpts
+        );
 
         await queryClient.invalidateQueries({
           queryKey: ["balances", address],
@@ -210,10 +225,13 @@ export function SimulatorWizard() {
         ) {
           return;
         }
-        const msg = e instanceof Error ? e.message : "Swap failed";
-        addNotification("Swap failed", "error", {
+        const errorCode = getGenericErrorCode(e);
+        const description = errorCode
+          ? getErrorMessage(errorCode)
+          : extractContractError(e);
+        addNotification(t("swapFailedTitle"), "error", {
           ...TOAST_CONFIG.defaultOpts,
-          description: msg,
+          description,
         });
       } finally {
         setSwapDepositBusy(false);
@@ -226,6 +244,8 @@ export function SimulatorWizard() {
       executeSwap,
       queryClient,
       addNotification,
+      getErrorMessage,
+      t,
     ]
   );
 
@@ -244,7 +264,7 @@ export function SimulatorWizard() {
             className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs font-medium text-white/60 transition-all hover:border-white/20 hover:bg-white/[0.06] hover:text-white"
           >
             <ArrowLeft size={12} />
-            Strategies
+            {t("strategiesLink")}
           </Link>
         </div>
         <StepIndicator steps={stepsMeta} currentPhase={state.phase} />
@@ -345,8 +365,12 @@ export function SimulatorWizard() {
 
       {depositIntent?.kind === "orchestrator" && (
         <SimulatorDepositConfirmModal
-          title="Confirm pool deposit"
-          description={`Deposit via orchestrator into ${depositIntent.poolInfo.name ?? "this pool"}.`}
+          title={t("confirmPoolDepositTitle")}
+          description={t("confirmPoolDepositDescription", {
+            poolName:
+              depositIntent.poolInfo.name ??
+              t("confirmPoolDepositFallbackName"),
+          })}
           amountLabel={`${depositIntent.depositAmountHuman ?? state.amount} ${depositIntent.poolInfo.tokens[0]?.code ?? ""}`}
           isPending={orchestratorPending}
           onClose={() => setDepositIntent(null)}

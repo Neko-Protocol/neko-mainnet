@@ -3,6 +3,7 @@
 import React, { use } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
 import { VaultDetailLayout } from "../ui/vault-detail-panel";
 import type { VaultActionTab } from "../ui/vault-detail-panel";
@@ -19,6 +20,7 @@ const PANEL_SCROLL_CLASS =
   "pool-detail-scroll flex max-h-[min(calc(100dvh-7rem),calc(100svh-7rem))] flex-col gap-3 overflow-y-auto overscroll-contain rounded-2xl bg-[#111111] p-6 lg:rounded-xl";
 
 function VaultDetailSkeleton() {
+  const t = useTranslations("sharedVault.detail");
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col overflow-hidden px-4 sm:px-6 lg:px-8">
       <div className="shrink-0 py-4">
@@ -29,7 +31,7 @@ function VaultDetailSkeleton() {
         className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl"
         style={{ background: "#111111" }}
         aria-busy
-        aria-label="Loading vault"
+        aria-label={t("loadingAriaLabel")}
       >
         {/* Right panel skeleton */}
         <aside className="z-30 w-full min-w-0 shrink-0 lg:fixed lg:right-8 lg:top-28 lg:z-40 lg:w-[min(24rem,calc(100vw-4rem))] lg:max-w-[calc(100vw-4rem)] lg:p-0">
@@ -82,7 +84,10 @@ function VaultDetailSkeleton() {
               <SkeletonBar className="h-4 w-48 mt-6" />
               <div className="space-y-0 rounded-xl border border-white/5 overflow-hidden mt-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex justify-between gap-4 py-3.5 px-1 border-b border-white/5 last:border-0">
+                  <div
+                    key={i}
+                    className="flex justify-between gap-4 py-3.5 px-1 border-b border-white/5 last:border-0"
+                  >
                     <SkeletonBar className="h-4 w-28" />
                     <SkeletonBar className="h-4 w-24" />
                   </div>
@@ -97,6 +102,7 @@ function VaultDetailSkeleton() {
 }
 
 const VaultDetail: React.FC<VaultDetailProps> = ({ params }) => {
+  const t = useTranslations("sharedVault.detail");
   const { vaultid: rawId } = use(params);
   const vaultId = decodeURIComponent(rawId);
 
@@ -116,17 +122,16 @@ const VaultDetail: React.FC<VaultDetailProps> = ({ params }) => {
       <div className="w-full flex items-center justify-center px-4 py-8 h-dvh">
         <div className="max-w-2xl w-full rounded-2xl bg-red-500/10 border border-red-500/20 p-8 text-center">
           <h1 className="text-xl font-bold text-red-400 mb-2">
-            Vault not found
+            {t("notFoundTitle")}
           </h1>
           <p className="text-red-400/70 text-sm mb-6">
-            Could not load vault data. The vault ID may be invalid or the API
-            may be unavailable.
+            {t("notFoundDescription")}
           </p>
           <Link
             href="/vaults"
             className="text-[#229EDF] font-semibold text-sm hover:underline"
           >
-            &larr; Back to Vaults
+            {t("backToVaults")}
           </Link>
         </div>
       </div>
@@ -140,7 +145,7 @@ const VaultDetail: React.FC<VaultDetailProps> = ({ params }) => {
           href="/vaults"
           className="inline-flex items-center gap-1 text-white/60 hover:text-white font-medium text-sm transition-colors"
         >
-          &larr; Back to Vaults
+          {t("backToVaults")}
         </Link>
       </div>
 

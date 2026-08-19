@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import Image from "next/image";
 import { ChevronDown, ArrowLeftRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useWallet } from "@/hooks/useWallet";
@@ -13,7 +14,8 @@ import {
   getSwappableTokens,
   type Token,
 } from "@/lib/helpers/stellar/swap-kit";
-import { extractContractErrorOrNull } from "@neko/orchestrator";
+import { extractContractError, getGenericErrorCode } from "@neko/orchestrator";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import {
   sanitizeAmountInput,
@@ -51,6 +53,7 @@ const TokenSelectorBtn: React.FC<TokenSelectorBtnProps> = ({
   onClick,
   disabled,
 }) => {
+  const t = useTranslations("expert.swap");
   const iconUrl = getTokenIconUrl(token);
   const tokenId = getTokenId(token);
 
@@ -77,7 +80,7 @@ const TokenSelectorBtn: React.FC<TokenSelectorBtnProps> = ({
         )}
       </div>
       <span className="text-white font-medium text-sm truncate">
-        {tokenId || "Select token"}
+        {tokenId || t("selectToken")}
       </span>
       <ChevronDown className="ml-auto h-4 w-4 text-white/40 shrink-0" />
     </button>
@@ -104,21 +107,24 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
   onMaxClick,
   isReadOnly,
 }) => {
+  const t = useTranslations("expert.swap");
   const maxAmt = maxSpendable ?? balance;
 
   return (
     <div className="bg-[#252525] rounded-xl p-3.5">
       <div className="text-white font-bold text-xl">
         {isLoadingPrice ? (
-          <span className="text-white/40 text-sm">Loading…</span>
+          <span className="text-white/40 text-sm">{t("loadingPrice")}</span>
         ) : (
           <>{fiatValue || "0.00"}</>
         )}
       </div>
       <div className="flex items-center justify-between mt-1 gap-2">
         <span className="text-white/40 text-xs min-w-0 truncate">
-          Your balance{" "}
-          {isLoadingBalance ? "..." : formatAmount(maxAmt || "0", 2)}
+          {t("yourBalance")}{" "}
+          {isLoadingBalance
+            ? t("loadingBalance")
+            : formatAmount(maxAmt || "0", 2)}
         </span>
         <button
           onClick={isReadOnly ? undefined : onMaxClick}
@@ -131,7 +137,7 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
               : "text-white/40 hover:text-white/70 disabled:cursor-not-allowed"
           }`}
         >
-          Max
+          {t("max")}
         </button>
       </div>
     </div>
@@ -139,6 +145,8 @@ const BalanceCard: React.FC<BalanceCardProps> = ({
 };
 
 const Swap: React.FC = () => {
+  const t = useTranslations("expert.swap");
+  const getErrorMessage = useApiErrorMessage();
   const { address, network, networkPassphrase, refetchBalances } = useWallet();
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
@@ -239,9 +247,9 @@ const Swap: React.FC = () => {
       if (result.orderId) {
         setTxHash(result.orderId);
         const explorerUrl = getExplorerUrl(result.orderId, network);
-        addNotification("Transaction successful", "success", {
+        addNotification(t("toasts.transactionSuccessTitle"), "success", {
           ...TOAST_CONFIG.defaultOpts,
-          description: "Swap completed successfully.",
+          description: t("toasts.transactionSuccessDescription"),
           ...(explorerUrl
             ? {
                 styles: {
@@ -249,7 +257,7 @@ const Swap: React.FC = () => {
                     "!mx-auto !mt-3 !box-border !flex !h-9 !w-[220px] !max-w-full !items-center !justify-center !rounded-full !bg-[#229EDF] !px-4 !text-sm !font-semibold !leading-5 !text-white !no-underline hover:!bg-[#1a8bc7]",
                 },
                 button: {
-                  title: "View on Stellar Expert",
+                  title: t("toasts.viewOnExplorer"),
                   onClick: () => {
                     window.open(explorerUrl, "_blank", "noopener,noreferrer");
                   },
@@ -291,13 +299,11 @@ const Swap: React.FC = () => {
         return;
       }
 
-      const contractError = extractContractErrorOrNull(err);
-      const errorMessage = contractError
-        ? `Contract error: ${contractError}`
-        : err instanceof Error
-          ? err.message
-          : "Failed to complete swap";
-      addNotification("Swap failed", "error", {
+      const errorCode = getGenericErrorCode(err);
+      const errorMessage = errorCode
+        ? getErrorMessage(errorCode)
+        : t("toasts.contractError", { error: extractContractError(err) });
+      addNotification(t("toasts.swapFailedTitle"), "error", {
         ...TOAST_CONFIG.defaultOpts,
         description: errorMessage,
       });
@@ -329,11 +335,11 @@ const Swap: React.FC = () => {
     <PageContainer maxWidth="4xl">
       {}
       <BannerPage
-        title="Swap Currency"
-        subtitle="Select an option and swap your currencies"
-        badge="Conversion"
+        title={t("banner.title")}
+        subtitle={t("banner.subtitle")}
+        badge={t("banner.badge")}
         imageSrc="/banners/swap.svg"
-        imageAlt="Swap illustration"
+        imageAlt={t("banner.imageAlt")}
         imageLayoutClassName="-right-12 -top-[15px] h-[120%] w-[96%] opacity-60 sm:right-0 sm:top-0 sm:h-full sm:w-[55%] sm:opacity-100"
         className="mb-6"
       />
@@ -346,7 +352,7 @@ const Swap: React.FC = () => {
       {}
       {!address && (
         <div className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-5 text-center text-white/60 text-sm">
-          Connect your wallet to start swapping
+          {t("connectPrompt")}
         </div>
       )}
 
@@ -355,7 +361,9 @@ const Swap: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
           {}
           <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
-            <span className="text-white/50 text-sm font-medium">From</span>
+            <span className="text-white/50 text-sm font-medium">
+              {t("from")}
+            </span>
 
             <TokenSelectorBtn
               token={tokenIn}
@@ -367,7 +375,7 @@ const Swap: React.FC = () => {
 
             <div>
               <span className="text-white/50 text-sm font-semibold block mb-2">
-                Amount
+                {t("amount")}
               </span>
               <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center">
                 <input
@@ -377,7 +385,7 @@ const Swap: React.FC = () => {
                   onChange={(e) =>
                     handleAmountChange(sanitizeAmountInput(e.target.value))
                   }
-                  placeholder="0.00"
+                  placeholder={t("amountPlaceholder")}
                   disabled={!address || isLoading}
                   className="bg-transparent text-white font-bold w-full outline-none placeholder:text-white/30 disabled:opacity-50 leading-none"
                   style={{ fontSize: "1.5rem" }}
@@ -397,7 +405,7 @@ const Swap: React.FC = () => {
 
           {}
           <div className="bg-[#1C1C1C] rounded-[20px] p-5 flex flex-col gap-4">
-            <span className="text-white/50 text-sm font-medium">To</span>
+            <span className="text-white/50 text-sm font-medium">{t("to")}</span>
 
             <TokenSelectorBtn
               token={tokenOut}
@@ -409,11 +417,13 @@ const Swap: React.FC = () => {
 
             <div>
               <span className="text-white/50 text-sm font-semibold block mb-2">
-                Amount
+                {t("amount")}
               </span>
               <div className="bg-[#2A2A2A] rounded-xl px-4 h-14 flex items-center gap-2">
                 {isLoadingQuote ? (
-                  <span className="text-white/40 text-sm">Loading…</span>
+                  <span className="text-white/40 text-sm">
+                    {t("loadingPrice")}
+                  </span>
                 ) : (
                   <span
                     className="text-white font-bold leading-none"
@@ -443,7 +453,7 @@ const Swap: React.FC = () => {
           <button
             onClick={swapTokens}
             disabled={isLoading}
-            aria-label="Swap tokens"
+            aria-label={t("swapTokensAriaLabel")}
             className="bg-[#229EDF] hover:bg-[#1a8bc7] text-white p-3 rounded-full shadow-xl transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ArrowLeftRight className="h-5 w-5" />
@@ -454,7 +464,7 @@ const Swap: React.FC = () => {
       {canGetQuote && !isLoadingQuote && (
         <div className="mt-3 bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex flex-col gap-1.5 text-sm">
           <div className="flex justify-between items-center text-white/60">
-            <span>Slippage tolerance</span>
+            <span>{t("slippageTolerance")}</span>
             <span className="text-white/80">
               {(DEFAULT_SLIPPAGE_BPS / 100).toFixed(4)}%
             </span>

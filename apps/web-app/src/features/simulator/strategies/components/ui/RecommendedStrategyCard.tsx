@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useFormatter, useTranslations } from "next-intl";
 import { ArrowRight, Bookmark, BookmarkCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
@@ -26,6 +27,10 @@ export function RecommendedStrategyCard({
   isSaved,
   canSave,
 }: RecommendedStrategyCardProps) {
+  const t = useTranslations("simulator.recommendedCard");
+  const tType = useTranslations("simulator.destinationType");
+  const tProtocol = useTranslations("simulator");
+  const format = useFormatter();
   const { dto, token, destination, stackVenue } = item;
 
   const { apy: liveApy, isLoading: apyLoading } = useLiveStrategyApy({
@@ -52,24 +57,22 @@ export function RecommendedStrategyCard({
     : destination.name;
 
   const protocolLabel = stackVenue
-    ? `${destination.protocol} + ${stackVenue.protocol}`
-    : destination.protocol;
+    ? `${tProtocol(destination.protocol)} + ${tProtocol(stackVenue.protocol)}`
+    : tProtocol(destination.protocol);
 
   const typeLabel = stackVenue
-    ? "Stacked"
+    ? tType("stacked")
     : destination.kind === "yield-token"
-      ? "Bond hold"
+      ? tType("bondHold")
       : destination.kind === "vault"
-        ? "Auto-invest"
-        : "Pool";
+        ? tType("autoInvest")
+        : tType("pool");
 
   const amountNum = dto.amount ? parseFloat(dto.amount) : NaN;
   const hasAmount = Number.isFinite(amountNum) && amountNum > 0;
   const amountLabel = hasAmount
-    ? `${amountNum.toLocaleString("en-US", {
-        maximumFractionDigits: 6,
-      })} ${token.code}`
-    : "Set on execute";
+    ? `${format.number(amountNum, { maximumFractionDigits: 6 })} ${token.code}`
+    : t("setOnExecute");
 
   const taxonomy = getAssetTaxonomy(token.code);
   const accent = taxonomy ? CLASS_ACCENT[taxonomy.class] : null;
@@ -107,7 +110,7 @@ export function RecommendedStrategyCard({
         </div>
 
         <span className="shrink-0 rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#5BB8E8]">
-          Recommended
+          {t("recommended")}
         </span>
       </div>
 
@@ -129,22 +132,22 @@ export function RecommendedStrategyCard({
               {apyLabel}
             </p>
             <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
-              APY - per year
+              {t("apyPerYear")}
             </p>
           </>
         ) : apyLoading ? (
           <>
             <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
-              Loading APY…
+              {t("loadingApy")}
             </p>
           </>
         ) : (
           <>
             <p className="text-4xl font-bold leading-none tracking-tight tabular-nums text-white/30">
-              No data
+              {t("noData")}
             </p>
             <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
-              APY unavailable
+              {t("apyUnavailable")}
             </p>
           </>
         )}
@@ -152,19 +155,19 @@ export function RecommendedStrategyCard({
 
       <div className="relative mt-4 flex flex-1 flex-col gap-2 border-t border-white/[0.06] pt-4 text-xs">
         <div className="flex items-start justify-between gap-3">
-          <span className="shrink-0 text-white/40">Route</span>
+          <span className="shrink-0 text-white/40">{t("route")}</span>
           <span className="min-w-0 truncate text-right font-medium text-white/80">
             {destinationLabel}
           </span>
         </div>
         <div className="flex items-start justify-between gap-3">
-          <span className="shrink-0 text-white/40">Protocol</span>
+          <span className="shrink-0 text-white/40">{t("protocol")}</span>
           <span className="min-w-0 truncate text-right font-medium text-white/80">
             {protocolLabel}
           </span>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-white/40">Amount</span>
+          <span className="text-white/40">{t("amount")}</span>
           <span className="font-mono text-white/65 tabular-nums">
             {amountLabel}
           </span>
@@ -179,17 +182,17 @@ export function RecommendedStrategyCard({
             className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-[#229EDF]/30 bg-transparent px-3 text-sm font-semibold text-[#5BB8E8]"
           >
             <BookmarkCheck className="h-3.5 w-3.5" />
-            Saved
+            {t("saved")}
           </button>
         ) : (
           <button
             type="button"
             onClick={onSave}
-            title={canSave ? undefined : "Connect your wallet to save"}
+            title={canSave ? undefined : t("connectToSaveTitle")}
             className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-transparent px-3 text-sm font-semibold text-white/70 transition-colors hover:border-white/20 hover:bg-white/[0.04] hover:text-white active:scale-[0.98]"
           >
             <Bookmark className="h-3.5 w-3.5" />
-            Save
+            {t("save")}
           </button>
         )}
         <button
@@ -197,7 +200,7 @@ export function RecommendedStrategyCard({
           onClick={onUse}
           className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-[#229EDF] px-3 text-sm font-semibold text-white transition-colors hover:bg-[#1a8ac9] active:scale-[0.98]"
         >
-          Use this strategy
+          {t("useStrategy")}
           <ArrowRight className="h-3.5 w-3.5" />
         </button>
       </div>

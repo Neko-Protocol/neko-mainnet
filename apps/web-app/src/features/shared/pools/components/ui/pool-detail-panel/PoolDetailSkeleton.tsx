@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { POOL_DETAIL_MAIN_SCROLL_ID } from "./scrollIds";
 
 function SkeletonBar({ className = "" }: { className?: string }) {
@@ -12,11 +13,12 @@ const panelInnerScroll =
   "pool-detail-scroll flex max-h-[min(calc(100dvh-7rem),calc(100svh-7rem))] flex-col gap-3 overflow-y-auto overscroll-contain rounded-2xl bg-[#111111] p-6 lg:rounded-xl";
 
 export function PoolDetailSkeleton() {
+  const t = useTranslations("sharedPools.skeleton");
   return (
     <div
       className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden rounded-2xl bg-[#111111]"
       aria-busy
-      aria-label="Loading pool"
+      aria-label={t("loadingAriaLabel")}
     >
       <aside className="z-30 w-full min-w-0 shrink-0 lg:fixed lg:right-8 lg:top-28 lg:z-40 lg:w-[min(24rem,calc(100vw-4rem))] lg:max-w-[calc(100vw-4rem)] lg:p-0">
         <div className={panelInnerScroll}>

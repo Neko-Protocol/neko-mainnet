@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { AmountInput } from "./AmountInput";
 import { BlendCollateralCard } from "./BlendCollateralCard";
 import { PoolPanelFooter } from "./PoolPanelFooter";
@@ -37,6 +38,7 @@ export function PoolDetailPanel({
   onBorrowSubmit,
   isLendingActionPending = false,
 }: PoolDetailPanelProps) {
+  const t = useTranslations("sharedPools.panel");
   const [mode, setMode] = useState<"lend" | "withdraw" | "borrow">(initialType);
   const [collateralAmount, setCollateralAmount] = useState("");
   const [borrowAmount, setBorrowAmount] = useState("");
@@ -149,12 +151,12 @@ export function PoolDetailPanel({
       {depositWithdrawMode ? (
         <>
           <AmountInput
-            label={isDepositTab ? "Supply" : "Withdraw"}
+            label={isDepositTab ? t("supply") : t("withdraw")}
             token={pool.token1}
             token2={isPair && !isDepositTab ? pool.token2 : undefined}
             value={ammAmount}
             onChange={(v) => onAmmAmountChange?.(v)}
-            balanceLabel="MAX"
+            balanceLabel={t("max")}
             balanceValue={balanceForAmm}
             balanceValue2={isPair && !isDepositTab ? balanceForAmm2 : undefined}
             onMax={maxAmm}
@@ -164,11 +166,11 @@ export function PoolDetailPanel({
           />
           {isPair && isDepositTab && (
             <AmountInput
-              label="Supply"
+              label={t("supply")}
               token={pool.token2}
               value={ammAmount2 ?? ""}
               onChange={(v) => onAmmAmount2Change?.(v)}
-              balanceLabel="MAX"
+              balanceLabel={t("max")}
               balanceValue={pool.token2Balance ?? "0.00"}
               onMax={onAmmAmount2Change ? maxAmm2 : undefined}
               disabled={!isWalletConnected}
@@ -180,12 +182,12 @@ export function PoolDetailPanel({
         <>
           {mode === "lend" && (
             <AmountInput
-              label="Supply"
+              label={t("supply")}
               token={pool.token1}
               token2={isPair ? pool.token2 : undefined}
               value={collateralAmount}
               onChange={setCollateralAmount}
-              balanceLabel="MAX"
+              balanceLabel={t("max")}
               balanceValue={pool.token1Balance ?? "0.00"}
               balanceValue2={
                 isPair ? (pool.token2Balance ?? "0.00") : undefined
@@ -197,11 +199,11 @@ export function PoolDetailPanel({
           )}
           {mode === "withdraw" && (
             <AmountInput
-              label="Withdraw"
+              label={t("withdraw")}
               token={pool.token1}
               value={collateralAmount}
               onChange={setCollateralAmount}
-              balanceLabel="MAX"
+              balanceLabel={t("max")}
               balanceValue={pool.lpBalance ?? "0.00"}
               onMax={() => setCollateralAmount(pool.lpBalance ?? "0")}
               disabled={!isWalletConnected}
@@ -211,11 +213,11 @@ export function PoolDetailPanel({
           {mode === "borrow" && (
             <>
               <AmountInput
-                label={`Borrow ${pool.token2.symbol}`}
+                label={t("borrowToken", { symbol: pool.token2.symbol })}
                 token={pool.token2}
                 value={borrowAmount}
                 onChange={setBorrowAmount}
-                balanceLabel="MAX"
+                balanceLabel={t("max")}
                 balanceValue={
                   dynamicBorrowMax != null
                     ? formatAmount(dynamicBorrowMax)
@@ -233,8 +235,10 @@ export function PoolDetailPanel({
               />
               {borrowExceedsHf && (
                 <p className="text-xs text-red-400/90 px-0.5">
-                  Borrow amount exceeds your collateral limit (~
-                  {formatAmount(dynamicBorrowMax!)} {pool.token2.symbol} max)
+                  {t("borrowExceedsLimit", {
+                    max: formatAmount(dynamicBorrowMax!),
+                    symbol: pool.token2.symbol,
+                  })}
                 </p>
               )}
 

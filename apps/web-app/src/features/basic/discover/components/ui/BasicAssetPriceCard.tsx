@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
@@ -17,6 +18,7 @@ import { useAssetInfo } from "@/features/shared/discover/hooks/useAssetInfo";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import {
   CLASS_ACCENT,
+  CLASS_LABEL_KEYS,
   getAssetTaxonomy,
 } from "@/features/shared/discover/utils/assetClass";
 import { InstitutionalNotice } from "@/features/shared/discover/components/ui/InstitutionalNotice";
@@ -33,6 +35,8 @@ export function BasicAssetPriceCard({
   assetInfo: assetInfoProp,
   apy,
 }: BasicAssetPriceCardProps) {
+  const t = useTranslations("basic.priceCard");
+  const tClassLabels = useTranslations("sharedDiscover.classLabels");
   const codeUpper = tokenCode.toUpperCase();
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
@@ -58,7 +62,7 @@ export function BasicAssetPriceCard({
   const hasPrice = Number.isFinite(price) && price > 0;
   const formattedPrice = hasPrice
     ? formatCurrency(convertedPrice, selectedCurrency)
-    : "No data";
+    : t("noData");
 
   const detailHref = ROUTES.assetDetail(codeUpper);
 
@@ -104,12 +108,12 @@ export function BasicAssetPriceCard({
           {isLoading ? (
             <div className="flex items-center gap-2">
               <LoadingSpinner variant="dots" size="sm" />
-              <span className="text-white/40 text-xs">Loading price…</span>
+              <span className="text-white/40 text-xs">{t("loadingPrice")}</span>
             </div>
           ) : (
             <div>
               <p className="text-white/40 text-[10px] font-semibold uppercase tracking-widest mb-1">
-                Price ({selectedCurrency})
+                {t("priceIn", { currency: selectedCurrency })}
               </p>
               <div className="flex items-baseline gap-3">
                 <p
@@ -119,7 +123,7 @@ export function BasicAssetPriceCard({
                 </p>
                 {apy !== undefined && (
                   <span className="text-emerald-400 text-sm font-semibold tabular-nums">
-                    ~{apy.toFixed(2)}% APY
+                    {t("apy", { value: apy.toFixed(2) })}
                   </span>
                 )}
               </div>
@@ -130,7 +134,9 @@ export function BasicAssetPriceCard({
             <span
               className={`self-start inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold ${accent.chip}`}
             >
-              {taxonomy.classLabel}
+              {CLASS_LABEL_KEYS[taxonomy.classLabel]
+                ? tClassLabels(CLASS_LABEL_KEYS[taxonomy.classLabel])
+                : taxonomy.classLabel}
             </span>
           )}
         </div>
@@ -146,7 +152,7 @@ export function BasicAssetPriceCard({
             className="flex items-center justify-center rounded-xl border border-[#229EDF]/20 bg-[#229EDF]/10 px-2 py-1.5 text-xs font-semibold text-[#229EDF] transition-colors hover:bg-[#229EDF]/20 sm:px-3 sm:py-2.5 sm:text-sm"
             onClick={(e) => e.stopPropagation()}
           >
-            {isInstitutional ? "Discover More" : "Buy Asset"}
+            {isInstitutional ? t("discoverMore") : t("buyAsset")}
           </Link>
           {!isInstitutional && (
             <button
@@ -155,7 +161,7 @@ export function BasicAssetPriceCard({
               className="flex items-center justify-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-xs font-semibold text-white/60 transition-colors hover:bg-white/10 hover:text-white/90 sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-sm"
             >
               <ShoppingBag className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
-              Shopping Cart
+              {t("shoppingCart")}
             </button>
           )}
         </div>

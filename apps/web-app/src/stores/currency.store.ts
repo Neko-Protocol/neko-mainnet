@@ -25,6 +25,7 @@ export const useCurrencyStore = create<CurrencyState>()(
       selectedCurrency: "USD",
       setSelectedCurrency: (currency) => set({ selectedCurrency: currency }),
     }),
-    { name: "selected-currency" }
+
+    { name: "selected-currency", skipHydration: true }
   )
 );

@@ -5,11 +5,14 @@ import type {
 } from "@/features/shared/vault/types/vault";
 import type { VaultApyStrategy } from "@/features/shared/vault/hooks/useVaultApy";
 
-const POOL_PROTOCOL_LABEL: Record<PoolType, string> = {
-  blend: "Blend",
-  neko: "Neko",
-  aqua: "Aqua",
-  custom: "Pool",
+// `*_PROTOCOL_KEY`/`*_CATEGORY_KEY` values are translation keys (see
+// messages/{locale}/simulator.json → labels.protocol.*), not display text —
+// `destination.protocol` is resolved via t() at render time.
+const POOL_PROTOCOL_KEY: Record<PoolType, string> = {
+  blend: "labels.protocol.blend",
+  neko: "labels.protocol.neko",
+  aqua: "labels.protocol.aqua",
+  custom: "labels.protocol.pool",
 };
 
 const POOL_STRATEGY_LABEL: Record<PoolType, string> = {
@@ -19,13 +22,17 @@ const POOL_STRATEGY_LABEL: Record<PoolType, string> = {
   custom: "Earn yield from this pool",
 };
 
-const VAULT_CATEGORY_LABEL: Record<VaultCategory, string> = {
-  lending: "Lending",
-  amm: "AMM",
-  staking: "Staking",
-  rwa: "Real-world assets",
+const VAULT_CATEGORY_KEY: Record<VaultCategory, string> = {
+  lending: "labels.protocol.lending",
+  amm: "labels.protocol.amm",
+  staking: "labels.protocol.staking",
+  rwa: "labels.protocol.rwa",
 };
 
+// Everything below feeds `SimulatorDestination.strategyLabels`, which is
+// computed but never rendered (its only consumer is a dead/unused
+// `_visibleLabels` var in StrategyRow.tsx) — left as plain English rather
+// than converted to translation keys, since there's no live UI to localize.
 const VAULT_CATEGORY_STRATEGY: Record<VaultCategory, string> = {
   lending: "Earn lending interest",
   amm: "Earn trading fees",
@@ -49,12 +56,15 @@ function plainLabelForStrategyName(name: string): string {
 }
 
 export function getPoolProtocolLabel(pool: PoolInfo): string {
-  return POOL_PROTOCOL_LABEL[pool.type] ?? "Pool";
+  return POOL_PROTOCOL_KEY[pool.type] ?? "labels.protocol.pool";
 }
 
 export function getVaultProtocolLabel(vault: VaultView): string {
-  return VAULT_CATEGORY_LABEL[vault.category] ?? "Vault";
+  return VAULT_CATEGORY_KEY[vault.category] ?? "labels.protocol.vault";
 }
+
+/** Translation key for the yield-token (sovereign bond) destination protocol label. */
+export const YIELD_TOKEN_PROTOCOL_KEY = "labels.protocol.sovereignBond";
 
 export function getPoolStrategyLabels(pool: PoolInfo): string[] {
   return [POOL_STRATEGY_LABEL[pool.type] ?? "Earn yield from this pool"];

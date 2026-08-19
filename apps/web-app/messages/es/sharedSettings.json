@@ -1,0 +1,72 @@
+{
+  "sharedSettings": {
+    "page": {
+      "bannerTitle": "Configuración",
+      "bannerSubtitle": "Administra tus preferencias y configuración.",
+      "bannerBadge": "Configuración",
+      "bannerImageAlt": "ilustración de configuración",
+      "sectionsAriaLabel": "Secciones de configuración",
+      "tabPreferences": "Preferencias",
+      "tabAppMode": "Modo de App",
+      "tabEmail": "Correo",
+      "tabWallet": "Wallet",
+      "tabNetwork": "Red",
+      "tabSupport": "Soporte"
+    },
+    "preferences": {
+      "title": "Preferencias"
+    },
+    "email": {
+      "title": "Correo (opcional)",
+      "connectPrompt": "Conecta una wallet para agregar un correo.",
+      "description": "Opcional. Solo lo usaremos para contactarte sobre tu actividad. Recibirás un enlace mágico para verificar la propiedad.",
+      "current": "Actual",
+      "verified": "Verificado",
+      "pending": "Pendiente",
+      "changeEmail": "Cambiar correo",
+      "addEmail": "Agregar correo",
+      "emailPlaceholder": "tu@ejemplo.com",
+      "sending": "Enviando…",
+      "sendLink": "Enviar enlace de verificación",
+      "emailVerifiedToast": "Correo verificado",
+      "emailVerifyErrorToast": "No se pudo verificar ese enlace. Intenta enviar uno nuevo.",
+      "invalidEmailToast": "Ingresa una dirección de correo válida",
+      "verificationSentToast": "Enlace de verificación enviado. Revisa tu bandeja de entrada.",
+      "sendFailedWithReason": "No se pudo enviar: {error}",
+      "sendFailedGeneric": "No se pudo enviar el enlace"
+    },
+    "network": {
+      "title": "Red",
+      "activeNetwork": "Red Activa",
+      "stellar": "Stellar",
+      "rpcUrl": "URL de RPC",
+      "horizonUrl": "URL de Horizon",
+      "networkPassphrase": "Passphrase de la Red",
+      "openStellarLab": "Abrir Stellar Lab"
+    },
+    "wallet": {
+      "title": "Wallet",
+      "provider": "Proveedor",
+      "address": "Dirección",
+      "disconnectWallet": "Desconectar Wallet",
+      "disconnecting": "Desconectando…",
+      "noWalletConnected": "No hay wallet conectada.",
+      "connectViaSidebar": "Conecta desde la barra lateral para comenzar."
+    },
+    "uiMode": {
+      "title": "Modo de App",
+      "ariaLabel": "Modo de la app",
+      "changeModeTitle": "¿Cambiar modo de app?",
+      "changeModeBody": "Estás cambiando a <mode>{mode}</mode>. {description}",
+      "cancel": "Cancelar",
+      "confirm": "Confirmar"
+    },
+    "support": {
+      "title": "Soporte",
+      "notice": "¿Necesitas ayuda o encontraste un error? Envíanos un correo e incluye cualquier detalle que pueda ayudarnos a investigarlo."
+    },
+    "clipboard": {
+      "copiedToast": "Copiado al portapapeles"
+    }
+  }
+}

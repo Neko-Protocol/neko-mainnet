@@ -1,0 +1,69 @@
+{
+  "common": {
+    "meta": {
+      "description": "All-in-one platform for RWAs on Stellar — vaults, liquidity, and real yield.",
+      "socialCardAlt": "Neko Protocol - Real yield from RWAs on Stellar"
+    },
+    "brand": {
+      "homeAriaLabel": "Neko home"
+    },
+    "language": {
+      "label": "Language"
+    },
+    "currency": {
+      "label": "Display currency"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "discover": "Discover",
+      "pools": "Pools",
+      "swap": "Swap",
+      "cart": "Cart",
+      "cartAriaLabel": "Cart",
+      "cartAriaLabelWithCount": "Cart, {count, plural, one {# item} other {# items}}",
+      "vault": "Vault",
+      "strategies": "Strategies",
+      "settings": "Settings",
+      "admin": "Admin",
+      "toggleMenu": "Toggle menu"
+    },
+    "network": {
+      "testnet": "Testnet",
+      "mainnet": "Mainnet"
+    },
+    "wallet": {
+      "connectWallet": "Connect Wallet",
+      "disconnect": "Disconnect",
+      "connectedWith": "You're connected with:",
+      "connectToGetStarted": "Connect your wallet to get started!",
+      "connectAccount": "Connect Account",
+      "referrals": "Referrals",
+      "stellarWallet": "Stellar Wallet",
+      "stellarWalletDescription": "Freighter or Stellar Wallets Kit"
+    },
+    "uiMode": {
+      "title": "Choose your experience",
+      "subtitle": "How would you like to use Neko?",
+      "ariaLabel": "App mode",
+      "expertLabel": "Expert App",
+      "expertDescription": "Full data, advanced metrics, and all protocol features.",
+      "basicLabel": "Basic App",
+      "basicDescription": "Simple language, guided experience, and hidden complexity.",
+      "changeAnytime": "You can change this at any time from <settings>Settings</settings>."
+    },
+    "readonlyRow": {
+      "viewOnExplorer": "View {label} on Stellar Expert",
+      "copyLabel": "Copy {label}"
+    },
+    "multisigToasts": {
+      "confirmedTitle": "Multisig transaction confirmed",
+      "confirmedDescription": "Your {action} of {amount} {asset} was confirmed on-chain.",
+      "failedTitle": "Multisig transaction failed",
+      "failedDescription": "Your {action} of {amount} {asset} failed on-chain. Please check Lobstr Vault for details.",
+      "expiredTitle": "Multisig transaction expired",
+      "expiredDescription": "Your {action} of {amount} {asset} was not signed in time. Please retry.",
+      "actionDeposit": "deposit",
+      "actionWithdraw": "withdraw"
+    }
+  }
+}

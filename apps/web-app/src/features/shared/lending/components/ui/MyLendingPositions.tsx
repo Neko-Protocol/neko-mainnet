@@ -14,6 +14,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import { useQueries } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useUserPositions } from "@/features/shared/positions/hooks/useUserPositions";
 import { usePoolAction } from "@/lib/orchestrator";
 import { ColHeader } from "./ColHeader";
@@ -24,6 +25,7 @@ import { safeParseFloat } from "@/lib/helpers/formatUtils";
 import { atomicToDecimal } from "@neko/orchestrator";
 import { stellarPriceService } from "@/lib/services/stellar-price.service";
 import { BLEND_VAULT_ONLY_RESERVES } from "@/lib/orchestrator/adapters/blend-config";
+import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 
 const PROTOCOL_ICONS: Record<string, string> = {
   neko: "/neko-logo.png",
@@ -103,6 +105,8 @@ function formatPositionAmount(amount: string, assetCode: string): string {
 }
 
 const MyPositions: React.FC = () => {
+  const t = useTranslations("sharedLending.positions");
+  const { formatCurrency } = useLocaleFormatter();
   const router = useRouter();
   const { mutate: executePoolAction, isPending: isClaimPending } =
     usePoolAction();
@@ -201,10 +205,7 @@ const MyPositions: React.FC = () => {
     };
     const price = priceMap.get(pos.assetCode) ?? 0;
     const usdValue = pos.depositedRaw * price;
-    const usdFormatted =
-      usdValue > 0
-        ? `$${usdValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : "—";
+    const usdFormatted = usdValue > 0 ? formatCurrency(usdValue, "USD") : "—";
     return (
       <tr
         key={pos.key}
@@ -298,8 +299,8 @@ const MyPositions: React.FC = () => {
               >
                 <Sparkles className="h-3.5 w-3.5" />
                 {claimingPoolId === pos.orchestratorId && isClaimPending
-                  ? "Claiming…"
-                  : "Claim"}
+                  ? t("claiming")
+                  : t("claim")}
               </button>
             )}
           </div>
@@ -312,9 +313,7 @@ const MyPositions: React.FC = () => {
     return (
       <div className="w-full rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
         <Wallet className="h-8 w-8 text-white/20 mx-auto mb-3" />
-        <p className="text-white/40 text-sm">
-          Connect your wallet to see your positions
-        </p>
+        <p className="text-white/40 text-sm">{t("connectWalletMessage")}</p>
       </div>
     );
   }
@@ -323,34 +322,34 @@ const MyPositions: React.FC = () => {
     <div className="w-full rounded-2xl overflow-hidden border border-white/5 bg-[#1C1C1C]">
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
         <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
-          Your Lending Positions
+          {t("title")}
         </span>
       </div>
 
       <table className="w-full">
         <thead>
           <tr className="border-b border-white/5">
-            <ColHeader icon={Shield} label="Protocol" centered />
-            <ColHeader icon={Layers} label="Pool" />
+            <ColHeader icon={Shield} label={t("headerProtocol")} centered />
+            <ColHeader icon={Layers} label={t("headerPool")} />
             <ColHeader
               icon={Coins}
-              label="Deposited"
-              tooltip="Amount currently deposited"
+              label={t("headerDeposited")}
+              tooltip={t("depositedTooltip")}
               centered
             />
             <ColHeader
               icon={DollarSign}
-              label="Value"
-              tooltip="Estimated USD value"
+              label={t("headerValue")}
+              tooltip={t("valueTooltip")}
               centered
             />
             <ColHeader
               icon={TrendingUp}
-              label="APY"
-              tooltip="Annual yield on your deposit"
+              label={t("headerApy")}
+              tooltip={t("apyTooltip")}
               centered
             />
-            <ColHeader icon={Zap} label="Actions" centered />
+            <ColHeader icon={Zap} label={t("headerActions")} centered />
           </tr>
         </thead>
         <tbody>
@@ -360,7 +359,7 @@ const MyPositions: React.FC = () => {
                 <div className="flex items-center justify-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white/50" />
                   <span className="text-white/40 text-sm">
-                    Loading your positions...
+                    {t("loadingPositions")}
                   </span>
                 </div>
               </td>
@@ -371,7 +370,7 @@ const MyPositions: React.FC = () => {
                 colSpan={colSpan}
                 className="px-4 py-12 text-center text-white/40 text-sm"
               >
-                You don&apos;t have any active lending positions yet.
+                {t("noPositions")}
               </td>
             </tr>
           ) : (
@@ -383,7 +382,7 @@ const MyPositions: React.FC = () => {
                     <div className="flex items-center justify-center gap-2">
                       <div className="animate-spin rounded-full h-3 w-3 border-2 border-white/20 border-t-white/40" />
                       <span className="text-white/30 text-xs">
-                        Loading positions…
+                        {t("loadingPositionsShort")}
                       </span>
                     </div>
                   </td>

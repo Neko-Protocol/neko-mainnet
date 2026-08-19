@@ -2,6 +2,7 @@
 
 import React from "react";
 import { DollarSign, Coins, TrendingUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useWallet } from "@/hooks/useWallet";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
@@ -12,6 +13,7 @@ import { useHighestVaultApy } from "@/features/shared/dashboard/hooks/useHighest
 import { StatCard } from "@/features/shared/discover/components/ui/StatCard";
 
 const MainStats: React.FC = () => {
+  const t = useTranslations("sharedDashboard.mainStats");
   const { address } = useWallet();
   const {
     totalUsd: portfolioTotalUsd,
@@ -39,22 +41,22 @@ const MainStats: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
         <StatCard
           icon={<DollarSign className="h-5 w-5" />}
-          label="Total Portfolio Value"
+          label={t("totalPortfolioValue")}
           value={address ? formattedTotal : formattedZero}
           isLoading={isLoading && !!address}
-          tooltip="Sum of vault/pool positions + assets held in your wallet."
+          tooltip={t("totalPortfolioValueTooltip")}
         />
         <StatCard
           icon={<Coins className="h-5 w-5" />}
-          label="Assets Held"
+          label={t("assetsHeld")}
           value={address ? holdings.length : 0}
           isLoading={isLoading && !!address}
-          tooltip="Number of total assets held in your wallet."
+          tooltip={t("assetsHeldTooltip")}
         />
         <StatCard
           icon={<TrendingUp className="h-5 w-5" />}
-          label="Highest Vault APY"
-          tooltip="Best available APY across Neko vaults."
+          label={t("highestVaultApy")}
+          tooltip={t("highestVaultApyTooltip")}
           value={
             highestApy !== null
               ? `${highestApy.toFixed(SUMMARY_DISPLAY_DECIMALS)}%`

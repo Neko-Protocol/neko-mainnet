@@ -1,0 +1,230 @@
+{
+  "sharedVault": {
+    "tabs": {
+      "vaults": "Vaults",
+      "positions": "Mis posiciones"
+    },
+    "mapper": {
+      "underlyingAssets": "Vault con {count, plural, one {# activo subyacente} other {# activos subyacentes}}.",
+      "liquidityDescription": "La liquidez depende de las estrategias subyacentes y las reglas del vault de DeFindex."
+    },
+    "list": {
+      "title": "Vaults",
+      "subtitle": "Pon tus activos a trabajar y genera rendimiento en Stellar",
+      "badge": "Genera rendimiento",
+      "illustrationAlt": "Ilustración de vault",
+      "allAssets": "Todos los activos",
+      "fetchingMore": "Cargando más vaults",
+      "noVaultsFound": "No se encontraron vaults",
+      "tryAdjustingFilters": "Intenta ajustar tus filtros",
+      "errorMissingApiKey": "Configura DEFINDEX_API_KEY en .env.local (solo servidor). DeFindex devuelve 403 sin ella.",
+      "errorUnsupportedNetwork": "Red no compatible. DeFindex requiere Stellar Mainnet.",
+      "errorNoVaultIds": "Configura DEFINDEX_VAULT_IDS o NEXT_PUBLIC_DEFINDEX_VAULT_IDS con las direcciones de los contratos de vault.",
+      "errorFetchFailed": "API de DeFindex: {message} (vault {contractId}…). Verifica DEFINDEX_API_KEY y la red."
+    },
+    "card": {
+      "categoryLending": "Préstamos",
+      "categoryRwa": "RWA",
+      "categoryAmm": "AMM",
+      "categoryStaking": "Staking",
+      "supply": "Suministro",
+      "on": "en",
+      "stellarAlt": "Stellar",
+      "createdBy": "Creado por",
+      "tvl": "TVL",
+      "apy": "APY",
+      "depositInto": "Depositar en {name}",
+      "withdrawFrom": "Retirar de {name}",
+      "deposit": "Depositar",
+      "withdraw": "Retirar"
+    },
+    "detail": {
+      "notFoundTitle": "Vault no encontrado",
+      "notFoundDescription": "No se pudo cargar la información del vault. El ID puede ser inválido o la API podría no estar disponible.",
+      "backToVaults": "← Volver a Vaults",
+      "loadingAriaLabel": "Cargando vault",
+      "aboutTab": "Sobre el vault",
+      "actionsTab": "Acciones",
+      "actionsAriaLabel": "Acciones del vault"
+    },
+    "info": {
+      "liquidity": "Liquidez",
+      "strategyAllocations": "Asignaciones de estrategia",
+      "strategyAllocationsDescription": "Montos desplegados por contrato de estrategia, según los fondos totales administrados.",
+      "paused": "Pausado",
+      "assetPrefix": "Activo {symbol}",
+      "contracts": "Contratos",
+      "vault": "Vault",
+      "pools": "Pools",
+      "strategies": "Estrategias",
+      "copyAddress": "Copiar dirección de {label}",
+      "copyContractAddress": "Copiar dirección del contrato"
+    },
+    "metrics": {
+      "tvl": "TVL",
+      "apy": "APY",
+      "supplyAsset": "Activo de suministro",
+      "createdBy": "Creado por"
+    },
+    "modal": {
+      "closeModal": "Cerrar modal",
+      "close": "Cerrar",
+      "apySuffix": "{apy} APY",
+      "tvlPrefix": "TVL {tvl}",
+      "liquidity": "Liquidez",
+      "strategyAllocations": "Asignaciones de estrategia",
+      "strategyAllocationsDescription": "Montos desplegados por contrato de estrategia (según los fondos totales administrados). La API no lista direcciones de pools AMM por separado — la liquidez se enruta a través de estas estrategias.",
+      "paused": "Pausado",
+      "assetPrefix": "Activo {symbol}",
+      "contracts": "Contratos",
+      "vault": "Vault",
+      "pools": "Pools",
+      "strategies": "Estrategias",
+      "deposit": "Depositar",
+      "copyAddress": "Copiar dirección de {label}",
+      "depositInto": "Depositar en {name}"
+    },
+    "action": {
+      "balanceLabel": "Saldo de {symbol}",
+      "max": "Máx",
+      "slippageTolerance": "Tolerancia de deslizamiento",
+      "network": "Red",
+      "stellarMainnet": "Stellar Mainnet",
+      "autoInvest": "Auto-inversión",
+      "yes": "Sí",
+      "deposit": "Depositar",
+      "withdraw": "Retirar",
+      "depositingSymbol": "Depositando {symbol}…",
+      "withdrawing": "Retirando…",
+      "depositSymbol": "Depositar {symbol}",
+      "processingDeposit": "Procesando depósito…",
+      "processingWithdrawal": "Procesando retiro…",
+      "confirmInWallet": "Confirma en tu billetera",
+      "depositSuccessToast": "Se depositaron {amount} {symbol} correctamente"
+    },
+    "positions": {
+      "connectWallet": "Conecta tu billetera para ver tus posiciones en vaults",
+      "noPositions": "Aún no tienes posiciones en vaults.",
+      "title": "Tus posiciones en vaults",
+      "vault": "Vault",
+      "asset": "Activo",
+      "deposited": "Depositado",
+      "depositedTooltip": "El monto total que has depositado, sin incluir las ganancias.",
+      "earnings": "Ganancias",
+      "earningsTooltip": "La ganancia que has generado desde tu primer depósito.",
+      "currentValue": "Valor actual",
+      "currentValueTooltip": "Tu saldo actual incluyendo todas las ganancias generadas hasta ahora.",
+      "apy": "APY",
+      "apyTooltip": "Rendimiento Porcentual Anual — el retorno anual estimado según la actividad del vault en los últimos 7 días.",
+      "claimEarnings": "Reclamar ganancias"
+    },
+    "summary": {
+      "title": "Resumen del portafolio",
+      "totalDeposited": "Total depositado",
+      "totalEarnings": "Ganancias totales",
+      "netApy": "APY neto",
+      "projectedYield": "Rendimiento proyectado / año"
+    },
+    "activity": {
+      "title": "Tu actividad",
+      "empty": "Aún no hay actividad en este vault",
+      "date": "Fecha",
+      "type": "Tipo",
+      "amount": "Monto",
+      "viewTransaction": "Ver transacción",
+      "pageOf": "{page} de {total}",
+      "actionDeposit": "Depósito",
+      "actionWithdraw": "Retiro",
+      "actionClaim": "Reclamo"
+    },
+    "earningsCard": {
+      "yourEarnings": "Tus ganancias",
+      "currentValue": "Valor actual",
+      "earnedSinceFirstDeposit": "generado desde el primer depósito",
+      "value": "Valor",
+      "projectedAt": "Proyectado a {apy}% APY",
+      "projectedDescription": "Estimado según el APY hasta que se acumule historial en vivo.",
+      "deposited": "Depositado",
+      "effectiveApy": "APY efectivo",
+      "effectiveApyTooltip": "Este es tu retorno anualizado basado en las ganancias reales desde tu primer depósito. Puede diferir del APY actual del vault, que refleja la tasa de hoy. La tasa efectiva promedia todo tu período de tenencia, incluyendo períodos anteriores en los que la tasa pudo haber sido distinta.",
+      "effectiveApyAriaLabel": "Más información sobre el APY efectivo"
+    },
+    "actionPanel": {
+      "depositTab": "Depositar",
+      "withdrawTab": "Retirar",
+      "depositLabel": "Depositar {symbol}",
+      "withdrawLabel": "Retirar {symbol}",
+      "max": "MÁX",
+      "network": "Red",
+      "stellar": "Stellar",
+      "stellarAlt": "Stellar",
+      "depositArrowRow": "Depositar ({symbol})",
+      "insufficientBalance": "Saldo insuficiente",
+      "apy": "APY",
+      "projectedMonthly": "Ganancias mensuales proyectadas",
+      "projectedYearly": "Ganancias anuales proyectadas",
+      "yourPosition": "Tu posición",
+      "deposited": "Depositado",
+      "earnings": "Ganancias",
+      "claiming": "Reclamando…",
+      "claim": "Reclamar",
+      "currentValue": "Valor actual",
+      "sendToLobstrVault": "Enviar a Lobstr Vault",
+      "depositSymbol": "Depositar {symbol}",
+      "withdrawSymbol": "Retirar {symbol}",
+      "depositingSymbol": "Depositando {symbol}…",
+      "withdrawing": "Retirando…",
+      "connectWallet": "Conectar billetera",
+      "confirmingOnNetwork": "Confirmando en la red…",
+      "confirmInWallet": "Confirma en tu billetera"
+    },
+    "claim": {
+      "claiming": "Reclamando…",
+      "claim": "Reclamar"
+    },
+    "multisigBanner": {
+      "detected": "Billetera multisig detectada (se requieren {signersRequired} de {signersCount} firmantes)",
+      "description": "Después de firmar, la transacción se enviará a <lobstr>Lobstr Vault</lobstr> para la aprobación de los co-firmantes. Espera unos minutos para que los demás firmantes confirmen en la app móvil de Lobstr Vault."
+    },
+    "multisigPending": {
+      "deposit": "Depósito",
+      "withdrawal": "Retiro",
+      "sentTitle": "Enviado a Lobstr Vault",
+      "waiting": "Esperando aprobación de co-firmantes",
+      "close": "Cerrar",
+      "hash": "Hash",
+      "copied": "copiado",
+      "description": "Abre la app de <lobstr>Lobstr Vault</lobstr> en los dispositivos de tus co-firmantes para revisar y aprobar. Una vez que se alcance el umbral multisig, tu transacción se ejecutará automáticamente. Puedes cerrar esta ventana — actualizaremos tu saldo cuando se confirme.",
+      "openLobstrVault": "Abrir Lobstr Vault",
+      "stellarExpert": "Stellar Expert"
+    },
+    "shareOnX": {
+      "button": "Compartir en X"
+    },
+    "depositSuccess": {
+      "close": "Cerrar",
+      "title": "¡Depósito exitoso!",
+      "description": "Hiciste tu primer depósito en un vault de Neko <vault>{vaultName}</vault>. Tus activos ya están generando rendimiento.",
+      "shareBannerAlt": "Banner para compartir",
+      "done": "Listo"
+    },
+    "errors": {
+      "walletPassphraseUnavailable": "Wallet passphrase no disponible",
+      "transactionRejectedByNetwork": "Transacción rechazada por la red: {reason}",
+      "networkCongested": "La red está congestionada. Intenta de nuevo en un momento.",
+      "transactionFailedOnChain": "La transacción falló en la blockchain. Actualiza tu saldo.",
+      "unexpectedError": "Ocurrió un error inesperado.",
+      "noBalanceToWithdraw": "No hay saldo disponible en el vault para retirar",
+      "withdrawalTooSmall": "El monto de retiro es demasiado pequeño",
+      "withdrawalExceedsBalance": "El monto de retiro excede el saldo del vault",
+      "noEarningsToClaim": "Aún no hay ganancias para reclamar",
+      "lobstrRejected": "Lobstr Vault rechazó la transacción: {error}",
+      "genericErrorTitle": "Algo salió mal",
+      "successTitle": "Éxito"
+    },
+    "toasts": {
+      "withdrawSuccess": "Se retiraron {amount} {symbol} correctamente",
+      "claimSuccess": "Se reclamaron {amount} {symbol} correctamente"
+    }
+  }
+}

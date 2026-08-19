@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Copy, ExternalLink, X, CheckCircle2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { stellarNetwork } from "@/lib/config/stellar.config";
 
@@ -27,6 +28,7 @@ export function MultisigPendingModal({
   amount,
   assetSymbol,
 }: MultisigPendingModalProps) {
+  const t = useTranslations("sharedVault.multisigPending");
   const [copied, setCopied] = useState(false);
 
   if (!open) return null;
@@ -42,7 +44,7 @@ export function MultisigPendingModal({
   };
 
   const shortHash = `${hash.slice(0, 8)}…${hash.slice(-8)}`;
-  const actionLabel = action === "deposit" ? "Deposit" : "Withdrawal";
+  const actionLabel = action === "deposit" ? t("deposit") : t("withdrawal");
 
   return (
     <ModalPortal>
@@ -63,18 +65,16 @@ export function MultisigPendingModal({
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-white">
-                  Sent to Lobstr Vault
+                  {t("sentTitle")}
                 </h2>
-                <p className="text-xs text-white/50">
-                  Waiting for co-signer approval
-                </p>
+                <p className="text-xs text-white/50">{t("waiting")}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={onClose}
               className="rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/5 hover:text-white"
-              aria-label="Close"
+              aria-label={t("close")}
             >
               <X size={18} />
             </button>
@@ -88,7 +88,7 @@ export function MultisigPendingModal({
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-white/50">Hash</span>
+              <span className="text-white/50">{t("hash")}</span>
               <button
                 type="button"
                 onClick={copyHash}
@@ -98,7 +98,7 @@ export function MultisigPendingModal({
                 <Copy size={12} />
                 {copied && (
                   <span className="text-[10px] uppercase tracking-wide text-emerald-300">
-                    copied
+                    {t("copied")}
                   </span>
                 )}
               </button>
@@ -106,12 +106,11 @@ export function MultisigPendingModal({
           </div>
 
           <p className="mb-5 text-xs leading-relaxed text-white/60">
-            Open the{" "}
-            <span className="font-medium text-white/85">Lobstr Vault</span> app
-            on your co-signers&apos; devices to review and approve. Once the
-            multisig threshold is met, your transaction will execute
-            automatically. You can close this window — we&apos;ll update your
-            balance when it confirms.
+            {t.rich("description", {
+              lobstr: (chunks) => (
+                <span className="font-medium text-white/85">{chunks}</span>
+              ),
+            })}
           </p>
 
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -121,7 +120,7 @@ export function MultisigPendingModal({
               rel="noopener noreferrer"
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#229EDF] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#1f8ec9]"
             >
-              Open Lobstr Vault
+              {t("openLobstrVault")}
               <ExternalLink size={14} />
             </a>
             <a
@@ -130,7 +129,7 @@ export function MultisigPendingModal({
               rel="noopener noreferrer"
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/15 px-4 py-2.5 text-sm font-medium text-white/80 transition-colors hover:border-white/30 hover:text-white"
             >
-              Stellar Expert
+              {t("stellarExpert")}
               <ExternalLink size={14} />
             </a>
           </div>

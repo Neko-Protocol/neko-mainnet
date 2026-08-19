@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { usePools } from "@/lib/orchestrator/hooks/usePools";
 import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaults";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
@@ -38,10 +39,14 @@ interface TokenAccumulator {
   contract?: string;
 }
 
-function cleanTokenName(name: string, code: string): string {
+function cleanTokenName(
+  name: string,
+  code: string,
+  nativeName: string
+): string {
   if (!name) return code;
   // Stellar native asset
-  if (name.toLowerCase() === "native") return "Stellar Lumens";
+  if (name.toLowerCase() === "native") return nativeName;
   // "CETES:GCRYUGD5N..."  strip the contract address part
   if (name.includes(":")) return name.split(":")[0];
   // Raw contract address used as name (56-char G... string)
@@ -57,6 +62,7 @@ const HIDDEN_TOKENS = new Set(["AQUA", "BLND", "KTB", "USDGLO"]);
  * holdings when a wallet is connected.
  */
 export function useSimulatorTokens() {
+  const t = useTranslations("simulator.labels");
   const pools = usePools();
   const vaults = useDefindexVaults();
   const { address, balances } = useWallet();
@@ -113,7 +119,7 @@ export function useSimulatorTokens() {
       .filter((entry) => !HIDDEN_TOKENS.has(entry.code.toUpperCase()))
       .map<SimulatorToken>((entry) => ({
         code: entry.code,
-        name: cleanTokenName(entry.name, entry.code),
+        name: cleanTokenName(entry.name, entry.code, t("stellarLumens")),
         iconSrc:
           getTokenIcon(entry.code) ??
           (entry.contract ? getTokenIcon(entry.contract) : null),
@@ -125,7 +131,7 @@ export function useSimulatorTokens() {
         if (a.balance !== b.balance) return b.balance - a.balance;
         return a.code.localeCompare(b.code);
       });
-  }, [pools.data, vaults.data, address, balances]);
+  }, [pools.data, vaults.data, address, balances, t]);
 
   return { tokens, isLoading };
 }

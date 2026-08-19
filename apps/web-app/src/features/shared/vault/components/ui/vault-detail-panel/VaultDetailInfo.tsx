@@ -2,9 +2,11 @@
 
 import React, { useState } from "react";
 import { Copy, Check, Droplets, FileText, Coins } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { VaultView } from "@/features/shared/vault/types/vault";
 
 function CopyableRow({ label, address }: { label: string; address: string }) {
+  const t = useTranslations("sharedVault.info");
   const [copied, setCopied] = useState(false);
   const short = `${address.slice(0, 6)}…${address.slice(-6)}`;
 
@@ -20,9 +22,11 @@ function CopyableRow({ label, address }: { label: string; address: string }) {
         {label}
       </span>
       <div className="flex items-center gap-2 min-w-0">
-        <span className="text-white/60 text-xs font-mono truncate">{short}</span>
+        <span className="text-white/60 text-xs font-mono truncate">
+          {short}
+        </span>
         <button
-          aria-label={`Copy ${label} address`}
+          aria-label={t("copyAddress", { label })}
           onClick={handleCopy}
           className="shrink-0 p-1 rounded-md hover:bg-white/10 transition-colors text-white/30 hover:text-white/70"
         >
@@ -53,6 +57,7 @@ function SectionHeading({
 }
 
 export function VaultDetailInfo({ vault }: { vault: VaultView }) {
+  const t = useTranslations("sharedVault.info");
   const detail = vault.detail;
   if (!detail) return null;
 
@@ -66,7 +71,7 @@ export function VaultDetailInfo({ vault }: { vault: VaultView }) {
 
       {detail.liquidity && (
         <section>
-          <SectionHeading icon={Droplets} title="Liquidity" />
+          <SectionHeading icon={Droplets} title={t("liquidity")} />
           <p className="text-white/50 text-xs leading-relaxed">
             {detail.liquidity}
           </p>
@@ -75,9 +80,9 @@ export function VaultDetailInfo({ vault }: { vault: VaultView }) {
 
       {detail.strategyAllocations && detail.strategyAllocations.length > 0 && (
         <section>
-          <SectionHeading icon={Coins} title="Strategy allocations" />
+          <SectionHeading icon={Coins} title={t("strategyAllocations")} />
           <p className="text-white/35 text-[11px] leading-relaxed mb-3">
-            Amounts deployed per strategy contract from total managed funds.
+            {t("strategyAllocationsDescription")}
           </p>
           <div className="rounded-xl bg-white/3 border border-white/5 overflow-hidden divide-y divide-white/5">
             {detail.strategyAllocations.map((row) => (
@@ -91,19 +96,22 @@ export function VaultDetailInfo({ vault }: { vault: VaultView }) {
                       {row.strategyName}
                       {row.paused && (
                         <span className="ml-2 text-amber-400/90 text-[10px] font-medium">
-                          Paused
+                          {t("paused")}
                         </span>
                       )}
                     </p>
                     <p className="text-white/35 text-[10px] mt-0.5">
-                      Asset {row.assetSymbol}
+                      {t("assetPrefix", { symbol: row.assetSymbol })}
                     </p>
                   </div>
                   <span className="text-white text-xs font-mono tabular-nums shrink-0">
                     {row.amountLabel}
                   </span>
                 </div>
-                <CopyableRow label="strategy" address={row.strategyAddress} />
+                <CopyableRow
+                  label={t("strategies")}
+                  address={row.strategyAddress}
+                />
               </div>
             ))}
           </div>
@@ -112,19 +120,22 @@ export function VaultDetailInfo({ vault }: { vault: VaultView }) {
 
       {detail.contracts && (
         <section>
-          <SectionHeading icon={FileText} title="Contracts" />
+          <SectionHeading icon={FileText} title={t("contracts")} />
           <div className="space-y-2">
             <div className="rounded-xl bg-white/3 border border-white/5 px-4 py-1">
               <p className="text-white/20 text-[10px] font-medium uppercase tracking-wide pt-2 pb-1">
-                Vault
+                {t("vault")}
               </p>
-              <CopyableRow label="vault" address={detail.contracts.vault} />
+              <CopyableRow
+                label={t("vault")}
+                address={detail.contracts.vault}
+              />
             </div>
 
             {Object.keys(detail.contracts.pools).length > 0 && (
               <div className="rounded-xl bg-white/3 border border-white/5 px-4 py-1">
                 <p className="text-white/20 text-[10px] font-medium uppercase tracking-wide pt-2 pb-1">
-                  Pools
+                  {t("pools")}
                 </p>
                 {Object.entries(detail.contracts.pools).map(([name, addr]) => (
                   <CopyableRow key={name} label={name} address={addr} />
@@ -135,7 +146,7 @@ export function VaultDetailInfo({ vault }: { vault: VaultView }) {
             {Object.keys(detail.contracts.strategies).length > 0 && (
               <div className="rounded-xl bg-white/3 border border-white/5 px-4 py-1">
                 <p className="text-white/20 text-[10px] font-medium uppercase tracking-wide pt-2 pb-1">
-                  Strategies
+                  {t("strategies")}
                 </p>
                 {Object.entries(detail.contracts.strategies).map(
                   ([name, addr]) => (

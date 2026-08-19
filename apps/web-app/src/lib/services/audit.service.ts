@@ -27,6 +27,16 @@ class AuditService {
       return [];
     }
   }
+
+  async getVaultActivity(wallet: string): Promise<AuditLog[]> {
+    try {
+      return await backendClient.get<AuditLog[]>(
+        `${this.basePath}/vaults/${encodeURIComponent(wallet)}`
+      );
+    } catch {
+      return [];
+    }
+  }
 }
 
 export const auditService = new AuditService();

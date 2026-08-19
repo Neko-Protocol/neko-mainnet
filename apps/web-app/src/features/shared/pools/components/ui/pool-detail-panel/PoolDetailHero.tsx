@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { CopyAddress } from "./CopyAddress";
 import { OverlappingTokens } from "./OverlappingTokens";
 import type { PoolDetailPanelPool } from "./types";
@@ -27,13 +28,10 @@ function PoolDetailHeroTitle({ pool }: { pool: PoolDetailPanelPool }) {
 }
 
 export function PoolDetailHero({ pool }: { pool: PoolDetailPanelPool }) {
+  const t = useTranslations("sharedPools.hero");
   return (
     <div className="flex items-center gap-5 mb-10">
-      <OverlappingTokens
-        token1={pool.token1}
-        token2={pool.token2}
-        size="lg"
-      />
+      <OverlappingTokens token1={pool.token1} token2={pool.token2} size="lg" />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="pool-detail-hero-title">
@@ -45,7 +43,7 @@ export function PoolDetailHero({ pool }: { pool: PoolDetailPanelPool }) {
           <div className="flex items-center gap-1.5">
             <Image
               src="/assets/xlm-negro-logo.png"
-              alt="Stellar"
+              alt={t("networkAlt")}
               width={12}
               height={12}
               unoptimized

@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 
 interface ConnectWalletModalProps {
@@ -12,6 +13,7 @@ export function ConnectWalletModal({
   isOpen,
   onClose,
 }: ConnectWalletModalProps) {
+  const t = useTranslations("common.wallet");
   const { connect } = useStellarWallet();
 
   if (!isOpen) return null;
@@ -25,7 +27,7 @@ export function ConnectWalletModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="bg-[#1C1C1C] border border-white/10 rounded-3xl w-full max-w-sm p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-white text-xl font-bold">Connect Wallet</h3>
+          <h3 className="text-white text-xl font-bold">{t("connectWallet")}</h3>
           <button
             onClick={onClose}
             className="text-white/40 hover:text-white transition-colors"
@@ -43,9 +45,11 @@ export function ConnectWalletModal({
               <span className="text-white font-bold text-sm">S</span>
             </div>
             <div>
-              <p className="text-white font-semibold text-sm">Stellar Wallet</p>
+              <p className="text-white font-semibold text-sm">
+                {t("stellarWallet")}
+              </p>
               <p className="text-white/40 text-xs">
-                Freighter or Stellar Wallets Kit
+                {t("stellarWalletDescription")}
               </p>
             </div>
           </button>

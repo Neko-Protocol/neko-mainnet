@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
@@ -27,6 +28,7 @@ export function StrategySummaryCard({
   oneYearProjection,
   hasPrice,
 }: StrategySummaryCardProps) {
+  const t = useTranslations("simulator.summaryCard");
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
 
@@ -34,7 +36,9 @@ export function StrategySummaryCard({
 
   const amountLabel = `${formatAmount(amount)} ${token.code}`;
   const apyLabel =
-    apy === null || apy <= 0 ? "current" : `${apy.toFixed(2)}% yearly`;
+    apy === null || apy <= 0
+      ? t("current")
+      : t("yearlyApy", { apy: apy.toFixed(2) });
 
   const fmtFiat = (usd: number) =>
     !hasPrice
@@ -56,30 +60,31 @@ export function StrategySummaryCard({
   if (amount <= 0) {
     return (
       <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-4 text-sm text-white/60">
-        Type an amount on the left to see projected growth after a year.
+        {t("emptyState")}
       </div>
     );
   }
 
+  const boldSpan = (chunks: React.ReactNode) => (
+    <span className="font-semibold">{chunks}</span>
+  );
+  const totalSpan = (chunks: React.ReactNode) => (
+    <span className="font-semibold text-[#229EDF]">{chunks}</span>
+  );
+
   return (
     <div className="rounded-2xl border border-[#229EDF]/30 bg-[#229EDF]/10 p-4 text-sm text-white">
       <p className="leading-relaxed">
-        {isHoldBondOnly ? (
-          <>
-            You hold <span className="font-semibold">{amountLabel}</span> of{" "}
-            <span className="font-semibold">{destination.name}</span>. After 1
-            year at <span className="font-semibold">{apyLabel}</span> growth,
-            you&apos;d have approximately{" "}
-          </>
-        ) : (
-          <>
-            You put <span className="font-semibold">{amountLabel}</span> into{" "}
-            <span className="font-semibold">{destination.name}</span>. After 1
-            year at <span className="font-semibold">{apyLabel}</span> earnings,
-            you&apos;d have approximately{" "}
-          </>
-        )}
-        <span className="font-semibold text-[#229EDF]">{totalLabel ?? ""}</span>
+        {t.rich(isHoldBondOnly ? "holdSentence" : "depositSentence", {
+          amountValue: amountLabel,
+          destinationValue: destination.name,
+          apyValue: apyLabel,
+          totalValue: totalLabel ?? "",
+          amt: boldSpan,
+          dest: boldSpan,
+          apy: boldSpan,
+          total: totalSpan,
+        })}
         {earningsLabel ? (
           <>
             {" "}

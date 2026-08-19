@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   useStrategiesStore,
   type SavedStrategy,
@@ -20,6 +21,7 @@ export function SaveStrategyDialog({
   suggestedName,
   onClose,
 }: SaveStrategyDialogProps) {
+  const t = useTranslations("simulator.saveDialog");
   const [name, setName] = useState(suggestedName);
   const { save } = useStrategiesStore();
   const { addNotification } = useToast();
@@ -30,7 +32,7 @@ export function SaveStrategyDialog({
     const trimmed = name.trim();
     if (!trimmed) return;
     save({ ...strategy, name: trimmed });
-    addNotification("Strategy saved", "success", TOAST_CONFIG.defaultOpts);
+    addNotification(t("savedToast"), "success", TOAST_CONFIG.defaultOpts);
     onClose();
     router.push("/strategies");
   };
@@ -44,11 +46,9 @@ export function SaveStrategyDialog({
     >
       <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#1A1A1A] p-6 shadow-xl">
         <h2 className="mb-1 text-base font-semibold text-white">
-          Save strategy
+          {t("title")}
         </h2>
-        <p className="mb-4 text-sm text-white/40">
-          Name it so you remember it.
-        </p>
+        <p className="mb-4 text-sm text-white/40">{t("subtitle")}</p>
         <input
           ref={inputRef}
           autoFocus
@@ -57,7 +57,7 @@ export function SaveStrategyDialog({
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSave()}
           maxLength={60}
-          placeholder="My USDC strategy"
+          placeholder={t("placeholder")}
           className="mb-5 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:border-[#229EDF]/50 focus:outline-none"
         />
         <div className="flex justify-end gap-2">
@@ -66,7 +66,7 @@ export function SaveStrategyDialog({
             onClick={onClose}
             className="rounded-full border border-white/10 px-4 py-2 text-sm text-white/50 transition-colors hover:bg-white/5"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             type="button"
@@ -74,7 +74,7 @@ export function SaveStrategyDialog({
             disabled={!name.trim()}
             className="rounded-full bg-[#229EDF] px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#1f8ec9] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            Save
+            {t("save")}
           </button>
         </div>
       </div>

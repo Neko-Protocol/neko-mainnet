@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Mail, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { usersService } from "@/lib/services/users.service";
 
@@ -14,6 +15,7 @@ function readDismissed(): boolean {
 }
 
 export function EmailNudgeBanner() {
+  const t = useTranslations("sharedDashboard.emailNudge");
   const { address, isConnected } = useStellarWallet();
   const [hasEmail, setHasEmail] = useState<boolean | null>(null);
   const [dismissed, setDismissed] = useState<boolean>(readDismissed);
@@ -48,13 +50,8 @@ export function EmailNudgeBanner() {
           <Mail className="h-4 w-4" />
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-white/90">
-            Add an email (optional)
-          </p>
-          <p className="truncate text-xs text-white/50">
-            Stay in the loop on your activity. We&apos;ll only use it to reach
-            you.
-          </p>
+          <p className="text-sm font-semibold text-white/90">{t("title")}</p>
+          <p className="truncate text-xs text-white/50">{t("body")}</p>
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2">
@@ -62,12 +59,12 @@ export function EmailNudgeBanner() {
           href="/settings?tab=email"
           className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/20"
         >
-          Add email
+          {t("addEmail")}
         </Link>
         <button
           type="button"
           onClick={handleDismiss}
-          aria-label="Dismiss"
+          aria-label={t("dismissAriaLabel")}
           className="rounded-lg p-1.5 text-white/30 transition-colors hover:bg-white/10 hover:text-white/70"
         >
           <X className="h-4 w-4" />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { InfoTabs } from "./InfoTabs";
 import { PoolDetailHero } from "./PoolDetailHero";
 import { PoolDetailMetrics } from "./PoolDetailMetrics";
@@ -38,6 +39,7 @@ export function PoolDetailLayout({
   isLendingActionPending,
 }: PoolDetailLayoutProps) {
   const [mobileTab, setMobileTab] = useState<"about" | "action">("about");
+  const t = useTranslations("sharedPools.layout");
 
   return (
     <div
@@ -55,7 +57,7 @@ export function PoolDetailLayout({
               : "text-white/40 hover:text-white/70"
           }`}
         >
-          About the Pool
+          {t("aboutPool")}
           {mobileTab === "about" && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-white" />
           )}
@@ -69,7 +71,7 @@ export function PoolDetailLayout({
               : "text-white/40 hover:text-white/70"
           }`}
         >
-          Actions
+          {t("actions")}
           {mobileTab === "action" && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-white" />
           )}

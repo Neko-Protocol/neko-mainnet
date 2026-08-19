@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { X, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { FirstVaultDepositSuccessModal } from "./FirstVaultDepositSuccessModal";
 import { MultisigPendingModal } from "./MultisigPendingModal";
@@ -41,6 +42,8 @@ export function VaultActionModal({
   vaultName,
   initialAmount = "",
 }: VaultActionModalProps) {
+  const t = useTranslations("sharedVault.action");
+  const tModal = useTranslations("sharedVault.modal");
   const [visible, setVisible] = useState(false);
   const [amount, setAmount] = useState(initialAmount);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -121,7 +124,10 @@ export function VaultActionModal({
         setShowSuccess(true);
       } else if (success) {
         notifyDepositSuccess(
-          `Successfully deposited ${amount} ${supplyAssetSymbol ?? ""}`
+          t("depositSuccessToast", {
+            amount,
+            symbol: supplyAssetSymbol ?? "",
+          })
         );
       }
     } else {
@@ -195,7 +201,7 @@ export function VaultActionModal({
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            aria-label="Close modal"
+            aria-label={tModal("closeModal")}
             onClick={handleClose}
             className="absolute top-3 right-3 z-10 p-1.5 rounded-lg hover:bg-white/10 text-white/30 hover:text-white transition-colors"
           >
@@ -215,7 +221,7 @@ export function VaultActionModal({
                     : "text-white/50 hover:text-white/80"
                 }`}
               >
-                Deposit
+                {t("deposit")}
               </button>
               <button
                 onClick={() => {
@@ -228,7 +234,7 @@ export function VaultActionModal({
                     : "text-white/50 hover:text-white/80"
                 }`}
               >
-                Withdraw
+                {t("withdraw")}
               </button>
             </div>
           </div>
@@ -236,9 +242,7 @@ export function VaultActionModal({
           <div className="px-5 py-5 space-y-4">
             <div className="flex items-center justify-between text-xs">
               <span className="text-white/40">
-                {mode === "deposit"
-                  ? `${supplyLabel} Balance`
-                  : `${supplyLabel} Balance`}
+                {t("balanceLabel", { symbol: supplyLabel })}
               </span>
               <span className="text-white/60 font-mono">
                 {mode === "deposit" ? supplyBalance : withdrawBalance}
@@ -258,23 +262,23 @@ export function VaultActionModal({
                 onClick={handleMax}
                 className="px-2 py-1 rounded-md text-xs font-semibold text-[#229EDF] hover:bg-[#229EDF]/10 transition-colors"
               >
-                Max
+                {t("max")}
               </button>
             </div>
 
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-white/40">Slippage tolerance</span>
+                <span className="text-white/40">{t("slippageTolerance")}</span>
                 <span className="text-white/60">1%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-white/40">Network</span>
-                <span className="text-white/60">Stellar Mainnet</span>
+                <span className="text-white/40">{t("network")}</span>
+                <span className="text-white/60">{t("stellarMainnet")}</span>
               </div>
               {mode === "deposit" && (
                 <div className="flex justify-between">
-                  <span className="text-white/40">Auto-invest</span>
-                  <span className="text-white/60">Yes</span>
+                  <span className="text-white/40">{t("autoInvest")}</span>
+                  <span className="text-white/60">{t("yes")}</span>
                 </div>
               )}
             </div>
@@ -290,13 +294,13 @@ export function VaultActionModal({
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   {mode === "deposit"
-                    ? `Depositing ${supplyLabel}…`
-                    : "Withdrawing…"}
+                    ? t("depositingSymbol", { symbol: supplyLabel })
+                    : t("withdrawing")}
                 </>
               ) : mode === "deposit" ? (
-                `Deposit ${supplyLabel}`
+                t("depositSymbol", { symbol: supplyLabel })
               ) : (
-                "Withdraw"
+                t("withdraw")
               )}
             </button>
           </div>
@@ -307,12 +311,10 @@ export function VaultActionModal({
               <Loader2 className="h-8 w-8 animate-spin text-[#229EDF]" />
               <p className="text-white/70 text-sm font-medium">
                 {mode === "deposit"
-                  ? "Processing deposit…"
-                  : "Processing withdrawal…"}
+                  ? t("processingDeposit")
+                  : t("processingWithdrawal")}
               </p>
-              <p className="text-white/35 text-xs">
-                Please confirm in your wallet
-              </p>
+              <p className="text-white/35 text-xs">{t("confirmInWallet")}</p>
             </div>
           )}
         </div>
