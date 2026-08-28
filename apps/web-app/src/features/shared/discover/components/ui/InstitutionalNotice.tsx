@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 interface InstitutionalNoticeProps {
   className?: string;
@@ -9,10 +10,11 @@ interface InstitutionalNoticeProps {
 export function InstitutionalNotice({
   className = "",
 }: InstitutionalNoticeProps) {
+  const t = useTranslations("sharedDiscover.institutionalNotice");
   return (
     <span
-      title="Institutional access required"
-      aria-label="Institutional access required"
+      title={t("label")}
+      aria-label={t("label")}
       className={`relative inline-flex shrink-0 ${className}`}
     >
       <Image

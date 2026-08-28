@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
@@ -19,6 +20,7 @@ export function ProjectionTable({
   hasPrice,
   isLoading = false,
 }: ProjectionTableProps) {
+  const t = useTranslations("simulator");
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
 
@@ -32,11 +34,15 @@ export function ProjectionTable({
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr className="text-xs uppercase tracking-wider text-white/40">
-            <th className="px-4 py-3 text-left font-medium">Period</th>
-            <th className="px-4 py-3 text-right font-medium">
-              <span className="block">You earn</span>
+            <th className="px-4 py-3 text-left font-medium">
+              {t("projectionTable.period")}
             </th>
-            <th className="px-4 py-3 text-right font-medium">Total value</th>
+            <th className="px-4 py-3 text-right font-medium">
+              <span className="block">{t("projectionTable.youEarn")}</span>
+            </th>
+            <th className="px-4 py-3 text-right font-medium">
+              {t("projectionTable.totalValue")}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -45,7 +51,7 @@ export function ProjectionTable({
               key={row.periodLabel}
               className="border-t border-white/5 text-white"
             >
-              <td className="px-4 py-3 font-medium">{row.periodLabel}</td>
+              <td className="px-4 py-3 font-medium">{t(row.periodLabel)}</td>
               <td className="px-4 py-3 text-right">
                 <div className="font-semibold text-[#229EDF]">
                   {isLoading ? "" : `+${fmtFiat(row.earningsUsd)}`}
@@ -71,7 +77,7 @@ export function ProjectionTable({
         </tbody>
       </table>
       <p className="border-t border-white/5 px-4 py-3 text-xs text-white/40">
-        Estimates based on current rates. Actual returns will vary.
+        {t("projectionTable.disclaimer")}
       </p>
     </div>
   );

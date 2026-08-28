@@ -11,6 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   CartesianGrid,
   Line,
@@ -30,11 +31,13 @@ import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
 import { useCurrencyStore } from "@/stores/currency.store";
+import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useAssetPriceHistory } from "../../hooks/useAssetPriceHistory";
 import {
   CLASS_ACCENT,
-  CLASS_EXPLANATIONS,
+  CLASS_EXPLANATION_KEYS,
+  CLASS_LABEL_KEYS,
   getAssetTaxonomy,
 } from "../../utils/assetClass";
 import type { PriceSource } from "@/lib/services/stellar-price.service";
@@ -55,16 +58,43 @@ function priceSourceLabel(source: PriceSource | null): string | null {
 type InfoTab = "overview" | "details";
 
 const RANGE_OPTIONS = [
-  { id: "3h", label: "3H", ms: 3 * 60 * 60 * 1000 },
-  { id: "1d", label: "1D", ms: 24 * 60 * 60 * 1000 },
-  { id: "3d", label: "3D", ms: 3 * 24 * 60 * 60 * 1000 },
-  { id: "7d", label: "7D", ms: 7 * 24 * 60 * 60 * 1000 },
+  {
+    id: "1d",
+    label: "1D",
+    ms: 24 * 60 * 60 * 1000,
+    bucketMs: 60 * 60 * 1000,
+  },
+  {
+    id: "7d",
+    label: "1W",
+    ms: 7 * 24 * 60 * 60 * 1000,
+    bucketMs: 4 * 60 * 60 * 1000,
+  },
+  {
+    id: "30d",
+    label: "1M",
+    ms: 30 * 24 * 60 * 60 * 1000,
+    bucketMs: 24 * 60 * 60 * 1000,
+  },
 ] as const;
 type RangeId = (typeof RANGE_OPTIONS)[number]["id"];
 
+function subtractCalendarMonth(timestamp: number): number {
+  const date = new Date(timestamp);
+  const originalDay = date.getDate();
+  date.setDate(1);
+  date.setMonth(date.getMonth() - 1);
+  const lastDayOfMonth = new Date(
+    date.getFullYear(),
+    date.getMonth() + 1,
+    0
+  ).getDate();
+  date.setDate(Math.min(originalDay, lastDayOfMonth));
+  return date.getTime();
+}
+
 interface ChartPoint {
   timestamp: number;
-  tick: string;
   fullLabel: string;
   value: number;
 }
@@ -91,6 +121,13 @@ export function AssetDetailLayout({
   renderMobileActions,
   renderMobilePanelLabel,
 }: AssetDetailLayoutProps) {
+  const t = useTranslations("sharedDiscover.assetDetail");
+  const tAssetInfo = useTranslations("sharedDiscover.assetInfo");
+  const tClassLabels = useTranslations("sharedDiscover.classLabels");
+  const tClassExplanations = useTranslations(
+    "sharedDiscover.classExplanations"
+  );
+  const { formatDate } = useLocaleFormatter();
   const params = useParams();
   const router = useRouter();
   const symbol = params?.symbol as string | undefined;
@@ -125,8 +162,19 @@ export function AssetDetailLayout({
   const taxonomy = stockInfo?.taxonomy ?? getAssetTaxonomy(symbolUpper);
   const accent = taxonomy ? CLASS_ACCENT[taxonomy.class] : undefined;
   const isInstitutional = Boolean(taxonomy?.institutional);
-  const classExplanation = taxonomy
-    ? CLASS_EXPLANATIONS[taxonomy.class]
+  const classExplanationKey = taxonomy
+    ? CLASS_EXPLANATION_KEYS[taxonomy.class]
+    : undefined;
+  const classExplanation = classExplanationKey
+    ? {
+        title: tClassExplanations(`${classExplanationKey}.title`),
+        body: tClassExplanations(`${classExplanationKey}.body`),
+      }
+    : undefined;
+  const classLabel = taxonomy
+    ? CLASS_LABEL_KEYS[taxonomy.classLabel]
+      ? tClassLabels(CLASS_LABEL_KEYS[taxonomy.classLabel])
+      : taxonomy.classLabel
     : undefined;
 
   const [activeTab, setActiveTab] = useState<InfoTab>("overview");
@@ -202,68 +250,68 @@ export function AssetDetailLayout({
     (e) => e.symbol.toUpperCase() === symbolUpper
   );
 
-  const [range, setRange] = useState<RangeId>("7d");
+  const [range, setRange] = useState<RangeId>("30d");
 
-  const { chartData, axisTicks } = useMemo(() => {
+  const { chartData, axisTicks, xDomain } = useMemo(() => {
     const history = priceHistory ?? [];
     if (history.length === 0)
-      return { chartData: [] as ChartPoint[], axisTicks: [] as number[] };
+      return {
+        chartData: [] as ChartPoint[],
+        axisTicks: [] as number[],
+        xDomain: [0, 0] as [number, number],
+      };
     const opt = RANGE_OPTIONS.find((o) => o.id === range)!;
-    const latestTimestamp = history[history.length - 1]?.timestamp ?? 0;
-    const cutoff = latestTimestamp - opt.ms;
-    const intraday = range === "3h" || range === "1d";
-
-    const points: ChartPoint[] = history
-      .filter((point) => point.timestamp >= cutoff)
-      .map((point) => {
-        const d = new Date(point.timestamp);
-        const tick = intraday
-          ? d.toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-          : `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
-        const fullLabel = d.toLocaleString("en-US", {
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-        return {
-          timestamp: point.timestamp,
-          tick,
-          fullLabel,
-          value: convertUsdToSelected(point.price, fxRate),
-        };
-      });
-
-    // One axis tick per distinct bucket (per day for multi-day ranges, per
-    // hour:minute for intraday) so a day with many points shows its date once.
-    const seen = new Set<string>();
-    const ticks: number[] = [];
-    for (const p of points) {
-      if (!seen.has(p.tick)) {
-        seen.add(p.tick);
-        ticks.push(p.timestamp);
-      }
+    const sortedHistory = [...history].sort(
+      (a, b) => a.timestamp - b.timestamp
+    );
+    const latestTimestamp =
+      sortedHistory[sortedHistory.length - 1]?.timestamp ?? 0;
+    const cutoff = (() => {
+      if (range !== "30d") return latestTimestamp - opt.ms;
+      return subtractCalendarMonth(latestTimestamp);
+    })();
+    const sampledByBucket = new Map<number, (typeof sortedHistory)[number]>();
+    for (const point of sortedHistory) {
+      if (point.timestamp < cutoff || !Number.isFinite(point.price)) continue;
+      const bucket = Math.floor(point.timestamp / opt.bucketMs);
+      sampledByBucket.set(bucket, point);
     }
 
-    return { chartData: points, axisTicks: ticks };
-  }, [priceHistory, fxRate, range]);
+    const points: ChartPoint[] = [...sampledByBucket.values()].map((point) => {
+      const d = new Date(point.timestamp);
+      const fullLabel = formatDate(d, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return {
+        timestamp: point.timestamp,
+        fullLabel,
+        value: convertUsdToSelected(point.price, fxRate),
+      };
+    });
 
-  const tickLabelByTimestamp = useMemo(() => {
-    const map = new Map<number, string>();
-    for (const p of chartData) map.set(p.timestamp, p.tick);
-    return map;
-  }, [chartData]);
+    const ticks: number[] = [];
+    const tickCount = 6;
+    for (let i = 0; i < tickCount; i++) {
+      ticks.push(cutoff + (i * (latestTimestamp - cutoff)) / (tickCount - 1));
+    }
+
+    return {
+      chartData: points,
+      axisTicks: ticks,
+      xDomain: [cutoff, latestTimestamp] as [number, number],
+    };
+  }, [priceHistory, fxRate, range, formatDate]);
 
   const hasHistory = (priceHistory?.length ?? 0) > 0;
 
   const isMaxSm = useIsMaxSm();
 
   const tabs: { id: InfoTab; label: string }[] = [
-    { id: "overview", label: "Overview" },
-    { id: "details", label: "Details" },
+    { id: "overview", label: t("overviewTab") },
+    { id: "details", label: t("detailsTab") },
   ];
 
   if (!symbol) return null;
@@ -276,10 +324,10 @@ export function AssetDetailLayout({
           className="inline-flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Discover
+          {t("backToDiscover")}
         </Link>
         <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
-          <p className="text-white/40 text-lg">Asset not found</p>
+          <p className="text-white/40 text-lg">{t("assetNotFound")}</p>
         </div>
       </PageContainer>
     );
@@ -296,7 +344,7 @@ export function AssetDetailLayout({
           href={ROUTES.DISCOVER_BASE}
           className="inline-flex items-center gap-1 text-white/60 hover:text-white font-medium text-sm transition-colors"
         >
-          &larr; Back to Discover
+          {t("backToDiscover")}
         </Link>
       </div>
 
@@ -316,7 +364,7 @@ export function AssetDetailLayout({
                     : "text-white/40 hover:text-white/70"
                 }`}
               >
-                Information
+                {t("informationTab")}
                 {mobileViewTab === "info" && (
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-white" />
                 )}
@@ -382,7 +430,7 @@ export function AssetDetailLayout({
                         <span
                           className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium text-white/70 ${accent.bg}`}
                         >
-                          {taxonomy.classLabel}
+                          {classLabel}
                         </span>
                       </div>
                     )}
@@ -391,7 +439,7 @@ export function AssetDetailLayout({
 
                 <div className="shrink-0 sm:text-right max-sm:w-full max-sm:text-center">
                   <p className="mb-3 text-xs font-medium uppercase tracking-wider text-white/40">
-                    Spot Price ({selectedCurrency})
+                    {t("spotPriceIn", { currency: selectedCurrency })}
                   </p>
                   {isLoadingPrice ? (
                     <div className="flex sm:justify-end max-sm:justify-center">
@@ -403,13 +451,16 @@ export function AssetDetailLayout({
                         formattedPrice ? "text-white" : "text-white/40"
                       }`}
                     >
-                      {formattedPrice ?? "No data"}
+                      {formattedPrice ?? t("noData")}
                     </p>
                   )}
                   <p className="mt-2 text-xs text-white/30">
-                    {priceSourceLabel(priceSource)
-                      ? `via ${priceSourceLabel(priceSource)}`
-                      : "Source unavailable"}
+                    {(() => {
+                      const source = priceSourceLabel(priceSource);
+                      return source
+                        ? t("viaSource", { source })
+                        : t("sourceUnavailable");
+                    })()}
                   </p>
                 </div>
               </div>
@@ -419,7 +470,7 @@ export function AssetDetailLayout({
               <section className="mt-8 rounded-2xl border border-white/7 bg-[#0E0E0E] p-5 max-sm:p-4">
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                   <h2 className="text-base font-semibold leading-tight text-white">
-                    Price
+                    {t("priceTitle")}
                   </h2>
                   <div className="flex items-center gap-3">
                     {hasHistory && (
@@ -440,12 +491,6 @@ export function AssetDetailLayout({
                         ))}
                       </div>
                     )}
-                    {chartData.length > 0 && (
-                      <div className="inline-flex items-center gap-2 text-xs font-medium text-emerald-300">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                        Live
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -462,11 +507,20 @@ export function AssetDetailLayout({
                           dataKey="timestamp"
                           type="number"
                           scale="time"
-                          domain={["dataMin", "dataMax"]}
+                          domain={xDomain}
                           ticks={axisTicks}
-                          tickFormatter={(ts) =>
-                            tickLabelByTimestamp.get(Number(ts)) ?? ""
-                          }
+                          tickFormatter={(timestamp) => {
+                            const date = new Date(Number(timestamp));
+                            return range === "1d"
+                              ? formatDate(date, {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : formatDate(date, {
+                                  day: "numeric",
+                                  month: "short",
+                                });
+                          }}
                           tick={{
                             fill: "rgba(255,255,255,0.55)",
                             fontSize: 12,
@@ -520,7 +574,7 @@ export function AssetDetailLayout({
                 ) : (
                   <div className="h-[220px] rounded-lg border border-white/5 bg-white/[0.02] flex items-center justify-center">
                     <p className="text-sm leading-relaxed text-white/45">
-                      Not enough data yet
+                      {t("notEnoughData")}
                     </p>
                   </div>
                 )}
@@ -558,19 +612,29 @@ export function AssetDetailLayout({
 
                 <div ref={overviewRef} className="mt-10 scroll-mt-16">
                   <h2 className="mb-6 text-xl font-bold text-white">
-                    Overview
+                    {t("overviewTab")}
                   </h2>
                   <p className="text-sm leading-relaxed text-white/70">
-                    {stockInfo.summary ?? stockInfo.description}
+                    {tAssetInfo.has(`${symbolUpper}.summary`)
+                      ? tAssetInfo(`${symbolUpper}.summary`)
+                      : (stockInfo.summary ?? stockInfo.description)}
                   </p>
 
-                  {stockInfo.highlights && stockInfo.highlights.length > 0 && (
+                  {(tAssetInfo.has(`${symbolUpper}.highlights`)
+                    ? tAssetInfo.raw(`${symbolUpper}.highlights`)
+                    : (stockInfo.highlights ?? [])
+                  ).length > 0 && (
                     <div className="mt-6">
                       <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-white/50">
-                        Highlights
+                        {t("highlights")}
                       </h3>
                       <ul className="space-y-2">
-                        {stockInfo.highlights.map((item) => (
+                        {(tAssetInfo.has(`${symbolUpper}.highlights`)
+                          ? (tAssetInfo.raw(
+                              `${symbolUpper}.highlights`
+                            ) as string[])
+                          : (stockInfo.highlights ?? [])
+                        ).map((item) => (
                           <li
                             key={item}
                             className="flex items-start gap-3 text-sm leading-relaxed text-white/80"
@@ -604,45 +668,53 @@ export function AssetDetailLayout({
                 </div>
 
                 <div ref={detailsRef} className="mt-12 scroll-mt-16">
-                  <h2 className="mb-6 text-xl font-bold text-white">Details</h2>
+                  <h2 className="mb-6 text-xl font-bold text-white">
+                    {t("detailsTab")}
+                  </h2>
                   <div>
-                    <AttributeRow label="Symbol">{symbolUpper}</AttributeRow>
-                    <AttributeRow label="Name">{stockInfo.name}</AttributeRow>
+                    <AttributeRow label={t("symbol")}>
+                      {symbolUpper}
+                    </AttributeRow>
+                    <AttributeRow label={t("name")}>
+                      {stockInfo.name}
+                    </AttributeRow>
                     {taxonomy && (
-                      <AttributeRow label="Class">
-                        {taxonomy.classLabel}
+                      <AttributeRow label={t("class")}>
+                        {classLabel}
                       </AttributeRow>
                     )}
                     {taxonomy?.peg && (
-                      <AttributeRow label="Peg">{taxonomy.peg}</AttributeRow>
+                      <AttributeRow label={t("peg")}>
+                        {taxonomy.peg}
+                      </AttributeRow>
                     )}
                     {taxonomy?.region && (
-                      <AttributeRow label="Region">
+                      <AttributeRow label={t("region")}>
                         <span className="inline-flex items-center gap-1.5">
                           {taxonomy.region}
                         </span>
                       </AttributeRow>
                     )}
                     {taxonomy?.issuer && (
-                      <AttributeRow label="Issuer">
+                      <AttributeRow label={t("issuer")}>
                         {taxonomy.issuer}
                       </AttributeRow>
                     )}
                     {yieldEntry ? (
-                      <AttributeRow label="APY">
+                      <AttributeRow label={t("apyLabel")}>
                         <span className="text-emerald-400 font-semibold">
                           ~{yieldEntry.apy.toFixed(2)}%
                         </span>
                       </AttributeRow>
                     ) : (
-                      <AttributeRow label="Yield bearing">
-                        {taxonomy?.yieldBearing ? "Yes" : "No"}
+                      <AttributeRow label={t("yieldBearing")}>
+                        {taxonomy?.yieldBearing ? t("yes") : t("no")}
                       </AttributeRow>
                     )}
-                    <AttributeRow label="Price source">
-                      {priceSourceLabel(priceSource) ?? "Unavailable"}
+                    <AttributeRow label={t("priceSource")}>
+                      {priceSourceLabel(priceSource) ?? t("unavailable")}
                     </AttributeRow>
-                    <AttributeRow label="Contract">
+                    <AttributeRow label={t("contract")}>
                       <CopyAddress address={cfg!.contract} />
                     </AttributeRow>
                   </div>

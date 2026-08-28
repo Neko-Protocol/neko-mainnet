@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState, type ReactNode } from "react";
 import { Search, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { BannerPage } from "@/components/ui/BannerPage";
@@ -16,6 +17,8 @@ interface DiscoverPageLayoutProps {
 }
 
 export function DiscoverPageLayout({ renderCard }: DiscoverPageLayoutProps) {
+  const t = useTranslations("sharedDiscover.page");
+  const tFilters = useTranslations("sharedDiscover.classFilters");
   const tokenCodes = useMemo(
     () => Object.keys(getAvailableTokens()).map((c) => c.toUpperCase()),
     []
@@ -57,11 +60,11 @@ export function DiscoverPageLayout({ renderCard }: DiscoverPageLayoutProps) {
   return (
     <PageContainer maxWidth="7xl">
       <BannerPage
-        title="Discover Assets"
-        subtitle="Explore assets, prices and market data"
-        badge="Market data"
+        title={t("title")}
+        subtitle={t("subtitle")}
+        badge={t("badge")}
         imageSrc="/banners/discover.png"
-        imageAlt="Discover assets"
+        imageAlt={t("illustrationAlt")}
         imageSize="large"
         imageLayoutClassName="-right-[116px] top-2 h-[115%] w-[118%] opacity-60 sm:-right-116 sm:-top-15 sm:h-[155%] sm:w-[120%] sm:opacity-100"
         className="mb-8"
@@ -70,7 +73,7 @@ export function DiscoverPageLayout({ renderCard }: DiscoverPageLayoutProps) {
       <div className="flex flex-col gap-3 mb-6 sm:flex-row sm:items-center sm:justify-between">
         <div
           role="tablist"
-          aria-label="Asset class"
+          aria-label={t("assetClassAriaLabel")}
           className="flex flex-wrap gap-2"
         >
           {ASSET_CLASS_FILTERS.map((f) => {
@@ -82,14 +85,14 @@ export function DiscoverPageLayout({ renderCard }: DiscoverPageLayoutProps) {
                 role="tab"
                 aria-selected={active}
                 onClick={() => setActiveFilter(f.id)}
-                title={f.description}
+                title={tFilters(f.descriptionKey)}
                 className={`group inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-xs font-semibold border transition-colors ${
                   active
                     ? "bg-white text-[#121212] border-white"
                     : "bg-[#1C1C1C] text-white/60 border-white/5 hover:text-white hover:border-white/15"
                 }`}
               >
-                {f.label}
+                {tFilters(f.labelKey)}
                 <span
                   className={`tabular-nums px-1.5 py-0.5 rounded text-[10px] font-semibold ${
                     active
@@ -110,14 +113,14 @@ export function DiscoverPageLayout({ renderCard }: DiscoverPageLayoutProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by symbol or name..."
+            placeholder={t("searchPlaceholder")}
             className="w-full bg-[#1C1C1C] border border-white/5 rounded-full pl-9 pr-9 py-2 text-sm text-white placeholder:text-white/30 outline-none focus:border-white/20 transition-colors"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery("")}
-              aria-label="Clear search"
+              aria-label={t("clearSearch")}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full text-white/40 hover:text-white hover:bg-white/5"
             >
               <X className="h-3.5 w-3.5" />
@@ -136,8 +139,8 @@ export function DiscoverPageLayout({ renderCard }: DiscoverPageLayoutProps) {
         <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-12 text-center">
           <p className="text-white/40 text-base">
             {tokenCodes.length === 0
-              ? "No assets configured"
-              : "No assets match your filters"}
+              ? t("noAssetsConfigured")
+              : t("noAssetsMatchFilters")}
           </p>
           {tokenCodes.length > 0 && (
             <button
@@ -148,7 +151,7 @@ export function DiscoverPageLayout({ renderCard }: DiscoverPageLayoutProps) {
               }}
               className="mt-3 text-xs font-semibold text-[#229EDF] hover:underline"
             >
-              Clear filters
+              {t("clearFilters")}
             </button>
           )}
         </div>

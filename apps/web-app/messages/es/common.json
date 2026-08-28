@@ -1,0 +1,69 @@
+{
+  "common": {
+    "meta": {
+      "description": "Plataforma todo en uno para RWAs en Stellar — vaults, liquidez y rendimiento real.",
+      "socialCardAlt": "Neko Protocol - Rendimiento real de RWAs en Stellar"
+    },
+    "brand": {
+      "homeAriaLabel": "Inicio de Neko"
+    },
+    "language": {
+      "label": "Idioma"
+    },
+    "currency": {
+      "label": "Moneda a mostrar"
+    },
+    "nav": {
+      "dashboard": "Panel",
+      "discover": "Descubrir",
+      "pools": "Pools",
+      "swap": "Swap",
+      "cart": "Carrito",
+      "cartAriaLabel": "Carrito",
+      "cartAriaLabelWithCount": "Carrito, {count, plural, one {# artículo} other {# artículos}}",
+      "vault": "Vault",
+      "strategies": "Estrategias",
+      "settings": "Configuración",
+      "admin": "Admin",
+      "toggleMenu": "Alternar menú"
+    },
+    "network": {
+      "testnet": "Testnet",
+      "mainnet": "Mainnet"
+    },
+    "wallet": {
+      "connectWallet": "Conectar billetera",
+      "disconnect": "Desconectar",
+      "connectedWith": "Estás conectado con:",
+      "connectToGetStarted": "¡Conecta tu billetera para empezar!",
+      "connectAccount": "Conectar cuenta",
+      "referrals": "Referidos",
+      "stellarWallet": "Billetera Stellar",
+      "stellarWalletDescription": "Freighter o Stellar Wallets Kit"
+    },
+    "uiMode": {
+      "title": "Elige tu experiencia",
+      "subtitle": "¿Cómo te gustaría usar Neko?",
+      "ariaLabel": "Modo de la app",
+      "expertLabel": "App Experto",
+      "expertDescription": "Datos completos, métricas avanzadas y todas las funciones del protocolo.",
+      "basicLabel": "App Básica",
+      "basicDescription": "Lenguaje simple, experiencia guiada y complejidad oculta.",
+      "changeAnytime": "Puedes cambiar esto en cualquier momento desde <settings>Configuración</settings>."
+    },
+    "readonlyRow": {
+      "viewOnExplorer": "Ver {label} en Stellar Expert",
+      "copyLabel": "Copiar {label}"
+    },
+    "multisigToasts": {
+      "confirmedTitle": "Transacción multisig confirmada",
+      "confirmedDescription": "Tu {action} de {amount} {asset} se confirmó en la blockchain.",
+      "failedTitle": "La transacción multisig falló",
+      "failedDescription": "Tu {action} de {amount} {asset} falló en la blockchain. Revisa Lobstr Vault para más detalles.",
+      "expiredTitle": "La transacción multisig expiró",
+      "expiredDescription": "Tu {action} de {amount} {asset} no se firmó a tiempo. Por favor intenta de nuevo.",
+      "actionDeposit": "depósito",
+      "actionWithdraw": "retiro"
+    }
+  }
+}

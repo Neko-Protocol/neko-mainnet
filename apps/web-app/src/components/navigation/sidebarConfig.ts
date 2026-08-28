@@ -14,19 +14,19 @@ import type { UIMode } from "@/features/shared/ui-mode/stores/ui-mode.store";
 export function getNavItems(
   mode: UIMode | null,
   isAdmin: boolean
-): { label: string; href: string; icon: React.ElementType }[] {
+): { labelKey: string; href: string; icon: React.ElementType }[] {
   return [
-    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Discover", href: "/discover", icon: BarChart2 },
-    { label: "Pools", href: "/pools", icon: Landmark },
+    { labelKey: "dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { labelKey: "discover", href: "/discover", icon: BarChart2 },
+    { labelKey: "pools", href: "/pools", icon: Landmark },
     ...(mode !== "basic"
-      ? [{ label: "Swap", href: "/swap", icon: ArrowLeftRight }]
-      : [{ label: "Cart", href: "/cart", icon: ShoppingCart }]),
-    { label: "Vault", href: "/vaults", icon: Vault },
-    { label: "Strategies", href: "/strategies", icon: Layers },
-    { label: "Settings", href: "/settings", icon: Settings },
+      ? [{ labelKey: "swap", href: "/swap", icon: ArrowLeftRight }]
+      : [{ labelKey: "cart", href: "/cart", icon: ShoppingCart }]),
+    { labelKey: "vault", href: "/vaults", icon: Vault },
+    { labelKey: "strategies", href: "/strategies", icon: Layers },
+    { labelKey: "settings", href: "/settings", icon: Settings },
     ...(isAdmin
-      ? [{ label: "Admin", href: "/dashboard/admin", icon: Shield }]
+      ? [{ labelKey: "admin", href: "/dashboard/admin", icon: Shield }]
       : []),
   ];
 }

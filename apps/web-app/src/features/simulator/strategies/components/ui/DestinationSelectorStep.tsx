@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useFilteredDestinations } from "@/features/simulator/strategies/hooks/useFilteredDestinations";
@@ -30,6 +31,7 @@ function EtherfuseBondCard({
   isSelected: boolean;
   onSelect: () => void;
 }) {
+  const t = useTranslations("simulator.destinationSelector");
   const symbol =
     destination.bondSymbol ?? destination.acceptedTokenCodes[0] ?? "";
   const symbolInitial =
@@ -76,7 +78,7 @@ function EtherfuseBondCard({
           {destination.name}
         </h3>
         <span className="mt-1 inline-flex items-center rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/50">
-          {destination.protocol}
+          {t(destination.protocol)}
         </span>
       </div>
 
@@ -84,7 +86,7 @@ function EtherfuseBondCard({
       <div className="shrink-0 text-right">
         {isSelected ? (
           <span className="mb-1.5 inline-block rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#229EDF]">
-            Selected
+            {t("selected")}
           </span>
         ) : null}
         {apy > 0 ? (
@@ -93,14 +95,14 @@ function EtherfuseBondCard({
               {apy.toFixed(2)}%
             </p>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
-              APY
+              {t("apy")}
             </p>
           </>
         ) : (
           <>
             <p className="text-2xl font-bold tabular-nums text-white/30">-</p>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-white/40">
-              APY
+              {t("apy")}
             </p>
           </>
         )}
@@ -115,6 +117,7 @@ export function DestinationSelectorStep({
   onSelect,
   onBackToTokens,
 }: DestinationSelectorStepProps) {
+  const t = useTranslations("simulator.destinationSelector");
   const { pools, vaults, yieldTokens, isLoading } =
     useFilteredDestinations(token);
 
@@ -142,56 +145,54 @@ export function DestinationSelectorStep({
 
   const tabs = useMemo<{ id: Tab; label: string; count: number }[]>(
     () => [
-      { id: "pools", label: "Liquidity Pools", count: pools.length },
-      { id: "vaults", label: "Auto-Invest", count: vaults.length },
+      { id: "pools", label: t("tabs.pools"), count: pools.length },
+      { id: "vaults", label: t("tabs.vaults"), count: vaults.length },
       {
         id: "hold-bond",
-        label: "Stable Bonds",
+        label: t("tabs.bonds"),
         count: yieldTokens.length,
       },
     ],
-    [pools.length, vaults.length, yieldTokens.length]
+    [pools.length, vaults.length, yieldTokens.length, t]
   );
 
   return (
     <section className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
       <header className="shrink-0 flex flex-col gap-1">
         <h2 className="text-xl font-semibold text-white">
-          How do you want your {token.code} to earn?
+          {t("header", { code: token.code })}
         </h2>
-        <p className="text-sm text-white/60">
-          Pick the strategy that fits you best.
-        </p>
+        <p className="text-sm text-white/60">{t("subheader")}</p>
       </header>
 
       <div className="flex w-full shrink-0 rounded-full bg-[#2A2A2A] p-1">
-        {tabs.map((t) => (
+        {tabs.map((tabItem) => (
           <button
-            key={t.id}
+            key={tabItem.id}
             type="button"
-            onClick={() => handleTabChange(t.id)}
+            onClick={() => handleTabChange(tabItem.id)}
             className={cn(
               "flex-1 rounded-full px-2 py-1.5 text-xs transition-colors sm:px-4 sm:text-sm",
-              tab === t.id
+              tab === tabItem.id
                 ? "bg-[#229EDF] font-semibold text-white"
                 : "font-medium text-white/50 hover:text-white/80"
             )}
           >
-            <span className="hidden sm:inline">{t.label}</span>
+            <span className="hidden sm:inline">{tabItem.label}</span>
             <span className="sm:hidden">
-              {t.id === "pools"
-                ? "Pools"
-                : t.id === "vaults"
-                  ? "Vaults"
-                  : "Bonds"}
+              {tabItem.id === "pools"
+                ? t("tabs.poolsShort")
+                : tabItem.id === "vaults"
+                  ? t("tabs.vaultsShort")
+                  : t("tabs.bondsShort")}
             </span>
             <span
               className={cn(
                 "tabular-nums text-xs font-normal",
-                tab === t.id ? "text-white/70" : "text-white/40"
+                tab === tabItem.id ? "text-white/70" : "text-white/40"
               )}
             >
-              {` · ${t.count}`}
+              {` · ${tabItem.count}`}
             </span>
           </button>
         ))}
@@ -205,7 +206,7 @@ export function DestinationSelectorStep({
         ) : total === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-[#2A2A2A] p-8 text-center">
             <p className="text-sm text-white/70">
-              Nothing available for {token.code} yet.
+              {t("emptyGeneric", { code: token.code })}
             </p>
             {onBackToTokens && (
               <button
@@ -213,17 +214,17 @@ export function DestinationSelectorStep({
                 onClick={onBackToTokens}
                 className="text-sm font-medium text-[#229EDF] hover:underline"
               >
-                Pick another token
+                {t("pickAnother")}
               </button>
             )}
           </div>
         ) : visible.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-[#2A2A2A] p-6 text-center text-sm text-white/60">
             {tab === "hold-bond"
-              ? `No bond options are available for ${token.code}.`
+              ? t("emptyBonds", { code: token.code })
               : tab === "pools"
-                ? `No liquidity pools accept ${token.code} yet. Try another option.`
-                : `No auto-invest vaults accept ${token.code} yet. Try another option.`}
+                ? t("emptyPools", { code: token.code })
+                : t("emptyVaults", { code: token.code })}
           </div>
         ) : tab === "hold-bond" ? (
           <div className="grid grid-cols-1 gap-4 pt-2 pb-5 md:grid-cols-2">

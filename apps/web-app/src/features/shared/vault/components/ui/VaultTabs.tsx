@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 
 export type VaultTabKey = "vaults" | "positions";
 
@@ -13,6 +14,8 @@ export const VaultTabs: React.FC<VaultTabsProps> = ({
   activeTab,
   onChange,
 }) => {
+  const t = useTranslations("sharedVault.tabs");
+
   return (
     <div className="flex bg-[#2A2A2A] rounded-xl p-1 gap-1 w-fit">
       <button
@@ -23,7 +26,7 @@ export const VaultTabs: React.FC<VaultTabsProps> = ({
             : "text-white/50 hover:text-white/80"
         }`}
       >
-        Vaults
+        {t("vaults")}
       </button>
       <button
         onClick={() => onChange("positions")}
@@ -33,7 +36,7 @@ export const VaultTabs: React.FC<VaultTabsProps> = ({
             : "text-white/50 hover:text-white/80"
         }`}
       >
-        My Positions
+        {t("positions")}
       </button>
     </div>
   );

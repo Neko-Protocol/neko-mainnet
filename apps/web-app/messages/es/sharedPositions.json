@@ -1,0 +1,42 @@
+{
+  "sharedPositions": {
+    "yourPositions": {
+      "title": "Tus Posiciones",
+      "loadingSection": "Cargando {label}...",
+      "loadingPositions": "Cargando posiciones...",
+      "emptyTitle": "No hay posiciones activas",
+      "emptySubtitle": "Deposita en un pool o vault para comenzar a generar rendimiento",
+      "explorePools": "Explorar Pools",
+      "poolsErrorTitle": "No se pudieron cargar las posiciones de pools",
+      "poolsErrorSubtitle": "Error de red — intenta de nuevo",
+      "retry": "Reintentar",
+      "sectionPools": "Pools",
+      "sectionVaults": "Vaults",
+      "sectionBearingYield": "Activos con Rendimiento"
+    },
+    "table": {
+      "pools": "Pools",
+      "manage": "Administrar",
+      "colAsset": "Activo",
+      "colPosition": "Posición",
+      "colDeposited": "Depositado",
+      "colValue": "Valor",
+      "apySuffix": "{value}% APY",
+      "rewardsSuffix": "+{value} recompensas",
+      "moreOnLending": "+{count} más en Lending"
+    },
+    "assetBreakdown": {
+      "title": "Pools Principales",
+      "subtitle": "Resumen de los pools más activos",
+      "viewAllPools": "Ver todos los pools"
+    },
+    "bearingYield": {
+      "colAsset": "Activo",
+      "colYieldBearingAsset": "Activo con Rendimiento",
+      "colBalance": "Saldo",
+      "colValue": "Valor",
+      "apyApprox": "~{value}% APY",
+      "depositedIn": "· depositado en {name}"
+    }
+  }
+}

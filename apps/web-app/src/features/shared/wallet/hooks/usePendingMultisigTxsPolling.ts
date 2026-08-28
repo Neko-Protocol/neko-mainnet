@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Horizon } from "@stellar/stellar-sdk";
 import { useQueryClient } from "@tanstack/react-query";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
@@ -45,6 +46,7 @@ async function checkTxOnHorizon(
 }
 
 export function usePendingMultisigTxsPolling() {
+  const t = useTranslations("common.multisigToasts");
   const { address } = useStellarWalletStore();
   const txs = usePendingMultisigTxsStore((s) => s.txs);
   const removeTx = usePendingMultisigTxsStore((s) => s.remove);
@@ -102,25 +104,46 @@ export function usePendingMultisigTxsPolling() {
         queryClient.invalidateQueries({ queryKey: ["bearingYieldBalance"] }),
         queryClient.invalidateQueries({ queryKey: ["defindex-vaults"] }),
       ]);
-      addNotification("Multisig transaction confirmed", "success", {
+      const action = t(
+        tx.action === "deposit" ? "actionDeposit" : "actionWithdraw"
+      );
+      addNotification(t("confirmedTitle"), "success", {
         ...TOAST_CONFIG.defaultOpts,
-        description: `${tx.action === "deposit" ? "Deposit" : "Withdraw"} of ${tx.amount} ${tx.assetSymbol} confirmed on-chain.`,
+        description: t("confirmedDescription", {
+          action,
+          amount: tx.amount,
+          asset: tx.assetSymbol,
+        }),
       });
       removeTx(tx.hash);
     };
 
     const handleFailure = (tx: PendingMultisigTx) => {
-      addNotification("Multisig transaction failed", "error", {
+      const action = t(
+        tx.action === "deposit" ? "actionDeposit" : "actionWithdraw"
+      );
+      addNotification(t("failedTitle"), "error", {
         ...TOAST_CONFIG.defaultOpts,
-        description: `Your ${tx.action} of ${tx.amount} ${tx.assetSymbol} failed on-chain. Please check Lobstr Vault for details.`,
+        description: t("failedDescription", {
+          action,
+          amount: tx.amount,
+          asset: tx.assetSymbol,
+        }),
       });
       removeTx(tx.hash);
     };
 
     const handleExpired = (tx: PendingMultisigTx) => {
-      addNotification("Multisig transaction expired", "error", {
+      const action = t(
+        tx.action === "deposit" ? "actionDeposit" : "actionWithdraw"
+      );
+      addNotification(t("expiredTitle"), "error", {
         ...TOAST_CONFIG.defaultOpts,
-        description: `Your ${tx.action} of ${tx.amount} ${tx.assetSymbol} was not signed in time. Please retry.`,
+        description: t("expiredDescription", {
+          action,
+          amount: tx.amount,
+          asset: tx.assetSymbol,
+        }),
       });
       removeTx(tx.hash);
     };
@@ -135,5 +158,5 @@ export function usePendingMultisigTxsPolling() {
       cancelled = true;
       clearInterval(id);
     };
-  }, [address, txs, removeTx, queryClient, addNotification]);
+  }, [address, txs, removeTx, queryClient, addNotification, t]);
 }

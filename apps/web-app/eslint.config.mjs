@@ -1,4 +1,5 @@
 import base from "@neko/config/eslint";
+import i18next from "eslint-plugin-i18next";
 
 /**
  * Feature-boundary rules on top of the shared config:
@@ -41,6 +42,44 @@ export default [
                 "basic/ features must not import expert or simulator features.",
             },
           ],
+        },
+      ],
+    },
+  },
+  // i18n guard, ratcheted directory-by-directory as each i18n rollout phase
+  // lands (see docs/i18n plan). Warn-only for now: it flags regressions
+  // without blocking CI on pre-existing patterns the rule can't tell apart
+  // from real UI copy (e.g. dev-only strings).
+  {
+    files: [
+      "src/features/basic/**/*.{ts,tsx}",
+      "src/components/**/*.{ts,tsx}",
+      "src/features/shared/ui-mode/**/*.{ts,tsx}",
+      "src/features/shared/vault/**/*.{ts,tsx}",
+      "src/features/shared/discover/**/*.{ts,tsx}",
+      "src/features/shared/pools/**/*.{ts,tsx}",
+      "src/features/shared/lending/**/*.{ts,tsx}",
+      "src/features/shared/dashboard/**/*.{ts,tsx}",
+      "src/features/shared/settings/**/*.{ts,tsx}",
+      "src/features/shared/referral/**/*.{ts,tsx}",
+      "src/features/shared/wallet/**/*.{ts,tsx}",
+      "src/features/shared/currency/**/*.{ts,tsx}",
+      "src/features/shared/positions/**/*.{ts,tsx}",
+      "src/features/shared/swap-engine/**/*.{ts,tsx}",
+      "src/features/shared/yields/**/*.{ts,tsx}",
+      "src/features/expert/**/*.{ts,tsx}",
+      "src/features/simulator/**/*.{ts,tsx}",
+    ],
+    plugins: { i18next },
+    rules: {
+      "i18next/no-literal-string": [
+        "warn",
+        {
+          mode: "jsx-text-only",
+          "jsx-attributes": { include: ["alt", "aria-label", "title", "placeholder"] },
+          // Language endonyms are intentionally shown in their own language
+          // regardless of UI locale (e.g. "Español" stays "Español" in English).
+          words: { exclude: ["English", "Español"] },
         },
       ],
     },

@@ -29,21 +29,22 @@ export function shouldOfferOptionalStack(
   );
 }
 
+/** `label` is a translation key (see messages/{locale}/simulator.json → labels.step.*), not display text. */
 export function wizardStepsMeta(
   token: SimulatorToken | null,
   destination: SimulatorDestination | null
 ): { phase: WizardPhaseId; label: string }[] {
   const steps: { phase: WizardPhaseId; label: string }[] = [
-    { phase: "select_token", label: "Your Token" },
-    { phase: "select_destination", label: "Where It Goes" },
+    { phase: "select_token", label: "labels.step.token" },
+    { phase: "select_destination", label: "labels.step.destination" },
   ];
   if (shouldOfferOptionalStack(token, destination)) {
     steps.push({
       phase: "optional_stack",
-      label: "Boost Returns",
+      label: "labels.step.boost",
     });
   }
-  steps.push({ phase: "simulate", label: "Your Earnings" });
+  steps.push({ phase: "simulate", label: "labels.step.earnings" });
   return steps;
 }
 

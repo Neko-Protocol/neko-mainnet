@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useFormatter, useTranslations } from "next-intl";
 import { Play, Sparkles, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getTokenIcon, getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
@@ -22,6 +23,9 @@ export function StrategyRow({
   onExecute,
   onDelete,
 }: StrategyRowProps) {
+  const t = useTranslations("simulator.strategyRow");
+  const tType = useTranslations("simulator.destinationType");
+  const format = useFormatter();
   const {
     name,
     token,
@@ -50,24 +54,22 @@ export function StrategyRow({
     : destination.protocol;
 
   const typeLabel = stackVenue
-    ? "Stacked"
+    ? tType("stacked")
     : destination.kind === "yield-token"
-      ? "Bond hold"
+      ? tType("bondHold")
       : destination.kind === "vault"
-        ? "Auto-invest"
-        : "Pool";
+        ? tType("autoInvest")
+        : tType("pool");
 
   const apyLabel = hasApy ? `${effectiveApy!.toFixed(2)}%` : null;
 
   const amountNum = parseFloat(amount);
   const hasAmount = Number.isFinite(amountNum) && amountNum > 0;
   const amountLabel = hasAmount
-    ? `${amountNum.toLocaleString("en-US", {
-        maximumFractionDigits: 6,
-      })} ${token.code}`
-    : "Set on execute";
+    ? `${format.number(amountNum, { maximumFractionDigits: 6 })} ${token.code}`
+    : t("setOnExecute");
 
-  const dateLabel = new Date(createdAt).toLocaleDateString("en-US", {
+  const dateLabel = format.dateTime(new Date(createdAt), {
     month: "short",
     day: "numeric",
   });
@@ -121,7 +123,7 @@ export function StrategyRow({
           {sourceRecommendationId ? (
             <span className="inline-flex items-center gap-1 rounded-md bg-[#229EDF]/15 px-2 py-0.5 text-[10px] font-semibold text-[#5BB8E8]">
               <Sparkles className="h-2.5 w-2.5" />
-              Curated by Neko
+              {t("curatedByNeko")}
             </span>
           ) : null}
           <span
@@ -143,22 +145,22 @@ export function StrategyRow({
               {apyLabel}
             </p>
             <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
-              APY · per year
+              {t("apyPerYear")}
             </p>
           </>
         ) : apyLoading ? (
           <>
             <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
-              Loading APY…
+              {t("loadingApy")}
             </p>
           </>
         ) : (
           <>
             <p className="text-4xl font-bold leading-none tracking-tight tabular-nums text-white/30">
-              No data
+              {t("noData")}
             </p>
             <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/35">
-              APY unavailable
+              {t("apyUnavailable")}
             </p>
           </>
         )}
@@ -167,19 +169,19 @@ export function StrategyRow({
       {/* Metadata */}
       <div className="relative mt-4 flex flex-1 flex-col gap-2 border-t border-white/[0.06] pt-4 text-xs">
         <div className="flex items-start justify-between gap-3">
-          <span className="shrink-0 text-white/40">Route</span>
+          <span className="shrink-0 text-white/40">{t("route")}</span>
           <span className="min-w-0 truncate text-right font-medium text-white/80">
             {destinationLabel}
           </span>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-white/40">Amount</span>
+          <span className="text-white/40">{t("amount")}</span>
           <span className="font-mono text-white/65 tabular-nums">
             {amountLabel}
           </span>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <span className="text-white/40">Saved</span>
+          <span className="text-white/40">{t("saved")}</span>
           <span className="text-white/55">{dateLabel}</span>
         </div>
       </div>
@@ -192,12 +194,12 @@ export function StrategyRow({
           className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl bg-[#229EDF] px-3 text-sm font-semibold text-white transition-colors hover:bg-[#1a8ac9] active:scale-[0.98]"
         >
           <Play className="h-3.5 w-3.5 fill-current" />
-          Execute strategy
+          {t("execute")}
         </button>
         <button
           type="button"
           onClick={onDelete}
-          aria-label={`Delete ${name}`}
+          aria-label={t("deleteAriaLabel", { name })}
           className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-white/40 transition-colors hover:border-red-500/30 hover:bg-red-500/10 hover:text-red-300"
         >
           <Trash2 className="h-3.5 w-3.5" />

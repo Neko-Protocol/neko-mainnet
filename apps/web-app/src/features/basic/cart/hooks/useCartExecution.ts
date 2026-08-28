@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { getTokens, getTokenAddress } from "@/lib/helpers/stellar/swap-kit";
 import { useSwapExecution } from "@/features/shared/swap-engine/hooks/useSwapExecution";
@@ -10,7 +11,8 @@ import {
   useCartStore,
   type CartItem,
 } from "@/features/basic/cart/stores/cart.store";
-import { extractContractErrorOrNull } from "@neko/orchestrator";
+import { extractContractError, getGenericErrorCode } from "@neko/orchestrator";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 
 export type ItemExecutionStatus =
@@ -26,6 +28,8 @@ export interface ItemStatus {
 }
 
 export function useCartExecution() {
+  const t = useTranslations("basic");
+  const getErrorMessage = useApiErrorMessage();
   const { address, networkPassphrase, refetchBalances } = useWallet();
   const { addNotification } = useToast();
   const queryClient = useQueryClient();
@@ -85,12 +89,10 @@ export function useCartExecution() {
           break;
         }
 
-        const contractError = extractContractErrorOrNull(err);
-        const msg = contractError
-          ? `Contract error: ${contractError}`
-          : err instanceof Error
-            ? err.message
-            : "Transaction failed";
+        const errorCode = getGenericErrorCode(err);
+        const msg = errorCode
+          ? getErrorMessage(errorCode)
+          : t("errors.contractError", { error: extractContractError(err) });
         setItemStatus(item.id, { status: "error", errorMsg: msg });
       }
     }
@@ -108,14 +110,17 @@ export function useCartExecution() {
 
     const total = items.length;
     if (successIds.length === total) {
-      addNotification("All purchases complete", "success", {
+      addNotification(t("cartToasts.allComplete"), "success", {
         ...TOAST_CONFIG.defaultOpts,
-        description: `${total} item${total !== 1 ? "s" : ""} added to your wallet`,
+        description: t("cartToasts.itemsAddedToWallet", { count: total }),
       });
       setStatuses({});
     } else if (successIds.length > 0) {
       addNotification(
-        `${successIds.length} of ${total} purchases complete`,
+        t("cartToasts.partialComplete", {
+          success: successIds.length,
+          total,
+        }),
         "warning",
         { ...TOAST_CONFIG.defaultOpts }
       );
@@ -129,6 +134,8 @@ export function useCartExecution() {
     refetchBalances,
     queryClient,
     addNotification,
+    getErrorMessage,
+    t,
   ]);
 
   const getStatus = (item: CartItem): ItemStatus =>

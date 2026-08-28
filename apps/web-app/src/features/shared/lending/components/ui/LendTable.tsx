@@ -8,6 +8,7 @@ import React, {
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
@@ -61,6 +62,7 @@ function ProtocolDropdown({
   options: { id: string; label: string }[];
   disabled?: boolean;
 }) {
+  const tTable = useTranslations("sharedLending.table");
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -76,7 +78,7 @@ function ProtocolDropdown({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const allOptions = [{ id: "all", label: "All protocols" }, ...options];
+  const allOptions = [{ id: "all", label: tTable("allProtocols") }, ...options];
   const selected = allOptions.find((o) => o.id === value) ?? allOptions[0];
 
   return (
@@ -195,6 +197,7 @@ function RangeRow({
   onMinChange: (v: string) => void;
   onMaxChange: (v: string) => void;
 }) {
+  const t = useTranslations("sharedLending.table");
   return (
     <div>
       <p className="text-xs text-white/50 font-medium mb-2">{label}</p>
@@ -202,7 +205,7 @@ function RangeRow({
         <div className="relative flex-1">
           <input
             type="number"
-            placeholder="Min"
+            placeholder={t("min")}
             value={minVal}
             onChange={(e) => onMinChange(e.target.value)}
             className="w-full bg-[#141414] border border-white/10 rounded-lg pl-3 pr-6 py-1.5 text-[11px] text-white placeholder:text-white/20 outline-none focus:border-[#229EDF]/50 transition-colors"
@@ -214,7 +217,7 @@ function RangeRow({
         <div className="relative flex-1">
           <input
             type="number"
-            placeholder="Max"
+            placeholder={t("max")}
             value={maxVal}
             onChange={(e) => onMaxChange(e.target.value)}
             className="w-full bg-[#141414] border border-white/10 rounded-lg pl-3 pr-6 py-1.5 text-[11px] text-white placeholder:text-white/20 outline-none focus:border-[#229EDF]/50 transition-colors"
@@ -237,6 +240,7 @@ function FilterDropdown({
   onChange: (f: FilterState) => void;
   pools: PoolData[];
 }) {
+  const t = useTranslations("sharedLending.table");
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const [open, setOpen] = useState(false);
   const [poolPanelOpen, setPoolPanelOpen] = useState(false);
@@ -288,7 +292,7 @@ function FilterDropdown({
         <ListFilter
           className={`h-3 w-3 shrink-0 transition-colors ${active ? "text-[#229EDF]" : "text-white/50 group-hover:text-white"}`}
         />
-        Filter
+        {t("filter")}
         {active && <span className="h-1.5 w-1.5 rounded-full bg-[#229EDF]" />}
       </button>
 
@@ -297,20 +301,20 @@ function FilterDropdown({
           {/* Left: range filters */}
           <div className="w-64 rounded-xl border border-white/10 bg-[#1C1C1C] shadow-2xl p-4 flex flex-col gap-4">
             <div className="flex items-center justify-between text-xs font-medium text-white/50">
-              <p>Pool</p>
+              <p>{t("pool")}</p>
               <button
                 onClick={() => setPoolPanelOpen((o) => !o)}
                 className={`flex items-center gap-1.5 transition-colors ${filters.selectedPools.length > 0 ? "text-[#229EDF]" : "hover:text-white"}`}
               >
                 {filters.selectedPools.length > 0
-                  ? `${filters.selectedPools.length} selected`
-                  : "All"}
+                  ? t("selectedCount", { count: filters.selectedPools.length })
+                  : t("all")}
                 <SlidersHorizontal className="h-3 w-3" />
               </button>
             </div>
             <div className="border-t border-white/5" />
             <RangeRow
-              label="Supply APY"
+              label={t("statSupplyApy")}
               minVal={filters.apyMin}
               maxVal={filters.apyMax}
               unit="%"
@@ -318,7 +322,7 @@ function FilterDropdown({
               onMaxChange={(v) => onChange({ ...filters, apyMax: v })}
             />
             <RangeRow
-              label="Total Liquidity"
+              label={t("columnLiquidity")}
               minVal={filters.liquidityMin}
               maxVal={filters.liquidityMax}
               unit={selectedCurrency}
@@ -334,7 +338,7 @@ function FilterDropdown({
                 className="flex items-center gap-1.5 text-[11px] text-white/40 hover:text-white/70 transition-colors"
               >
                 <RotateCcw className="h-3 w-3" />
-                Reset
+                {t("reset")}
               </button>
             )}
           </div>
@@ -347,7 +351,7 @@ function FilterDropdown({
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-white/30" />
                   <input
                     type="text"
-                    placeholder="Search pools..."
+                    placeholder={t("searchPoolsPlaceholder")}
                     value={poolSearch}
                     onChange={(e) => setPoolSearch(e.target.value)}
                     className="w-full bg-[#141414] border border-white/10 rounded-lg pl-7 pr-3 py-1.5 text-[11px] text-white placeholder:text-white/25 outline-none focus:border-[#229EDF]/40 transition-colors"
@@ -433,11 +437,11 @@ interface SortState {
   order: SortOrder;
 }
 
-const SORT_FIELDS: { value: SortField; label: string }[] = [
-  { value: "roi", label: "Supply APY" },
-  { value: "liquidity", label: "Total Liquidity" },
-  { value: "totalBorrowed", label: "Total Borrowed" },
-  { value: "name", label: "Pool name" },
+const SORT_FIELDS: { value: SortField; labelKey: string }[] = [
+  { value: "roi", labelKey: "statSupplyApy" },
+  { value: "liquidity", labelKey: "columnLiquidity" },
+  { value: "totalBorrowed", labelKey: "columnTotalBorrowed" },
+  { value: "name", labelKey: "poolName" },
 ];
 
 const DEFAULT_SORT: SortState = { field: "liquidity", order: "desc" };
@@ -449,6 +453,7 @@ function SortDropdown({
   sort: SortState;
   onChange: (s: SortState) => void;
 }) {
+  const t = useTranslations("sharedLending.table");
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -456,16 +461,20 @@ function SortDropdown({
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      const t = e.target as Node;
-      if (!btnRef.current?.contains(t) && !panelRef.current?.contains(t))
+      const target = e.target as Node;
+      if (
+        !btnRef.current?.contains(target) &&
+        !panelRef.current?.contains(target)
+      )
         setOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const fieldLabel =
-    SORT_FIELDS.find((f) => f.value === sort.field)?.label ?? "Sort";
+  const fieldLabel = t(
+    SORT_FIELDS.find((f) => f.value === sort.field)?.labelKey ?? "sortBySection"
+  );
 
   return (
     <div>
@@ -485,7 +494,7 @@ function SortDropdown({
         ) : (
           <ArrowUp className="h-3 w-3 text-white/50 group-hover:text-white transition-colors shrink-0" />
         )}
-        Sort by {fieldLabel}
+        {t("sortByButton", { field: fieldLabel })}
       </button>
 
       {open &&
@@ -499,7 +508,7 @@ function SortDropdown({
             {/* Order section */}
             <div className="px-3 pt-3 pb-1">
               <p className="text-[10px] text-white/30 font-semibold uppercase tracking-wider mb-1">
-                Order
+                {t("order")}
               </p>
               {(["desc", "asc"] as SortOrder[]).map((o) => (
                 <button
@@ -512,7 +521,7 @@ function SortDropdown({
                   ) : (
                     <ArrowUp className="h-3.5 w-3.5 shrink-0" />
                   )}
-                  {o === "desc" ? "Descending" : "Ascending"}
+                  {o === "desc" ? t("descending") : t("ascending")}
                   {sort.order === o && (
                     <span className="ml-auto text-[#229EDF]">✓</span>
                   )}
@@ -525,7 +534,7 @@ function SortDropdown({
             {/* Sort by section */}
             <div className="px-3 pb-3">
               <p className="text-[10px] text-white/30 font-semibold uppercase tracking-wider mb-1">
-                Sort by
+                {t("sortBySection")}
               </p>
               {SORT_FIELDS.map((f) => (
                 <button
@@ -536,7 +545,7 @@ function SortDropdown({
                   }}
                   className="flex w-full items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] transition-colors hover:bg-white/5 text-white/70 hover:text-white"
                 >
-                  {f.label}
+                  {t(f.labelKey)}
                   {sort.field === f.value && (
                     <span className="ml-auto text-[#229EDF]">✓</span>
                   )}
@@ -560,13 +569,13 @@ export type ColumnKey =
   | "totalBorrowed"
   | "borrow";
 
-const ALL_COLUMNS: { key: ColumnKey; label: string }[] = [
-  { key: "protocol", label: "Protocol" },
-  { key: "pool", label: "Pool" },
-  { key: "apy", label: "Supply APY" },
-  { key: "liquidity", label: "Total Liquidity" },
-  { key: "totalBorrowed", label: "Total Borrowed" },
-  { key: "borrow", label: "Borrow APY" },
+const ALL_COLUMNS: { key: ColumnKey; labelKey: string }[] = [
+  { key: "protocol", labelKey: "columnProtocol" },
+  { key: "pool", labelKey: "columnPool" },
+  { key: "apy", labelKey: "columnApy" },
+  { key: "liquidity", labelKey: "columnLiquidity" },
+  { key: "totalBorrowed", labelKey: "columnTotalBorrowed" },
+  { key: "borrow", labelKey: "columnBorrow" },
 ];
 
 export const DEFAULT_VISIBLE_COLUMNS: Set<ColumnKey> = new Set([
@@ -585,6 +594,7 @@ function ColumnsDropdown({
   visible: Set<ColumnKey>;
   onChange: (next: Set<ColumnKey>) => void;
 }) {
+  const t = useTranslations("sharedLending.table");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -593,8 +603,11 @@ function ColumnsDropdown({
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      const t = e.target as Node;
-      if (!btnRef.current?.contains(t) && !panelRef.current?.contains(t))
+      const target = e.target as Node;
+      if (
+        !btnRef.current?.contains(target) &&
+        !panelRef.current?.contains(target)
+      )
         setOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -602,7 +615,7 @@ function ColumnsDropdown({
   }, []);
 
   const filtered = ALL_COLUMNS.filter((c) =>
-    c.label.toLowerCase().includes(search.toLowerCase())
+    t(c.labelKey).toLowerCase().includes(search.toLowerCase())
   );
 
   const toggle = (key: ColumnKey) => {
@@ -627,7 +640,7 @@ function ColumnsDropdown({
           setOpen((o) => !o);
         }}
         className="flex items-center justify-center text-white/40 hover:text-white/70 transition-colors"
-        title="Manage columns"
+        title={t("manageColumns")}
       >
         <Settings className="h-5 w-5" />
       </button>
@@ -646,7 +659,7 @@ function ColumnsDropdown({
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
                 <input
                   type="text"
-                  placeholder="Search columns..."
+                  placeholder={t("searchColumnsPlaceholder")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full bg-[#141414] border border-white/10 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-white/25 outline-none focus:border-[#229EDF]/40 transition-colors"
@@ -668,7 +681,7 @@ function ColumnsDropdown({
                       <span
                         className={`flex-1 text-left text-[12px] font-medium ${isVisible ? "text-white" : "text-white/30"}`}
                       >
-                        {col.label}
+                        {t(col.labelKey)}
                       </span>
                       {isVisible ? (
                         <Eye className="h-4 w-4 text-white/50 shrink-0" />
@@ -837,6 +850,7 @@ export function LendTable({
   protocolOptions = [],
   compact = false,
 }: LendTableProps) {
+  const t = useTranslations("sharedLending.table");
   const router = useRouter();
   const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
   const [sort, setSort] = useState<SortState>(DEFAULT_SORT);
@@ -999,7 +1013,7 @@ export function LendTable({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/30" />
                 <input
                   type="text"
-                  placeholder="Filter pools..."
+                  placeholder={t("searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                   className="w-full bg-transparent border border-white/15 rounded-full pl-8 pr-4 py-1.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-white/30 hover:border-white/25 transition-colors"
@@ -1020,38 +1034,40 @@ export function LendTable({
           <thead className="sticky top-0 bg-[#1C1C1C] z-10">
             <tr className="border-b border-white/5">
               {col("protocol") && (
-                <ColHeader icon={ArrowLeftRight} label="Protocol" />
+                <ColHeader icon={ArrowLeftRight} label={t("headerProtocol")} />
               )}
-              {col("pool") && <ColHeader icon={Layers} label="Pool" />}
+              {col("pool") && (
+                <ColHeader icon={Layers} label={t("headerPool")} />
+              )}
               {col("apy") && (
                 <ColHeader
                   icon={TrendingUp}
-                  tooltip="Annual yield rate you earn by supplying assets"
-                  label="Supply APY"
+                  tooltip={t("supplyApyTooltip")}
+                  label={t("headerSupplyApy")}
                   centered
                 />
               )}
               {col("liquidity") && (
                 <ColHeader
                   icon={Droplets}
-                  tooltip="Total liquidity in pool"
-                  label="Total liquidity"
+                  tooltip={t("totalLiquidityTooltip")}
+                  label={t("headerTotalLiquidity")}
                   centered
                 />
               )}
               {col("totalBorrowed") && (
                 <ColHeader
                   icon={ArrowDownUp}
-                  tooltip="Total amount currently borrowed from this pool"
-                  label="Total Borrowed"
+                  tooltip={t("totalBorrowedTooltip")}
+                  label={t("headerTotalBorrowed")}
                   centered
                 />
               )}
               {col("borrow") && (
                 <ColHeader
                   icon={TrendingUp}
-                  tooltip="Annual cost to borrow from this pool"
-                  label="Borrow APY"
+                  tooltip={t("borrowApyTooltip")}
+                  label={t("headerBorrowApy")}
                   centered
                 />
               )}
@@ -1059,19 +1075,19 @@ export function LendTable({
           </thead>
           <tbody>
             {isLoading ? (
-              <LoadingRow colSpan={colCount} message="fetching more pools" />
+              <LoadingRow colSpan={colCount} message={t("fetchingMorePools")} />
             ) : error ? (
               <EmptyRow
                 colSpan={colCount}
-                message={`Error loading pools: ${String(error)}`}
+                message={t("errorLoadingPools", { error: String(error) })}
                 variant="error"
               />
             ) : pools.length === 0 ? (
-              <EmptyRow colSpan={colCount} message="Loading pools..." />
+              <EmptyRow colSpan={colCount} message={t("loadingPoolsDesktop")} />
             ) : filterEmpty ? (
               <EmptyRow
                 colSpan={colCount}
-                message="No pools match this protocol."
+                message={t("noPoolsMatchProtocol")}
               />
             ) : (
               displayPools.map((pool) => (
@@ -1145,16 +1161,16 @@ export function LendTable({
       {}
       <div className={`md:hidden ${compact ? "" : "min-h-[420px]"}`}>
         {isLoading ? (
-          <MobileEmptyState message="Loading pools…" />
+          <MobileEmptyState message={t("loadingPoolsDesktop")} />
         ) : error ? (
           <MobileEmptyState
-            message={`Error loading pools: ${String(error)}`}
+            message={t("errorLoadingPools", { error: String(error) })}
             variant="error"
           />
         ) : isEmpty ? (
-          <MobileEmptyState message="Loading Pools..." />
+          <MobileEmptyState message={t("loadingPoolsMobile")} />
         ) : filterEmpty ? (
-          <MobileEmptyState message="No pools match this protocol." />
+          <MobileEmptyState message={t("noPoolsMatchProtocol")} />
         ) : (
           <>
             <ul className="divide-y divide-white/5 overflow-y-auto max-h-[600px]">
@@ -1175,31 +1191,31 @@ export function LendTable({
                     className={`grid gap-2 ${pool.borrowApy ? "grid-cols-2" : "grid-cols-3"}`}
                   >
                     <StatCell
-                      label="Supply APY"
+                      label={t("statSupplyApy")}
                       value={pool.roi}
                       icon={TrendingUp}
                     />
                     <StatCell
-                      label="Liquidity"
+                      label={t("statLiquidity")}
                       value={pool.liquidity}
                       icon={Droplets}
                     />
                     {pool.borrowApy ? (
                       <>
                         <StatCell
-                          label="Borrow APY"
+                          label={t("statBorrowApy")}
                           value={pool.borrowApy}
                           icon={TrendingUp}
                         />
                         <StatCell
-                          label="Borrowed"
+                          label={t("statBorrowed")}
                           value={pool.totalBorrowed ?? "—"}
                           icon={ArrowDownUp}
                         />
                       </>
                     ) : (
                       <StatCell
-                        label="Borrowed"
+                        label={t("statBorrowed")}
                         value={pool.totalBorrowed ?? "—"}
                         icon={ArrowDownUp}
                       />
@@ -1276,6 +1292,7 @@ function MobileEmptyState({
 }
 
 function BottomFetchingIndicator() {
+  const t = useTranslations("sharedLending.table");
   return (
     <div className="flex items-center justify-center gap-2 text-sm text-white/50">
       <span
@@ -1283,7 +1300,7 @@ function BottomFetchingIndicator() {
         style={{ width: 14, height: 14 }}
         aria-hidden="true"
       />
-      <span>Fetching more pools</span>
+      <span>{t("fetchingMorePoolsIndicator")}</span>
     </div>
   );
 }

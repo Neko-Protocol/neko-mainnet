@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useVaultApy } from "@/features/shared/vault/hooks/useVaultApy";
@@ -71,6 +72,8 @@ function StrategyRecap({
   apy: number | null;
   isLoading: boolean;
 }) {
+  const t = useTranslations("simulator.returnStep");
+  const tProtocol = useTranslations("simulator");
   const iconSrc = getTokenIcon(token.code) ?? token.iconSrc;
   const hasPositiveApy = apy !== null && !Number.isNaN(apy) && apy > 0;
 
@@ -100,7 +103,7 @@ function StrategyRecap({
           {destination.name}
         </span>
         <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/50">
-          {destination.protocol}
+          {tProtocol(destination.protocol)}
         </span>
       </div>
 
@@ -114,7 +117,7 @@ function StrategyRecap({
         ) : (
           <span className="text-sm font-bold text-white/30">-</span>
         )}
-        <p className="text-[10px] text-white/30">APY</p>
+        <p className="text-[10px] text-white/30">{t("apy")}</p>
       </div>
     </div>
   );
@@ -131,6 +134,8 @@ function EarningsPanel({
   hasPrice: boolean;
   isLoading: boolean;
 }) {
+  const t = useTranslations("simulator.returnStep");
+  const tLabels = useTranslations("simulator");
   const selectedCurrency = useCurrencyStore((s) => s.selectedCurrency);
   const { rate: fxRate } = useFxRate({ currency: selectedCurrency });
 
@@ -147,7 +152,7 @@ function EarningsPanel({
       {/* Hero: 1-year earnings */}
       <div className="rounded-2xl border border-white/8 bg-[#1E1E1E] px-5 py-5">
         <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/40">
-          Projected after 1 year
+          {t("projectedAfterYear")}
         </p>
         {isLoading ? (
           <div className="h-10 w-40 rounded-lg bg-white/10" />
@@ -169,9 +174,7 @@ function EarningsPanel({
             )}
           </div>
         ) : null}
-        <p className="mt-3 text-xs text-white/30">
-          Estimate based on current rate. Actual returns will vary.
-        </p>
+        <p className="mt-3 text-xs text-white/30">{t("estimateDisclaimer")}</p>
       </div>
 
       {/* 1 month + 6 months chips */}
@@ -182,7 +185,7 @@ function EarningsPanel({
             className="rounded-xl border border-white/8 bg-[#1E1E1E] px-4 py-3"
           >
             <p className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-white/40">
-              {p.periodLabel}
+              {tLabels(p.periodLabel)}
             </p>
             {isLoading ? (
               <div className="h-5 w-20 rounded bg-white/10" />
@@ -239,6 +242,7 @@ export function ReturnSimulatorStep({
   onSaveStrategy,
   showSaveStrategy = false,
 }: ReturnSimulatorStepProps) {
+  const t = useTranslations("simulator.returnStep");
   const { balances, address } = useWallet();
   const walletConnected = Boolean(address);
 
@@ -441,15 +445,21 @@ export function ReturnSimulatorStep({
           <header className="flex shrink-0 flex-col gap-1">
             <h2 className="text-xl font-semibold text-white">
               {isYieldOnlyHold
-                ? `Watch your ${earningsTokenLabel} grow`
-                : "See what you could earn"}
+                ? t("headerWithToken", { token: earningsTokenLabel })
+                : t("headerGeneric")}
             </h2>
             <p className="text-sm text-white/50">
               {stableFundsBondPurchase
                 ? depositVenue
-                  ? `Enter how much ${token.code} to use. We'll swap it to ${bondSymbolResolved} and deposit it for you.`
-                  : `Enter how much ${token.code} to use. We'll swap it to ${bondSymbolResolved} for you.`
-                : "Enter an amount to see your projected earnings."}
+                  ? t("subheaderSwapDeposit", {
+                      token: token.code,
+                      bondSymbol: bondSymbolResolved,
+                    })
+                  : t("subheaderSwap", {
+                      token: token.code,
+                      bondSymbol: bondSymbolResolved,
+                    })
+                : t("subheaderGeneric")}
             </p>
           </header>
 
@@ -468,14 +478,14 @@ export function ReturnSimulatorStep({
               className="text-xs font-semibold uppercase tracking-widest text-white/40"
             >
               {stableFundsBondPurchase
-                ? `How much ${token.code}?`
-                : "How much?"}
+                ? t("amountLabelWithToken", { token: token.code })
+                : t("amountLabelGeneric")}
             </label>
             <div className="mt-2 flex items-center gap-2">
               <input
                 id="simulator-amount"
                 inputMode="decimal"
-                placeholder="0.00"
+                placeholder={t("amountPlaceholder")}
                 value={amount}
                 onChange={(e) => {
                   const next = e.target.value.replace(/[^0-9.]/g, "");
@@ -512,8 +522,13 @@ export function ReturnSimulatorStep({
             <div className="mt-3 flex flex-wrap items-center justify-between gap-1 text-xs text-white/50">
               <span>
                 {token.hasWallet
-                  ? `Balance: ${formatAmount(walletBalanceForAmount)} ${stableFundsBondPurchase ? token.code : amountAssetCode}`
-                  : "Connect wallet to deposit"}
+                  ? t("balance", {
+                      amount: formatAmount(walletBalanceForAmount),
+                      token: stableFundsBondPurchase
+                        ? token.code
+                        : amountAssetCode,
+                    })
+                  : t("connectToDeposit")}
               </span>
               {token.hasWallet && walletBalanceForAmount > 0 && (
                 <button
@@ -521,7 +536,7 @@ export function ReturnSimulatorStep({
                   onClick={handleMax}
                   className="rounded-full bg-[#229EDF]/10 px-3 py-1 text-xs font-semibold text-[#229EDF] hover:bg-[#229EDF]/20"
                 >
-                  Max
+                  {t("max")}
                 </button>
               )}
             </div>
@@ -529,20 +544,25 @@ export function ReturnSimulatorStep({
             {stableFundsBondPurchase && stableAmountNum > 0 && (
               <div className="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/70">
                 {swapQuote.isFetching ? (
-                  <span>Fetching swap estimate…</span>
+                  <span>{t("fetchingQuote")}</span>
                 ) : swapQuote.isError ? (
                   <span className="text-amber-200/90">
-                    Could not price {token.code} → {bondSymbolResolved}. Try a
-                    smaller amount or swap manually on the Swap page.
+                    {t("quoteError", {
+                      from: token.code,
+                      to: bondSymbolResolved,
+                    })}
                   </span>
                 ) : swapQuote.data ? (
                   <span>
-                    ≈{" "}
-                    <span className="font-mono font-semibold text-white">
-                      {formatAmount(swapQuote.data.bondOutHuman)}{" "}
-                      {bondSymbolResolved}
-                    </span>{" "}
-                    after swap (estimate; actual output may differ slightly).
+                    {t.rich("quoteSuccess", {
+                      amount: formatAmount(swapQuote.data.bondOutHuman),
+                      symbol: bondSymbolResolved,
+                      mono: (chunks) => (
+                        <span className="font-mono font-semibold text-white">
+                          {chunks}
+                        </span>
+                      ),
+                    })}
                   </span>
                 ) : null}
               </div>
@@ -553,7 +573,7 @@ export function ReturnSimulatorStep({
               bondHold.bondSymbol &&
               !stableFundsBondPurchase && (
                 <p className="mt-2 text-xs text-white/40">
-                  Projections are in {bondHold.bondSymbol}.
+                  {t("projectionsIn", { symbol: bondHold.bondSymbol })}
                 </p>
               )}
           </div>
@@ -572,7 +592,7 @@ export function ReturnSimulatorStep({
             />
           ) : (
             <div className="rounded-2xl border border-white/8 bg-[#1E1E1E] px-5 py-8 text-center text-sm text-white/30">
-              Enter an amount above to see your projected earnings.
+              {t("emptyState")}
             </div>
           )}
         </div>
@@ -590,7 +610,7 @@ export function ReturnSimulatorStep({
               }}
               className="rounded-full border border-white/10 px-5 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/5"
             >
-              Back
+              {t("back")}
             </button>
           </div>
 
@@ -602,7 +622,7 @@ export function ReturnSimulatorStep({
                 onClick={onSaveStrategy}
                 className="rounded-full border border-white/15 px-5 py-2.5 text-sm font-medium text-white/70 transition-colors hover:border-white/30 hover:text-white"
               >
-                Save strategy
+                {t("saveStrategy")}
               </button>
             )}
             {!canDeposit ? (
@@ -616,7 +636,7 @@ export function ReturnSimulatorStep({
                     : "border border-white/15 text-white hover:bg-white/5"
                 )}
               >
-                Got it
+                {t("gotIt")}
               </button>
             ) : (
               <button
@@ -636,17 +656,19 @@ export function ReturnSimulatorStep({
               >
                 {!walletConnected
                   ? isSwapOnly
-                    ? "Connect wallet to buy"
+                    ? t("cta.connectToBuy")
                     : useSwapThenDeposit
-                      ? "Connect wallet to swap & deposit"
-                      : "Connect wallet to deposit"
+                      ? t("cta.connectToSwapDeposit")
+                      : t("cta.connectToDeposit")
                   : isSwapDepositPending
-                    ? "Swapping…"
+                    ? t("cta.swapping")
                     : isSwapOnly
-                      ? `Buy ${bondHold?.bondSymbol ?? bondSymbolResolved}`
+                      ? t("cta.buy", {
+                          symbol: bondHold?.bondSymbol ?? bondSymbolResolved,
+                        })
                       : useSwapThenDeposit
-                        ? "Swap & deposit"
-                        : "Deposit"}
+                        ? t("cta.swapDeposit")
+                        : t("cta.deposit")}
               </button>
             )}
           </div>

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { X, RefreshCw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ModalPortal } from "@/components/ui/ModalPortal";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import { decimalToAtomic } from "@neko/orchestrator";
@@ -31,6 +32,7 @@ export function LendModal({
   onRefreshBalance,
 }: LendModalProps) {
   const [amount, setAmount] = useState("");
+  const t = useTranslations("sharedLending.modal");
 
   const isAggregated = !!pool.isAggregated;
   const isPairPool =
@@ -41,18 +43,18 @@ export function LendModal({
     : pool.token1;
   const withdrawLabel =
     pool.withdrawAction === "withdrawCollateral"
-      ? "Remove Collateral"
-      : "Withdraw";
+      ? t("withdrawLabelRemoveCollateral")
+      : t("withdrawLabelWithdraw");
   const withdrawUnitLabel =
     isPairWithdraw && pool.withdrawUnit === "lp_shares"
-      ? "LP shares"
+      ? t("lpShares")
       : pool.token1;
   const positionDisplay = `${pool.depositedAmount} ${withdrawUnitLabel}`;
   const inputLabel = isDeposit
-    ? `Amount to Deposit (${pool.token1})`
+    ? t("amountToDeposit", { token: pool.token1 })
     : isPairWithdraw
-      ? `Amount to Withdraw (${pairLabel})`
-      : `Amount to ${withdrawLabel} (${pool.token1})`;
+      ? t("amountToWithdrawPair", { pair: pairLabel })
+      : t("amountToAction", { action: withdrawLabel, token: pool.token1 });
   const estimatedSecondaryOut = useMemo(() => {
     if (
       !isPairWithdraw ||
@@ -115,14 +117,14 @@ export function LendModal({
 
   const stats = isAggregated
     ? [
-        { label: "Supply APY", value: pool.roi },
-        { label: "Liquidity", value: pool.liquidity },
+        { label: t("statSupplyApy"), value: pool.roi },
+        { label: t("statLiquidity"), value: pool.liquidity },
       ]
     : [
-        { label: "Supply APY", value: pool.roi },
-        { label: "Liquidity", value: pool.liquidity },
+        { label: t("statSupplyApy"), value: pool.roi },
+        { label: t("statLiquidity"), value: pool.liquidity },
         {
-          label: "bToken Rate",
+          label: t("statBTokenRate"),
           value: pool.bTokenRate
             ? formatAmount(pool.bTokenRate)
             : formatAmount(1),
@@ -134,7 +136,9 @@ export function LendModal({
       <div className="bg-[#1C1C1C] border border-white/10 rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl p-4 sm:p-5 animate__animated animate__fadeInUp animate__faster">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-white text-lg font-bold">
-            {isDeposit ? "Deposit" : withdrawLabel} — {pool.name}
+            {isDeposit
+              ? t("depositTitle", { name: pool.name })
+              : `${withdrawLabel} — ${pool.name}`}
           </h3>
           <button
             onClick={onClose}
@@ -161,7 +165,9 @@ export function LendModal({
 
         {!isDeposit && pool.depositedAmount && (
           <div className="mb-3 rounded-xl bg-[#229EDF]/10 border border-[#229EDF]/20 p-3">
-            <p className="text-[#229EDF]/70 text-xs mb-0.5">Your Position</p>
+            <p className="text-[#229EDF]/70 text-xs mb-0.5">
+              {t("yourPosition")}
+            </p>
             <p className="text-[#229EDF] font-bold text-base">
               {positionDisplay}
             </p>
@@ -178,9 +184,11 @@ export function LendModal({
         {!isDeposit && !isAggregated && (
           <div className="mb-3 rounded-xl bg-[#229EDF]/10 border border-[#229EDF]/20 p-3 flex items-center justify-between">
             <div className="min-w-0">
-              <p className="text-[#229EDF]/70 text-xs">Your bToken Balance</p>
+              <p className="text-[#229EDF]/70 text-xs">
+                {t("yourBTokenBalance")}
+              </p>
               <p className="text-[#229EDF] font-bold text-base truncate">
-                {isLoadingBalance ? "Loading…" : (bTokenBalance ?? "--")} b
+                {isLoadingBalance ? t("loading") : (bTokenBalance ?? "--")} b
                 {pool.token1}
               </p>
             </div>
@@ -203,7 +211,7 @@ export function LendModal({
           <div className="relative">
             <input
               type="number"
-              placeholder="0.00"
+              placeholder={t("amountPlaceholder")}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               disabled={isLoading}
@@ -215,26 +223,30 @@ export function LendModal({
                 onClick={() => setAmount(pool.depositedAmount!)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[#229EDF] text-xs font-bold hover:text-[#1a8bc7] transition-colors"
               >
-                Max
+                {t("max")}
               </button>
             )}
           </div>
           {!isDeposit && !isAggregated && amount && bTokensToBurn && (
             <p className="text-white/30 text-xs mt-1 italic">
-              You will burn ~{formatAmount(bTokensToBurn)} bTokens
+              {t("burnEstimate", { amount: formatAmount(bTokensToBurn) })}
             </p>
           )}
           {isPairWithdraw &&
             estimatedSecondaryOut &&
             pool.secondaryAssetCode && (
               <p className="text-white/40 text-xs mt-1">
-                Estimated output: {amount} {pool.token1} +{" "}
-                {estimatedSecondaryOut} {pool.secondaryAssetCode}
+                {t("estimatedOutput", {
+                  amount,
+                  token: pool.token1,
+                  secondaryAmount: estimatedSecondaryOut,
+                  secondaryToken: pool.secondaryAssetCode,
+                })}
               </p>
             )}
           {!isDeposit && exceedsAggregatedPosition && (
             <p className="text-red-400/90 text-xs mt-1">
-              Amount exceeds your withdrawable position
+              {t("exceedsPosition")}
             </p>
           )}
         </div>
@@ -245,7 +257,7 @@ export function LendModal({
             disabled={isLoading}
             className="flex-1 rounded-xl border border-white/10 py-2.5 text-white/60 font-semibold text-sm hover:bg-white/5 transition-colors disabled:opacity-50"
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             onClick={() => void onConfirm(amount)}
@@ -253,12 +265,12 @@ export function LendModal({
             className="flex-1 rounded-xl bg-[#229EDF] py-2.5 text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading
-              ? "Processing…"
+              ? t("processing")
               : !hasWallet
-                ? "Connect Wallet"
+                ? t("connectWallet")
                 : isDeposit
-                  ? "Confirm Deposit"
-                  : `Confirm ${withdrawLabel}`}
+                  ? t("confirmDeposit")
+                  : t("confirmAction", { action: withdrawLabel })}
           </button>
         </div>
       </div>

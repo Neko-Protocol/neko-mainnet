@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { useToast } from "@/hooks/useToast";
 
 const DEFAULT_RESET_MS = 1500;
@@ -9,6 +10,7 @@ export function useCopyToClipboard(options?: {
 }) {
   const { resetMs = DEFAULT_RESET_MS, showNotification = false } =
     options ?? {};
+  const t = useTranslations("sharedSettings.clipboard");
   const { addNotification } = useToast();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
@@ -17,14 +19,14 @@ export function useCopyToClipboard(options?: {
       void navigator.clipboard.writeText(value).then(() => {
         setCopiedKey(key);
         if (showNotification) {
-          addNotification("Copied to clipboard", "success");
+          addNotification(t("copiedToast"), "success");
         }
         if (resetMs > 0) {
           setTimeout(() => setCopiedKey(null), resetMs);
         }
       });
     },
-    [resetMs, showNotification, addNotification]
+    [resetMs, showNotification, addNotification, t]
   );
 
   return { copy, copiedKey } as const;

@@ -11,20 +11,31 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Info, TrendingUp } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { AppTooltip } from "@/components/ui/AppTooltip";
 import { fromSmallestUnit } from "@neko/orchestrator";
 import { formatCurrency } from "@/lib/helpers/currency";
+import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 import type { SupportedCurrency } from "@/stores/currency.store";
-import { useVaultPpsHistory } from "@/features/shared/vault/hooks/useVaultPpsHistory";
+import {
+  useVaultPpsHistory,
+  type VaultPpsPoint,
+} from "@/features/shared/vault/hooks/useVaultPpsHistory";
 
 const ONE_SHARE = 1_000_000_000_000n;
 const MS_PER_YEAR = 365 * 24 * 60 * 60 * 1000;
 const SECONDS_PER_YEAR = 365 * 24 * 60 * 60;
 const INTRO_DURATION_MS = 1200;
+const HISTORY_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+const HISTORY_BUCKET_MS = 4 * 60 * 60 * 1000;
+const MAX_PROJECTION_MS = 7 * 24 * 60 * 60 * 1000;
+const EMPTY_PPS_POINTS: VaultPpsPoint[] = [];
 
-function formatChartLabel(t: number): string {
-  const d = new Date(t);
-  return `${d.getDate()} ${d.toLocaleString("en-US", { month: "short" })}`;
+function formatChartLabel(
+  t: number,
+  formatDate: ReturnType<typeof useLocaleFormatter>["formatDate"]
+): string {
+  return formatDate(new Date(t), { day: "numeric", month: "short" });
 }
 
 function easeOutCubic(p: number): number {
@@ -40,10 +51,7 @@ function useCountUp(target: number, durationMs = 1000, enabled = true): number {
   const [value, setValue] = useState(skipAnimation ? target : 0);
 
   useEffect(() => {
-    if (skipAnimation) {
-      setValue(target);
-      return;
-    }
+    if (skipAnimation) return;
 
     let rafId = 0;
     const start = performance.now();
@@ -56,7 +64,6 @@ function useCountUp(target: number, durationMs = 1000, enabled = true): number {
       }
     };
 
-    setValue(0);
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
   }, [target, durationMs, skipAnimation]);
@@ -89,27 +96,31 @@ export function LiveEarningsCard({
   tokenPriceInCurrency?: number;
   selectedCurrency?: SupportedCurrency;
 }) {
+  const t = useTranslations("sharedVault.earningsCard");
+  const { formatDate } = useLocaleFormatter();
   const prefersReduced =
     typeof window !== "undefined" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const apyDecimal = Math.max(0, apyPercent) / 100;
   const perSecond = apyDecimal / SECONDS_PER_YEAR;
+  const [chartNow] = useState(Date.now);
 
   const liveBaseRef = useRef(currentValue);
-  const liveStartRef = useRef(Date.now());
+  const liveStartRef = useRef(0);
   const introDoneRef = useRef(prefersReduced);
-  const [displayValue, setDisplayValue] = useState(currentValue);
+  const [displayValue, setDisplayValue] = useState(
+    prefersReduced ? currentValue : 0
+  );
 
   const depositedAnim = useCountUp(netDeposited);
   const apyAnim = useCountUp(apyPercent, 1000, apyPercent > 0);
 
   const { data } = useVaultPpsHistory(vaultId);
-  const points = data?.points ?? [];
+  const points = data?.points ?? EMPTY_PPS_POINTS;
 
   useEffect(() => {
     if (prefersReduced) {
-      setDisplayValue(currentValue);
       liveBaseRef.current = currentValue;
       liveStartRef.current = Date.now();
       introDoneRef.current = true;
@@ -133,7 +144,6 @@ export function LiveEarningsCard({
       }
     };
 
-    setDisplayValue(0);
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
   }, [currentValue, prefersReduced]);
@@ -151,7 +161,11 @@ export function LiveEarningsCard({
   }, [apyDecimal, perSecond, prefersReduced]);
 
   const { chartData, isModeled } = useMemo(() => {
-    const now = Date.now();
+    const now = chartNow;
+    const historyStart = Math.max(
+      firstDepositMs ?? now - HISTORY_WINDOW_MS,
+      now - HISTORY_WINDOW_MS
+    );
 
     type HistoryPoint = {
       t: number;
@@ -162,8 +176,15 @@ export function LiveEarningsCard({
     let historyPoints: HistoryPoint[] = [];
     let modeled = false;
 
-    if (points.length >= 2 && userShares > 0n) {
-      historyPoints = points.map((point) => {
+    const sampledPoints = new Map<number, (typeof points)[number]>();
+    for (const point of points) {
+      const timestamp = Date.parse(point.recordedAt);
+      if (!Number.isFinite(timestamp) || timestamp < historyStart) continue;
+      sampledPoints.set(Math.floor(timestamp / HISTORY_BUCKET_MS), point);
+    }
+
+    if (sampledPoints.size >= 2 && userShares > 0n) {
+      historyPoints = [...sampledPoints.values()].map((point) => {
         const underlyingStroops = (userShares * BigInt(point.pps)) / ONE_SHARE;
         const value = parseFloat(
           fromSmallestUnit(underlyingStroops.toString(), 7)
@@ -176,7 +197,7 @@ export function LiveEarningsCard({
       });
     } else {
       modeled = true;
-      const startTs = firstDepositMs ?? now - 30 * 86400000;
+      const startTs = historyStart;
       const count = 40;
       const span = Math.max(now - startTs, 1);
 
@@ -199,12 +220,15 @@ export function LiveEarningsCard({
       }
     }
 
-    const projectionCount = 20;
-    const projectionEnd = now + 30 * 86400000;
-    const projectionSpan = projectionEnd - now;
+    const projectionCount = 12;
+    const firstHistoryTimestamp = historyPoints[0]?.t ?? historyStart;
+    const projectionSpan = Math.min(
+      MAX_PROJECTION_MS,
+      Math.max(now - firstHistoryTimestamp, 1)
+    );
 
     const rows: {
-      label: string;
+      timestamp: number;
       actual: number | null;
       projected: number | null;
     }[] = [];
@@ -213,13 +237,13 @@ export function LiveEarningsCard({
       const p = historyPoints[i];
       if (modeled && i === historyPoints.length - 1) {
         rows.push({
-          label: formatChartLabel(p.t),
+          timestamp: p.t,
           actual: currentValue,
           projected: currentValue,
         });
       } else {
         rows.push({
-          label: formatChartLabel(p.t),
+          timestamp: p.t,
           actual: p.value,
           projected: null,
         });
@@ -228,18 +252,18 @@ export function LiveEarningsCard({
 
     if (!modeled) {
       rows.push({
-        label: formatChartLabel(now),
+        timestamp: now,
         actual: currentValue,
         projected: currentValue,
       });
     }
 
     for (let i = 1; i < projectionCount; i++) {
-      const t = now + (i / (projectionCount - 1)) * projectionSpan;
-      const yearsForward = (t - now) / MS_PER_YEAR;
+      const projectedTs = now + (i / (projectionCount - 1)) * projectionSpan;
+      const yearsForward = (projectedTs - now) / MS_PER_YEAR;
       const value = currentValue * (1 + apyDecimal * yearsForward);
       rows.push({
-        label: formatChartLabel(t),
+        timestamp: projectedTs,
         actual: null,
         projected: value,
       });
@@ -253,17 +277,8 @@ export function LiveEarningsCard({
     netDeposited,
     firstDepositMs,
     apyDecimal,
+    chartNow,
   ]);
-
-  const tickIndices = useMemo(
-    () =>
-      new Set(
-        chartData
-          .map((_, i) => i)
-          .filter((i) => i % 12 === 0 || i === chartData.length - 1)
-      ),
-    [chartData]
-  );
 
   const yDomain = useMemo((): [number, number] => {
     const values = chartData.flatMap((d) =>
@@ -277,7 +292,8 @@ export function LiveEarningsCard({
 
   if (currentValue <= 0) return null;
 
-  const liveEarnings = Math.max(0, displayValue - netDeposited);
+  const renderedValue = prefersReduced ? currentValue : displayValue;
+  const liveEarnings = Math.max(0, renderedValue - netDeposited);
   const showEarningsPulse = apyDecimal > 0 && !prefersReduced;
   const statEnterClass = prefersReduced
     ? ""
@@ -286,7 +302,9 @@ export function LiveEarningsCard({
   return (
     <div className="animate-in fade-in">
       <div className="flex items-center gap-2 mb-4">
-        <h3 className="text-white/70 text-sm font-medium">Your earnings</h3>
+        <h3 className="text-white/70 text-sm font-medium">
+          {t("yourEarnings")}
+        </h3>
         <Info size={13} className="text-white/30" />
       </div>
 
@@ -295,16 +313,16 @@ export function LiveEarningsCard({
         style={{ background: "#1a1a1a" }}
       >
         <div className="mb-5">
-          <p className="text-white/40 text-xs mb-1">Current value</p>
+          <p className="text-white/40 text-xs mb-1">{t("currentValue")}</p>
           <p className="text-white text-3xl sm:text-4xl font-bold tabular-nums leading-none [font-variant-numeric:tabular-nums]">
-            {displayValue.toFixed(6)} {assetSymbol}
+            {renderedValue.toFixed(6)} {assetSymbol}
           </p>
           {tokenPriceInCurrency != null &&
             tokenPriceInCurrency > 0 &&
             selectedCurrency != null && (
               <p className="text-white/40 text-sm mt-1.5 tabular-nums">
                 {formatCurrency(
-                  displayValue * tokenPriceInCurrency,
+                  renderedValue * tokenPriceInCurrency,
                   selectedCurrency,
                   4
                 )}
@@ -325,7 +343,7 @@ export function LiveEarningsCard({
               {assetSymbol}
             </span>
             <span className="text-white/30 text-xs">
-              earned since first deposit
+              {t("earnedSinceFirstDeposit")}
             </span>
           </div>
         </div>
@@ -347,12 +365,19 @@ export function LiveEarningsCard({
               vertical={false}
             />
             <XAxis
-              dataKey="label"
+              dataKey="timestamp"
+              type="number"
+              scale="time"
+              domain={["dataMin", "dataMax"]}
+              tickCount={6}
               tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 11 }}
               tickLine={false}
               axisLine={false}
               interval="preserveStartEnd"
-              tickFormatter={(v, i) => (tickIndices.has(i) ? v : "")}
+              minTickGap={36}
+              tickFormatter={(timestamp) =>
+                formatChartLabel(Number(timestamp), formatDate)
+              }
             />
             <YAxis
               domain={yDomain}
@@ -372,8 +397,15 @@ export function LiveEarningsCard({
               }}
               formatter={(v: number) => [
                 `${v.toFixed(4)} ${assetSymbol}`,
-                "Value",
+                t("value"),
               ]}
+              labelFormatter={(timestamp) =>
+                formatDate(new Date(Number(timestamp)), {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })
+              }
               labelStyle={{
                 color: "rgba(255,255,255,0.5)",
                 marginBottom: 4,
@@ -388,7 +420,6 @@ export function LiveEarningsCard({
               fill="url(#liveGrad)"
               dot={false}
               isAnimationActive
-              connectNulls
             />
             <Area
               type="monotone"
@@ -398,7 +429,6 @@ export function LiveEarningsCard({
               strokeDasharray="4 4"
               fill="transparent"
               dot={false}
-              connectNulls
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -409,11 +439,11 @@ export function LiveEarningsCard({
               className="inline-block w-4 h-0 border-t-2 border-dashed border-emerald-500"
               aria-hidden
             />
-            Projected at {apyPercent.toFixed(2)}% APY
+            {t("projectedAt", { apy: apyPercent.toFixed(2) })}
           </span>
           {isModeled && (
             <span className="text-white/25 text-xs">
-              Estimated from APY until live history accumulates.
+              {t("projectedDescription")}
             </span>
           )}
         </div>
@@ -425,7 +455,7 @@ export function LiveEarningsCard({
             className={statEnterClass}
             style={prefersReduced ? undefined : { animationDelay: "60ms" }}
           >
-            <p className="text-white/40 text-xs mb-1">Deposited</p>
+            <p className="text-white/40 text-xs mb-1">{t("deposited")}</p>
             <p className="text-white font-bold text-sm tabular-nums">
               {depositedAnim.toFixed(2)} {assetSymbol}
             </p>
@@ -435,15 +465,15 @@ export function LiveEarningsCard({
             style={prefersReduced ? undefined : { animationDelay: "120ms" }}
           >
             <div className="flex items-center gap-1 mb-1">
-              <p className="text-white/40 text-xs">Effective APY</p>
+              <p className="text-white/40 text-xs">{t("effectiveApy")}</p>
               <AppTooltip
-                content="This is your annualized return based on actual earnings since your first deposit. This may differ from the vault's current APY, which reflects today's rate. Effective rate averages over your entire holding period, including earlier periods when the rate may have been different."
+                content={t("effectiveApyTooltip")}
                 widthClassName="w-64"
                 position="top"
               >
                 <button
                   type="button"
-                  aria-label="More information about Effective APY"
+                  aria-label={t("effectiveApyAriaLabel")}
                   className="inline-flex h-4 w-4 items-center justify-center rounded-full text-white/40 hover:text-white/70 transition-colors"
                 >
                   <Info className="h-3 w-3" />

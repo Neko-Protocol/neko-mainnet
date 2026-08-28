@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
@@ -42,6 +43,7 @@ const PortfolioSummaryCard: React.FC<PortfolioSummaryCardProps> = ({
   vaults,
   userBalances,
 }) => {
+  const t = useTranslations("sharedVault.summary");
   const positionVaults = vaults.filter((v) => (userBalances[v.id] ?? 0n) > 0n);
   const earnings = useVaultEarningsCard(positionVaults, userBalances);
 
@@ -141,22 +143,22 @@ const PortfolioSummaryCard: React.FC<PortfolioSummaryCardProps> = ({
 
   const stats = [
     {
-      label: "Total Deposited",
+      label: t("totalDeposited"),
       value: formatCurrency(totalDeposited, selectedCurrency, 2),
       valueClassName: "text-white",
     },
     {
-      label: "Total Earnings",
+      label: t("totalEarnings"),
       value: formatCurrency(totalEarnings, selectedCurrency, 2),
       valueClassName: "text-green-400",
     },
     {
-      label: "Net APY",
+      label: t("netApy"),
       value: `${netApy.toFixed(2)}%`,
       valueClassName: "text-green-400",
     },
     {
-      label: "Projected Yield / yr",
+      label: t("projectedYield"),
       value: formatCurrency(projectedYield, selectedCurrency, 2),
       valueClassName: "text-white",
     },
@@ -170,7 +172,7 @@ const PortfolioSummaryCard: React.FC<PortfolioSummaryCardProps> = ({
 
       <div className="flex items-center px-4 py-3 border-b border-white/5">
         <span className="text-white/40 text-xs font-semibold uppercase tracking-wide">
-          Portfolio Summary
+          {t("title")}
         </span>
       </div>
 

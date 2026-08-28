@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTranslations } from "next-intl";
 import { TransactionBuilder, rpc } from "@stellar/stellar-sdk";
 import { Client as DefindexVaultClient } from "@neko/defindex-vault";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,7 +20,11 @@ import {
 import { useMultisigDetection } from "@/features/shared/vault/hooks/useMultisigDetection";
 import { lobstrVaultService } from "@/features/shared/vault/services/lobstr-vault.service";
 import { usePendingMultisigTxsStore } from "@/features/shared/wallet/stores/pendingMultisigTxs.store";
-import { extractContractErrorOrNull } from "@neko/orchestrator";
+import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
+import {
+  extractContractErrorOrNull,
+  getGenericErrorCode,
+} from "@neko/orchestrator";
 import { toSmallestUnit, fromSmallestUnit } from "@neko/orchestrator";
 import {
   applySlippageBps,
@@ -90,7 +95,8 @@ async function signAndSubmit(
     opts: { networkPassphrase: string; address?: string }
   ) => Promise<string | { signedTxXdr?: string }>,
   address: string,
-  isMultisig: boolean
+  isMultisig: boolean,
+  lobstrRejectedMessage: (error: string) => string
 ): Promise<SignAndSubmitResult> {
   const server = new rpc.Server(configRpcUrl, {
     allowHttp: stellarNetwork === "LOCAL",
@@ -103,7 +109,7 @@ async function signAndSubmit(
   if (isMultisig) {
     const result = await lobstrVaultService.submitForCosigning(signedTxXdr);
     if (!result.ok) {
-      throw new Error(`Lobstr Vault rejected the transaction: ${result.error}`);
+      throw new Error(lobstrRejectedMessage(result.error));
     }
     return { kind: "multisig_pending", hash };
   }
@@ -160,6 +166,9 @@ export function useVaultAction(
   supplyAssetSymbol = "tokens",
   vaultShareSymbol?: string
 ) {
+  const t = useTranslations("sharedVault.errors");
+  const tToasts = useTranslations("sharedVault.toasts");
+  const getErrorMessage = useApiErrorMessage();
   const [isLoading, setIsLoading] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -188,19 +197,19 @@ export function useVaultAction(
 
   const showError = useCallback(
     (msg: string) =>
-      addNotification("Something went wrong", "error", {
+      addNotification(t("genericErrorTitle"), "error", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
       }),
-    [addNotification]
+    [addNotification, t]
   );
   const showSuccess = useCallback(
     (msg: string) =>
-      addNotification("Success", "success", {
+      addNotification(t("successTitle"), "success", {
         ...TOAST_CONFIG.defaultOpts,
         description: msg,
       }),
-    [addNotification]
+    [addNotification, t]
   );
 
   const handleDeposit = useCallback(
@@ -219,7 +228,7 @@ export function useVaultAction(
 
       try {
         if (!walletPassphrase) {
-          throw new Error("Wallet passphrase not available");
+          throw new Error(t("walletPassphraseUnavailable"));
         }
         const passphrase = walletPassphrase;
 
@@ -250,7 +259,8 @@ export function useVaultAction(
           passphrase,
           signTransaction,
           address,
-          multisigInfo?.isMultisig ?? false
+          multisigInfo?.isMultisig ?? false,
+          (error) => t("lobstrRejected", { error })
         );
 
         if (result.kind === "multisig_pending") {
@@ -276,25 +286,22 @@ export function useVaultAction(
 
         if (sendResult.status === "ERROR") {
           throw new Error(
-            `Transaction rejected by network: ${
-              sendResult.errorResult?.result().switch().name ?? "unknown"
-            }`
+            t("transactionRejectedByNetwork", {
+              reason:
+                sendResult.errorResult?.result().switch().name ?? "unknown",
+            })
           );
         }
 
         if (sendResult.status === "TRY_AGAIN_LATER") {
-          throw new Error(
-            "Network is congested. Please try again in a moment."
-          );
+          throw new Error(t("networkCongested"));
         }
 
         setIsConfirming(true);
         const finalResult = await waitForTx(sendResult.hash);
 
         if (finalResult.status !== "SUCCESS") {
-          throw new Error(
-            "Transaction failed on-chain. Please refresh your balance."
-          );
+          throw new Error(t("transactionFailedOnChain"));
         }
 
         const minted = vaultDepositMintedShares(depositTx.result);
@@ -326,13 +333,11 @@ export function useVaultAction(
       } catch (err) {
         if (err instanceof Error && err.message === "USER_REJECTED")
           return { success: false, isFirstVaultDeposit: false };
-        const contractMsg = extractContractErrorOrNull(err);
+        const errorCode = getGenericErrorCode(err);
         showError(
-          typeof contractMsg === "string"
-            ? contractMsg
-            : err instanceof Error
-              ? err.message
-              : "An unexpected error occurred."
+          errorCode
+            ? getErrorMessage(errorCode)
+            : (extractContractErrorOrNull(err) ?? t("unexpectedError"))
         );
         return { success: false, isFirstVaultDeposit: false };
       } finally {
@@ -351,6 +356,8 @@ export function useVaultAction(
       vaultShareSymbol,
       multisigInfo,
       addPendingMultisig,
+      getErrorMessage,
+      t,
     ]
   );
 
@@ -366,7 +373,7 @@ export function useVaultAction(
 
       try {
         if (!walletPassphrase) {
-          throw new Error("Wallet passphrase not available");
+          throw new Error(t("walletPassphraseUnavailable"));
         }
         const passphrase = walletPassphrase;
 
@@ -393,7 +400,7 @@ export function useVaultAction(
         const totalManaged = readSingleAssetTotalManaged(fundsTx.result);
 
         if (userShares <= 0n || totalSupply <= 0n || totalManaged <= 0n) {
-          throw new Error("No vault balance available to withdraw");
+          throw new Error(t("noBalanceToWithdraw"));
         }
 
         let sharesBigInt = options?.withdrawAll
@@ -402,13 +409,13 @@ export function useVaultAction(
             ? mulDivFloor(amountUnderlying, totalSupply, totalManaged)
             : mulDivCeil(amountUnderlying, totalSupply, totalManaged);
         if (sharesBigInt <= 0n) {
-          throw new Error("Withdrawal amount is too small");
+          throw new Error(t("withdrawalTooSmall"));
         }
         if (sharesBigInt > userShares) {
           if (options?.withdrawAll) {
             sharesBigInt = userShares;
           } else {
-            throw new Error("Withdrawal amount exceeds vault balance");
+            throw new Error(t("withdrawalExceedsBalance"));
           }
         }
         const expectedUnderlying = mulDivFloor(
@@ -433,7 +440,8 @@ export function useVaultAction(
           passphrase,
           signTransaction,
           address,
-          multisigInfo?.isMultisig ?? false
+          multisigInfo?.isMultisig ?? false,
+          (error) => t("lobstrRejected", { error })
         );
 
         if (result.kind === "multisig_pending") {
@@ -455,25 +463,22 @@ export function useVaultAction(
 
         if (sendResult.status === "ERROR") {
           throw new Error(
-            `Transaction rejected by network: ${
-              sendResult.errorResult?.result().switch().name ?? "unknown"
-            }`
+            t("transactionRejectedByNetwork", {
+              reason:
+                sendResult.errorResult?.result().switch().name ?? "unknown",
+            })
           );
         }
 
         if (sendResult.status === "TRY_AGAIN_LATER") {
-          throw new Error(
-            "Network is congested. Please try again in a moment."
-          );
+          throw new Error(t("networkCongested"));
         }
 
         setIsConfirming(true);
         const finalResult = await waitForTx(sendResult.hash);
 
         if (finalResult.status !== "SUCCESS") {
-          throw new Error(
-            "Transaction failed on-chain. Please refresh your balance."
-          );
+          throw new Error(t("transactionFailedOnChain"));
         }
 
         const underlyingBi = vaultWithdrawUnderlyingOut(withdrawTx.result);
@@ -505,20 +510,21 @@ export function useVaultAction(
         });
 
         showSuccess(
-          `Successfully withdrew ${displayAmount} ${supplyAssetSymbol}`
+          tToasts("withdrawSuccess", {
+            amount: displayAmount,
+            symbol: supplyAssetSymbol,
+          })
         );
         void invalidateAfterTx();
         return { success: true };
       } catch (err) {
         if (err instanceof Error && err.message === "USER_REJECTED")
           return { success: false };
-        const contractMsg = extractContractErrorOrNull(err);
+        const errorCode = getGenericErrorCode(err);
         showError(
-          typeof contractMsg === "string"
-            ? contractMsg
-            : err instanceof Error
-              ? err.message
-              : "An unexpected error occurred."
+          errorCode
+            ? getErrorMessage(errorCode)
+            : (extractContractErrorOrNull(err) ?? t("unexpectedError"))
         );
         return { success: false };
       } finally {
@@ -538,6 +544,9 @@ export function useVaultAction(
       vaultShareSymbol,
       multisigInfo,
       addPendingMultisig,
+      getErrorMessage,
+      t,
+      tToasts,
     ]
   );
 
@@ -551,7 +560,7 @@ export function useVaultAction(
 
       try {
         if (!walletPassphrase)
-          throw new Error("Wallet passphrase not available");
+          throw new Error(t("walletPassphraseUnavailable"));
         const passphrase = walletPassphrase;
 
         const client = new DefindexVaultClient({
@@ -576,7 +585,7 @@ export function useVaultAction(
         const totalManaged = readSingleAssetTotalManaged(fundsTx.result);
 
         if (userShares <= 0n || totalSupply <= 0n || totalManaged <= 0n) {
-          throw new Error("No vault balance available to withdraw");
+          throw new Error(t("noBalanceToWithdraw"));
         }
 
         // Round UP principal shares so the remaining balance is always >= deposit
@@ -592,7 +601,7 @@ export function useVaultAction(
         const claimShares = userShares - principalShares;
 
         if (claimShares <= 0n) {
-          throw new Error("No earnings to claim yet");
+          throw new Error(t("noEarningsToClaim"));
         }
 
         const expectedUnderlying = mulDivFloor(
@@ -617,7 +626,8 @@ export function useVaultAction(
           passphrase,
           signTransaction,
           address,
-          multisigInfo?.isMultisig ?? false
+          multisigInfo?.isMultisig ?? false,
+          (error) => t("lobstrRejected", { error })
         );
 
         if (result.kind === "multisig_pending") {
@@ -639,23 +649,20 @@ export function useVaultAction(
 
         if (sendResult.status === "ERROR") {
           throw new Error(
-            `Transaction rejected by network: ${
-              sendResult.errorResult?.result().switch().name ?? "unknown"
-            }`
+            t("transactionRejectedByNetwork", {
+              reason:
+                sendResult.errorResult?.result().switch().name ?? "unknown",
+            })
           );
         }
         if (sendResult.status === "TRY_AGAIN_LATER") {
-          throw new Error(
-            "Network is congested. Please try again in a moment."
-          );
+          throw new Error(t("networkCongested"));
         }
 
         setIsConfirming(true);
         const finalResult = await waitForTx(sendResult.hash);
         if (finalResult.status !== "SUCCESS") {
-          throw new Error(
-            "Transaction failed on-chain. Please refresh your balance."
-          );
+          throw new Error(t("transactionFailedOnChain"));
         }
 
         const underlyingBi = vaultWithdrawUnderlyingOut(withdrawTx.result);
@@ -685,20 +692,21 @@ export function useVaultAction(
         });
 
         showSuccess(
-          `Successfully claimed ${displayAmount} ${supplyAssetSymbol}`
+          tToasts("claimSuccess", {
+            amount: displayAmount,
+            symbol: supplyAssetSymbol,
+          })
         );
         void invalidateAfterTx();
         return { success: true };
       } catch (err) {
         if (err instanceof Error && err.message === "USER_REJECTED")
           return { success: false };
-        const contractMsg = extractContractErrorOrNull(err);
+        const errorCode = getGenericErrorCode(err);
         showError(
-          typeof contractMsg === "string"
-            ? contractMsg
-            : err instanceof Error
-              ? err.message
-              : "An unexpected error occurred."
+          errorCode
+            ? getErrorMessage(errorCode)
+            : (extractContractErrorOrNull(err) ?? t("unexpectedError"))
         );
         return { success: false };
       } finally {
@@ -718,6 +726,9 @@ export function useVaultAction(
       vaultShareSymbol,
       multisigInfo,
       addPendingMultisig,
+      getErrorMessage,
+      t,
+      tToasts,
     ]
   );
 

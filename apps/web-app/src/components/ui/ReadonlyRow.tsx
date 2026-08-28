@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Check, Copy, ExternalLink } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 export interface ReadonlyRowProps {
@@ -31,6 +32,7 @@ export function ReadonlyRow({
   copiedKey,
   mono = true,
 }: ReadonlyRowProps) {
+  const t = useTranslations("common.readonlyRow");
   const valueToCopy = copyValue ?? value;
   const isCopied = copyKey != null && copiedKey === copyKey;
   const showCopy = copyKey != null && onCopy != null && !href;
@@ -54,7 +56,7 @@ export function ReadonlyRow({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`View ${label} on Stellar Expert`}
+          aria-label={t("viewOnExplorer", { label })}
           className={rowButtonClass}
         >
           <ExternalLink className="h-3.5 w-3.5" />
@@ -63,7 +65,7 @@ export function ReadonlyRow({
         <button
           type="button"
           onClick={() => onCopy(copyKey, valueToCopy)}
-          aria-label={`Copy ${label}`}
+          aria-label={t("copyLabel", { label })}
           className={rowButtonClass}
         >
           {isCopied ? (

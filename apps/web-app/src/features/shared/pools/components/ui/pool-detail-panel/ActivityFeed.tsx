@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { usePoolActivity } from "../../../hooks/usePoolActivity";
 import { ExternalLinkIcon } from "./ExternalLinkIcon";
 import { EVENT_TYPE_COLORS, PAGE_SIZE, formatTs } from "./utils";
 
 export function ActivityFeed({ poolId }: { poolId: string }) {
+  const t = useTranslations("sharedPools.activityFeed");
   const { data: events, isLoading, isError } = usePoolActivity(poolId);
   const [page, setPage] = useState(1);
 
@@ -22,10 +24,10 @@ export function ActivityFeed({ poolId }: { poolId: string }) {
       <div
         className="rounded-xl border border-white/7 overflow-hidden"
         aria-busy
-        aria-label="Loading activity"
+        aria-label={t("loadingAriaLabel")}
       >
         <div className="grid grid-cols-[1.4fr_0.8fr_1fr_2rem] gap-4 px-5 py-3 border-b border-white/7 bg-white/[0.02]">
-          {["Date", "Type", "User"].map((h) => (
+          {[t("date"), t("type"), t("user")].map((h) => (
             <span
               key={h}
               className="text-white/30 text-xs font-medium uppercase tracking-wider"
@@ -50,16 +52,14 @@ export function ActivityFeed({ poolId }: { poolId: string }) {
   if (isError) {
     return (
       <p className="text-white/30 text-sm text-center py-12">
-        Could not load activity
+        {t("loadError")}
       </p>
     );
   }
 
   if (!events || events.length === 0) {
     return (
-      <p className="text-white/30 text-sm text-center py-12">
-        No recent activity
-      </p>
+      <p className="text-white/30 text-sm text-center py-12">{t("empty")}</p>
     );
   }
 
@@ -67,13 +67,13 @@ export function ActivityFeed({ poolId }: { poolId: string }) {
     <div className="rounded-xl border border-white/7 overflow-hidden">
       <div className="grid grid-cols-[1.4fr_0.8fr_1fr_2rem] gap-4 px-5 py-3 border-b border-white/7 bg-white/[0.02]">
         <span className="text-white/30 text-xs font-medium uppercase tracking-wider">
-          Date
+          {t("date")}
         </span>
         <span className="text-white/30 text-xs font-medium uppercase tracking-wider">
-          Type
+          {t("type")}
         </span>
         <span className="text-white/30 text-xs font-medium uppercase tracking-wider">
-          User
+          {t("user")}
         </span>
         <span />
       </div>
@@ -109,7 +109,7 @@ export function ActivityFeed({ poolId }: { poolId: string }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white/25 hover:text-white/70 transition-colors justify-self-end"
-                title="View on Stellar Expert"
+                title={t("viewOnExplorer")}
               >
                 <ExternalLinkIcon />
               </a>
@@ -143,7 +143,7 @@ export function ActivityFeed({ poolId }: { poolId: string }) {
             </svg>
           </button>
           <span className="text-white/40 text-xs tabular-nums px-3 py-1.5 rounded-full bg-white/5">
-            {safePage} of {totalPages}
+            {t("pagination", { page: safePage, totalPages })}
           </span>
           <button
             type="button"

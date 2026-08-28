@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
@@ -14,6 +15,7 @@ import { StrategiesNavTabs } from "@/features/simulator/strategies/components/ui
 import { StrategyRow } from "@/features/simulator/strategies/components/ui/StrategyRow";
 
 export default function StrategiesLibraryPage() {
+  const t = useTranslations("simulator.libraryPage");
   const { strategies, remove, setPendingExecuteId } = useStrategiesStore();
   const { address } = useStellarWalletStore();
   const router = useRouter();
@@ -33,11 +35,11 @@ export default function StrategiesLibraryPage() {
       className="flex h-full min-h-0 w-full flex-col"
     >
       <BannerPage
-        title="Strategies"
-        subtitle="Plan your positions. Execute when ready."
-        badge="Saved strategies"
+        title={t("title")}
+        subtitle={t("subtitle")}
+        badge={t("badge")}
         imageSrc="/banners/strategy-builder.svg"
-        imageAlt="Strategies"
+        imageAlt={t("imageAlt")}
         className="mb-6 shrink-0 min-h-[128px] sm:min-h-[170px]"
         imageLayoutClassName="right-0 -bottom-10 h-[125%] w-[55%]"
         imageObjectClassName="object-contain object-right object-bottom"
@@ -71,11 +73,12 @@ function SavedStrategiesSection({
   onExecute: (strategy: SavedStrategy) => void;
   onDelete: (id: string) => void;
 }) {
+  const t = useTranslations("simulator.libraryPage");
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex shrink-0 items-center justify-between gap-3">
         <p className="text-xs font-medium uppercase tracking-[0.14em] text-white/40">
-          Your strategies · {strategies.length} saved
+          {t("savedCount", { count: strategies.length })}
         </p>
         <Link
           href="/strategies/new"
@@ -85,7 +88,7 @@ function SavedStrategiesSection({
             size={14}
             className="transition-transform group-hover/cta:rotate-90"
           />
-          Build new strategy
+          {t("buildNew")}
         </Link>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 [scrollbar-gutter:stable] pt-4">
@@ -105,35 +108,29 @@ function SavedStrategiesSection({
 }
 
 function NoWalletState() {
+  const t = useTranslations("simulator.libraryPage.noWallet");
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 text-center">
-      <p className="text-base font-medium text-white/50">
-        Connect your wallet to see your strategies
-      </p>
-      <p className="text-sm text-white/25">
-        Strategies are saved per wallet address.
-      </p>
+      <p className="text-base font-medium text-white/50">{t("title")}</p>
+      <p className="text-sm text-white/25">{t("subtitle")}</p>
     </div>
   );
 }
 
 function EmptyState() {
+  const t = useTranslations("simulator.libraryPage.empty");
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-5 text-center">
       <div className="flex flex-col gap-1">
-        <p className="text-base font-medium text-white/50">
-          No saved strategies
-        </p>
-        <p className="text-sm text-white/25">
-          Build one to plan a yield position before committing funds.
-        </p>
+        <p className="text-base font-medium text-white/50">{t("title")}</p>
+        <p className="text-sm text-white/25">{t("subtitle")}</p>
       </div>
       <Link
         href="/strategies/new"
         className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-6 py-2.5 text-sm font-medium text-white/60 transition-colors hover:border-white/30 hover:text-white"
       >
         <Plus size={14} />
-        Build your first strategy
+        {t("cta")}
       </Link>
     </div>
   );

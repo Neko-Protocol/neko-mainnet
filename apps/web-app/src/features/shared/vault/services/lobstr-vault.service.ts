@@ -26,6 +26,10 @@ export const lobstrVaultService = {
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
+        // Lobstr Vault's own response body — a third-party API outside our
+        // error-code contract, so it has no stable code and stays as
+        // dynamic (English) content inside the translated "lobstrRejected"
+        // toast wrapper.
         return { ok: false, error: text || `Lobstr Vault HTTP ${res.status}` };
       }
       return { ok: true };

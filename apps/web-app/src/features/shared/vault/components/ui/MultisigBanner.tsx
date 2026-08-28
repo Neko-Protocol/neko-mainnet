@@ -1,6 +1,7 @@
 "use client";
 
 import { ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface MultisigBannerProps {
   signersCount: number;
@@ -11,6 +12,8 @@ export function MultisigBanner({
   signersCount,
   signersRequired,
 }: MultisigBannerProps) {
+  const t = useTranslations("sharedVault.multisigBanner");
+
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/[0.06] px-4 py-3 text-sm">
       <ShieldCheck
@@ -20,14 +23,14 @@ export function MultisigBanner({
       />
       <div className="flex flex-col gap-1 text-amber-100/90">
         <span className="font-semibold text-amber-200">
-          Multisig wallet detected ({signersRequired}-of-{signersCount} signers
-          required)
+          {t("detected", { signersRequired, signersCount })}
         </span>
         <span className="text-xs leading-relaxed text-amber-100/70">
-          After you sign, the transaction will be sent to{" "}
-          <span className="font-medium text-amber-100">Lobstr Vault</span> for
-          co-signer approval. Allow up to a few minutes for the other signers to
-          confirm in the Lobstr Vault mobile app.
+          {t.rich("description", {
+            lobstr: (chunks) => (
+              <span className="font-medium text-amber-100">{chunks}</span>
+            ),
+          })}
         </span>
       </div>
     </div>

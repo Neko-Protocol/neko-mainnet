@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 export function PoolPanelModeTabs({
   depositWithdrawMode,
   ammTab,
@@ -19,6 +21,7 @@ export function PoolPanelModeTabs({
   mode: "lend" | "withdraw" | "borrow";
   setMode: (m: "lend" | "withdraw" | "borrow") => void;
 }) {
+  const t = useTranslations("sharedPools.modeTabs");
   const ammTabs = canWithdraw
     ? (["deposit", "withdraw"] as const)
     : (["deposit"] as const);
@@ -27,18 +30,18 @@ export function PoolPanelModeTabs({
     <>
       {depositWithdrawMode && (
         <div className="flex rounded-xl p-1 gap-1">
-          {ammTabs.map((t) => (
+          {ammTabs.map((tabKey) => (
             <button
-              key={t}
+              key={tabKey}
               type="button"
-              onClick={() => onAmmTabChange?.(t)}
+              onClick={() => onAmmTabChange?.(tabKey)}
               className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors capitalize ${
-                ammTab === t
+                ammTab === tabKey
                   ? "bg-[#229EDF] text-white"
                   : "text-white/40 hover:text-white/70"
               }`}
             >
-              {t}
+              {t(tabKey)}
             </button>
           ))}
         </div>
@@ -57,7 +60,7 @@ export function PoolPanelModeTabs({
                   : "text-white/40 hover:text-white/70"
               }`}
             >
-              {m === "lend" ? "Lend" : m === "withdraw" ? "Withdraw" : "Borrow"}
+              {t(m)}
             </button>
           ))}
         </div>
@@ -65,7 +68,7 @@ export function PoolPanelModeTabs({
 
       {!depositWithdrawMode && !supportsBorrow && (
         <span className="inline-flex w-fit items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-white/70">
-          Lending
+          {t("lendingBadge")}
         </span>
       )}
     </>

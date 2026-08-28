@@ -1,6 +1,7 @@
 "use client";
 
 import { Globe } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { CollateralOption, PoolDetailPanelPool } from "./types";
 import { InfoRow } from "./InfoRow";
 import { PanelTokenIcon } from "./PanelTokenIcon";
@@ -26,10 +27,11 @@ export function PoolSummaryRows({
   borrowUsdDisplay: string;
   selectedCollateral: CollateralOption | undefined;
 }) {
+  const t = useTranslations("sharedPools.summaryRows");
   return (
     <div className="rounded-xl px-4 py-1">
       <InfoRow
-        label="Network"
+        label={t("network")}
         valueEl={
           <div className="flex items-center gap-1.5">
             <Globe className="h-3 w-3 text-[#229EDF]" />
@@ -67,7 +69,11 @@ export function PoolSummaryRows({
                   size={20}
                 />
               )}
-              <span className="text-white/40 text-xs">{`${mode === "withdraw" ? "Withdraw" : "Supplied"} (${pairLabel})`}</span>
+              <span className="text-white/40 text-xs">
+                {mode === "withdraw"
+                  ? t("withdraw", { pair: pairLabel })
+                  : t("supplied", { pair: pairLabel })}
+              </span>
             </div>
           }
           valueEl={
@@ -87,7 +93,9 @@ export function PoolSummaryRows({
           labelEl={
             <div className="flex items-center gap-1.5">
               <PanelTokenIcon symbol={selectedCollateral.symbol} size={20} />
-              <span className="text-white/40 text-xs">{`Collateral (${selectedCollateral.symbol})`}</span>
+              <span className="text-white/40 text-xs">
+                {t("collateral", { symbol: selectedCollateral.symbol })}
+              </span>
             </div>
           }
           valueEl={
@@ -108,7 +116,9 @@ export function PoolSummaryRows({
                 icon={pool.token2.icon}
                 size={20}
               />
-              <span className="text-white/40 text-xs">{`Loan (${pool.token2.symbol})`}</span>
+              <span className="text-white/40 text-xs">
+                {t("loan", { symbol: pool.token2.symbol })}
+              </span>
             </div>
           }
           valueEl={
@@ -124,17 +134,20 @@ export function PoolSummaryRows({
         />
       )}
       {mode !== "borrow" && pool.liquidationLtv > 0 && (
-        <InfoRow label="Collateral Factor" value={`${pool.liquidationLtv}%`} />
+        <InfoRow
+          label={t("collateralFactor")}
+          value={`${pool.liquidationLtv}%`}
+        />
       )}
       {mode === "borrow" && pool.lFactor != null && (
         <InfoRow
-          label="Liability Factor"
+          label={t("liabilityFactor")}
           value={`${Math.round(pool.lFactor * 100)}%`}
         />
       )}
       {mode !== "borrow" && (
         <InfoRow
-          label="Supply APY"
+          label={t("supplyApy")}
           valueEl={
             <span className="text-xs font-medium tabular-nums text-white/80 text-right max-w-[min(12rem,55vw)]">
               {pool.supplyApy}
@@ -143,7 +156,7 @@ export function PoolSummaryRows({
         />
       )}
       {mode === "borrow" && pool.borrowApyLabel != null && (
-        <InfoRow label="Borrow APY" value={pool.borrowApyLabel} />
+        <InfoRow label={t("borrowApy")} value={pool.borrowApyLabel} />
       )}
     </div>
   );

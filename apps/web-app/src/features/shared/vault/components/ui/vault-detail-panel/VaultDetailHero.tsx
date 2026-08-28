@@ -3,10 +3,12 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import { Copy, Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import type { VaultView } from "@/features/shared/vault/types/vault";
 
 function CopyableAddress({ address }: { address: string }) {
+  const t = useTranslations("sharedVault.info");
   const [copied, setCopied] = useState(false);
   const short = `${address.slice(0, 6)}…${address.slice(-6)}`;
 
@@ -18,7 +20,7 @@ function CopyableAddress({ address }: { address: string }) {
 
   return (
     <button
-      aria-label="Copy contract address"
+      aria-label={t("copyContractAddress")}
       onClick={handleCopy}
       className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors"
     >

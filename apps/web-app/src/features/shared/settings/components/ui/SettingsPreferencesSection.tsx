@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { CurrencySelector } from "@/components/navigation/CurrencySelector";
+import { LanguageSelector } from "@/components/navigation/LanguageSelector";
 
 export interface SettingsPreferencesSectionProps {
   open?: boolean;
@@ -15,15 +17,19 @@ export function SettingsPreferencesSection({
   onToggle,
   icon,
 }: SettingsPreferencesSectionProps) {
+  const t = useTranslations("sharedSettings.preferences");
   return (
     <SectionCard
-      title="Preferences"
+      title={t("title")}
       collapsible
       open={open}
       onToggle={onToggle}
       icon={icon}
     >
-      <CurrencySelector embedded />
+      <div className="flex flex-col gap-3">
+        <CurrencySelector embedded />
+        <LanguageSelector embedded />
+      </div>
     </SectionCard>
   );
 }

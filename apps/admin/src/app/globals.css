@@ -1,16 +1,24 @@
 @import "tailwindcss";
 
-:root {
-  --bg: #121212;
-  --surface: #1c1c1c;
-  --surface-2: #242424;
-  --border: rgba(255, 255, 255, 0.08);
-  --accent: #229edf;
-  --green: #4ade80;
+@source "../**/*.{ts,tsx}";
+
+@theme inline {
+  /* Neko semantic colors — mirrors packages/config/tailwind.config.ts */
+  --color-neko-navy: #081f5c;
+  --color-neko-blue: #7096d1;
+  --color-neko-accent: #294cab;
+  --color-neko-border: #334eac;
+  --color-neko-teal: #39bfb7;
+  --color-neko-teal-light: #68f9f2;
+  --color-neko-muted: #bad6eb;
+  --color-neko-navy-hover: #12328a;
+  --color-neko-cream: #fff9f0;
+  --color-neko-gray: #f3f4f6;
+  --color-neko-dark: #121212;
 }
 
 body {
-  background: var(--bg);
-  color: white;
-  font-family: system-ui, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  background: #121212;
 }

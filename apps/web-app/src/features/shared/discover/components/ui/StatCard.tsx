@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Info } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { AppTooltip } from "@/components/ui/AppTooltip";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ export function StatCard({
   className,
   tooltip,
 }: StatCardProps) {
+  const t = useTranslations("sharedDiscover.statCard");
   return (
     <div
       className={cn(
@@ -37,7 +39,7 @@ export function StatCard({
             <AppTooltip content={tooltip}>
               <button
                 type="button"
-                aria-label={`More information about ${label}`}
+                aria-label={t("moreInfoAbout", { label })}
                 className="inline-flex h-4 w-4 items-center justify-center rounded-full text-white/40 hover:text-white/70 transition-colors"
               >
                 <Info className="h-3.5 w-3.5" />
