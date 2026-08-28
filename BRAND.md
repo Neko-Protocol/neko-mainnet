@@ -53,27 +53,12 @@ Defined via `@font-face` in `apps/web-app/src/app/globals.css`:
 
 | Asset                  | Path(s)                                                                    |
 | ---------------------- | -------------------------------------------------------------------------- |
-| Primary logo (PNG)     | `apps/web-app/public/neko-logo.png`, `apps/admin/public/neko-logo.png`     |
-| Primary logo (SVG)     | `apps/web-app/public/Neko.svg`, `apps/admin/public/Neko.svg`               |
+| Primary logo (PNG)     | `apps/web-app/public/neko-logo.png`                                        |
+| Primary logo (SVG)     | `apps/web-app/public/Neko.svg`                                             |
 | DeFindex partner logo  | `apps/web-app/public/defindex-logo.svg`                                    |
 | Asset token icons      | `apps/web-app/public/assets/{usdc,eurc,pyusd,xlm,xlm-negro,usdy}-logo.png` |
 | Social icons           | `apps/web-app/public/assets/social-logos/x-logo.png`                       |
 | Sidebar logo component | `apps/web-app/src/components/navigation/SidebarLogo.tsx`                   |
-
-## Known gap: `apps/admin` is not on-brand
-
-`apps/admin/src/app/globals.css` defines its own, much smaller and **divergent** palette — it does not consume the `neko-*` tokens at all:
-
-```css
---bg: #121212;
---surface: #1c1c1c;
---surface-2: #242424;
---border: rgba(255, 255, 255, 0.08);
---accent: #229edf; /* not neko-accent (#294cab) */
---green: #4ade80;
-```
-
-It also has no `@font-face` declarations — text renders in `system-ui, sans-serif`, not FK Grotesk/Klein Condensed. This is a real, current inconsistency, not something this document silently papers over. Unifying admin onto the shared palette is tracked as a follow-up (see the deferred cleanup issue) — don't unify it as a drive-by change without confirming the design intent first.
 
 ## For agents
 

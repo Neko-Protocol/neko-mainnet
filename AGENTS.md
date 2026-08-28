@@ -6,9 +6,9 @@ architecture, environment, deployment, and routing guidance, read `CLAUDE.md`.
 ## Project Summary
 
 Neko is an RWA aggregator (capital routing layer) monorepo that integrates external protocols and
-services. `apps/web-app` is the public Next.js 16 / React 19 app, `apps/admin`
-is the internal Next.js admin console, and `apps/backend` is the NestJS 10
-internal API. Shared TypeScript packages live under `packages/`.
+services. `apps/web-app` is the public Next.js 16 / React 19 app, and
+`apps/backend` is the NestJS 10 internal API. Shared TypeScript packages live
+under `packages/`.
 
 ## Commands
 
@@ -21,7 +21,7 @@ npm run format:check   # Prettier check
 ```
 
 Use workspace commands from the target package when possible, for example
-`npm run dev -w web-app`, `npm run dev -w admin`, or `npm run dev -w backend`.
+`npm run dev -w web-app` or `npm run dev -w backend`.
 
 ## Hard Boundaries
 

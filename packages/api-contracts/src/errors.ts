@@ -79,32 +79,6 @@ export const ErrorCode = {
   ALREADY_PAID: "ALREADY_PAID",
   ALREADY_PAYING: "ALREADY_PAYING",
 
-  // ─── admin/admin-auth (admin-only, internal ops) ───────────────────────
-  EMAIL_REQUIRED: "EMAIL_REQUIRED",
-
-  // ─── admin/admin-strategies (admin-only, internal ops) ─────────────────
-  INVALID_STRATEGY_TYPE: "INVALID_STRATEGY_TYPE",
-  STRATEGY_CREATE_FAILED: "STRATEGY_CREATE_FAILED",
-  INVALID_STATUS: "INVALID_STATUS",
-
-  // ─── admin/campaigns (admin-only, internal ops) ────────────────────────
-  NAME_AND_SUBJECT_REQUIRED: "NAME_AND_SUBJECT_REQUIRED",
-  CAMPAIGN_CREATE_FAILED: "CAMPAIGN_CREATE_FAILED",
-  ONLY_DRAFT_EDITABLE: "ONLY_DRAFT_EDITABLE",
-  INVALID_NAME: "INVALID_NAME",
-  INVALID_SUBJECT: "INVALID_SUBJECT",
-  CAMPAIGN_UPDATE_FAILED: "CAMPAIGN_UPDATE_FAILED",
-  TVL_UPDATE_FAILED: "TVL_UPDATE_FAILED",
-  ALREADY_SENT: "ALREADY_SENT",
-  SEND_IN_PROGRESS: "SEND_IN_PROGRESS",
-  RESEND_NOT_CONFIGURED: "RESEND_NOT_CONFIGURED",
-  NO_RECIPIENTS: "NO_RECIPIENTS",
-  SEND_FAILED: "SEND_FAILED",
-
-  // ─── admin/invitations (admin-only, internal ops) ──────────────────────
-  INVITATION_CREATE_FAILED: "INVITATION_CREATE_FAILED",
-  INVITATION_ACCEPT_FAILED: "INVITATION_ACCEPT_FAILED",
-
   // ─── chain/transaction (user-facing — wallet tx prepare/submit/status) ──
   SUBMIT_REJECTED: "SUBMIT_REJECTED",
   RPC_ERROR: "RPC_ERROR",

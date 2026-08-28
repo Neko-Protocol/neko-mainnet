@@ -1,5 +1,0 @@
-{
-  "installCommand": "cd ../.. && npm install --legacy-peer-deps",
-  "buildCommand": "cd ../.. && npx turbo run build --filter=admin --ui stream --log-order grouped",
-  "outputDirectory": ".next"
-}
