@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Neko DApp is an RWA aggregator (capital routing layer) application that aggregates external protocols and services: DeFindex vaults, Reflector oracle data, Blend/Aquarius market integrations, xBull Swap routing, wallet flows, admin operations, and on/off-ramp flows. It is a **Turborepo + npm workspaces monorepo** with three apps and shared packages.
+Neko DApp is an RWA aggregator (capital routing layer) application that aggregates external protocols and services: DeFindex vaults, Reflector oracle data, Blend/Aquarius market integrations, xBull Swap routing, wallet flows, and on/off-ramp flows. It is a **Turborepo + npm workspaces monorepo** with two apps and shared packages.
 
 **Neko-owned smart contracts are not used in this repo.** The only generated Soroban bindings consumed here are external integrations: `@neko/defindex-vault` and `@neko/reflector`.
 
@@ -13,11 +13,10 @@ Neko DApp is an RWA aggregator (capital routing layer) application that aggregat
 ```
 apps/
   web-app/        # Public dApp — Next.js 16 + React 19 + Turbopack (App Router)
-  admin/          # Internal admin console — Next.js 16 (auth, strategies, users, campaigns, 2FA)
   backend/        # API server — NestJS 10 (port 4000), Supabase-backed
 packages/
   config/         # Shared ESLint, PostCSS, Tailwind 4 preset, tsconfig
-  api-contracts/  # Shared DTOs/types for web/admin/backend API contracts
+  api-contracts/  # Shared DTOs/types for web/backend API contracts
   keeper/         # Vault keeper, asset config, pricing, DeFindex helpers
   orchestrator/   # External market orchestration across Blend and Aquarius
   stellar-wallet/ # Freighter + Stellar Wallets Kit Zustand integration
@@ -54,10 +53,6 @@ npm run lint             # eslint
 
 NestJS — `npm run dev`, `npm run build`, `npm run test`. Listens on port 4000 with URI versioning under `/v1` and Swagger at `/docs`.
 
-### Admin (`apps/admin/`)
-
-Standard Next.js — `npm run dev`, `npm run build`, `npm run start`.
-
 ## Architecture
 
 ### Web app (`apps/web-app/src/`)
@@ -80,7 +75,7 @@ stores/               # Zustand stores
 
 - `basic/` — Buy flow for fiat-first users. `BasicDiscoverPage`, `BasicAssetDetail`, `BasicBuyForm`, `AddToCartModal`. Uses `react-hook-form` + `zod`.
 - `expert/` — Advanced trading. `Dashboard`, `ExpertDiscoverPage`, `ExpertAssetDetail`, `Swap` (xBull Swap-backed).
-- `shared/` — External protocol and product integrations consumed by both modes. Submodules include `admin`, `borrowing`, `dashboard`, `discover`, `lending`, `on-off-ramps`, `pools`, `referral`, `settings`, `vault`, and `wallet`. Treat borrowing/lending/pool UI as integrations with external protocols, not Neko-owned contracts.
+- `shared/` — External protocol and product integrations consumed by both modes. Submodules include `borrowing`, `dashboard`, `discover`, `lending`, `on-off-ramps`, `pools`, `referral`, `settings`, `vault`, and `wallet`. Treat borrowing/lending/pool UI as integrations with external protocols, not Neko-owned contracts.
 - `simulator/` — Investment projection wizard (token → strategy → destination → projected returns).
 
 **Stores (Zustand, `src/stores/`):**
@@ -113,20 +108,16 @@ Feature components → feature hooks → `backendClient` or local services → N
 - **Server state**: TanStack Query v5
 - **DB / auth**: Supabase (audit logs, user metadata)
 
-### Admin app (`apps/admin/`)
-
-Next.js 16 internal console. Routes under `app/dashboard/` include `activity`, `strategies`, `users`, `campaigns`, `recommended`, `activations`, `referrals`, and `invitations`. Auth uses Supabase-backed admin sessions plus TOTP 2FA (`otpauth`, `qrcode`). Server helpers call the NestJS backend via `BACKEND_INTERNAL_URL`/`BACKEND_INTERNAL_KEY`. `middleware.ts` enforces auth.
-
 ### Backend infrastructure (`apps/backend/`)
 
 NestJS 10 + Express adapter. Bootstraps in `src/main.ts` on port 4000 with CORS, URI versioning (`/v1`), Swagger (`/docs`), Helmet, compression, global validation, global exception filtering, request IDs, throttling, pino logging, shutdown hooks, and a Node WebSocket polyfill for Supabase realtime compatibility.
 
-The backend is an internal API. `AppModule` installs two global guards: `ThrottlerGuard` and `InternalApiKeyGuard`. Browser clients should not call Railway/backend directly; `apps/web-app/src/app/api/backend-proxy/[...path]/route.ts` forwards `/v1/*` requests with `BACKEND_INTERNAL_KEY`, and `apps/admin` server helpers call `BACKEND_INTERNAL_URL` with the same internal key.
+The backend is an internal API. `AppModule` installs two global guards: `ThrottlerGuard` and `InternalApiKeyGuard`. Browser clients should not call Railway/backend directly; `apps/web-app/src/app/api/backend-proxy/[...path]/route.ts` forwards `/v1/*` requests with `BACKEND_INTERNAL_KEY`.
 
 Core infrastructure lives under `src/core/`:
 
 - `stellar/` — Stellar RPC/Horizon helpers and network/passphrase access.
-- `supabase/` — Supabase service clients for platform/admin data.
+- `supabase/` — Supabase service clients for platform data.
 - `orchestrator/` — External market orchestration service wrapper, not a Neko contract layer.
 - `email/` — Resend-backed email helpers.
 - `health/` — health checks.
@@ -136,8 +127,7 @@ Business domains live under `src/domains/`:
 - `chain/transaction` — transaction prepare/submit/status relay endpoints.
 - `market-data/` — asset prices, pool rates, Etherfuse yields, and contract/activity scanners.
 - `investing/` — DeFindex vault catalog, APY, PPS history, keeper/rebalance jobs, strategy catalog, and recommended strategies.
-- `platform/` — users, audit logs, dashboard aggregation, referrals, and activations.
-- `admin/` — admin auth/dashboard, campaigns, invitations, segments, strategies, and console workflows.
+- `platform/` — users, audit logs, dashboard aggregation, referrals, activations, and `apps/admin` sign-in (one-time email codes via Resend).
 
 Scheduled jobs are backend-owned through `@nestjs/schedule` (for example vault invest, vault PPS, pool rates, and asset prices). Do not add cron-only behavior back into web-app route handlers.
 
@@ -201,10 +191,6 @@ NEXT_PUBLIC_USE_BACKEND_DASHBOARD=
 ### Backend — `apps/backend/.env`
 
 Supabase URL + service role key (see `.env.example`).
-
-### Admin — `apps/admin/.env.local`
-
-Supabase + Resend (email). See `.env.example`.
 
 ## Vercel deployment
 
@@ -276,7 +262,7 @@ git clone https://github.com/garrytan/gstack ~/.claude/skills/gstack
 - QA / dogfooding → `/qa` plus the relevant app/package test, lint, or build command
 - Release → `/ship`, `/land-and-deploy`
 
-**Backend (`apps/backend/` + `apps/admin/` API routes + Supabase):**
+**Backend (`apps/backend/` + Supabase):**
 
 - NestJS-specific work → use the global `nestjs*` skills (`nestjs`, `nestjs-best-practices`, `nestjs-clean-typescript`, `nestjs-expert`, `nestjs-testing-expert`) BEFORE `backend-developer`
 - Generic backend / API design → `backend-developer`

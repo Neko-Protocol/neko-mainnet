@@ -2,140 +2,23 @@
 
 @source "../**/*.{ts,tsx}";
 
-@font-face {
-  font-family: "Klein Condensed";
-  src: url("/Klein-Condensed-ExtraBold-trial.ttf") format("truetype");
-  font-weight: 800;
-  font-display: swap;
-}
-
 @theme inline {
-  --font-sans: "FK Grotesk", ui-sans-serif, system-ui, sans-serif;
-  --font-label: "FK Grotesk SemiMono", ui-monospace, monospace;
+  /* Neko semantic colors — mirrors packages/config/tailwind.config.ts */
+  --color-neko-navy: #081f5c;
   --color-neko-blue: #7096d1;
   --color-neko-accent: #294cab;
   --color-neko-border: #334eac;
+  --color-neko-teal: #39bfb7;
+  --color-neko-teal-light: #68f9f2;
   --color-neko-muted: #bad6eb;
   --color-neko-navy-hover: #12328a;
   --color-neko-cream: #fff9f0;
+  --color-neko-gray: #f3f4f6;
   --color-neko-dark: #121212;
-  --color-admin-canvas: var(--admin-canvas);
-  --color-admin-sidebar: var(--admin-sidebar);
-  --color-admin-surface: var(--admin-surface);
-  --color-admin-elevated: var(--admin-elevated);
-  --color-admin-border: var(--admin-border);
-  --color-admin-border-strong: var(--admin-border-strong);
-  --color-admin-text: var(--admin-text);
-  --color-admin-muted: var(--admin-muted);
-  --color-admin-subtle: var(--admin-subtle);
-  --color-admin-warning: var(--admin-warning);
-  --color-admin-danger: var(--admin-danger);
-}
-
-:root {
-  color-scheme: dark;
-  --admin-canvas: #121212;
-  --admin-sidebar: #0d0e11;
-  --admin-surface: #191b20;
-  --admin-elevated: #21242b;
-  --admin-border: rgba(186, 214, 235, 0.12);
-  --admin-border-strong: rgba(186, 214, 235, 0.22);
-  --admin-text: #f7f8fa;
-  --admin-muted: #a8afbd;
-  --admin-subtle: #747d8d;
-  --admin-warning: #e7b65a;
-  --admin-danger: #ef7777;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html {
-  min-width: 320px;
-  overflow-x: hidden;
-  background: var(--admin-canvas);
 }
 
 body {
-  min-height: 100vh;
   margin: 0;
-  overflow-x: hidden;
-  background: var(--admin-canvas);
-  color: var(--admin-text);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-}
-
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid var(--color-neko-blue);
-  outline-offset: 2px;
-}
-
-.font-klein {
-  font-family: "Klein Condensed", "Arial Narrow", sans-serif;
-  font-weight: 800;
-}
-
-.admin-page {
-  width: 100%;
-  max-width: 96rem;
-  margin-inline: auto;
-  padding: 1.5rem;
-}
-
-.admin-card {
-  border: 1px solid var(--admin-border);
-  border-radius: 0.75rem;
-  background: var(--admin-surface);
-}
-
-.admin-input {
-  width: 100%;
-  border: 1px solid var(--admin-border);
-  border-radius: 0.625rem;
-  background: var(--admin-canvas);
-  color: var(--admin-text);
-}
-
-.admin-input:hover {
-  border-color: var(--admin-border-strong);
-}
-
-.admin-button-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.625rem;
-  background: var(--color-neko-accent);
-  color: white;
-  font-weight: 600;
-}
-
-.admin-button-primary:hover {
-  background: var(--color-neko-navy-hover);
-}
-
-.admin-button-primary:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-@media (min-width: 1024px) {
-  .admin-page {
-    padding: 2rem 2.5rem 3rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-  }
+  min-height: 100vh;
+  background: #121212;
 }
