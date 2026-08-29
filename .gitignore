@@ -83,3 +83,6 @@ scripts/
 # Claude Code local state (per-developer, not shared)
 .claude/settings.local.json
 .claude/worktrees/
+
+# Internal engineering docs — not part of the published repo.
+docs/

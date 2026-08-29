@@ -1,9 +1,17 @@
 import { Global, Module } from "@nestjs/common";
-import { RpcCacheService } from "./rpc-cache.service";
-import { RpcClientService } from "./rpc-client.service";
-import { RpcHealthScheduler } from "./rpc-health.scheduler";
-import { RpcPoolService } from "./rpc-pool.service";
+import { RpcCacheService } from "./cache/rpc-cache.service";
+import { RpcClientService } from "./client/rpc-client.service";
+import { RpcMetricsService } from "./metrics/rpc-metrics.service";
+import { RpcHealthScheduler } from "./pool/rpc-health.scheduler";
+import { RpcPoolService } from "./pool/rpc-pool.service";
 
+/**
+ * The RPC gateway: endpoint pool, health checks, failover and retry, response
+ * caching, and the collectors that measure all of it.
+ *
+ * Global because StellarRpcService and the domain modules consume it without
+ * importing it explicitly.
+ */
 @Global()
 @Module({
   providers: [
@@ -11,7 +19,13 @@ import { RpcPoolService } from "./rpc-pool.service";
     RpcCacheService,
     RpcClientService,
     RpcHealthScheduler,
+    RpcMetricsService,
   ],
-  exports: [RpcPoolService, RpcClientService, RpcCacheService],
+  exports: [
+    RpcPoolService,
+    RpcClientService,
+    RpcCacheService,
+    RpcMetricsService,
+  ],
 })
 export class RpcModule {}
