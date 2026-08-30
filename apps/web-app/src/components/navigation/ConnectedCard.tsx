@@ -2,13 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, LogOut, ShoppingBag } from "lucide-react";
+import { ArrowRight, Gift, LogOut, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { truncateAddress } from "@/lib/utils";
 import { CARD_STYLES, CARD_BUTTON_STYLES } from "./sidebarConfig";
 import { useCartStore } from "@/features/basic/cart/stores/cart.store";
 import { useUIMode } from "@/features/shared/ui-mode/hooks/useUIMode";
 import { ReferEarnModal } from "@/features/shared/referral/components/ReferEarnModal";
+import { NotificationCenter } from "@/features/shared/notifications/components/NotificationCenter";
 
 const NETWORK = (
   process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET"
@@ -91,17 +92,22 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
         </div>
       </div>
 
-      <div className="pt-2">
+      {/* Two icon-only halves spanning the same width as the address button
+          above, so the card reads as one stack rather than a pill with an
+          orphaned circle beside it. NotificationCenter anchors its tray to
+          this relative wrapper. */}
+      <div className="relative flex items-stretch gap-2 pt-2">
         <button
           type="button"
           onClick={() => setReferOpen(true)}
-          className="flex w-full items-center justify-between rounded-full bg-[#229EDF] px-5 py-3 text-sm font-semibold text-white cursor-pointer transition-colors hover:bg-[#1e8bc9]"
+          aria-label={t("wallet.referrals")}
+          title={t("wallet.referrals")}
+          className="flex flex-1 items-center justify-center rounded-full bg-[#229EDF] py-3 text-white cursor-pointer transition-colors hover:bg-[#1e8bc9]"
         >
-          <span className="flex items-center gap-2">
-            {t("wallet.referrals")}
-          </span>
-          <ArrowRight className="ml-2 h-4 w-4 shrink-0" />
+          <Gift className="h-5 w-5 shrink-0" />
         </button>
+
+        <NotificationCenter />
       </div>
 
       <ReferEarnModal open={referOpen} onClose={() => setReferOpen(false)} />
