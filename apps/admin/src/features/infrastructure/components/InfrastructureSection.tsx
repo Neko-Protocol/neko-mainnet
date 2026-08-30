@@ -6,6 +6,7 @@ import { AnalyticsErrorState } from "@/features/analytics/components/AnalyticsEr
 import { useInfrastructure } from "../hooks/useInfrastructure";
 import { EndpointPoolTable } from "./EndpointPoolTable";
 import { UsageTable } from "./UsageTable";
+import { MetricsHistory } from "./MetricsHistory";
 
 /**
  * A missing rate is not zero. No traffic in the window means we cannot say
@@ -150,10 +151,12 @@ export function InfrastructureSection() {
         </section>
       </div>
 
+      <MetricsHistory />
+
       {data && (
         <p className="text-xs text-white/30">
-          Counters reset when the backend restarts. For history and alerting,
-          see the Grafana dashboard.
+          The counters above reset when the backend restarts; the charts read
+          Grafana, which keeps them.
         </p>
       )}
     </div>

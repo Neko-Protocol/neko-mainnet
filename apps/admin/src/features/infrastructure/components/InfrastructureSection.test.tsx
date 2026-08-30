@@ -8,6 +8,13 @@ vi.mock("../hooks/useInfrastructure", () => ({
   useInfrastructure: vi.fn(),
 }));
 
+// The charts read Grafana through a server-only module, which refuses to load
+// outside a server component. This suite is about the live counters, so the
+// history block is stubbed rather than pulled in.
+vi.mock("./MetricsHistory", () => ({
+  MetricsHistory: () => null,
+}));
+
 const mocked = vi.mocked(useInfrastructure);
 
 function snapshot(
