@@ -163,7 +163,7 @@ async function rawRequest(
 /**
  * Calls the backend and returns the response payload, or throws
  * BackendRequestError when the call failed. Callers should let this propagate
- * to TanStack Query rather than swallowing it into a default value — an admin
+ * to TanStack Query rather than swallowing it into a default value. An admin
  * analytics panel that shows "$0" during a real outage is worse than one that
  * visibly errors.
  */
