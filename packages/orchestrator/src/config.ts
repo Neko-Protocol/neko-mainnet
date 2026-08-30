@@ -17,6 +17,15 @@ export interface OrchestratorNetwork {
    * that `rpcUrl` points at.
    */
   server?: rpc.Server;
+  /**
+   * Headers to send with RPC requests built from `rpcUrl`.
+   *
+   * Only one consumer needs this: Blend's SDK takes a URL and builds its own
+   * client, so it cannot be handed `server`. Pointing `rpcUrl` at a gateway
+   * that requires a key is the only way to get it onto the pool, and this is
+   * how the key travels.
+   */
+  rpcHeaders?: Record<string, string>;
 }
 /**
  * Rich token metadata used by adapters that need decimals / icon / display

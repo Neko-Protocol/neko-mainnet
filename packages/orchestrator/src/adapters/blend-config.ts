@@ -3,15 +3,17 @@ import type { Network } from "@blend-capital/blend-sdk";
 import type { OrchestratorNetwork, StellarNetworkId } from "../config.js";
 
 /**
- * The one path that cannot be routed through the endpoint pool.
+ * The one consumer that cannot be handed a client directly.
  *
- * Blend's SDK takes `rpc` as a URL string and constructs its own client
- * internally — its `Network` type has no seam for supplying one. So pool reads
- * elsewhere get failover and these do not, and a provider outage degrades
- * Blend pool data while the rest of the app rides it out. Tracked in the
- * follow-up on issue #144; the remaining option is pointing this at the
- * backend's own passthrough over loopback, which trades a self-HTTP hop for
- * the pool's behaviour.
+ * Blend's SDK takes `rpc` as a URL and constructs its own client internally —
+ * its `Network` type has no seam for supplying one. It does pass `opts`
+ * straight through to `rpc.Server`, though, which accepts headers. So the way
+ * onto the pool is a URL that reaches it: the backend points `rpcUrl` at its
+ * own passthrough and sends the internal key here.
+ *
+ * That means the backend calls itself over HTTP for this one path. It is a
+ * loopback hop, and it buys health-aware selection, retry and failover for
+ * reads that would otherwise ride a single endpoint with none of it.
  */
 export function getBlendNetwork(net: OrchestratorNetwork): Network {
   // The Blend SDK refuses an http:// RPC unless told otherwise. That matters
@@ -19,10 +21,17 @@ export function getBlendNetwork(net: OrchestratorNetwork): Network {
   // http in local development.
   const allowHttp = net.allowHttp ?? net.rpcUrl.startsWith("http://");
 
+  const opts = {
+    ...(allowHttp ? { allowHttp: true } : {}),
+    ...(net.rpcHeaders ? { headers: net.rpcHeaders } : {}),
+  };
+
   return {
     rpc: net.rpcUrl,
     passphrase: net.passphrase,
-    ...(allowHttp ? { opts: { allowHttp: true } } : {}),
+    // `opts` is typed against Horizon but handed to rpc.Server, which is what
+    // reads `headers`.
+    ...(Object.keys(opts).length ? { opts: opts as Network["opts"] } : {}),
   };
 }
 
