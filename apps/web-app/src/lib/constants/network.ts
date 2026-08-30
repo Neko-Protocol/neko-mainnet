@@ -97,8 +97,18 @@ export const labPrefix = () => {
 
 export const rpcUrl = resolveRpcUrl(env.PUBLIC_STELLAR_RPC_URL);
 
+/**
+ * Whether the Soroban clients must be told the RPC endpoint is insecure.
+ *
+ * A gateway path inherits the page's protocol, so a relative `rpcUrl` is only
+ * insecure when the app itself is served over http — which is the case in
+ * local development and not in production.
+ */
 export const allowHttpForSoroban =
-  typeof rpcUrl === "string" && rpcUrl.startsWith("http:");
+  rpcUrl.startsWith("http:") ||
+  (rpcUrl.startsWith("/") &&
+    typeof window !== "undefined" &&
+    window.location.protocol === "http:");
 
 export const horizonUrl = env.PUBLIC_STELLAR_HORIZON_URL;
 
