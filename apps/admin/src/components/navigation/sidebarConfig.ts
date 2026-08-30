@@ -1,4 +1,4 @@
-import { Bell, LayoutDashboard, Send, ShieldCheck, Users } from "lucide-react";
+import { Activity, Bell, LayoutDashboard, Send, ShieldCheck, Users } from "lucide-react";
 
 export interface AdminNavItem {
   label: string;
@@ -12,4 +12,9 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "Mailing", href: "/mailing", icon: Send },
   { label: "Admins", href: "/admins", icon: ShieldCheck },
+  {
+    label: "RPC",
+    href: "/analytics/rpc",
+    icon: Activity,
+  },
 ];
