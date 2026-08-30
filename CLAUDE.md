@@ -13,6 +13,7 @@ Neko DApp is an RWA aggregator (capital routing layer) application that aggregat
 ```
 apps/
   web-app/        # Public dApp — Next.js 16 + React 19 + Turbopack (App Router)
+  admin/          # Internal admin console — Next.js 16 (port 3001), Supabase auth
   backend/        # API server — NestJS 10 (port 4000), Supabase-backed
 packages/
   config/         # Shared ESLint, PostCSS, Tailwind 4 preset, tsconfig
@@ -127,7 +128,9 @@ Business domains live under `src/domains/`:
 - `chain/transaction` — transaction prepare/submit/status relay endpoints.
 - `market-data/` — asset prices, pool rates, Etherfuse yields, and contract/activity scanners.
 - `investing/` — DeFindex vault catalog, APY, PPS history, keeper/rebalance jobs, strategy catalog, and recommended strategies.
-- `platform/` — users, audit logs, dashboard aggregation, referrals, activations, and `apps/admin` sign-in (one-time email codes via Resend).
+- `platform/` — users, audit logs, dashboard aggregation, referrals, and `apps/admin` sign-in (one-time email codes via Resend).
+- `platform/mailing` — email templates, broadcasts, and triggered automations, delivered by two crons (enrollment every 15 min, dispatch every 5 min).
+- `platform/notifications` — in-app notifications, the second channel for the same triggers. `NotificationsService.emit()` is called **in-band** from the function that records the event (`AuditService.log()`, `UsersService.register()`, `ReferralsService.confirmPending()`), so the bell updates immediately rather than waiting on a cron; only `inactivity` and `admin_wallet_low_balance` are polled. `NotificationsCoreModule` holds just the emit path, with no dependency beyond Supabase, so the event-producing domains can import it without closing a module cycle through `MailingAudiencesService`.
 
 Scheduled jobs are backend-owned through `@nestjs/schedule` (for example vault invest, vault PPS, pool rates, and asset prices). Do not add cron-only behavior back into web-app route handlers.
 
