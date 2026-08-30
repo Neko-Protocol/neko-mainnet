@@ -1,3 +1,5 @@
+import type { rpc } from "@stellar/stellar-sdk";
+
 export type StellarNetworkId = "PUBLIC" | "TESTNET" | "FUTURENET" | "LOCAL";
 export interface OrchestratorNetwork {
   id: StellarNetworkId;
@@ -6,6 +8,15 @@ export interface OrchestratorNetwork {
   allowHttp?: boolean;
   /** Optional Horizon REST endpoint for classic Stellar operations. */
   horizonUrl?: string;
+  /**
+   * An RPC client to use instead of building one from `rpcUrl`.
+   *
+   * The backend passes its endpoint pool here, so these reads get the same
+   * health-aware selection, retry and failover as the rest of the app. The
+   * browser leaves it unset: it already reaches the pool through the gateway
+   * that `rpcUrl` points at.
+   */
+  server?: rpc.Server;
 }
 /**
  * Rich token metadata used by adapters that need decimals / icon / display

@@ -2,6 +2,17 @@ import type { Network } from "@blend-capital/blend-sdk";
 
 import type { OrchestratorNetwork, StellarNetworkId } from "../config.js";
 
+/**
+ * The one path that cannot be routed through the endpoint pool.
+ *
+ * Blend's SDK takes `rpc` as a URL string and constructs its own client
+ * internally — its `Network` type has no seam for supplying one. So pool reads
+ * elsewhere get failover and these do not, and a provider outage degrades
+ * Blend pool data while the rest of the app rides it out. Tracked in the
+ * follow-up on issue #144; the remaining option is pointing this at the
+ * backend's own passthrough over loopback, which trades a self-HTTP hop for
+ * the pool's behaviour.
+ */
 export function getBlendNetwork(net: OrchestratorNetwork): Network {
   // The Blend SDK refuses an http:// RPC unless told otherwise. That matters
   // now that traffic routes through the app's own gateway, which is plain

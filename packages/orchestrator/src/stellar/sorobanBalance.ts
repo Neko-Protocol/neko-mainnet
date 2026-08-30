@@ -15,6 +15,7 @@ export interface SorobanBalanceNetwork {
   passphrase: string;
   allowHttp?: boolean;
   horizonUrl?: string;
+  server?: rpc.Server;
 }
 
 function toBalanceNetwork(
@@ -30,9 +31,11 @@ function simulateBalance(
   account: Account | { accountId(): string; sequenceNumber(): string },
   network: SorobanBalanceNetwork
 ): Promise<string> {
-  const sorobanRpcServer = new rpc.Server(network.rpcUrl, {
-    allowHttp: network.allowHttp ?? false,
-  });
+  const sorobanRpcServer =
+    network.server ??
+    new rpc.Server(network.rpcUrl, {
+      allowHttp: network.allowHttp ?? false,
+    });
   return (async () => {
     const contract = new Contract(contractAddress);
     const operation = contract.call(

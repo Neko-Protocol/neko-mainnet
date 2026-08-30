@@ -215,6 +215,11 @@ export class AquaPoolAdapter implements BasePoolAdapter {
     return this.config.network.allowHttp ?? false;
   }
 
+  /** See BlendPoolAdapter: the pool's client when the host supplied one. */
+  private get pooledServer() {
+    return this.config.network.server;
+  }
+
   async listPools(limit?: number): Promise<PoolInfo[]> {
     try {
       const raw = await fetchAquaPools(getAquaPoolAddresses());
@@ -335,9 +340,11 @@ export class AquaPoolAdapter implements BasePoolAdapter {
     _tokenIndex?: number
   ): Promise<TransactionResult> {
     try {
-      const sorobanServer = new rpc.Server(this.rpcUrl, {
-        allowHttp: this.allowHttp,
-      });
+      const sorobanServer =
+        this.pooledServer ??
+        new rpc.Server(this.rpcUrl, {
+          allowHttp: this.allowHttp,
+        });
       const account = await sorobanServer.getAccount(userAddress);
 
       const poolInfo = await this.getPoolInfo(poolId);
@@ -389,9 +396,11 @@ export class AquaPoolAdapter implements BasePoolAdapter {
     options?: PoolActionOptions
   ): Promise<TransactionResult> {
     try {
-      const sorobanServer = new rpc.Server(this.rpcUrl, {
-        allowHttp: this.allowHttp,
-      });
+      const sorobanServer =
+        this.pooledServer ??
+        new rpc.Server(this.rpcUrl, {
+          allowHttp: this.allowHttp,
+        });
       const account = await sorobanServer.getAccount(userAddress);
 
       const poolInfo = await this.getPoolInfo(poolId);
@@ -511,9 +520,11 @@ export class AquaPoolAdapter implements BasePoolAdapter {
     try {
       const poolAddress = poolId.replace("aqua:", "");
 
-      const sorobanServer = new rpc.Server(this.rpcUrl, {
-        allowHttp: this.allowHttp,
-      });
+      const sorobanServer =
+        this.pooledServer ??
+        new rpc.Server(this.rpcUrl, {
+          allowHttp: this.allowHttp,
+        });
       const account = await sorobanServer.getAccount(userAddress);
 
       const poolContract = new Contract(poolAddress);
