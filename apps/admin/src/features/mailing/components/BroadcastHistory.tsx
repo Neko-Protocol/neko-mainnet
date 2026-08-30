@@ -1,24 +1,21 @@
 "use client";
 
 import { RotateCcw, Trash2 } from "lucide-react";
-import { useAudiences, useBroadcasts } from "../hooks/useMailingQueries";
-import {
-  useDeleteBroadcast,
-  useSendBroadcast,
-} from "../hooks/useMailingMutations";
+import { useAudiences, useMessages } from "../hooks/useMailingQueries";
+import { useDeleteMessage, useSendMessage } from "../hooks/useMailingMutations";
 import { Button, Card, ErrorNote, StatusPill } from "./MailingFormControls";
 
 function formatDate(value: string | null): string {
-  if (!value) return "—";
+  if (!value) return "-";
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString();
+  return Number.isNaN(d.getTime()) ? "-" : d.toLocaleString();
 }
 
 export function BroadcastHistory() {
-  const { data, isPending, isError } = useBroadcasts();
+  const { data, isPending, isError } = useMessages("broadcast");
   const audiences = useAudiences();
-  const resend = useSendBroadcast();
-  const remove = useDeleteBroadcast();
+  const resend = useSendMessage();
+  const remove = useDeleteMessage();
 
   const audienceLabel = (id: string) =>
     (audiences.data ?? []).find((a) => a.id === id)?.label ?? id;

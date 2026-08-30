@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  useAutomationRuns,
-  useAutomationStats,
-} from "../hooks/useMailingQueries";
+import { useMessageSends, useMessageStats } from "../hooks/useMailingQueries";
 import { StatusPill } from "./MailingFormControls";
 
 const STAT_LABELS: { key: keyof Stats; label: string }[] = [
@@ -22,9 +19,9 @@ type Stats = {
   failed: number;
 };
 
-export function AutomationRuns({ automationId }: { automationId: string }) {
-  const stats = useAutomationStats(automationId);
-  const runs = useAutomationRuns(automationId);
+export function MessageSends({ messageId }: { messageId: string }) {
+  const stats = useMessageStats(messageId);
+  const runs = useMessageSends(messageId);
 
   return (
     <div className="mt-3 border-t border-white/5 pt-3">
@@ -34,7 +31,7 @@ export function AutomationRuns({ automationId }: { automationId: string }) {
             <div className="text-xs text-white/35">{label}</div>
             <div className="text-sm font-medium text-white">
               {stats.isPending
-                ? "—"
+                ? "-"
                 : (stats.data?.[key] ?? 0).toLocaleString()}
             </div>
           </div>

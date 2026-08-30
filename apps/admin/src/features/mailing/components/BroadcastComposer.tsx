@@ -8,10 +8,8 @@ import {
   useAudiences,
   useTemplates,
 } from "../hooks/useMailingQueries";
-import {
-  useSendBroadcastTest,
-  useSendNewBroadcast,
-} from "../hooks/useMailingMutations";
+import { useSendNewBroadcast, useSendTest } from "../hooks/useMailingMutations";
+import { EmailPreview } from "./EmailPreview";
 import {
   Button,
   Card,
@@ -41,7 +39,7 @@ export function BroadcastComposer() {
   const preview = useAudiencePreview(audience);
   const templates = useTemplates();
   const send = useSendNewBroadcast();
-  const sendTest = useSendBroadcastTest();
+  const sendTest = useSendTest();
 
   const options = (audiences.data ?? []).slice().sort((a, b) => {
     const ai = PRIMARY_AUDIENCES.indexOf(a.id);
@@ -81,7 +79,7 @@ export function BroadcastComposer() {
         <div className="flex flex-col gap-4">
           <Field
             label="Internal name"
-            hint="Only shown in the admin history — recipients never see this."
+            hint="Only shown in the admin history. Recipients never see this."
           >
             <TextInput
               value={name}
@@ -163,7 +161,7 @@ export function BroadcastComposer() {
         <div className="flex flex-col gap-4">
           <Field
             label="Body (HTML)"
-            hint="Supports {{email}} and {{wallet_address}}. An unsubscribe link is appended automatically."
+            hint="The full HTML email. Supports {{email}}, {{wallet_address}}, and {{unsubscribe_url}}. If you omit the last one, an unsubscribe button is appended for you."
           >
             <TextArea
               value={body}
@@ -172,6 +170,8 @@ export function BroadcastComposer() {
               placeholder="<p>Hi there,</p>"
             />
           </Field>
+
+          <EmailPreview bodyHtml={body} label="Preview email" />
 
           <Field label="Send a test first" hint="Sends only to this address.">
             <div className="flex gap-2">
@@ -187,10 +187,8 @@ export function BroadcastComposer() {
                 disabled={!canSubmit || !testEmail.trim() || sendTest.isPending}
                 onClick={() =>
                   sendTest.mutate({
-                    name: name.trim(),
                     subject: subject.trim(),
                     body_html: body,
-                    audience,
                     email: testEmail.trim(),
                   })
                 }

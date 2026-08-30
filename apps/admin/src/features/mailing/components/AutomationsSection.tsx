@@ -1,56 +1,78 @@
 "use client";
 
 import { useState } from "react";
-import { Archive, Pause, Play, Plus, Trash2 } from "lucide-react";
+import {
+  Archive,
+  ArchiveRestore,
+  Pause,
+  Pencil,
+  Play,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
+import type { MailingMessage } from "@neko/api-contracts";
 import {
   useAudiences,
-  useAutomations,
+  useMessages,
   useTemplates,
   useTriggers,
 } from "../hooks/useMailingQueries";
 import {
-  useCreateAutomation,
-  useDeleteAutomation,
-  useSetAutomationStatus,
+  useCreateMessage,
+  useDeleteMessage,
+  useSetMessageStatus,
+  useUpdateMessage,
 } from "../hooks/useMailingMutations";
-import { AutomationRuns } from "./AutomationRuns";
 import {
-  Button,
-  Card,
-  ErrorNote,
-  Field,
-  Select,
-  StatusPill,
-  TextInput,
-} from "./MailingFormControls";
+  AutomationDraft,
+  AutomationForm,
+  EMPTY_AUTOMATION,
+  toAutomationPayload,
+} from "./AutomationForm";
+import { MessageSends } from "./MessageSends";
+import { Button, Card, ErrorNote, StatusPill } from "./MailingFormControls";
 
-const DELAY_UNITS = ["minutes", "hours", "days"] as const;
+/** Only draft and paused automations are editable, matching the backend rule. */
+function isEditable(status: string): boolean {
+  return status === "draft" || status === "paused";
+}
+
+function toDraft(a: MailingMessage): AutomationDraft {
+  const days = a.trigger_params?.inactivity_days;
+  const threshold = a.trigger_params?.threshold_xlm;
+  return {
+    name: a.name,
+    trigger_type: a.trigger_type ?? "signup",
+    inactivity_days: String(typeof days === "number" ? days : 14),
+    threshold_xlm: String(typeof threshold === "number" ? threshold : 50),
+    delay_value: String(a.delay_value),
+    delay_unit: a.delay_unit,
+    audience: a.audience,
+    template_id: a.template_id ?? "",
+  };
+}
 
 export function AutomationsSection() {
-  const automations = useAutomations();
+  const automations = useMessages("automation");
   const triggers = useTriggers();
   const templates = useTemplates();
   const audiences = useAudiences();
-  const create = useCreateAutomation();
-  const setStatus = useSetAutomationStatus();
-  const remove = useDeleteAutomation();
+  const create = useCreateMessage();
+  const update = useUpdateMessage();
+  const setStatus = useSetMessageStatus();
+  const remove = useDeleteMessage();
 
-  const [open, setOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [draft, setDraft] = useState<AutomationDraft>(EMPTY_AUTOMATION);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<AutomationDraft>(EMPTY_AUTOMATION);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [name, setName] = useState("");
-  const [triggerType, setTriggerType] = useState("signup");
-  const [inactivityDays, setInactivityDays] = useState("14");
-  const [delayValue, setDelayValue] = useState("0");
-  const [delayUnit, setDelayUnit] = useState<string>("days");
-  const [segment, setSegment] = useState("all");
-  const [templateId, setTemplateId] = useState("");
 
-  // Admin-list audiences have no wallet, so enrollment can never match them.
-  const automationAudiences = (audiences.data ?? []).filter(
-    (a) => a.automationCompatible
-  );
+  // Every audience is selectable: wallet-less ones (admins) are matched on
+  // email during enrollment instead of wallet.
+  const automationAudiences = audiences.data ?? [];
   const templateOptions = templates.data ?? [];
-  const canSubmit = name.trim() && templateId;
 
   const labelFor = (id: string) =>
     (audiences.data ?? []).find((a) => a.id === id)?.label ?? id;
@@ -65,148 +87,43 @@ export function AutomationsSection() {
         <Button
           type="button"
           variant="secondary"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => {
+            setCreating((v) => !v);
+            setDraft(EMPTY_AUTOMATION);
+          }}
         >
-          <Plus className="h-4 w-4" />
-          {open ? "Close" : "New automation"}
+          {creating ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+          {creating ? "Close" : "New automation"}
         </Button>
       }
     >
-      {open && (
-        <div className="mb-5 grid gap-3 rounded-xl border border-white/5 bg-[#141414] p-4 sm:grid-cols-2">
-          <Field label="Name">
-            <TextInput
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Welcome series — day 0"
-            />
-          </Field>
-
-          <Field
-            label="Trigger"
-            hint={
-              (triggers.data ?? []).find((t) => t.id === triggerType)
-                ?.description
-            }
-          >
-            <Select
-              value={triggerType}
-              onChange={(e) => setTriggerType(e.target.value)}
-            >
-              {(triggers.data ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
-          {triggerType === "inactivity" && (
-            <Field
-              label="Inactive for (days)"
-              hint="How long with no activity before the trigger fires."
-            >
-              <TextInput
-                type="number"
-                min={1}
-                value={inactivityDays}
-                onChange={(e) => setInactivityDays(e.target.value)}
-              />
-            </Field>
-          )}
-
-          <Field
-            label="Audience"
-            hint="Narrows who the trigger applies to. Admins aren't selectable — they have no wallet to trigger on."
-          >
-            <Select
-              value={segment}
-              onChange={(e) => setSegment(e.target.value)}
-            >
-              {automationAudiences.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.label}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
-          <Field label="Delay after trigger">
-            <div className="flex gap-2">
-              <TextInput
-                type="number"
-                min={0}
-                value={delayValue}
-                onChange={(e) => setDelayValue(e.target.value)}
-              />
-              <Select
-                value={delayUnit}
-                onChange={(e) => setDelayUnit(e.target.value)}
-              >
-                {DELAY_UNITS.map((u) => (
-                  <option key={u} value={u}>
-                    {u}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          </Field>
-
-          <Field
-            label="Template"
-            hint={
-              templateOptions.length
-                ? undefined
-                : "Create a template first — an automation must send one."
-            }
-          >
-            <Select
-              value={templateId}
-              onChange={(e) => setTemplateId(e.target.value)}
-            >
-              <option value="">Choose a template…</option>
-              {templateOptions.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </Select>
-          </Field>
-
-          <div className="sm:col-span-2">
-            <Button
-              type="button"
-              disabled={!canSubmit || create.isPending}
-              onClick={() =>
-                create.mutate(
-                  {
-                    name: name.trim(),
-                    trigger_type: triggerType,
-                    trigger_params:
-                      triggerType === "inactivity"
-                        ? { inactivity_days: Number(inactivityDays) || 14 }
-                        : {},
-                    delay_value: Number(delayValue) || 0,
-                    delay_unit: delayUnit,
-                    segment,
-                    template_id: templateId,
+      {creating && (
+        <div className="mb-5">
+          <AutomationForm
+            value={draft}
+            onChange={setDraft}
+            submitLabel="Create as draft"
+            pending={create.isPending}
+            error={create.error}
+            triggers={triggers.data ?? []}
+            audiences={automationAudiences}
+            templates={templateOptions}
+            onCancel={() => {
+              setCreating(false);
+              setDraft(EMPTY_AUTOMATION);
+            }}
+            onSubmit={() =>
+              create.mutate(
+                { ...toAutomationPayload(draft), kind: "automation" },
+                {
+                  onSuccess: () => {
+                    setDraft(EMPTY_AUTOMATION);
+                    setCreating(false);
                   },
-                  {
-                    onSuccess: () => {
-                      setName("");
-                      setTemplateId("");
-                      setOpen(false);
-                    },
-                  }
-                )
-              }
-            >
-              {create.isPending ? "Creating…" : "Create as draft"}
-            </Button>
-            <div className="mt-3">
-              <ErrorNote error={create.error} />
-            </div>
-          </div>
+                }
+              )
+            }
+          />
         </div>
       )}
 
@@ -218,87 +135,136 @@ export function AutomationsSection() {
         <p className="text-sm text-white/40">No automations yet.</p>
       ) : (
         <ul className="flex flex-col gap-2">
-          {automations.data.map((a) => (
-            <li
-              key={a.id}
-              className="rounded-lg border border-white/5 bg-[#141414] px-3 py-2.5"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <button
-                  type="button"
-                  className="min-w-0 flex-1 text-left"
-                  onClick={() =>
-                    setExpanded((cur) => (cur === a.id ? null : a.id))
+          {automations.data.map((a) =>
+            editingId === a.id ? (
+              <li key={a.id}>
+                <AutomationForm
+                  value={editDraft}
+                  onChange={setEditDraft}
+                  submitLabel="Save changes"
+                  pending={update.isPending}
+                  error={update.error}
+                  triggers={triggers.data ?? []}
+                  audiences={automationAudiences}
+                  templates={templateOptions}
+                  onCancel={() => setEditingId(null)}
+                  onSubmit={() =>
+                    update.mutate(
+                      { id: a.id, patch: toAutomationPayload(editDraft) },
+                      { onSuccess: () => setEditingId(null) }
+                    )
                   }
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="truncate text-sm font-medium text-white">
-                      {a.name}
-                    </span>
-                    <StatusPill status={a.status} />
-                  </div>
-                  <div className="mt-0.5 text-xs text-white/40">
-                    {triggerLabel(a.trigger_type)} · {labelFor(a.segment)} ·
-                    after {a.delay_value} {a.delay_unit}
-                  </div>
-                </button>
+                />
+              </li>
+            ) : (
+              <li
+                key={a.id}
+                className="rounded-lg border border-white/5 bg-[#141414] px-3 py-2.5"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
+                    onClick={() =>
+                      setExpanded((cur) => (cur === a.id ? null : a.id))
+                    }
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="truncate text-sm font-medium text-white">
+                        {a.name}
+                      </span>
+                      <StatusPill status={a.status} />
+                    </div>
+                    <div className="mt-0.5 text-xs text-white/40">
+                      {triggerLabel(a.trigger_type ?? "")} ·{" "}
+                      {labelFor(a.audience)} · after {a.delay_value}{" "}
+                      {a.delay_unit}
+                    </div>
+                  </button>
 
-                <div className="flex gap-2">
-                  {(a.status === "draft" || a.status === "paused") && (
-                    <Button
-                      type="button"
-                      disabled={setStatus.isPending}
-                      onClick={() =>
-                        setStatus.mutate({ id: a.id, action: "activate" })
-                      }
-                    >
-                      <Play className="h-3.5 w-3.5" />
-                      Activate
-                    </Button>
-                  )}
-                  {a.status === "active" && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      disabled={setStatus.isPending}
-                      onClick={() =>
-                        setStatus.mutate({ id: a.id, action: "pause" })
-                      }
-                    >
-                      <Pause className="h-3.5 w-3.5" />
-                      Pause
-                    </Button>
-                  )}
-                  {a.status !== "archived" && (
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      disabled={setStatus.isPending}
-                      onClick={() =>
-                        setStatus.mutate({ id: a.id, action: "archive" })
-                      }
-                    >
-                      <Archive className="h-3.5 w-3.5" />
-                      Archive
-                    </Button>
-                  )}
-                  {a.status === "draft" && (
-                    <Button
-                      type="button"
-                      variant="danger"
-                      disabled={remove.isPending}
-                      onClick={() => remove.mutate(a.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete
-                    </Button>
-                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {isEditable(a.status) && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => {
+                          setEditingId(a.id);
+                          setEditDraft(toDraft(a));
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit
+                      </Button>
+                    )}
+                    {isEditable(a.status) && (
+                      <Button
+                        type="button"
+                        disabled={setStatus.isPending}
+                        onClick={() =>
+                          setStatus.mutate({ id: a.id, action: "activate" })
+                        }
+                      >
+                        <Play className="h-3.5 w-3.5" />
+                        Activate
+                      </Button>
+                    )}
+                    {a.status === "active" && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={setStatus.isPending}
+                        onClick={() =>
+                          setStatus.mutate({ id: a.id, action: "pause" })
+                        }
+                      >
+                        <Pause className="h-3.5 w-3.5" />
+                        Pause
+                      </Button>
+                    )}
+                    {a.status !== "archived" && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={setStatus.isPending}
+                        onClick={() =>
+                          setStatus.mutate({ id: a.id, action: "archive" })
+                        }
+                      >
+                        <Archive className="h-3.5 w-3.5" />
+                        Archive
+                      </Button>
+                    )}
+                    {a.status === "archived" && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={setStatus.isPending}
+                        onClick={() =>
+                          setStatus.mutate({ id: a.id, action: "unarchive" })
+                        }
+                      >
+                        <ArchiveRestore className="h-3.5 w-3.5" />
+                        Unarchive
+                      </Button>
+                    )}
+                    {a.status === "draft" && (
+                      <Button
+                        type="button"
+                        variant="danger"
+                        disabled={remove.isPending}
+                        onClick={() => remove.mutate(a.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {expanded === a.id && <AutomationRuns automationId={a.id} />}
-            </li>
-          ))}
+                {expanded === a.id && <MessageSends messageId={a.id} />}
+              </li>
+            )
+          )}
         </ul>
       )}
 

@@ -1,16 +1,16 @@
 "use client";
 
 import { Zap } from "lucide-react";
-import { useAutomations, useTriggers } from "../hooks/useMailingQueries";
+import { useMessages, useTriggers } from "../hooks/useMailingQueries";
 import { Card, ErrorNote } from "./MailingFormControls";
 
 /**
  * The trigger catalog is served by the backend, so this list is exactly what
- * enrollment can actually fire on — not a hand-maintained copy that can drift.
+ * enrollment can actually fire on, not a hand-maintained copy that can drift.
  */
 export function TriggersSection() {
   const triggers = useTriggers();
-  const automations = useAutomations();
+  const automations = useMessages("automation");
 
   const activeCountFor = (triggerId: string) =>
     (automations.data ?? []).filter(
