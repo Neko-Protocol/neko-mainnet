@@ -86,3 +86,6 @@ scripts/
 
 # Internal engineering docs — not part of the published repo.
 docs/
+
+# Local env backups (never commit; they hold real credentials)
+.env.bak-*
