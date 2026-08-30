@@ -98,17 +98,19 @@ export const labPrefix = () => {
 export const rpcUrl = resolveRpcUrl(env.PUBLIC_STELLAR_RPC_URL);
 
 /**
- * Whether the Soroban clients must be told the RPC endpoint is insecure.
+ * Whether the Soroban clients must be told not to refuse this endpoint.
  *
- * A gateway path inherits the page's protocol, so a relative `rpcUrl` is only
- * insecure when the app itself is served over http — which is the case in
- * local development and not in production.
+ * The SDK inspects the *URL's* protocol, not the page's, and refuses anything
+ * that is not `https:`. A relative path has no protocol at all, so it is
+ * refused on an https page exactly as it is on an http one — which an earlier
+ * version of this flag got wrong by reasoning about `window.location`.
+ *
+ * Setting it for a relative path gives nothing away: the browser still
+ * resolves the path against the page's own origin, so the request is https in
+ * production regardless. The flag only suppresses a check the SDK cannot
+ * perform on a URL that carries no scheme.
  */
-export const allowHttpForSoroban =
-  rpcUrl.startsWith("http:") ||
-  (rpcUrl.startsWith("/") &&
-    typeof window !== "undefined" &&
-    window.location.protocol === "http:");
+export const allowHttpForSoroban = !rpcUrl.startsWith("https:");
 
 export const horizonUrl = env.PUBLIC_STELLAR_HORIZON_URL;
 
