@@ -10,8 +10,7 @@ export type AuditActionType =
   | "vaults_withdraw"
   | "vaults_claim_earnings"
   | "pool_repay"
-  | "pool_claim_rewards"
-  | "activation_payout";
+  | "pool_claim_rewards";
 
 export interface AuditEvent {
   wallet_address: string;
