@@ -5,6 +5,7 @@ import {
   getBlendPoolIds as pkgGetBlendPoolIds,
 } from "@neko/orchestrator";
 import {
+  allowHttpForSoroban,
   networkPassphrase,
   rpcUrl,
   stellarNetwork,
@@ -15,6 +16,7 @@ export function getBlendNetwork(): Network {
   return pkgGetBlendNetwork({
     id: mapNetworkId(stellarNetwork),
     rpcUrl,
+    allowHttp: allowHttpForSoroban,
     passphrase: networkPassphrase,
   });
 }

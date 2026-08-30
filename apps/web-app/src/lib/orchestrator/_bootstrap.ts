@@ -5,6 +5,7 @@ import {
   type StellarNetworkId,
 } from "@neko/orchestrator";
 import {
+  allowHttpForSoroban,
   horizonUrl,
   networkPassphrase,
   rpcUrl,
@@ -46,6 +47,9 @@ export const { orchestrator, poolRegistry } = createOrchestrator({
   network: {
     id: mapNetworkId(stellarNetwork),
     rpcUrl,
+    // Several adapters refuse an insecure RPC unless told it is intentional,
+    // and a gateway path carries no protocol of its own to test.
+    allowHttp: allowHttpForSoroban,
     passphrase: networkPassphrase,
     horizonUrl,
   },
