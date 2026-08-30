@@ -1,6 +1,7 @@
 import { Client as ReflectorClient } from "@neko/reflector";
 import { REFLECTOR_CONTRACT_ID } from "@/lib/constants/contracts";
 import {
+  allowHttpForSoroban,
   rpcUrl,
   networkPassphrase,
   stellarNetwork,
@@ -21,6 +22,7 @@ export function getReflectorClient(): ReflectorClient | null {
     contractId: REFLECTOR_CONTRACT_ID,
     networkPassphrase,
     rpcUrl,
+    allowHttp: allowHttpForSoroban,
   });
   return _client;
 }

@@ -357,6 +357,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         const vault = new DefindexVaultClient({
           contractId: vaultId,
           rpcUrl: this.rpcUrl,
+          allowHttp: this.allowHttp,
           networkPassphrase: this.networkPassphrase,
           publicKey: userAddress,
         });
@@ -462,6 +463,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         const vault = new DefindexVaultClient({
           contractId: vaultId,
           rpcUrl: this.rpcUrl,
+          allowHttp: this.allowHttp,
           networkPassphrase: this.networkPassphrase,
           publicKey: userAddress,
         });
@@ -562,6 +564,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       const vault = new DefindexVaultClient({
         contractId: vaultId,
         rpcUrl: this.rpcUrl,
+        allowHttp: this.allowHttp,
         networkPassphrase: this.networkPassphrase,
         publicKey: userAddress,
       });
@@ -591,6 +594,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       const vault = new DefindexVaultClient({
         contractId: vaultId,
         rpcUrl: this.rpcUrl,
+        allowHttp: this.allowHttp,
         networkPassphrase: this.networkPassphrase,
         publicKey: userAddress,
       });
