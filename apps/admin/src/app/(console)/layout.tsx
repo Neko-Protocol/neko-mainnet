@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AdminSidebar } from "@/components/navigation/AdminSidebar";
 import { AdminMobileHeader } from "@/components/navigation/AdminMobileHeader";
 
-export default async function AnalyticsLayout({
+export default async function ConsoleLayout({
   children,
 }: {
   children: ReactNode;

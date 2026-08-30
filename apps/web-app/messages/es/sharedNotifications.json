@@ -1,0 +1,17 @@
+{
+  "sharedNotifications": {
+    "ariaLabel": "Notificaciones",
+    "ariaLabelWithCount": "Notificaciones, {count, plural, one {# sin leer} other {# sin leer}}",
+    "panel": {
+      "title": "Notificaciones",
+      "markAllRead": "Marcar todo como leído",
+      "clear": "Descartar",
+      "clearAll": "Borrar todo",
+      "pageOf": "{current} de {total}",
+      "previousPage": "Página anterior",
+      "nextPage": "Página siguiente",
+      "empty": "Todavía no hay nada. Te avisaremos cuando ocurra algo.",
+      "unread": "Sin leer"
+    }
+  }
+}

@@ -11,6 +11,7 @@ import { useNavItems } from "@/hooks/useNavItems";
 import { useWalletType } from "@/hooks/useWalletType";
 import { useStellarWallet } from "@/hooks/useStellarWallet";
 import { truncateAddress } from "@/lib/utils";
+import { NotificationCenter } from "@/features/shared/notifications/components/NotificationCenter";
 
 const NETWORK = (
   process.env.NEXT_PUBLIC_STELLAR_NETWORK ?? "TESTNET"
@@ -87,6 +88,14 @@ export function MobileHeader() {
               />
             </Link>
           </div>
+
+          {/* The sidebar is desktop-only, so the bell has to appear here too or
+              mobile users simply never see a notification. */}
+          {isConnected && (
+            <div className="relative mr-2 shrink-0">
+              <NotificationCenter variant="header" />
+            </div>
+          )}
 
           <div className="relative min-w-0 mr-6" ref={walletButtonRef}>
             {isConnected && activeAddress ? (

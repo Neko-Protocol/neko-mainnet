@@ -1,0 +1,17 @@
+{
+  "sharedNotifications": {
+    "ariaLabel": "Notifications",
+    "ariaLabelWithCount": "Notifications, {count, plural, one {# unread} other {# unread}}",
+    "panel": {
+      "title": "Notifications",
+      "markAllRead": "Mark all read",
+      "clear": "Clear",
+      "clearAll": "Clear all",
+      "pageOf": "{current} of {total}",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "empty": "Nothing here yet. We will let you know when something happens.",
+      "unread": "Unread"
+    }
+  }
+}
