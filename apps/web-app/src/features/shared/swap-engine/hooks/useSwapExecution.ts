@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { rpc } from "@stellar/stellar-sdk";
-import { rpcUrl, stellarNetwork } from "@/lib/config/stellar.config";
+import { allowHttpForSoroban, rpcUrl } from "@/lib/constants/network";
 import type { Token } from "@/lib/helpers/stellar/swap-kit";
 import {
   getQuote,
@@ -100,7 +100,7 @@ export function useSwapExecution() {
 
       if (sendResult.txHash) {
         const server = new rpc.Server(rpcUrl, {
-          allowHttp: stellarNetwork === "LOCAL",
+          allowHttp: allowHttpForSoroban,
         });
         const confirmed = await server.pollTransaction(sendResult.txHash, {
           attempts: 30,

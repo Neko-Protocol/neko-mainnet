@@ -13,10 +13,6 @@ import {
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
-import {
-  rpcUrl as configRpcUrl,
-  stellarNetwork,
-} from "@/lib/config/stellar.config";
 import { useMultisigDetection } from "@/features/shared/vault/hooks/useMultisigDetection";
 import { lobstrVaultService } from "@/features/shared/vault/services/lobstr-vault.service";
 import { usePendingMultisigTxsStore } from "@/features/shared/wallet/stores/pendingMultisigTxs.store";
@@ -98,8 +94,8 @@ async function signAndSubmit(
   isMultisig: boolean,
   lobstrRejectedMessage: (error: string) => string
 ): Promise<SignAndSubmitResult> {
-  const server = new rpc.Server(configRpcUrl, {
-    allowHttp: stellarNetwork === "LOCAL",
+  const server = new rpc.Server(rpcUrl, {
+    allowHttp: allowHttpForSoroban,
   });
   const signed = await signFn(xdr, { networkPassphrase: passphrase, address });
   const signedTxXdr = extractSignedTxXdr(signed);
@@ -143,8 +139,8 @@ async function waitForTx(
     intervalMs = 1_000,
   }: { timeoutMs?: number; intervalMs?: number } = {}
 ) {
-  const server = new rpc.Server(configRpcUrl, {
-    allowHttp: stellarNetwork === "LOCAL",
+  const server = new rpc.Server(rpcUrl, {
+    allowHttp: allowHttpForSoroban,
   });
   const start = Date.now();
 

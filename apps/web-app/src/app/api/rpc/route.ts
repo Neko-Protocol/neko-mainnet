@@ -57,8 +57,18 @@ function isSameOrigin(req: NextRequest): boolean {
     }
   }
 
-  // Neither header: not a browser request from our app.
-  return false;
+  // Neither header present, which no browser does on a cross-site request:
+  // CORS requires Origin on any fetch sending JSON. So what lands here is a
+  // non-browser client — including our own server-side code, which routes
+  // through this gateway because the SDKs it hands off to (SwapKit among
+  // them) accept a URL and no headers, leaving them no way to authenticate.
+  //
+  // Rejecting these would break our own traffic while stopping nothing: a
+  // scripted caller can set Origin with one flag. The guarantee worth keeping
+  // is the one a browser cannot forge — a mismatched Origin — and that is
+  // enforced above. Abuse is bounded by the method allowlist, the batch and
+  // body caps, and the backend throttle.
+  return true;
 }
 
 export async function POST(req: NextRequest) {

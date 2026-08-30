@@ -1,6 +1,9 @@
 import { Networks, TransactionBuilder, rpc } from "@stellar/stellar-sdk";
-import { networkPassphrase, rpcUrl } from "@/lib/constants/network";
-import { stellarNetwork } from "@/lib/config/stellar.config";
+import {
+  allowHttpForSoroban,
+  networkPassphrase,
+  rpcUrl,
+} from "@/lib/constants/network";
 import type {
   BuildRequest,
   BuildResponse,
@@ -39,7 +42,7 @@ export async function sendTransaction(
   request: SendRequest
 ): Promise<SendResponse> {
   const server = new rpc.Server(rpcUrl, {
-    allowHttp: stellarNetwork === "LOCAL",
+    allowHttp: allowHttpForSoroban,
   });
   const transaction =
     networkPassphrase === Networks.PUBLIC
