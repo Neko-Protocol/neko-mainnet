@@ -20,6 +20,8 @@ export default getRequestConfig(async () => {
     ...(await import(`../../messages/${locale}/sharedBorrowing.json`)).default,
     ...(await import(`../../messages/${locale}/sharedOnOffRamps.json`)).default,
     ...(await import(`../../messages/${locale}/sharedReferral.json`)).default,
+    ...(await import(`../../messages/${locale}/sharedNotifications.json`))
+      .default,
     ...(await import(`../../messages/${locale}/sharedSettings.json`)).default,
     ...(await import(`../../messages/${locale}/sharedDashboard.json`)).default,
     ...(await import(`../../messages/${locale}/sharedAdmin.json`)).default,
