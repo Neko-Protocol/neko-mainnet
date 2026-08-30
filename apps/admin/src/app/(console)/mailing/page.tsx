@@ -6,8 +6,8 @@ export default function MailingPage() {
     <div className="space-y-6">
       <BannerPage
         title="Mailing"
-        subtitle="Send mass emails, manage templates, and configure triggered automations"
-        badge="Notifications"
+        subtitle="Send mass emails and manage the templates they draw on"
+        badge="Email"
         imageSrc="/banners/mailing.png"
         imageAlt="Mailing illustration"
       />
