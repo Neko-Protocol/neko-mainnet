@@ -7,8 +7,8 @@ export default function MailingPage() {
       <BannerPage
         title="Mailing"
         subtitle="Send mass emails, manage templates, and configure triggered automations"
-        badge="Mailing"
-        imageSrc="/banners/oracle.svg"
+        badge="Notifications"
+        imageSrc="/banners/mailing.png"
         imageAlt="Mailing illustration"
       />
       <MailingConsole />
