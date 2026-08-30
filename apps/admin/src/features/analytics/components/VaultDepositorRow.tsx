@@ -40,7 +40,7 @@ export function VaultDepositorRow({
       </button>
 
       <span className="hidden truncate text-sm text-white/50 sm:block">
-        {depositor.email ?? "—"}
+        {depositor.email ?? "-"}
       </span>
 
       <div className="text-right">

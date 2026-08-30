@@ -11,7 +11,6 @@ export const AUDIT_ACTION_TYPES = [
   "vaults_claim_earnings",
   "pool_repay",
   "pool_claim_rewards",
-  "activation_payout",
 ] as const;
 
 export type AuditActionType = (typeof AUDIT_ACTION_TYPES)[number];
