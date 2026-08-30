@@ -1,7 +1,10 @@
 import { Networks } from "@stellar/stellar-sdk";
 import { SwapKit } from "@xbullcorp/swap-kit";
-import { networkPassphrase, rpcUrl } from "@/lib/constants/network";
-import { stellarNetwork } from "@/lib/config/stellar.config";
+import {
+  allowHttpForSoroban,
+  networkPassphrase,
+  rpcUrl,
+} from "@/lib/constants/network";
 import { resolveDecimalsForSwapToken } from "@/lib/helpers/auditAssetAmounts";
 import type {
   BuildRequest,
@@ -13,7 +16,7 @@ import { getTokenAddress } from "./tokens";
 
 const swapKit = new SwapKit({
   rpcUrl,
-  allowHttp: stellarNetwork === "LOCAL",
+  allowHttp: allowHttpForSoroban,
   passphrase: networkPassphrase as Networks,
 });
 

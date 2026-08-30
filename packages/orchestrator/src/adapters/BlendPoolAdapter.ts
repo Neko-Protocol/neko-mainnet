@@ -124,6 +124,14 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     return this.config.network.allowHttp ?? false;
   }
 
+  /**
+   * The pool's client when the host supplied one, otherwise undefined and the
+   * SDK builds its own from `rpcUrl`.
+   */
+  private get server() {
+    return this.config.network.server;
+  }
+
   private static readonly POOL_CACHE_TTL_MS = 20_000;
   private poolCache?: { pool: PoolV2; loadedAt: number };
   private poolCacheInFlight?: Promise<PoolV2>;
@@ -357,6 +365,8 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         const vault = new DefindexVaultClient({
           contractId: vaultId,
           rpcUrl: this.rpcUrl,
+          allowHttp: this.allowHttp,
+          server: this.server,
           networkPassphrase: this.networkPassphrase,
           publicKey: userAddress,
         });
@@ -462,6 +472,8 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         const vault = new DefindexVaultClient({
           contractId: vaultId,
           rpcUrl: this.rpcUrl,
+          allowHttp: this.allowHttp,
+          server: this.server,
           networkPassphrase: this.networkPassphrase,
           publicKey: userAddress,
         });
@@ -562,6 +574,8 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       const vault = new DefindexVaultClient({
         contractId: vaultId,
         rpcUrl: this.rpcUrl,
+        allowHttp: this.allowHttp,
+        server: this.server,
         networkPassphrase: this.networkPassphrase,
         publicKey: userAddress,
       });
@@ -591,6 +605,8 @@ export class BlendPoolAdapter implements BasePoolAdapter {
       const vault = new DefindexVaultClient({
         contractId: vaultId,
         rpcUrl: this.rpcUrl,
+        allowHttp: this.allowHttp,
+        server: this.server,
         networkPassphrase: this.networkPassphrase,
         publicKey: userAddress,
       });
@@ -897,7 +913,8 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     userAddress: string
   ): Promise<TransactionResult> {
     const operation = xdr.Operation.fromXDR(opXdrBase64, "base64");
-    const server = new rpc.Server(this.rpcUrl, { allowHttp: this.allowHttp });
+    const server =
+      this.server ?? new rpc.Server(this.rpcUrl, { allowHttp: this.allowHttp });
     const account = await server.getAccount(userAddress);
 
     const tx = new TransactionBuilder(account, {

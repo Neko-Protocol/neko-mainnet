@@ -1,3 +1,5 @@
+import type { rpc } from "@stellar/stellar-sdk";
+
 export type StellarNetworkId = "PUBLIC" | "TESTNET" | "FUTURENET" | "LOCAL";
 export interface OrchestratorNetwork {
   id: StellarNetworkId;
@@ -6,6 +8,24 @@ export interface OrchestratorNetwork {
   allowHttp?: boolean;
   /** Optional Horizon REST endpoint for classic Stellar operations. */
   horizonUrl?: string;
+  /**
+   * An RPC client to use instead of building one from `rpcUrl`.
+   *
+   * The backend passes its endpoint pool here, so these reads get the same
+   * health-aware selection, retry and failover as the rest of the app. The
+   * browser leaves it unset: it already reaches the pool through the gateway
+   * that `rpcUrl` points at.
+   */
+  server?: rpc.Server;
+  /**
+   * Headers to send with RPC requests built from `rpcUrl`.
+   *
+   * Only one consumer needs this: Blend's SDK takes a URL and builds its own
+   * client, so it cannot be handed `server`. Pointing `rpcUrl` at a gateway
+   * that requires a key is the only way to get it onto the pool, and this is
+   * how the key travels.
+   */
+  rpcHeaders?: Record<string, string>;
 }
 /**
  * Rich token metadata used by adapters that need decimals / icon / display

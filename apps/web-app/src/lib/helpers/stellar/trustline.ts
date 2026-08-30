@@ -5,7 +5,12 @@ import {
   TransactionBuilder,
 } from "@stellar/stellar-sdk";
 import { TokenMetadata } from "@blend-capital/blend-sdk";
-import { horizonUrl, networkPassphrase, rpcUrl } from "@/lib/constants/network";
+import {
+  allowHttpForSoroban,
+  horizonUrl,
+  networkPassphrase,
+  rpcUrl,
+} from "@/lib/constants/network";
 import { extractSignedTxXdr, type SignTransactionFn } from "@neko/orchestrator";
 
 export interface ClassicAssetRef {
@@ -122,7 +127,11 @@ async function resolveClassicAssetForSAC(
 ): Promise<ClassicAssetRef | null> {
   // Strategy 0: Blend SDK TokenMetadata (most reliable  reads on-chain data)
   try {
-    const network = { rpc: rpcUrl, passphrase: networkPassphrase };
+    const network = {
+      rpc: rpcUrl,
+      passphrase: networkPassphrase,
+      ...(allowHttpForSoroban ? { opts: { allowHttp: true } } : {}),
+    };
     const meta = await TokenMetadata.load(network, contractId);
     if (meta.asset) {
       return { code: meta.asset.getCode(), issuer: meta.asset.getIssuer() };

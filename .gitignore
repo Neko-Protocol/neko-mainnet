@@ -78,8 +78,18 @@ add-soroswap-liquidity.cjs
 add-ktb-liquidity.cjs
 add-ktb-xlm-pool.cjs
 upgrade-ktb-token.cjs
-scripts/
+scripts/*
+# ...except the k6 harness, which is a deliverable and has to run from a clean
+# checkout. Everything else in scripts/ is one-off operational tooling.
+!scripts/load/
+scripts/load/results/
 
 # Claude Code local state (per-developer, not shared)
 .claude/settings.local.json
 .claude/worktrees/
+
+# Internal engineering docs — not part of the published repo.
+docs/
+
+# Local env backups (never commit; they hold real credentials)
+.env.bak-*

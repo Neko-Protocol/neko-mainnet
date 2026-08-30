@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { resolveRpcUrl } from "./resolveRpcUrl";
 import { Networks as WalletNetwork } from "@creit.tech/stellar-wallets-kit/types";
 
 type NetworkType = "mainnet" | "testnet" | "futurenet" | "custom";
@@ -56,22 +57,45 @@ const stellarEncode = (str: string) => {
   return str.replace(/\//g, "//").replace(/;/g, "/;");
 };
 
+/**
+ * The RPC URL to hand to external tools such as Stellar Lab.
+ *
+ * When the app routes through the gateway, `rpcUrl` is a path on our own
+ * origin that requires an internal key — useless to a third-party tool. Fall
+ * back to the network's public RPC so those links keep working.
+ */
+export function externalRpcUrl(): string {
+  const configured = env.PUBLIC_STELLAR_RPC_URL;
+  if (!configured.startsWith("/")) return configured;
+
+  switch (stellarNetwork) {
+    case "PUBLIC":
+      return "https://mainnet.sorobanrpc.com";
+    case "TESTNET":
+      return "https://soroban-testnet.stellar.org";
+    case "FUTURENET":
+      return "https://rpc-futurenet.stellar.org";
+    default:
+      return "http://localhost:8000/rpc";
+  }
+}
+
 export const labPrefix = () => {
   switch (stellarNetwork) {
     case "LOCAL":
-      return `http://localhost:8000/lab/transaction-dashboard?$=network$id=custom&label=Custom&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(rpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
+      return `http://localhost:8000/lab/transaction-dashboard?$=network$id=custom&label=Custom&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(externalRpcUrl())}&passphrase=${stellarEncode(networkPassphrase)};`;
     case "PUBLIC":
-      return `https://lab.stellar.org/transaction-dashboard?$=network$id=mainnet&label=Mainnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(rpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
+      return `https://lab.stellar.org/transaction-dashboard?$=network$id=mainnet&label=Mainnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(externalRpcUrl())}&passphrase=${stellarEncode(networkPassphrase)};`;
     case "TESTNET":
-      return `https://lab.stellar.org/transaction-dashboard?$=network$id=testnet&label=Testnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(rpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
+      return `https://lab.stellar.org/transaction-dashboard?$=network$id=testnet&label=Testnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(externalRpcUrl())}&passphrase=${stellarEncode(networkPassphrase)};`;
     case "FUTURENET":
-      return `https://lab.stellar.org/transaction-dashboard?$=network$id=futurenet&label=Futurenet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(rpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
+      return `https://lab.stellar.org/transaction-dashboard?$=network$id=futurenet&label=Futurenet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(externalRpcUrl())}&passphrase=${stellarEncode(networkPassphrase)};`;
     default:
-      return `https://lab.stellar.org/transaction-dashboard?$=network$id=testnet&label=Testnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(rpcUrl)}&passphrase=${stellarEncode(networkPassphrase)};`;
+      return `https://lab.stellar.org/transaction-dashboard?$=network$id=testnet&label=Testnet&horizonUrl=${stellarEncode(horizonUrl)}&rpcUrl=${stellarEncode(externalRpcUrl())}&passphrase=${stellarEncode(networkPassphrase)};`;
   }
 };
 
-export const rpcUrl = env.PUBLIC_STELLAR_RPC_URL;
+export const rpcUrl = resolveRpcUrl(env.PUBLIC_STELLAR_RPC_URL);
 
 export const horizonUrl = env.PUBLIC_STELLAR_HORIZON_URL;
 
