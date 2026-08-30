@@ -3,7 +3,7 @@
 @source "../**/*.{ts,tsx}";
 
 @theme inline {
-  /* Neko semantic colors — mirrors packages/config/tailwind.config.ts */
+  /* Neko semantic colors, mirroring packages/config/tailwind.config.ts */
   --color-neko-navy: #081f5c;
   --color-neko-blue: #7096d1;
   --color-neko-accent: #294cab;

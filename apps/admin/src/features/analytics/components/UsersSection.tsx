@@ -30,7 +30,7 @@ export function UsersSection() {
           label="Total users"
           value={(data?.totalUsers ?? 0).toLocaleString()}
           isLoading={isPending}
-          info="Row count in the `users` table for mainnet — one row per wallet that has ever connected to the app."
+          info="Row count in the `users` table for mainnet. One row per wallet that has ever connected to the app."
         />
         <StatCard
           icon={<Mail className="h-5 w-5" />}
@@ -38,7 +38,7 @@ export function UsersSection() {
           value={(data?.emailConfirmed ?? 0).toLocaleString()}
           subValue={pct(data?.emailConfirmedPct ?? 0)}
           isLoading={isPending}
-          info="Users with `email_verified_at` set — they completed the email magic-link verification flow."
+          info="Users with `email_verified_at` set, meaning they completed the email magic-link verification flow."
         />
         <StatCard
           icon={<Wallet className="h-5 w-5" />}
@@ -46,7 +46,7 @@ export function UsersSection() {
           value={(data?.investedCount ?? 0).toLocaleString()}
           subValue={pct(data?.investedPct ?? 0)}
           isLoading={isPending}
-          info="Wallets with at least one 'vaults_deposit' entry in audit_logs. Vault deposits only — does not include swaps, Blend/Aqua pool activity, or on/off-ramp usage."
+          info="Wallets with at least one 'vaults_deposit' entry in audit_logs. Vault deposits only. Does not include swaps, Blend/Aqua pool activity, or on/off-ramp usage."
         />
         <StatCard
           icon={<RefreshCw className="h-5 w-5" />}
@@ -54,7 +54,7 @@ export function UsersSection() {
           value={(data?.reinvestedCount ?? 0).toLocaleString()}
           subValue={pct(data?.reinvestedPct ?? 0)}
           isLoading={isPending}
-          info="Wallets with 2 or more 'vaults_deposit' entries — came back and deposited into a vault again after their first time."
+          info="Wallets with 2 or more 'vaults_deposit' entries, meaning they came back and deposited into a vault again after their first time."
         />
       </div>
     </section>

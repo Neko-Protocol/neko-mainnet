@@ -30,15 +30,15 @@ const DEFAULT_PAGE_SIZE = 10;
 
 function formatAmount(row: TransactionRow): string {
   const amount = row.amountOut ?? row.amountIn;
-  if (amount == null) return "—";
+  if (amount == null) return "-";
   return amount.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-// Vault share tokens are stored as e.g. "DeFindex-Vault-Neko USDC" — show just
+// Vault share tokens are stored as e.g. "DeFindex-Vault-Neko USDC", so show just
 // the trailing asset symbol to match the rest of the admin's asset labels.
 function formatAsset(row: TransactionRow): string {
   const asset = row.assetOut ?? row.assetIn;
-  if (!asset) return "—";
+  if (!asset) return "-";
   const parts = asset.trim().split(/\s+/);
   return parts[parts.length - 1];
 }
@@ -184,11 +184,11 @@ export function TransactionsTable() {
                         )}
                       </button>
                     ) : (
-                      "—"
+                      "-"
                     )}
                   </td>
                   <td className="px-4 py-3 text-white/70">
-                    {row.email ?? "—"}
+                    {row.email ?? "-"}
                   </td>
                   <td className="px-4 py-3 text-white/70">
                     {formatAmount(row)}
