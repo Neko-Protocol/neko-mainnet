@@ -2,16 +2,36 @@ import type { Network } from "@blend-capital/blend-sdk";
 
 import type { OrchestratorNetwork, StellarNetworkId } from "../config.js";
 
+/**
+ * The one consumer that cannot be handed a client directly.
+ *
+ * Blend's SDK takes `rpc` as a URL and constructs its own client internally —
+ * its `Network` type has no seam for supplying one. It does pass `opts`
+ * straight through to `rpc.Server`, though, which accepts headers. So the way
+ * onto the pool is a URL that reaches it: the backend points `rpcUrl` at its
+ * own passthrough and sends the internal key here.
+ *
+ * That means the backend calls itself over HTTP for this one path. It is a
+ * loopback hop, and it buys health-aware selection, retry and failover for
+ * reads that would otherwise ride a single endpoint with none of it.
+ */
 export function getBlendNetwork(net: OrchestratorNetwork): Network {
   // The Blend SDK refuses an http:// RPC unless told otherwise. That matters
   // now that traffic routes through the app's own gateway, which is plain
   // http in local development.
   const allowHttp = net.allowHttp ?? net.rpcUrl.startsWith("http://");
 
+  const opts = {
+    ...(allowHttp ? { allowHttp: true } : {}),
+    ...(net.rpcHeaders ? { headers: net.rpcHeaders } : {}),
+  };
+
   return {
     rpc: net.rpcUrl,
     passphrase: net.passphrase,
-    ...(allowHttp ? { opts: { allowHttp: true } } : {}),
+    // `opts` is typed against Horizon but handed to rpc.Server, which is what
+    // reads `headers`.
+    ...(Object.keys(opts).length ? { opts: opts as Network["opts"] } : {}),
   };
 }
 
