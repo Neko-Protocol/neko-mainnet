@@ -3,7 +3,16 @@ import type { Network } from "@blend-capital/blend-sdk";
 import type { OrchestratorNetwork, StellarNetworkId } from "../config.js";
 
 export function getBlendNetwork(net: OrchestratorNetwork): Network {
-  return { rpc: net.rpcUrl, passphrase: net.passphrase };
+  // The Blend SDK refuses an http:// RPC unless told otherwise. That matters
+  // now that traffic routes through the app's own gateway, which is plain
+  // http in local development.
+  const allowHttp = net.allowHttp ?? net.rpcUrl.startsWith("http://");
+
+  return {
+    rpc: net.rpcUrl,
+    passphrase: net.passphrase,
+    ...(allowHttp ? { opts: { allowHttp: true } } : {}),
+  };
 }
 
 export const BLEND_POOLS: Record<string, string[]> = {

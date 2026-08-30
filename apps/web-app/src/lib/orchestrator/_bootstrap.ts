@@ -46,6 +46,9 @@ export const { orchestrator, poolRegistry } = createOrchestrator({
   network: {
     id: mapNetworkId(stellarNetwork),
     rpcUrl,
+    // The gateway is plain http in local development, and several adapters
+    // refuse an insecure RPC unless told it is intentional.
+    allowHttp: rpcUrl.startsWith("http://"),
     passphrase: networkPassphrase,
     horizonUrl,
   },
