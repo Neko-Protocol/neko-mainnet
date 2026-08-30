@@ -18,8 +18,8 @@ export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { label: "Mailing", href: "/analytics/mailing", icon: Send },
   { label: "Admins", href: "/analytics/admins", icon: ShieldCheck },
   {
-    label: "Infrastructure",
-    href: "/analytics/infrastructure",
+    label: "RPC",
+    href: "/analytics/rpc",
     icon: Activity,
   },
 ];

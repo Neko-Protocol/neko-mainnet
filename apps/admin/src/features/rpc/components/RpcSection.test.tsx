@@ -1,11 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { InfrastructureSection } from "./InfrastructureSection";
-import { useInfrastructure } from "../hooks/useInfrastructure";
-import type { InfrastructureSnapshot } from "../types";
+import { RpcSection } from "./RpcSection";
+import { useRpcOverview } from "../hooks/useRpcOverview";
+import type { RpcOverview } from "../types";
 
-vi.mock("../hooks/useInfrastructure", () => ({
-  useInfrastructure: vi.fn(),
+vi.mock("../hooks/useRpcOverview", () => ({
+  useRpcOverview: vi.fn(),
 }));
 
 // The charts read Grafana through a server-only module, which refuses to load
@@ -15,11 +15,9 @@ vi.mock("./MetricsHistory", () => ({
   MetricsHistory: () => null,
 }));
 
-const mocked = vi.mocked(useInfrastructure);
+const mocked = vi.mocked(useRpcOverview);
 
-function snapshot(
-  overrides: Partial<InfrastructureSnapshot> = {}
-): InfrastructureSnapshot {
+function snapshot(overrides: Partial<RpcOverview> = {}): RpcOverview {
   return {
     endpoints: [
       {
@@ -62,28 +60,26 @@ function snapshot(
   };
 }
 
-function mock(value: Partial<ReturnType<typeof useInfrastructure>>) {
-  mocked.mockReturnValue(value as ReturnType<typeof useInfrastructure>);
+function mock(value: Partial<ReturnType<typeof useRpcOverview>>) {
+  mocked.mockReturnValue(value as ReturnType<typeof useRpcOverview>);
 }
 
 afterEach(cleanup);
 
-describe("InfrastructureSection", () => {
+describe("RpcSection", () => {
   it("shows an error state rather than zeroed stats when the call failed", () => {
     mock({ data: undefined, isLoading: false, error: new Error("boom") });
 
-    render(<InfrastructureSection />);
+    render(<RpcSection />);
 
-    expect(
-      screen.getByText(/could not load infrastructure metrics/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/could not load rpc metrics/i)).toBeInTheDocument();
     expect(screen.queryByText("Endpoint pool")).not.toBeInTheDocument();
   });
 
   it("renders pool state, rates and failovers", () => {
     mock({ data: snapshot(), isLoading: false, error: null });
 
-    render(<InfrastructureSection />);
+    render(<RpcSection />);
 
     expect(screen.getByText("1 / 2")).toBeInTheDocument();
     // 90% shows twice on purpose: the headline card and the per-method row.
@@ -96,7 +92,7 @@ describe("InfrastructureSection", () => {
   it("surfaces the reason an endpoint is down", () => {
     mock({ data: snapshot(), isLoading: false, error: null });
 
-    render(<InfrastructureSection />);
+    render(<RpcSection />);
 
     // Without this the table says "down" and leaves you guessing — the 429 is
     // what tells you it is a credential or quota problem, not an outage.
@@ -118,7 +114,7 @@ describe("InfrastructureSection", () => {
       error: null,
     });
 
-    render(<InfrastructureSection />);
+    render(<RpcSection />);
 
     // An idle backend is not a broken one. Printing 0% here is the mistake
     // that made the Grafana success-rate alert page on an empty window.

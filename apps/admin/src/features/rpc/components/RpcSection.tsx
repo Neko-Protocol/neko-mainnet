@@ -3,7 +3,7 @@
 import { Activity, Database, Server, Shuffle } from "lucide-react";
 import { StatCard } from "@/features/analytics/components/StatCard";
 import { AnalyticsErrorState } from "@/features/analytics/components/AnalyticsErrorState";
-import { useInfrastructure } from "../hooks/useInfrastructure";
+import { useRpcOverview } from "../hooks/useRpcOverview";
 import { EndpointPoolTable } from "./EndpointPoolTable";
 import { UsageTable } from "./UsageTable";
 import { MetricsHistory } from "./MetricsHistory";
@@ -23,13 +23,11 @@ function count(n: number): string {
   return n.toLocaleString("en-US");
 }
 
-export function InfrastructureSection() {
-  const { data, isLoading, error } = useInfrastructure();
+export function RpcSection() {
+  const { data, isLoading, error } = useRpcOverview();
 
   if (error) {
-    return (
-      <AnalyticsErrorState message="Could not load infrastructure metrics." />
-    );
+    return <AnalyticsErrorState message="Could not load RPC metrics." />;
   }
 
   const totals = data?.totals;

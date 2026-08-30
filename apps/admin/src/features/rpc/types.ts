@@ -39,7 +39,7 @@ export interface FailoverEvent {
   count: number;
 }
 
-export interface InfrastructureSnapshot {
+export interface RpcOverview {
   endpoints: EndpointSnapshot[];
   usableCount: number;
   byMethod: MethodUsage[];

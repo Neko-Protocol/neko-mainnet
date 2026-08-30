@@ -4,7 +4,7 @@ import type { Environment } from "../grafana";
 
 export function useMetricsHistory(environment: Environment, range: RangeKey) {
   return useQuery({
-    queryKey: ["infrastructure", "history", environment, range] as const,
+    queryKey: ["rpc-overview", "history", environment, range] as const,
     queryFn: () => fetchMetricsHistory(environment, range),
     // Grafana scrapes every 60s, so anything faster just re-reads the same
     // window.

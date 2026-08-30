@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchInfrastructure } from "../actions";
-import { infrastructureKeys } from "../queryKeys";
+import { fetchRpcOverview } from "../actions";
+import { rpcOverviewKeys } from "../queryKeys";
 
 /**
  * Pool health moves on a 20s probe, so the page refetches on that cadence.
@@ -8,10 +8,10 @@ import { infrastructureKeys } from "../queryKeys";
  */
 const REFETCH_MS = 20_000;
 
-export function useInfrastructure() {
+export function useRpcOverview() {
   return useQuery({
-    queryKey: infrastructureKeys.snapshot,
-    queryFn: fetchInfrastructure,
+    queryKey: rpcOverviewKeys.snapshot,
+    queryFn: fetchRpcOverview,
     refetchInterval: REFETCH_MS,
     refetchOnWindowFocus: true,
   });
