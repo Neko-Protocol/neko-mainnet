@@ -1,14 +1,17 @@
-import type { MailingAudienceId } from "@neko/api-contracts";
+import type {
+  MailingAudienceId,
+  MailingMessageKind,
+} from "@neko/api-contracts";
 
 export const mailingKeys = {
   audiences: ["mailing", "audiences"] as const,
+  triggers: ["mailing", "triggers"] as const,
   audiencePreview: (audience: MailingAudienceId) =>
     ["mailing", "audience-preview", audience] as const,
-  broadcasts: ["mailing", "broadcasts"] as const,
-  broadcast: (id: string) => ["mailing", "broadcast", id] as const,
+  messages: (kind?: MailingMessageKind) =>
+    ["mailing", "messages", kind ?? "all"] as const,
+  messageSends: (id: string) => ["mailing", "message-sends", id] as const,
+  messageStats: (id: string) => ["mailing", "message-stats", id] as const,
   templates: ["mailing", "templates"] as const,
-  triggers: ["mailing", "triggers"] as const,
-  automations: ["mailing", "automations"] as const,
-  automationRuns: (id: string) => ["mailing", "automation-runs", id] as const,
-  automationStats: (id: string) => ["mailing", "automation-stats", id] as const,
+  stats: ["mailing", "stats"] as const,
 };

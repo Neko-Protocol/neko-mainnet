@@ -1,82 +1,91 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { MailingAudienceId } from "@neko/api-contracts";
 import {
-  createAutomation,
-  createBroadcast,
+  MessageInput,
+  createMessage,
   createTemplate,
-  deleteAutomation,
-  deleteBroadcast,
+  deleteMessage,
   deleteTemplate,
   runDispatch,
   runEnrollment,
-  sendBroadcast,
-  sendBroadcastTest,
-  setAutomationStatus,
-  updateAutomation,
+  sendAdHocTest,
+  sendMessage,
+  setMessageStatus,
+  updateMessage,
   updateTemplate,
 } from "../actions";
 import { mailingKeys } from "../queryKeys";
 
-export function useCreateBroadcast() {
+/** Message lists are keyed by kind, so invalidate the whole subtree. */
+function useMessageInvalidation() {
+  const qc = useQueryClient();
+  return () => qc.invalidateQueries({ queryKey: ["mailing", "messages"] });
+}
+
+export function useCreateMessage() {
+  const invalidate = useMessageInvalidation();
+  return useMutation({ mutationFn: createMessage, onSuccess: invalidate });
+}
+
+export function useUpdateMessage() {
+  const invalidate = useMessageInvalidation();
+  return useMutation({
+    mutationFn: (input: { id: string; patch: Record<string, unknown> }) =>
+      updateMessage(input.id, input.patch),
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteMessage() {
+  const invalidate = useMessageInvalidation();
+  return useMutation({
+    mutationFn: (id: string) => deleteMessage(id),
+    onSuccess: invalidate,
+  });
+}
+
+export function useSendMessage() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: createBroadcast,
-    onSuccess: () => qc.invalidateQueries({ queryKey: mailingKeys.broadcasts }),
+    mutationFn: (id: string) => sendMessage(id),
+    // A send writes per-recipient rows too, so refresh the whole mailing tree.
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["mailing"] }),
   });
 }
 
 /**
- * Compose-and-send in one step: the composer creates the draft, then sends it,
- * so a send failure still leaves a recoverable draft behind rather than losing
- * the copy the admin just wrote.
+ * Compose-and-send: creates the draft, then sends it. A send failure leaves a
+ * recoverable draft rather than losing the copy the admin just wrote.
  */
 export function useSendNewBroadcast() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: {
-      name: string;
-      subject: string;
-      body_html: string;
-      audience: MailingAudienceId;
-    }) => {
-      const draft = await createBroadcast(input);
-      return sendBroadcast(draft.id);
+    mutationFn: async (input: Omit<MessageInput, "kind">) => {
+      const draft = await createMessage({ ...input, kind: "broadcast" });
+      return sendMessage(draft.id);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: mailingKeys.broadcasts }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["mailing"] }),
   });
 }
 
-export function useSendBroadcast() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => sendBroadcast(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: mailingKeys.broadcasts }),
-  });
-}
-
-export function useSendBroadcastTest() {
+export function useSetMessageStatus() {
+  const invalidate = useMessageInvalidation();
   return useMutation({
     mutationFn: (input: {
-      name: string;
-      subject: string;
-      body_html: string;
-      audience: MailingAudienceId;
-      email: string;
-    }) =>
-      createBroadcast({
-        name: input.name,
-        subject: input.subject,
-        body_html: input.body_html,
-        audience: input.audience,
-      }).then((draft) => sendBroadcastTest(draft.id, input.email)),
+      id: string;
+      action: "activate" | "pause" | "archive" | "unarchive";
+    }) => setMessageStatus(input.id, input.action),
+    onSuccess: invalidate,
   });
 }
 
-export function useDeleteBroadcast() {
-  const qc = useQueryClient();
+/** Test-sends from the composer without persisting a message. */
+export function useSendTest() {
   return useMutation({
-    mutationFn: (id: string) => deleteBroadcast(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: mailingKeys.broadcasts }),
+    mutationFn: (input: {
+      subject: string;
+      body_html: string;
+      email: string;
+    }) => sendAdHocTest(input),
   });
 }
 
@@ -112,50 +121,6 @@ export function useDeleteTemplate() {
   });
 }
 
-export function useCreateAutomation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: createAutomation,
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: mailingKeys.automations }),
-  });
-}
-
-export function useUpdateAutomation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: { id: string; patch: Record<string, unknown> }) =>
-      updateAutomation(input.id, input.patch),
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: mailingKeys.automations }),
-  });
-}
-
-export function useSetAutomationStatus() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (input: {
-      id: string;
-      action: "activate" | "pause" | "archive";
-    }) => setAutomationStatus(input.id, input.action),
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: mailingKeys.automations }),
-  });
-}
-
-export function useDeleteAutomation() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: string) => deleteAutomation(id),
-    onSuccess: () =>
-      qc.invalidateQueries({ queryKey: mailingKeys.automations }),
-  });
-}
-
-/**
- * Ops actions run the same cron jobs on demand. Both automations and their run
- * rows can change, so invalidate the whole mailing tree.
- */
 export function useRunEnrollment() {
   const qc = useQueryClient();
   return useMutation({

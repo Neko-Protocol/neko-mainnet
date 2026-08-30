@@ -4,83 +4,130 @@ import type {
   MailingAudience,
   MailingAudienceId,
   MailingAudiencePreview,
-  MailingAutomation,
-  MailingAutomationRun,
-  MailingAutomationStats,
-  MailingBroadcast,
+  MailingEmailPreview,
+  MailingMessage,
+  MailingMessageKind,
+  MailingSend,
+  MailingSendStats,
+  MailingStats,
   MailingTemplate,
   MailingTrigger,
 } from "@neko/api-contracts";
 import { fetchFromBackend, mutateBackend } from "@/lib/services/backend-client";
+import { getActingAdminEmail } from "./actingAdmin";
 
-const BROADCASTS = "admin/mailing/broadcasts";
+const MESSAGES = "admin/mailing/messages";
 const TEMPLATES = "admin/mailing/templates";
-const AUTOMATIONS = "admin/mailing/automations";
 
-/* ---------------------------------- audiences --------------------------- */
+/* ------------------------------ catalogs -------------------------------- */
 
 export async function fetchAudiences(): Promise<MailingAudience[]> {
-  return fetchFromBackend<MailingAudience[]>(`${BROADCASTS}/audiences`);
+  return fetchFromBackend<MailingAudience[]>(`${MESSAGES}/audiences`);
+}
+
+export async function fetchTriggers(): Promise<MailingTrigger[]> {
+  return fetchFromBackend<MailingTrigger[]>(`${MESSAGES}/triggers`);
 }
 
 export async function fetchAudiencePreview(
   audience: MailingAudienceId
 ): Promise<MailingAudiencePreview> {
   return fetchFromBackend<MailingAudiencePreview>(
-    `${BROADCASTS}/audiences/preview`,
+    "admin/mailing/audience-preview",
     { audience }
   );
 }
 
-/* --------------------------------- broadcasts --------------------------- */
-
-export async function fetchBroadcasts(): Promise<MailingBroadcast[]> {
-  return fetchFromBackend<MailingBroadcast[]>(BROADCASTS);
-}
-
-export async function fetchBroadcast(id: string): Promise<MailingBroadcast> {
-  return fetchFromBackend<MailingBroadcast>(`${BROADCASTS}/${id}`);
-}
-
-export async function createBroadcast(input: {
-  name: string;
-  subject: string;
+/** Renders body content through the same branded shell the send path uses. */
+export async function previewEmail(input: {
   body_html: string;
+  email?: string;
+}): Promise<MailingEmailPreview> {
+  return mutateBackend<MailingEmailPreview>(
+    "POST",
+    "admin/mailing/preview",
+    input
+  );
+}
+
+export async function fetchMailingStats(): Promise<MailingStats> {
+  return fetchFromBackend<MailingStats>("admin/mailing/stats");
+}
+
+/* ------------------------------- messages ------------------------------- */
+
+export async function fetchMessages(
+  kind?: MailingMessageKind
+): Promise<MailingMessage[]> {
+  return fetchFromBackend<MailingMessage[]>(
+    MESSAGES,
+    kind ? { kind } : undefined
+  );
+}
+
+export interface MessageInput {
+  kind: MailingMessageKind;
+  name: string;
+  template_id?: string;
+  subject?: string;
+  body_html?: string;
   audience: MailingAudienceId;
-}): Promise<MailingBroadcast> {
-  return mutateBackend<MailingBroadcast>("POST", BROADCASTS, input);
+  trigger_type?: string;
+  trigger_params?: Record<string, unknown>;
+  delay_value?: number;
+  delay_unit?: string;
 }
 
-export async function updateBroadcast(
-  id: string,
-  input: Partial<{
-    name: string;
-    subject: string;
-    body_html: string;
-    audience: MailingAudienceId;
-  }>
-): Promise<MailingBroadcast> {
-  return mutateBackend<MailingBroadcast>("PATCH", `${BROADCASTS}/${id}`, input);
-}
-
-export async function deleteBroadcast(id: string): Promise<{ ok: boolean }> {
-  return mutateBackend<{ ok: boolean }>("DELETE", `${BROADCASTS}/${id}`);
-}
-
-export async function sendBroadcast(id: string): Promise<MailingBroadcast> {
-  return mutateBackend<MailingBroadcast>("POST", `${BROADCASTS}/${id}/send`);
-}
-
-export async function sendBroadcastTest(
-  id: string,
-  email: string
-): Promise<{ ok: boolean }> {
-  return mutateBackend<{ ok: boolean }>("POST", `${BROADCASTS}/${id}/test`, {
-    email,
+export async function createMessage(
+  input: MessageInput
+): Promise<MailingMessage> {
+  const created_by = await getActingAdminEmail();
+  return mutateBackend<MailingMessage>("POST", MESSAGES, {
+    ...input,
+    ...(created_by ? { created_by } : {}),
   });
 }
 
-/* --------------------------------- templates ---------------------------- */
+export async function updateMessage(
+  id: string,
+  patch: Record<string, unknown>
+): Promise<MailingMessage> {
+  return mutateBackend<MailingMessage>("PATCH", `${MESSAGES}/${id}`, patch);
+}
+
+export async function deleteMessage(id: string): Promise<{ ok: boolean }> {
+  return mutateBackend<{ ok: boolean }>("DELETE", `${MESSAGES}/${id}`);
+}
+
+export async function sendMessage(id: string): Promise<MailingMessage> {
+  return mutateBackend<MailingMessage>("POST", `${MESSAGES}/${id}/send`);
+}
+
+export async function setMessageStatus(
+  id: string,
+  action: "activate" | "pause" | "archive" | "unarchive"
+): Promise<MailingMessage> {
+  return mutateBackend<MailingMessage>("POST", `${MESSAGES}/${id}/${action}`);
+}
+
+export async function fetchMessageSends(id: string): Promise<MailingSend[]> {
+  return fetchFromBackend<MailingSend[]>(`${MESSAGES}/${id}/sends`);
+}
+
+export async function fetchMessageStats(id: string): Promise<MailingSendStats> {
+  return fetchFromBackend<MailingSendStats>(`${MESSAGES}/${id}/stats`);
+}
+
+/** Test-sends unsaved copy; deliberately creates no message row. */
+export async function sendAdHocTest(input: {
+  email: string;
+  subject: string;
+  body_html: string;
+}): Promise<{ ok: boolean }> {
+  return mutateBackend<{ ok: boolean }>("POST", `${MESSAGES}/test`, input);
+}
+
+/* ------------------------------- templates ------------------------------ */
 
 export async function fetchTemplates(): Promise<MailingTemplate[]> {
   return fetchFromBackend<MailingTemplate[]>(TEMPLATES);
@@ -91,7 +138,11 @@ export async function createTemplate(input: {
   subject: string;
   body_html: string;
 }): Promise<MailingTemplate> {
-  return mutateBackend<MailingTemplate>("POST", TEMPLATES, input);
+  const created_by = await getActingAdminEmail();
+  return mutateBackend<MailingTemplate>("POST", TEMPLATES, {
+    ...input,
+    ...(created_by ? { created_by } : {}),
+  });
 }
 
 export async function updateTemplate(
@@ -105,72 +156,7 @@ export async function deleteTemplate(id: string): Promise<{ ok: boolean }> {
   return mutateBackend<{ ok: boolean }>("DELETE", `${TEMPLATES}/${id}`);
 }
 
-/* -------------------------------- automations --------------------------- */
-
-export async function fetchTriggers(): Promise<MailingTrigger[]> {
-  return fetchFromBackend<MailingTrigger[]>(`${AUTOMATIONS}/triggers`);
-}
-
-export async function fetchAutomations(): Promise<MailingAutomation[]> {
-  return fetchFromBackend<MailingAutomation[]>(AUTOMATIONS);
-}
-
-export async function fetchAutomationRuns(
-  id: string
-): Promise<MailingAutomationRun[]> {
-  return fetchFromBackend<MailingAutomationRun[]>(`${AUTOMATIONS}/${id}/runs`);
-}
-
-export async function fetchAutomationStats(
-  id: string
-): Promise<MailingAutomationStats> {
-  return fetchFromBackend<MailingAutomationStats>(`${AUTOMATIONS}/${id}/stats`);
-}
-
-export async function fetchAutomationPreview(
-  id: string
-): Promise<{ count: number }> {
-  return fetchFromBackend<{ count: number }>(`${AUTOMATIONS}/${id}/preview`);
-}
-
-export async function createAutomation(input: {
-  name: string;
-  trigger_type: string;
-  trigger_params?: Record<string, unknown>;
-  delay_value?: number;
-  delay_unit?: string;
-  segment?: string;
-  template_id: string;
-}): Promise<MailingAutomation> {
-  return mutateBackend<MailingAutomation>("POST", AUTOMATIONS, input);
-}
-
-export async function updateAutomation(
-  id: string,
-  input: Record<string, unknown>
-): Promise<MailingAutomation> {
-  return mutateBackend<MailingAutomation>(
-    "PATCH",
-    `${AUTOMATIONS}/${id}`,
-    input
-  );
-}
-
-export async function deleteAutomation(id: string): Promise<{ ok: boolean }> {
-  return mutateBackend<{ ok: boolean }>("DELETE", `${AUTOMATIONS}/${id}`);
-}
-
-export async function setAutomationStatus(
-  id: string,
-  action: "activate" | "pause" | "archive"
-): Promise<MailingAutomation> {
-  return mutateBackend<MailingAutomation>(
-    "POST",
-    `${AUTOMATIONS}/${id}/${action}`
-  );
-}
-
-/* ----------------------------------- ops -------------------------------- */
+/* ---------------------------------- ops --------------------------------- */
 
 export async function runEnrollment(): Promise<{
   automationsProcessed: number;
