@@ -28,13 +28,9 @@ export async function createReferralPartner(
   });
 }
 
-export async function setReferralPartnerActive(
-  id: string,
-  isActive: boolean
-): Promise<ReferralPartner> {
-  return mutateBackend<ReferralPartner>(
-    "PATCH",
-    `${PARTNERS}/${encodeURIComponent(id)}`,
-    { is_active: isActive }
+export async function deleteReferralPartner(id: string): Promise<void> {
+  await mutateBackend<{ ok: true }>(
+    "DELETE",
+    `${PARTNERS}/${encodeURIComponent(id)}`
   );
 }
