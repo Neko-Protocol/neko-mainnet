@@ -14,7 +14,7 @@ const DASHBOARD_TOP_POOLS_LIMIT = 8;
 const AssetBreakdown: React.FC = () => {
   const t = useTranslations("sharedPositions.assetBreakdown");
   const router = useRouter();
-  const { assets, isLoading, error } = useDashboardPools();
+  const { assets, isLoading, error, refetch } = useDashboardPools();
 
   const handleAction = (_pool: PoolData) => router.push("/lending");
 
@@ -40,6 +40,7 @@ const AssetBreakdown: React.FC = () => {
         pools={assets.slice(0, DASHBOARD_TOP_POOLS_LIMIT)}
         isLoading={isLoading}
         error={error}
+        onRetry={refetch}
       />
     </div>
   );
