@@ -39,7 +39,10 @@
       "connectAccount": "Conectar cuenta",
       "referrals": "Referidos",
       "stellarWallet": "Billetera Stellar",
-      "stellarWalletDescription": "Freighter o Stellar Wallets Kit"
+      "stellarWalletDescription": "Freighter o Stellar Wallets Kit",
+      "haveReferralCode": "¿Tienes un código de referido?",
+      "referralCodePlaceholder": "Ingresa el código",
+      "referralCodeApplied": "El código {code} se aplicará al conectar."
     },
     "uiMode": {
       "title": "Elige tu experiencia",

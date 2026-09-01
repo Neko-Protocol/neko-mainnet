@@ -12,6 +12,22 @@
       "swapVolume": "Volumen de swap",
       "vaultTvl": "TVL de Vault",
       "explanation": "Un referido cuenta cuando la persona que invitaste conecta una wallet y verifica su correo. Su volumen de swap y depósitos en vaults se registran en tu enlace."
+    },
+    "settings": {
+      "title": "Referidos",
+      "noWalletConnected": "Conecta tu wallet para ver tu enlace de referido.",
+      "yourCode": "Tu código",
+      "yourLink": "Tu enlace",
+      "referred": "Referidos",
+      "swapVolume": "Volumen de swap",
+      "vaultTvl": "TVL de Vault",
+      "haveCode": "¿Tienes un código de referido?",
+      "codePlaceholder": "Ingresa el código",
+      "apply": "Aplicar",
+      "applying": "Aplicando…",
+      "statusPending": "pendiente",
+      "statusConfirmed": "confirmado",
+      "appliedToast": "¡Código de referido aplicado!"
     }
   }
 }
