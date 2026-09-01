@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createReferralPartner,
+  deleteReferralPartner,
   fetchReferralPartners,
-  setReferralPartnerActive,
   type CreateReferralPartnerInput,
 } from "../actions";
 
@@ -24,11 +24,10 @@ export function useCreateReferralPartner() {
   });
 }
 
-export function useSetReferralPartnerActive() {
+export function useDeleteReferralPartner() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { id: string; isActive: boolean }) =>
-      setReferralPartnerActive(input.id, input.isActive),
+    mutationFn: (id: string) => deleteReferralPartner(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: partnerKeys.list }),
   });
 }
