@@ -10,21 +10,24 @@ interface NotificationBellButtonProps {
   onToggle: () => void;
   /** "sidebar" sits in the light wallet card; "header" sits on the dark bar. */
   variant?: "sidebar" | "header";
+  /** Basic mode spells out the action instead of relying on the icon alone. */
+  showLabel?: boolean;
 }
 
 export function NotificationBellButton({
   open,
   onToggle,
   variant = "sidebar",
+  showLabel = false,
 }: NotificationBellButtonProps) {
   const t = useTranslations("sharedNotifications");
   const { data: unread = 0 } = useUnreadCount();
 
-  // flex-1 rather than a fixed circle: the two card buttons split the row
-  // evenly so together they span the width of the address button above them.
+  // flex-1 rather than a fixed circle: the button spans the full width of
+  // the address button above it, in the sidebar wallet card.
   const base =
     variant === "sidebar"
-      ? "flex flex-1 items-center justify-center rounded-full bg-[#229EDF] py-3 text-white transition-colors hover:bg-[#1e8bc9]"
+      ? "flex flex-1 items-center justify-center gap-2 rounded-full bg-[#229EDF] py-3 text-white transition-colors hover:bg-[#1e8bc9]"
       : "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/5 text-white transition-colors hover:bg-white/10";
 
   return (
@@ -38,6 +41,9 @@ export function NotificationBellButton({
       className={`relative cursor-pointer ${base}`}
     >
       <Bell className={variant === "sidebar" ? "h-5 w-5" : "h-4 w-4"} />
+      {showLabel && (
+        <span className="text-sm font-semibold">{t("ariaLabel")}</span>
+      )}
       {unread > 0 && (
         <span
           aria-hidden="true"
