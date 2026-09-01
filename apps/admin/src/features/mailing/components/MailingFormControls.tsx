@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "lucide-react";
 import type { ReactNode, SelectHTMLAttributes } from "react";
 import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 
@@ -65,24 +66,62 @@ export function Card({
   description,
   actions,
   children,
+  collapsible = false,
+  open = true,
+  onToggle,
 }: {
   title: string;
   description?: string;
   actions?: ReactNode;
   children: ReactNode;
+  collapsible?: boolean;
+  open?: boolean;
+  onToggle?: () => void;
 }) {
+  const header = (
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 className="text-lg font-bold text-white">{title}</h2>
+        {description && (
+          <p className="mt-1 text-sm text-white/40">{description}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        {actions}
+        {collapsible && (
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-white/40 transition-transform duration-200 ${
+              open ? "rotate-180" : ""
+            }`}
+          />
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <section className="rounded-2xl border border-white/5 bg-[#1C1C1C] p-4 sm:p-5">
-      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold text-white">{title}</h2>
-          {description && (
-            <p className="mt-1 text-sm text-white/40">{description}</p>
-          )}
+      {collapsible && onToggle ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          className="w-full text-left"
+        >
+          {header}
+        </button>
+      ) : (
+        header
+      )}
+      <div
+        className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="mt-4">{children}</div>
         </div>
-        {actions}
       </div>
-      {children}
     </section>
   );
 }

@@ -1,0 +1,40 @@
+"use server";
+
+import type { ReferralPartner, ReferralPartnerType } from "@neko/api-contracts";
+import { fetchFromBackend, mutateBackend } from "@/lib/services/backend-client";
+import { getActingAdminEmail } from "@/features/mailing/actingAdmin";
+
+const PARTNERS = "admin/referral-partners";
+
+export async function fetchReferralPartners(): Promise<ReferralPartner[]> {
+  return fetchFromBackend<ReferralPartner[]>(PARTNERS);
+}
+
+export interface CreateReferralPartnerInput {
+  name: string;
+  type: ReferralPartnerType;
+  code: string;
+  email?: string;
+  notes?: string;
+}
+
+export async function createReferralPartner(
+  input: CreateReferralPartnerInput
+): Promise<ReferralPartner> {
+  const created_by = await getActingAdminEmail();
+  return mutateBackend<ReferralPartner>("POST", PARTNERS, {
+    ...input,
+    ...(created_by ? { created_by } : {}),
+  });
+}
+
+export async function setReferralPartnerActive(
+  id: string,
+  isActive: boolean
+): Promise<ReferralPartner> {
+  return mutateBackend<ReferralPartner>(
+    "PATCH",
+    `${PARTNERS}/${encodeURIComponent(id)}`,
+    { is_active: isActive }
+  );
+}
