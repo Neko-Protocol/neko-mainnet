@@ -4,9 +4,9 @@
 
 In Supabase Dashboard, open **Authentication > URL Configuration**.
 
-- Site URL: `https://dapp.nekoprotocol.xyz`
+- Site URL: `https://app.nekoprotocol.xyz`
 - Redirect URLs:
-  - `https://dapp.nekoprotocol.xyz/auth/email-confirmed**`
+  - `https://app.nekoprotocol.xyz/auth/email-confirmed**`
   - `http://localhost:3000/**` for local development only
 
 The `/auth/email-confirmed` redirect URL is used by Supabase's default
@@ -16,7 +16,7 @@ directly to the app's server-side confirmation endpoint.
 The app also needs this production environment variable:
 
 ```env
-NEXT_PUBLIC_APP_URL=https://dapp.nekoprotocol.xyz
+NEXT_PUBLIC_APP_URL=https://app.nekoprotocol.xyz
 ```
 
 ## Magic Link Template
