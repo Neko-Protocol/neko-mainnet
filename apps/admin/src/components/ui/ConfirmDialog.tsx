@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 export interface ConfirmDialogProps {
   title: string;
   description: string;
@@ -10,7 +12,8 @@ export interface ConfirmDialogProps {
   onCancel: () => void;
 }
 
-/** Matches the web-app's "Change app mode?" confirm dialog styling. */
+/** Matches the web-app's "Change app mode?" confirm dialog styling, with a
+ * real fade/slide entrance (no tailwindcss-animate plugin in this app). */
 export function ConfirmDialog({
   title,
   description,
@@ -20,13 +23,24 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const [entered, setEntered] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm transition-opacity duration-200 ${
+        entered ? "opacity-100" : "opacity-0"
+      }`}
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#161616] p-6 shadow-2xl"
+        className={`w-full max-w-sm rounded-2xl border border-white/10 bg-[#161616] p-6 shadow-2xl transition-all duration-300 ${
+          entered ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+        }`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
