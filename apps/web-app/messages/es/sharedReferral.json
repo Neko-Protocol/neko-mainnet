@@ -16,6 +16,7 @@
     "settings": {
       "title": "Referidos",
       "noWalletConnected": "Conecta tu wallet para ver tu enlace de referido.",
+      "loadError": "No se pudieron cargar tus estadísticas de referidos. Intenta más tarde.",
       "yourCode": "Tu código",
       "yourLink": "Tu enlace",
       "referred": "Referidos",
@@ -28,6 +29,12 @@
       "statusPending": "pendiente",
       "statusConfirmed": "confirmado",
       "appliedToast": "¡Código de referido aplicado!"
+    },
+    "capture": {
+      "toast": "Código de referido guardado — empezará a funcionar cuando conectes tu wallet. Podés verlo cuando quieras en Configuración → Referidos.",
+      "alreadyReferredToast": "Ya tenés un código de referido aplicado — este nuevo no puede reemplazarlo.",
+      "readyToApplyToast": "Código de referido guardado — andá a Configuración → Referidos para aplicarlo.",
+      "savedToast": "Código de referido guardado. Revisá Configuración → Referidos para aplicarlo."
     }
   }
 }
