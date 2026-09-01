@@ -12,6 +12,29 @@
       "swapVolume": "Volumen de swap",
       "vaultTvl": "TVL de Vault",
       "explanation": "Un referido cuenta cuando la persona que invitaste conecta una wallet y verifica su correo. Su volumen de swap y depósitos en vaults se registran en tu enlace."
+    },
+    "settings": {
+      "title": "Referidos",
+      "noWalletConnected": "Conecta tu wallet para ver tu enlace de referido.",
+      "loadError": "No se pudieron cargar tus estadísticas de referidos. Intenta más tarde.",
+      "yourCode": "Tu código",
+      "yourLink": "Tu enlace",
+      "referred": "Referidos",
+      "swapVolume": "Volumen de swap",
+      "vaultTvl": "TVL de Vault",
+      "haveCode": "¿Tienes un código de referido?",
+      "codePlaceholder": "Ingresa el código",
+      "apply": "Aplicar",
+      "applying": "Aplicando…",
+      "statusPending": "pendiente",
+      "statusConfirmed": "confirmado",
+      "appliedToast": "¡Código de referido aplicado!"
+    },
+    "capture": {
+      "toast": "Código de referido guardado — empezará a funcionar cuando conectes tu wallet. Podés verlo cuando quieras en Configuración → Referidos.",
+      "alreadyReferredToast": "Ya tenés un código de referido aplicado — este nuevo no puede reemplazarlo.",
+      "readyToApplyToast": "Código de referido guardado — andá a Configuración → Referidos para aplicarlo.",
+      "savedToast": "Código de referido guardado. Revisá Configuración → Referidos para aplicarlo."
     }
   }
 }

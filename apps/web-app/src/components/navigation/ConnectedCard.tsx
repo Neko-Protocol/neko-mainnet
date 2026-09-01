@@ -2,13 +2,12 @@
 
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, Gift, LogOut, ShoppingBag } from "lucide-react";
+import { ArrowRight, LogOut, ShoppingBag } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { truncateAddress } from "@/lib/utils";
 import { CARD_STYLES, CARD_BUTTON_STYLES } from "./sidebarConfig";
 import { useCartStore } from "@/features/basic/cart/stores/cart.store";
 import { useUIMode } from "@/features/shared/ui-mode/hooks/useUIMode";
-import { ReferEarnModal } from "@/features/shared/referral/components/ReferEarnModal";
 import { NotificationCenter } from "@/features/shared/notifications/components/NotificationCenter";
 
 const NETWORK = (
@@ -25,32 +24,11 @@ interface ConnectedCardProps {
 export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
   const t = useTranslations("common");
   const [open, setOpen] = React.useState(false);
-  const [referOpen, setReferOpen] = React.useState(false);
   const cartCount = useCartStore((s) => s.items.length);
   const { isBasic } = useUIMode();
 
   return (
     <div className={`${CARD_STYLES} relative`}>
-      {isBasic && (
-        <Link
-          href="/cart"
-          aria-label={
-            cartCount > 0
-              ? t("nav.cartAriaLabelWithCount", { count: cartCount })
-              : t("nav.cartAriaLabel")
-          }
-          className="absolute -top-3 -right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full text-white shadow-lg transition-transform hover:scale-110"
-          style={{ backgroundColor: "#229EDF" }}
-        >
-          <ShoppingBag className="h-4 w-4" />
-          {cartCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#229EDF]">
-              {cartCount > 9 ? "9+" : cartCount}
-            </span>
-          )}
-        </Link>
-      )}
-
       <p className="mb-4 text-base font-bold leading-snug text-black">
         {t("wallet.connectedWith")}
       </p>
@@ -92,25 +70,32 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
         </div>
       </div>
 
-      {/* Two icon-only halves spanning the same width as the address button
-          above, so the card reads as one stack rather than a pill with an
-          orphaned circle beside it. NotificationCenter anchors its tray to
-          this relative wrapper. */}
+      {/* NotificationCenter anchors its tray to this relative wrapper. In
+          basic mode the cart moves in from its own floating badge to sit
+          beside notifications instead — both icon-only there since they're
+          paired; expert mode has notifications alone, so it spells itself
+          out. */}
       <div className="relative flex items-stretch gap-2 pt-2">
-        <button
-          type="button"
-          onClick={() => setReferOpen(true)}
-          aria-label={t("wallet.referrals")}
-          title={t("wallet.referrals")}
-          className="flex flex-1 items-center justify-center rounded-full bg-[#229EDF] py-3 text-white cursor-pointer transition-colors hover:bg-[#1e8bc9]"
-        >
-          <Gift className="h-5 w-5 shrink-0" />
-        </button>
-
-        <NotificationCenter />
+        {isBasic && (
+          <Link
+            href="/cart"
+            aria-label={
+              cartCount > 0
+                ? t("nav.cartAriaLabelWithCount", { count: cartCount })
+                : t("nav.cartAriaLabel")
+            }
+            className="relative flex flex-1 items-center justify-center rounded-full bg-[#229EDF] py-3 text-white transition-colors hover:bg-[#1e8bc9]"
+          >
+            <ShoppingBag className="h-5 w-5 shrink-0" />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[11px] font-bold text-[#229EDF]">
+                {cartCount > 9 ? "9+" : cartCount}
+              </span>
+            )}
+          </Link>
+        )}
+        <NotificationCenter showLabel={!isBasic} />
       </div>
-
-      <ReferEarnModal open={referOpen} onClose={() => setReferOpen(false)} />
     </div>
   );
 }

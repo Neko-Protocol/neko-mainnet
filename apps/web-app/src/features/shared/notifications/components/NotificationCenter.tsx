@@ -12,8 +12,10 @@ import { NotificationPanel } from "./NotificationPanel";
  */
 export function NotificationCenter({
   variant = "sidebar",
+  showLabel = false,
 }: {
   variant?: "sidebar" | "header";
+  showLabel?: boolean;
 }) {
   const [open, setOpen] = React.useState(false);
   useNotificationLiveRefresh();
@@ -24,6 +26,7 @@ export function NotificationCenter({
         open={open}
         onToggle={() => setOpen((v) => !v)}
         variant={variant}
+        showLabel={showLabel}
       />
       {/* Mounted only while open so the tray's page position resets between
           visits without an effect reaching in to clear it. */}

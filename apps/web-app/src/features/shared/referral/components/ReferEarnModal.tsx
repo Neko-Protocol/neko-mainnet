@@ -8,17 +8,11 @@ import { ModalPortal } from "@/components/ui/ModalPortal";
 import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import { useReferralStats } from "../hooks/useReferralStats";
+import { referralLink } from "../utils/referralLink";
 
 interface ReferEarnModalProps {
   open: boolean;
   onClose: () => void;
-}
-
-function referralLink(code: string): string {
-  const base =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    (typeof window !== "undefined" ? window.location.origin : "");
-  return `${base}/?ref=${code}`;
 }
 
 export function ReferEarnModal({ open, onClose }: ReferEarnModalProps) {
