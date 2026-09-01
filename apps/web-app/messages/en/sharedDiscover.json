@@ -67,7 +67,8 @@
       "loadingPrice": "Loading price…",
       "noData": "No data",
       "spotIn": "Spot ({currency})",
-      "apy": "~{value}% APY"
+      "apy": "~{value}% APY",
+      "unavailable": "Unavailable"
     },
     "assetDetail": {
       "backToDiscover": "← Back to Discover",

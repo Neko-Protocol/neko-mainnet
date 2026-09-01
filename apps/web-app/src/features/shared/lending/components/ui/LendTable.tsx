@@ -828,6 +828,8 @@ interface LendTableProps {
   isLoading: boolean;
   isFetching?: boolean;
   error: unknown;
+  /** Offered in the error state; the retry button is hidden without it. */
+  onRetry?: () => void;
   // Toolbar
   searchQuery?: string;
   onSearchChange?: (q: string) => void;
@@ -843,6 +845,7 @@ export function LendTable({
   isLoading,
   isFetching = false,
   error,
+  onRetry,
   searchQuery = "",
   onSearchChange,
   protocolFilter = "all",
@@ -1077,11 +1080,11 @@ export function LendTable({
             {isLoading ? (
               <LoadingRow colSpan={colCount} message={t("fetchingMorePools")} />
             ) : error ? (
-              <EmptyRow
-                colSpan={colCount}
-                message={t("errorLoadingPools", { error: String(error) })}
-                variant="error"
-              />
+              <tr>
+                <td colSpan={colCount}>
+                  <PoolsError onRetry={onRetry} />
+                </td>
+              </tr>
             ) : pools.length === 0 ? (
               <EmptyRow colSpan={colCount} message={t("loadingPoolsDesktop")} />
             ) : filterEmpty ? (
@@ -1163,10 +1166,7 @@ export function LendTable({
         {isLoading ? (
           <MobileEmptyState message={t("loadingPoolsDesktop")} />
         ) : error ? (
-          <MobileEmptyState
-            message={t("errorLoadingPools", { error: String(error) })}
-            variant="error"
-          />
+          <PoolsError onRetry={onRetry} />
         ) : isEmpty ? (
           <MobileEmptyState message={t("loadingPoolsMobile")} />
         ) : filterEmpty ? (
@@ -1251,6 +1251,36 @@ function LoadingRow({
         </div>
       </td>
     </tr>
+  );
+}
+
+/**
+ * The error state, for both layouts.
+ *
+ * It used to print `String(error)`, which surfaced things like
+ * "Error: pool-catalog failed: 502" — a doubled prefix, an HTTP status and an
+ * internal endpoint name, none of which a user can act on. What they need to
+ * know is that the table is empty because a request failed rather than because
+ * there are no pools, that their money is fine, and how to try again.
+ */
+function PoolsError({ onRetry }: { onRetry?: () => void }) {
+  const t = useTranslations("sharedLending.table");
+  return (
+    <div className="px-4 py-12 text-center">
+      <p className="text-white font-semibold text-sm mb-1">
+        {t("poolsErrorTitle")}
+      </p>
+      <p className="text-white/40 text-xs">{t("poolsErrorSubtitle")}</p>
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#2A2A2A] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#333] transition-colors"
+        >
+          {t("poolsErrorRetry")}
+        </button>
+      )}
+    </div>
   );
 }
 

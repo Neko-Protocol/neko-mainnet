@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { AutomationsSection } from "./AutomationsSection";
 import { BroadcastComposer } from "./BroadcastComposer";
-import { BroadcastHistory } from "./BroadcastHistory";
 import { MailingOpsSection } from "./MailingOpsSection";
 import { StatisticsSection } from "./StatisticsSection";
 import { TemplatesSection } from "./TemplatesSection";
-import { TriggersSection } from "./TriggersSection";
 
+// Triggered automations moved to the Notifications console, where they sit
+// beside the in-app half of the same trigger. What is left here is the mass
+// email side: one-off sends and the templates they draw on.
 const TABS = [
   { id: "broadcasts", label: "Mass email" },
-  { id: "automations", label: "Automations" },
   { id: "templates", label: "Templates" },
   { id: "statistics", label: "Statistics" },
+  { id: "ops", label: "Jobs" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -48,24 +48,13 @@ export function MailingConsole() {
         </div>
       </div>
 
-      {tab === "broadcasts" && (
-        <>
-          <BroadcastComposer />
-          <BroadcastHistory />
-        </>
-      )}
-
-      {tab === "automations" && (
-        <>
-          <TriggersSection />
-          <AutomationsSection />
-          <MailingOpsSection />
-        </>
-      )}
+      {tab === "broadcasts" && <BroadcastComposer />}
 
       {tab === "templates" && <TemplatesSection />}
 
       {tab === "statistics" && <StatisticsSection />}
+
+      {tab === "ops" && <MailingOpsSection />}
     </div>
   );
 }

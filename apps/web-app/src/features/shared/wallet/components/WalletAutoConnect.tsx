@@ -32,7 +32,10 @@ export function WalletAutoConnect() {
 
     void (async () => {
       try {
-        const Kit = await getStellarWalletKit();
+        // No bridge module: this probe runs on every page load and explicitly
+        // refuses to auto-connect a BRIDGE_WALLET, so loading WalletConnect
+        // here downloaded @reown/appkit and viem only to skip over them.
+        const Kit = await getStellarWalletKit({ includeBridge: false });
         const wallets = await Kit.refreshSupportedWallets();
         const platformWallet = wallets.find(
           (w) =>

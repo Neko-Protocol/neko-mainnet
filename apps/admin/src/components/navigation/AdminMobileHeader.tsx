@@ -31,11 +31,6 @@ export function AdminMobileHeader({
     setIsOpen(false);
   }
 
-  const isActive = (href: string) =>
-    href === "/analytics"
-      ? pathname === "/analytics"
-      : pathname === href || pathname?.startsWith(`${href}/`);
-
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -99,7 +94,8 @@ export function AdminMobileHeader({
       >
         <div className="flex flex-col gap-2 px-4 py-6">
           {ADMIN_NAV_ITEMS.map(({ label, href, icon: Icon }) => {
-            const active = isActive(href);
+            const active =
+              pathname === href || pathname?.startsWith(`${href}/`);
             return (
               <Link
                 key={href}

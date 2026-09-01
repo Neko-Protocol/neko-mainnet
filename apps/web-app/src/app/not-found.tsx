@@ -4,8 +4,6 @@ import Image from "next/image";
 export default function NotFound() {
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#121212] px-6">
-      {}
-      <div className="pointer-events-none absolute right-[-80px] top-[-80px] h-[400px] w-[400px] rounded-full bg-[#294cab]/20 blur-3xl" />
       <div className="pointer-events-none absolute bottom-[-80px] left-[-80px] h-[360px] w-[360px] rounded-full bg-[#39bfb7]/10 blur-3xl" />
       <div className="pointer-events-none absolute left-1/2 top-1/2 h-[200px] w-[200px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#334eac]/10 blur-2xl" />
 

@@ -44,7 +44,6 @@
       "borrowApyTooltip": "Annual cost to borrow from this pool",
       "fetchingMorePools": "fetching more pools",
       "fetchingMorePoolsIndicator": "Fetching more pools",
-      "errorLoadingPools": "Error loading pools: {error}",
       "loadingPoolsDesktop": "Loading pools...",
       "loadingPoolsMobile": "Loading Pools...",
       "noPoolsMatchProtocol": "No pools match this protocol.",
@@ -52,7 +51,10 @@
       "statSupplyApy": "Supply APY",
       "statLiquidity": "Liquidity",
       "statBorrowApy": "Borrow APY",
-      "statBorrowed": "Borrowed"
+      "statBorrowed": "Borrowed",
+      "poolsErrorTitle": "Couldn't load pools",
+      "poolsErrorSubtitle": "The service didn't respond. Your funds are unaffected.",
+      "poolsErrorRetry": "Try again"
     },
     "modal": {
       "depositTitle": "Deposit — {name}",

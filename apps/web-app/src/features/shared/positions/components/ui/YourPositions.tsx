@@ -12,21 +12,21 @@ import { YourPositionsTable } from "./YourPositionsTable";
 import MyVaultPositions from "@/features/shared/vault/components/ui/MyVaultPositions";
 import { BearingYieldTable } from "./BearingYieldTable";
 
-function SectionSkeleton({ label }: { label: string }) {
+/**
+ * A quiet line rather than a per-section skeleton.
+ *
+ * Whether a wallet holds pool, vault or bearing-yield positions is unknown
+ * until each source answers, so a skeleton shaped like a table promised
+ * content that often turned out not to exist and then vanished. This says only
+ * what is true — something is still being checked — and leaves almost nothing
+ * behind when it resolves to nothing.
+ */
+function StillChecking() {
   const t = useTranslations("sharedPositions.yourPositions");
   return (
-    <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-white/5 flex items-center justify-between">
-        <span className="text-white/30 text-xs font-semibold uppercase tracking-wide">
-          {label}
-        </span>
-      </div>
-      <div className="p-6 flex items-center justify-center gap-2">
-        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-t-white/50" />
-        <span className="text-white/30 text-xs">
-          {t("loadingSection", { label: label.toLowerCase() })}
-        </span>
-      </div>
+    <div className="flex items-center justify-center gap-2 py-3">
+      <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white/15 border-t-white/40" />
+      <span className="text-white/30 text-xs">{t("stillChecking")}</span>
     </div>
   );
 }
@@ -109,9 +109,6 @@ const YourPositions: React.FC = () => {
       ) : (
         <div className="flex flex-col gap-4">
           {hasPoolData && <YourPositionsTable positions={positions} />}
-          {isLoading && !hasPoolData && !isError && (
-            <SectionSkeleton label={t("sectionPools")} />
-          )}
           {isError && !hasPoolData && (
             <div className="rounded-2xl bg-[#1C1C1C] border border-white/5 p-8 text-center">
               <p className="text-white font-semibold text-sm mb-1">
@@ -135,9 +132,6 @@ const YourPositions: React.FC = () => {
               userBalances={vaultBalances}
             />
           )}
-          {vaultLoading && !hasVaultData && (
-            <SectionSkeleton label={t("sectionVaults")} />
-          )}
 
           {hasBearingData && (
             <BearingYieldTable
@@ -145,9 +139,7 @@ const YourPositions: React.FC = () => {
               yieldsMap={yieldsMap}
             />
           )}
-          {bearingLoading && !hasBearingData && (
-            <SectionSkeleton label={t("sectionBearingYield")} />
-          )}
+          {!allDone && <StillChecking />}
         </div>
       )}
     </div>

@@ -1,6 +1,9 @@
 "use client";
 
-import { getStellarWalletKit as getSharedStellarWalletKit } from "@neko/stellar-wallet";
+import {
+  getStellarWalletKit as getSharedStellarWalletKit,
+  type StellarWalletKitOptions,
+} from "@neko/stellar-wallet";
 import { getCurrentNetworkPassphrase } from "../network";
 
 /**
@@ -8,9 +11,12 @@ import { getCurrentNetworkPassphrase } from "../network";
  * network resolution (which falls back to LOCAL/STANDALONE) instead of the
  * package's plain env read.
  */
-export async function getStellarWalletKit() {
+export async function getStellarWalletKit(
+  options?: Pick<StellarWalletKitOptions, "includeBridge">
+) {
   return getSharedStellarWalletKit({
     networkPassphrase: getCurrentNetworkPassphrase(),
+    ...options,
   });
 }
 
