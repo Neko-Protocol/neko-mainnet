@@ -15,15 +15,13 @@ export interface ReferralMe {
 }
 
 class ReferralsService {
-  async getMe(wallet: string): Promise<ReferralMe | null> {
-    try {
-      const json = await backendClient.get<ReferralMe>(
-        `/v1/referrals/me?wallet=${encodeURIComponent(wallet)}`
-      );
-      return json && typeof json === "object" ? json : null;
-    } catch {
-      return null;
-    }
+  /** Throws BackendError on failure — a network blip is not the same as
+   * "this wallet has no referral data", so callers must tell them apart
+   * instead of both collapsing to a falsy result. */
+  async getMe(wallet: string): Promise<ReferralMe> {
+    return backendClient.get<ReferralMe>(
+      `/v1/referrals/me?wallet=${encodeURIComponent(wallet)}`
+    );
   }
 
   /** Throws BackendError on failure (invalid code, already referred, …) so
