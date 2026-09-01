@@ -115,3 +115,42 @@ export function useBackendDashboardPositions(): UseQueryResult<BackendDashboardP
     },
   });
 }
+
+/**
+ * The vault half on its own, from the endpoint that skips the pool lookup.
+ *
+ * Measured against a real wallet, `positions/:wallet` spends about 0.6s on
+ * vaults and another ~2.5s screening pools — so the vault tables used to sit
+ * behind three seconds of work that had nothing to do with them. Asking
+ * separately lets them render as soon as they are ready.
+ *
+ * The combined query still runs for the pool half; both share the backend's
+ * per-wallet caches, so splitting costs no extra upstream work.
+ */
+export function useBackendDashboardVaultPositions(): UseQueryResult<
+  BackendDashboardPositionsPayload["vaultPositions"]
+> {
+  const { address } = useWallet();
+  return useQuery({
+    queryKey: ["backend-dashboard-vault-positions", address],
+    enabled: Boolean(address) && USE_BACKEND_DASHBOARD,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/backend-proxy/dashboard/vault-positions/${address}`
+      );
+      if (!res.ok) {
+        throw new Error(`dashboard-vault-positions failed: ${res.status}`);
+      }
+      const json = (await res.json()) as WirePayload["vaultPositions"];
+      return json.map((v) => ({
+        vaultId: v.vaultId,
+        userShares: BigInt(v.userShares || "0"),
+        pricePerShare: BigInt(v.pricePerShare || "0"),
+      }));
+    },
+  });
+}
