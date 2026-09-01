@@ -8,7 +8,6 @@ export interface ReferralPartner {
   email: string | null;
   code: string;
   notes: string | null;
-  is_active: boolean;
   created_by: string | null;
   created_at: string;
 }
