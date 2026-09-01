@@ -1,6 +1,29 @@
+import { createClient } from "@/lib/supabase/server";
+
 export interface BackendResult {
   ok: boolean;
   reason?: string;
+}
+
+/**
+ * Bearer token for routes guarded by the backend's AdminAuthGuard (e.g. the
+ * referral leaderboards). Most backend-client calls don't need this — the
+ * shared x-internal-key alone is enough — but a handful of routes also
+ * require proof the caller is a signed-in, active admin. Sending it on every
+ * call is harmless: unguarded routes simply ignore the extra header.
+ */
+async function authHeader(): Promise<Record<string, string>> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return session?.access_token
+      ? { authorization: `Bearer ${session.access_token}` }
+      : {};
+  } catch {
+    return {};
+  }
 }
 
 // Thrown by fetchFromBackend when the backend call fails, so a real outage
@@ -48,6 +71,7 @@ async function request<T extends BackendResult>(
       headers: {
         "content-type": "application/json",
         "x-internal-key": key,
+        ...(await authHeader()),
       },
       ...(method === "POST" ? { body: JSON.stringify(body ?? {}) } : {}),
       cache: "no-store",
@@ -122,6 +146,7 @@ async function rawRequest(
       headers: {
         "content-type": "application/json",
         "x-internal-key": key,
+        ...(await authHeader()),
       },
       ...(method === "GET" ? {} : { body: JSON.stringify(payload ?? {}) }),
       cache: "no-store",

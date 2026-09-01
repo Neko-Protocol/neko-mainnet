@@ -12,6 +12,29 @@
       "swapVolume": "Swap volume",
       "vaultTvl": "Vault TVL",
       "explanation": "A referral counts once the person you invited connects a wallet and verifies their email. Their swap volume and vault deposits are tracked to your link."
+    },
+    "settings": {
+      "title": "Referrals",
+      "noWalletConnected": "Connect your wallet to see your referral link.",
+      "loadError": "Couldn't load your referral stats. Try again later.",
+      "yourCode": "Your code",
+      "yourLink": "Your link",
+      "referred": "Referred",
+      "swapVolume": "Swap volume",
+      "vaultTvl": "Vault TVL",
+      "haveCode": "Have a referral code?",
+      "codePlaceholder": "Enter code",
+      "apply": "Apply",
+      "applying": "Applying…",
+      "statusPending": "pending",
+      "statusConfirmed": "confirmed",
+      "appliedToast": "Referral code applied!"
+    },
+    "capture": {
+      "toast": "Referral code saved — it'll start working once you connect your wallet. You can check it anytime in Settings → Referrals.",
+      "alreadyReferredToast": "You already have a referral code applied — this new one can't replace it.",
+      "readyToApplyToast": "Referral code saved — go to Settings → Referrals to apply it.",
+      "savedToast": "Referral code saved. Check Settings → Referrals to apply it."
     }
   }
 }

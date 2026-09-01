@@ -1,4 +1,11 @@
-import { Activity, Bell, LayoutDashboard, Send, ShieldCheck, Users } from "lucide-react";
+import {
+  Activity,
+  Bell,
+  LayoutDashboard,
+  Send,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 
 export interface AdminNavItem {
   label: string;

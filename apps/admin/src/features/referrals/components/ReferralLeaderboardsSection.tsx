@@ -1,0 +1,216 @@
+"use client";
+
+import { type ReactNode } from "react";
+import { Check, Copy } from "lucide-react";
+import { formatCurrency } from "@/lib/helpers/currency";
+import { truncateAddress } from "@/lib/helpers/addressUtils";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { AnalyticsErrorState } from "@/features/analytics/components/AnalyticsErrorState";
+import {
+  usePartnerLeaderboard,
+  useUserLeaderboard,
+} from "../hooks/useReferralLeaderboards";
+import type {
+  ReferralLeaderboardRow,
+  ReferralPartnerLeaderboardRow,
+} from "../actions";
+
+interface Column<T> {
+  header: string;
+  render: (row: T) => ReactNode;
+  className?: string;
+}
+
+interface ReferralMetrics {
+  confirmed_count: number;
+  swap_volume_usd: number;
+  vault_tvl_usd: number;
+}
+
+// Volumen / Compras-Swaps / TVL / Users, in that order. TVL only counts
+// vault activity 7+ days old (see 0020_referral_tvl_maturity.sql), so
+// Volumen (TVL + swaps) reflects that same maturity window.
+function metricColumns<T extends ReferralMetrics>(): Column<T>[] {
+  return [
+    {
+      header: "Volume",
+      render: (row) => formatCurrency(row.swap_volume_usd + row.vault_tvl_usd),
+    },
+    {
+      header: "Swaps/Purchases",
+      render: (row) => formatCurrency(row.swap_volume_usd),
+    },
+    {
+      header: "TVL",
+      render: (row) => formatCurrency(row.vault_tvl_usd),
+    },
+    {
+      header: "Users",
+      render: (row) => row.confirmed_count,
+    },
+  ];
+}
+
+function LeaderboardCard<T>({
+  title,
+  rows,
+  isPending,
+  isError,
+  columns,
+  emptyMessage,
+  rowKey,
+}: {
+  title: string;
+  rows: T[] | undefined;
+  isPending: boolean;
+  isError: boolean;
+  columns: Column<T>[];
+  emptyMessage: string;
+  rowKey: (row: T) => string;
+}) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-white/5 bg-[#1C1C1C]">
+      <div className="border-b border-white/5 px-4 py-3">
+        <h3 className="text-lg font-bold text-white">{title}</h3>
+      </div>
+
+      {isError ? (
+        <div className="p-4 sm:p-5">
+          <AnalyticsErrorState />
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/5 text-white/40">
+                {columns.map((col) => (
+                  <th key={col.header} className="px-4 py-3 font-medium">
+                    {col.header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {isPending ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="px-4 py-6 text-center text-white/40"
+                  >
+                    Loading…
+                  </td>
+                </tr>
+              ) : !rows?.length ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="px-4 py-6 text-center text-white/40"
+                  >
+                    {emptyMessage}
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row) => (
+                  <tr
+                    key={rowKey(row)}
+                    className="border-b border-white/5 last:border-0 hover:bg-white/[0.04]"
+                  >
+                    {columns.map((col) => (
+                      <td
+                        key={col.header}
+                        className={`px-4 py-3 text-white/70 ${col.className ?? ""}`}
+                      >
+                        {col.render(row)}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function ReferralLeaderboardsSection() {
+  const users = useUserLeaderboard();
+  const partners = usePartnerLeaderboard();
+  const { copy, copiedKey } = useCopyToClipboard();
+
+  const companies = partners.data?.filter((p) => p.type === "company");
+  const influencers = partners.data?.filter((p) => p.type === "influencer");
+
+  const partnerColumns: Column<ReferralPartnerLeaderboardRow>[] = [
+    {
+      header: "Name",
+      render: (row) => <span className="text-white">{row.name}</span>,
+    },
+    {
+      header: "Code",
+      render: (row) => <span className="font-mono">{row.code}</span>,
+    },
+    ...metricColumns<ReferralPartnerLeaderboardRow>(),
+  ];
+
+  return (
+    <div className="flex flex-col gap-6">
+      <LeaderboardCard<ReferralLeaderboardRow>
+        title="Top user referrers"
+        rows={users.data}
+        isPending={users.isPending}
+        isError={users.isError}
+        emptyMessage="No confirmed referrals yet."
+        rowKey={(row) => row.referrer_wallet}
+        columns={[
+          {
+            header: "Wallet",
+            render: (row) => (
+              <button
+                onClick={() => copy(row.referrer_wallet, row.referrer_wallet)}
+                className="group flex items-center gap-1.5 text-white/70 transition-colors hover:text-white"
+              >
+                {truncateAddress(row.referrer_wallet)}
+                {copiedKey === row.referrer_wallet ? (
+                  <Check className="h-3 w-3 text-emerald-400" />
+                ) : (
+                  <Copy className="h-3 w-3 text-white/40 group-hover:text-white/70" />
+                )}
+              </button>
+            ),
+          },
+          {
+            header: "Code",
+            render: (row) => <span className="font-mono">{row.code}</span>,
+          },
+          {
+            header: "Email",
+            render: (row) => row.email ?? "-",
+          },
+          ...metricColumns<ReferralLeaderboardRow>(),
+        ]}
+      />
+
+      <LeaderboardCard<ReferralPartnerLeaderboardRow>
+        title="Top companies"
+        rows={companies}
+        isPending={partners.isPending}
+        isError={partners.isError}
+        emptyMessage="No company partners yet."
+        rowKey={(row) => row.partner_id}
+        columns={partnerColumns}
+      />
+
+      <LeaderboardCard<ReferralPartnerLeaderboardRow>
+        title="Top influencers"
+        rows={influencers}
+        isPending={partners.isPending}
+        isError={partners.isError}
+        emptyMessage="No influencer partners yet."
+        rowKey={(row) => row.partner_id}
+        columns={partnerColumns}
+      />
+    </div>
+  );
+}

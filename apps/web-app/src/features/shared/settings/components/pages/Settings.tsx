@@ -8,12 +8,14 @@ import {
   LayoutGrid,
   Network,
   LifeBuoy,
+  Gift,
 } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { BannerPage } from "@/components/ui/BannerPage";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { useCopyToClipboard } from "@/features/shared/settings/hooks/useCopyToClipboard";
+import { ReferralSettingsSection } from "@/features/shared/referral";
 import { SettingsWalletSection } from "../ui/SettingsWalletSection";
 import { SettingsNetworkSection } from "../ui/SettingsNetworkSection";
 import { SettingsPreferencesSection } from "../ui/SettingsPreferencesSection";
@@ -26,6 +28,7 @@ type SectionId =
   | "email"
   | "preferences"
   | "uiMode"
+  | "referrals"
   | "network"
   | "support";
 
@@ -34,6 +37,7 @@ const VALID_SECTION_IDS: SectionId[] = [
   "uiMode",
   "email",
   "wallet",
+  "referrals",
   "network",
   "support",
 ];
@@ -43,6 +47,7 @@ const TABS: { id: SectionId; labelKey: string; Icon: React.ElementType }[] = [
   { id: "uiMode", labelKey: "tabAppMode", Icon: LayoutGrid },
   { id: "email", labelKey: "tabEmail", Icon: Mail },
   { id: "wallet", labelKey: "tabWallet", Icon: Wallet },
+  { id: "referrals", labelKey: "tabReferrals", Icon: Gift },
   { id: "network", labelKey: "tabNetwork", Icon: Network },
   { id: "support", labelKey: "tabSupport", Icon: LifeBuoy },
 ];
@@ -122,6 +127,7 @@ export default function Settings() {
             open
           />
         )}
+        {active === "referrals" && <ReferralSettingsSection icon={Gift} open />}
         {active === "email" && <SettingsEmailSection icon={Mail} open />}
         {active === "preferences" && (
           <SettingsPreferencesSection icon={Sliders} open />
