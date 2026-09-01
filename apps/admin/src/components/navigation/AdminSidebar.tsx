@@ -9,11 +9,6 @@ import { SignOutButton } from "./SignOutButton";
 export function AdminSidebar({ userEmail }: { userEmail?: string | null }) {
   const pathname = usePathname();
 
-  const isActive = (href: string) =>
-    href === "/analytics"
-      ? pathname === "/analytics"
-      : pathname === href || pathname?.startsWith(`${href}/`);
-
   return (
     <aside className="hidden lg:flex fixed left-0 top-0 z-40 h-screen w-[270px] flex-col border-r border-white/5 bg-[#121212]">
       <Link href="/analytics" className="flex items-center pt-12 pb-6 px-6">
@@ -28,7 +23,7 @@ export function AdminSidebar({ userEmail }: { userEmail?: string | null }) {
 
       <nav className="flex flex-1 flex-col gap-1 px-3 min-h-0 overflow-y-auto">
         {ADMIN_NAV_ITEMS.map(({ label, href, icon: Icon }) => {
-          const active = isActive(href);
+          const active = pathname === href || pathname?.startsWith(`${href}/`);
           return (
             <Link
               key={href}

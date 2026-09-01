@@ -17,7 +17,7 @@ import {
   Select,
   TextArea,
   TextInput,
-} from "@/features/mailing/components/MailingFormControls";
+} from "@/components/ui/FormControls";
 
 type FilterTab = "all" | ReferralPartnerType;
 

@@ -19,6 +19,8 @@ interface UseDashboardPoolsResult {
   assets: PoolData[];
   isLoading: boolean;
   error: Error | null;
+  /** Lets the error state offer a retry instead of stranding the table. */
+  refetch: () => void;
 }
 
 function toPoolData(pool: PoolInfo): PoolData {
@@ -131,5 +133,14 @@ export function useDashboardPools(): UseDashboardPoolsResult {
     ? backendCatalogQuery.error
     : (blendQuery.error ?? aquaQuery.error);
 
-  return { assets, isLoading, error: error as Error | null };
+  const refetch = () => {
+    if (USE_BACKEND_DASHBOARD) {
+      void backendCatalogQuery.refetch();
+      return;
+    }
+    void blendQuery.refetch();
+    void aquaQuery.refetch();
+  };
+
+  return { assets, isLoading, error: error as Error | null, refetch };
 }

@@ -34,15 +34,16 @@ export function AdminsSection() {
           label="Authorize a new admin"
           hint="They sign in with a one-time code sent to this address."
         >
-          <div className="flex gap-2">
+          <div className="flex items-start gap-2">
             <TextInput
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="teammate@nekoprotocol.xyz"
+              placeholder="fabian@oppialabs.com"
             />
             <Button
               type="button"
+              className="shrink-0 whitespace-nowrap"
               disabled={!email.trim() || add.isPending}
               onClick={() =>
                 add.mutate(email.trim(), { onSuccess: () => setEmail("") })

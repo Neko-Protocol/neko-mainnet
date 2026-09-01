@@ -12,7 +12,8 @@
       "retry": "Reintentar",
       "sectionPools": "Pools",
       "sectionVaults": "Vaults",
-      "sectionBearingYield": "Activos con Rendimiento"
+      "sectionBearingYield": "Activos con Rendimiento",
+      "stillChecking": "Buscando más posiciones…"
     },
     "table": {
       "pools": "Pools",

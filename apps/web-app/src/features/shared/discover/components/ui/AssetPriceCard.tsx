@@ -36,7 +36,7 @@ export function AssetPriceCard({
   const t = useTranslations("sharedDiscover.priceCard");
   const tClassLabels = useTranslations("sharedDiscover.classLabels");
   const codeUpper = tokenCode.toUpperCase();
-  const { price, isLoading } = useTokenPrice(tokenCode);
+  const { price, isLoading, isError } = useTokenPrice(tokenCode);
   const selectedCurrency = useCurrencyStore((state) => state.selectedCurrency);
   const { rate: fxRate } = useFxRate();
   const fromStatic = useAssetInfo(codeUpper);
@@ -55,9 +55,14 @@ export function AssetPriceCard({
   const logoSrc = assetInfo?.logo ?? assetConfig?.icon;
   const convertedPrice = convertUsdToSelected(price, fxRate);
   const hasPrice = Number.isFinite(price) && price > 0;
+  // A failed request and a genuinely absent price look the same to the user
+  // otherwise — and "No data" reads as a fact about the asset when the truth
+  // is that we could not reach the price service.
   const formattedPrice = hasPrice
     ? formatCurrency(convertedPrice, selectedCurrency)
-    : t("noData");
+    : isError
+      ? t("unavailable")
+      : t("noData");
 
   return (
     <Link

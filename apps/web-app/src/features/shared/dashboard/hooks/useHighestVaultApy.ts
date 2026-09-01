@@ -43,8 +43,17 @@ export function useHighestVaultApy() {
     vaults.length > 0 &&
     apyQueries.some((query) => query.isLoading && !query.isFetched);
 
+  // The vault list already carries each vault's APY, and the per-vault queries
+  // only refine it — so the card can show a number as soon as the list lands
+  // and let the live values replace it in place. Waiting for all of them held
+  // the skeleton up for an extra round trip per vault, one after the list, to
+  // arrive at a figure we were already holding.
+  //
+  // The refinement is still worth blocking on when the list gave us nothing:
+  // there is no number to show yet, and "-" followed by a value reads worse
+  // than a skeleton that resolves once.
   return {
     highestApy,
-    isLoading: vaultsPending || apyPending,
+    isLoading: vaultsPending || (highestApy === null && apyPending),
   };
 }

@@ -1,6 +1,17 @@
 import { backendClient } from "@/lib/services/backend-client";
 import type { AuditEvent, AuditLog } from "@/lib/types/audit.types";
 
+/**
+ * Fired after an audit write lands.
+ *
+ * The backend emits the matching in-app notification in-band with the same
+ * request (`AuditService.log()` -> `NotificationsService.emit()`), so by the
+ * time this resolves the row already exists. Broadcasting it lets the bell
+ * refresh on the event instead of waiting out its poll interval, without every
+ * action hook having to know that notifications exist.
+ */
+export const AUDIT_LOGGED_EVENT = "neko:audit-logged";
+
 class AuditService {
   private readonly basePath = "/v1/audit";
 
@@ -10,6 +21,9 @@ class AuditService {
         this.basePath,
         event
       );
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent(AUDIT_LOGGED_EVENT));
+      }
       return { isFirstVaultDeposit: data.isFirstVaultDeposit };
     } catch {
       return {};
