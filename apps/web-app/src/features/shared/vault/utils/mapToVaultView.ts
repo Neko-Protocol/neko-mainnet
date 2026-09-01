@@ -13,10 +13,18 @@ import { formatAmount } from "@/lib/helpers/formatUtils";
 import { getTokenIcon } from "@/lib/helpers/tokenDisplay";
 import type { Locale } from "@/i18n/config";
 
-/** Translator scoped to the "sharedVault.mapper" namespace (see useDefindexVaults.ts). */
+/**
+ * Translator scoped to the "sharedVault.mapper" namespace (see
+ * useDefindexVaults.ts).
+ *
+ * The value type matches what next-intl actually accepts, so both the client
+ * hook's `useTranslations` and the server prefetch's `getTranslations` satisfy
+ * it directly. Declaring it as `unknown` would be wider than any real
+ * translator and force a cast at every call site.
+ */
 export type MapperTranslator = (
   key: "underlyingAssets" | "liquidityDescription",
-  values?: Record<string, unknown>
+  values?: Record<string, string | number | Date>
 ) => string;
 
 // Per-vault static overrides: contractId → fields that differ from the defaults.
