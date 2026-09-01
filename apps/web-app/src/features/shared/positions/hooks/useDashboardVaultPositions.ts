@@ -12,7 +12,7 @@ import { useDefindexVaults } from "@/features/shared/vault/hooks/useDefindexVaul
 import type { VaultView } from "@/features/shared/vault/types/vault";
 import {
   USE_BACKEND_DASHBOARD,
-  useBackendDashboardPositions,
+  useBackendDashboardVaultPositions,
 } from "./useBackendDashboardPositions";
 
 export interface VaultPositionEntry {
@@ -25,7 +25,10 @@ export function useDashboardVaultPositions() {
   const { address } = useWallet();
   const { data: vaultsPayload, isLoading: vaultsLoading } = useDefindexVaults();
   const vaults = vaultsPayload?.vaults ?? [];
-  const backendQuery = useBackendDashboardPositions();
+  // The vault-only endpoint, not the combined one: vault balances are ready
+  // in well under a second while the pool screen it used to wait on takes
+  // several.
+  const backendQuery = useBackendDashboardVaultPositions();
 
   const legacyEnabled = !USE_BACKEND_DASHBOARD;
   const balanceQueries = useQueries({
@@ -56,7 +59,7 @@ export function useDashboardVaultPositions() {
   });
 
   if (USE_BACKEND_DASHBOARD) {
-    const backendVaultPositions = backendQuery.data?.vaultPositions ?? [];
+    const backendVaultPositions = backendQuery.data ?? [];
     const positions: VaultPositionEntry[] = [];
     for (const vault of vaults) {
       const vp = backendVaultPositions.find((v) => v.vaultId === vault.id);

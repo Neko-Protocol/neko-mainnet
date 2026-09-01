@@ -2,13 +2,16 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
-import type { VaultInfoResponse } from "@defindex/sdk";
 import { backendClient } from "@/lib/services/backend-client";
 import {
   defindexInfoToVaultView,
   type MapperTranslator,
 } from "@/features/shared/vault/utils/mapToVaultView";
 import type { Locale } from "@/i18n/config";
+import {
+  defindexVaultsKey,
+  type RawDefindexVaultsResponse,
+} from "../queryKeys";
 import type { VaultView } from "../types/vault";
 
 export type DefindexVaultsPayload = {
@@ -17,14 +20,6 @@ export type DefindexVaultsPayload = {
   hint?: string;
   fetchErrors?: { contractId: string; message: string }[];
 };
-
-interface RawDefindexVaultsResponse {
-  vaults: { contractId: string; info: VaultInfoResponse }[];
-  prices: Record<string, number>;
-  fetchErrors?: { contractId: string; message: string }[];
-  error?: string;
-  hint?: string;
-}
 
 async function fetchDefindexVaults(
   locale: Locale,
@@ -60,7 +55,7 @@ export function useDefindexVaults() {
   const locale = useLocale() as Locale;
   const t = useTranslations("sharedVault.mapper") as MapperTranslator;
   return useQuery({
-    queryKey: ["defindex-vaults", locale],
+    queryKey: defindexVaultsKey(locale),
     queryFn: () => fetchDefindexVaults(locale, t),
     staleTime: 5 * 60_000,
     gcTime: 15 * 60_000,

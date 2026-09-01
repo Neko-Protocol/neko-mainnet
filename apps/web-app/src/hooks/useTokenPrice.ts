@@ -73,5 +73,11 @@ export const useTokenPrice = (token: Token | string | undefined) => {
     source,
     isLoading,
     error: priceError,
+    /**
+     * True only when the request itself failed, as opposed to succeeding with
+     * no price. The card shows different copy for each: "no data" is a fact
+     * about the asset, while a failed request is a fact about us.
+     */
+    isError: Boolean(error),
   };
 };

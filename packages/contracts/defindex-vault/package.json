@@ -18,7 +18,7 @@
     "build": "tsc && esbuild src/index.ts --bundle --platform=node --format=cjs --target=node22 --external:@stellar/stellar-sdk --external:buffer --outfile=dist/index.cjs"
   },
   "dependencies": {
-    "@stellar/stellar-sdk": "~14.5.0",
+    "@stellar/stellar-sdk": "^14.5.0",
     "buffer": "6.0.3"
   },
   "devDependencies": {

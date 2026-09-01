@@ -44,7 +44,6 @@
       "borrowApyTooltip": "Costo anual por pedir prestado de este pool",
       "fetchingMorePools": "cargando más pools",
       "fetchingMorePoolsIndicator": "Cargando más pools",
-      "errorLoadingPools": "Error al cargar los pools: {error}",
       "loadingPoolsDesktop": "Cargando pools...",
       "loadingPoolsMobile": "Cargando Pools...",
       "noPoolsMatchProtocol": "Ningún pool coincide con este protocolo.",
@@ -52,7 +51,10 @@
       "statSupplyApy": "APY de Depósito",
       "statLiquidity": "Liquidez",
       "statBorrowApy": "APY de Préstamo",
-      "statBorrowed": "Prestado"
+      "statBorrowed": "Prestado",
+      "poolsErrorTitle": "No se pudieron cargar los pools",
+      "poolsErrorSubtitle": "El servicio no respondió. Tus fondos no se ven afectados.",
+      "poolsErrorRetry": "Reintentar"
     },
     "modal": {
       "depositTitle": "Depositar — {name}",

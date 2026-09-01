@@ -12,7 +12,8 @@
       "retry": "Retry",
       "sectionPools": "Pools",
       "sectionVaults": "Vaults",
-      "sectionBearingYield": "Bearing Yield Assets"
+      "sectionBearingYield": "Bearing Yield Assets",
+      "stillChecking": "Checking for more positions…"
     },
     "table": {
       "pools": "Pools",
