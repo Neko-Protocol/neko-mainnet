@@ -69,11 +69,11 @@ export function RpcSection() {
         />
         <StatCard
           icon={<Database className="h-4 w-4" />}
-          label="Cache hit rate"
+          label="Calls saved by cache"
           value={percent(cacheRate)}
-          subValue={`${count(cacheTotals.hit)} hits · ${count(cacheTotals.miss)} misses`}
+          subValue={`${count(cacheTotals.hit)} served from cache · ${count(cacheTotals.miss)} went to the network`}
           isLoading={isLoading}
-          info="Only cacheable methods count. getLedgerEntries and getTransaction are never cached — the SDK's parser for those responses is not exported, and caching what we cannot faithfully rebuild corrupts data."
+          info="A call that went to the network is not a failure — it succeeded, it just was not already stored, so it cost an upstream request. Read this number as money saved, not as errors: see RPC success rate for whether anything actually failed. Only cacheable methods count. getLedgerEntries and getTransaction are never cached — the SDK's parser for those responses is not exported, and caching what we cannot faithfully rebuild corrupts data."
         />
         <StatCard
           icon={<Shuffle className="h-4 w-4" />}
@@ -112,7 +112,7 @@ export function RpcSection() {
             Cache by method
           </h2>
           <UsageTable
-            headers={["Method", "Hits", "Misses", "Hit rate"]}
+            headers={["Method", "From cache", "To network", "Saved"]}
             rows={(data?.cache ?? []).map((c) => ({
               key: c.method,
               primary: c.method,
