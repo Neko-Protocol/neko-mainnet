@@ -5,7 +5,7 @@ import type { ReactNode, SelectHTMLAttributes } from "react";
 import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 const CONTROL_CLASS =
-  "w-full rounded-lg border border-white/10 bg-[#141414] px-3 py-2 text-sm text-white placeholder:text-white/25 outline-none transition-colors focus:border-[#229EDF] disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/25 outline-none transition-colors focus:border-[#229EDF] disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Field({
   label,
@@ -34,7 +34,15 @@ export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
 }
 
 export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={CONTROL_CLASS} />;
+  return (
+    <div className="relative">
+      <select {...props} className={`${CONTROL_CLASS} appearance-none pr-9`} />
+      <ChevronDown
+        className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-white/40"
+        aria-hidden
+      />
+    </div>
+  );
 }
 
 export function Button({

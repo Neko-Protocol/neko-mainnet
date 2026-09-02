@@ -12,7 +12,7 @@ export interface ReferralCodeClaimProps {
   referredBy: ReferredBy | null;
 }
 
-/** "Have a code?" — either the claim form, or the locked-in code once one
+/** "Have a code?", either the claim form, or the locked-in code once one
  * is already attributed (a wallet can only ever have one). */
 export function ReferralCodeClaim({ referredBy }: ReferralCodeClaimProps) {
   const t = useTranslations("sharedReferral.settings");
@@ -40,24 +40,16 @@ export function ReferralCodeClaim({ referredBy }: ReferralCodeClaimProps) {
 
   return (
     <div className="mt-1 border-t border-white/5 pt-4">
-      <span className="mb-2 block text-xs text-white/40">{t("haveCode")}</span>
+      <span className="mb-2 block text-sm font-semibold text-white">
+        {t("haveCode")}
+      </span>
       {referredBy ? (
         <div className="flex items-center justify-between gap-3 rounded-xl bg-[#2A2A2A] px-4 py-3">
           <span className="font-mono text-sm text-white/80">
             {referredBy.code}
           </span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-              referredBy.status === "confirmed"
-                ? "bg-emerald-500/15 text-emerald-400"
-                : "bg-amber-500/15 text-amber-400"
-            }`}
-          >
-            {t(
-              referredBy.status === "confirmed"
-                ? "statusConfirmed"
-                : "statusPending"
-            )}
+          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400">
+            {t("statusConfirmed")}
           </span>
         </div>
       ) : (

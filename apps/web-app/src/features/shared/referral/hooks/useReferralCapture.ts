@@ -9,15 +9,15 @@ import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 import { useToast } from "@/hooks/useToast";
 
 /**
- * Reads ?ref=<code> and decides what happens to it, one of four outcomes:
+ * Reads ?ref=<code> and decides what happens to it, one of three outcomes:
  *  - no code in the URL: nothing to do
- *  - not connected yet: saved, applies once they connect
+ *  - not connected yet: saved, useAutoApplyReferral claims it the moment
+ *    they connect
  *  - connected but already has a referrer: this one can never apply (a
  *    wallet is referred by exactly one entity, ever)
- *  - connected, unreferred: saved, needs Settings > Referrals to apply
- * A failed status check (network blip) can't tell which of the last two
- * applies, so it saves the code without claiming either — claim() itself
- * is the real, live source of truth once they try to apply it.
+ *  - connected, unreferred (or the status check itself failed): saved, and
+ *    useAutoApplyReferral claims it right away since a wallet is already
+ *    on hand, no manual trip to Settings > Referrals needed
  */
 export function useReferralCapture() {
   const searchParams = useSearchParams();
@@ -40,15 +40,11 @@ export function useReferralCapture() {
       .getMe(address)
       .then((me) => {
         if (me.referred_by) {
-          addNotification(t("alreadyReferredToast"), "info");
+          addNotification(t("alreadyReferredToast"), "warning");
           return;
         }
         setRefCode(ref);
-        addNotification(t("readyToApplyToast"), "info");
       })
-      .catch(() => {
-        setRefCode(ref);
-        addNotification(t("savedToast"), "info");
-      });
+      .catch(() => setRefCode(ref));
   }, [searchParams, setRefCode, address, addNotification, t]);
 }

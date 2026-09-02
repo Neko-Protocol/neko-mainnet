@@ -19,22 +19,21 @@
       "loadError": "Couldn't load your referral stats. Try again later.",
       "yourCode": "Your code",
       "yourLink": "Your link",
-      "referred": "Referred",
-      "swapVolume": "Swap volume",
+      "statsTitle": "Your referral stats",
+      "referred": "Users referred",
+      "volume": "Volume",
+      "purchasesSwaps": "Purchases/swaps",
       "vaultTvl": "Vault TVL",
       "haveCode": "Have a referral code?",
       "codePlaceholder": "Enter code",
       "apply": "Apply",
       "applying": "Applying…",
-      "statusPending": "pending",
       "statusConfirmed": "confirmed",
       "appliedToast": "Referral code applied!"
     },
     "capture": {
-      "toast": "Referral code saved — it'll start working once you connect your wallet. You can check it anytime in Settings → Referrals.",
-      "alreadyReferredToast": "You already have a referral code applied — this new one can't replace it.",
-      "readyToApplyToast": "Referral code saved — go to Settings → Referrals to apply it.",
-      "savedToast": "Referral code saved. Check Settings → Referrals to apply it."
+      "toast": "Referral code saved, it'll apply automatically once you connect your wallet.",
+      "alreadyReferredToast": "You already have a referral code applied, this new one can't replace it."
     }
   }
 }

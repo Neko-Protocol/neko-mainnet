@@ -1,11 +1,12 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
 import { formatCurrency } from "@/lib/helpers/currency";
 import { truncateAddress } from "@/lib/helpers/addressUtils";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { AnalyticsErrorState } from "@/features/analytics/components/AnalyticsErrorState";
+import { Card } from "@/components/ui/FormControls";
 import {
   usePartnerLeaderboard,
   useUserLeaderboard,
@@ -37,7 +38,7 @@ function metricColumns<T extends ReferralMetrics>(): Column<T>[] {
       render: (row) => formatCurrency(row.swap_volume_usd + row.vault_tvl_usd),
     },
     {
-      header: "Swaps/Purchases",
+      header: "Swaps",
       render: (row) => formatCurrency(row.swap_volume_usd),
     },
     {
@@ -59,6 +60,8 @@ function LeaderboardCard<T>({
   columns,
   emptyMessage,
   rowKey,
+  open,
+  onToggle,
 }: {
   title: string;
   rows: T[] | undefined;
@@ -67,19 +70,15 @@ function LeaderboardCard<T>({
   columns: Column<T>[];
   emptyMessage: string;
   rowKey: (row: T) => string;
+  open: boolean;
+  onToggle: () => void;
 }) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-white/5 bg-[#1C1C1C]">
-      <div className="border-b border-white/5 px-4 py-3">
-        <h3 className="text-lg font-bold text-white">{title}</h3>
-      </div>
-
+    <Card title={title} collapsible open={open} onToggle={onToggle}>
       {isError ? (
-        <div className="p-4 sm:p-5">
-          <AnalyticsErrorState />
-        </div>
+        <AnalyticsErrorState />
       ) : (
-        <div className="overflow-x-auto">
+        <div className="-mx-4 overflow-x-auto sm:-mx-5">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-white/5 text-white/40">
@@ -130,7 +129,7 @@ function LeaderboardCard<T>({
           </table>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
 
@@ -138,6 +137,9 @@ export function ReferralLeaderboardsSection() {
   const users = useUserLeaderboard();
   const partners = usePartnerLeaderboard();
   const { copy, copiedKey } = useCopyToClipboard();
+  const [usersOpen, setUsersOpen] = useState(true);
+  const [companiesOpen, setCompaniesOpen] = useState(true);
+  const [influencersOpen, setInfluencersOpen] = useState(true);
 
   const companies = partners.data?.filter((p) => p.type === "company");
   const influencers = partners.data?.filter((p) => p.type === "influencer");
@@ -163,6 +165,8 @@ export function ReferralLeaderboardsSection() {
         isError={users.isError}
         emptyMessage="No confirmed referrals yet."
         rowKey={(row) => row.referrer_wallet}
+        open={usersOpen}
+        onToggle={() => setUsersOpen((v) => !v)}
         columns={[
           {
             header: "Wallet",
@@ -199,6 +203,8 @@ export function ReferralLeaderboardsSection() {
         isError={partners.isError}
         emptyMessage="No company partners yet."
         rowKey={(row) => row.partner_id}
+        open={companiesOpen}
+        onToggle={() => setCompaniesOpen((v) => !v)}
         columns={partnerColumns}
       />
 
@@ -209,6 +215,8 @@ export function ReferralLeaderboardsSection() {
         isError={partners.isError}
         emptyMessage="No influencer partners yet."
         rowKey={(row) => row.partner_id}
+        open={influencersOpen}
+        onToggle={() => setInfluencersOpen((v) => !v)}
         columns={partnerColumns}
       />
     </div>

@@ -2,8 +2,8 @@
 -- from referral_partners) alongside the original wallet-to-wallet referrals.
 -- referrer_wallet becomes optional; exactly one of referrer_wallet /
 -- referrer_partner_id must be set per row. The FK from code -> referral_codes
--- is dropped because a partner-owned code lives in referral_partners instead
--- — code is now an informational snapshot, not a strict single-parent FK.
+-- is dropped because a partner-owned code lives in referral_partners instead,
+-- code is now an informational snapshot, not a strict single-parent FK.
 
 alter table public.referrals
   drop constraint if exists referrals_code_fkey;

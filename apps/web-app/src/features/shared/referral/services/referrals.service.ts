@@ -15,7 +15,7 @@ export interface ReferralMe {
 }
 
 class ReferralsService {
-  /** Throws BackendError on failure — a network blip is not the same as
+  /** Throws BackendError on failure, a network blip is not the same as
    * "this wallet has no referral data", so callers must tell them apart
    * instead of both collapsing to a falsy result. */
   async getMe(wallet: string): Promise<ReferralMe> {

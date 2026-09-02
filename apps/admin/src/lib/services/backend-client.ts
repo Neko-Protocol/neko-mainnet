@@ -7,8 +7,8 @@ export interface BackendResult {
 
 /**
  * Bearer token for routes guarded by the backend's AdminAuthGuard (e.g. the
- * referral leaderboards). Most backend-client calls don't need this — the
- * shared x-internal-key alone is enough — but a handful of routes also
+ * referral leaderboards). Most backend-client calls don't need this, the
+ * shared x-internal-key alone is enough, but a handful of routes also
  * require proof the caller is a signed-in, active admin. Sending it on every
  * call is harmless: unguarded routes simply ignore the extra header.
  */

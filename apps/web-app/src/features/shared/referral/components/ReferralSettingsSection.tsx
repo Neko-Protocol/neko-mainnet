@@ -10,6 +10,8 @@ import { referralLink } from "../utils/referralLink";
 import { ReferralStatsGrid } from "./ReferralStatsGrid";
 import { ReferralCodeClaim } from "./ReferralCodeClaim";
 
+const TITLE_CLASSNAME = "text-base font-semibold text-white/60";
+
 export interface ReferralSettingsSectionProps {
   open?: boolean;
   onToggle?: () => void;
@@ -37,6 +39,7 @@ export function ReferralSettingsSection({
     return (
       <SectionCard
         title={t("title")}
+        titleClassName={TITLE_CLASSNAME}
         collapsible
         open={open}
         onToggle={onToggle}
@@ -54,6 +57,7 @@ export function ReferralSettingsSection({
   return (
     <SectionCard
       title={t("title")}
+      titleClassName={TITLE_CLASSNAME}
       collapsible
       open={open}
       onToggle={onToggle}
@@ -88,7 +92,7 @@ export function ReferralSettingsSection({
 
           <ReferralStatsGrid
             referredConfirmed={data.referred_confirmed}
-            swapVolumeUsd={data.swap_volume_usd}
+            purchasesSwapsUsd={data.swap_volume_usd}
             vaultTvlUsd={data.vault_tvl_usd}
           />
 

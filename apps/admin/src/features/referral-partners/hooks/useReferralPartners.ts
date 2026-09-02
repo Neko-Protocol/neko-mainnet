@@ -17,7 +17,7 @@ export function useReferralPartners() {
 }
 
 // Creating/deleting a partner code changes both the management list and the
-// partner leaderboard (a distinct query in features/referrals) — invalidate
+// partner leaderboard (a distinct query in features/referrals), invalidate
 // both so the leaderboard tables never show a stale, already-deleted partner.
 function invalidatePartnerQueries(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: partnerKeys.list });

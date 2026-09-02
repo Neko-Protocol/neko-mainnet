@@ -8,17 +8,23 @@ export interface SectionCardProps {
   children: React.ReactNode;
   className?: string;
   contentClassName?: string;
+  /** Overrides the default `text-xs ... text-white/60` title styling. */
+  titleClassName?: string;
   icon?: React.ElementType;
   collapsible?: boolean;
   open?: boolean;
   onToggle?: () => void;
 }
 
+const DEFAULT_TITLE_CLASSNAME =
+  "text-xs font-semibold uppercase tracking-widest text-white/60";
+
 export function SectionCard({
   title,
   children,
   className,
   contentClassName,
+  titleClassName = DEFAULT_TITLE_CLASSNAME,
   icon: Icon,
   collapsible = false,
   open = true,
@@ -38,7 +44,7 @@ export function SectionCard({
 
   const headerInner = (
     <>
-      <span className="flex items-center gap-2.5 text-xs font-semibold uppercase tracking-widest text-white/60">
+      <span className={`flex items-center gap-2.5 ${titleClassName}`}>
         {Icon && (
           <span
             className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
