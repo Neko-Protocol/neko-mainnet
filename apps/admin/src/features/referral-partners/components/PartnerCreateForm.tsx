@@ -44,7 +44,7 @@ export function PartnerCreateForm() {
   }
 
   return (
-    <div className="mb-5 flex flex-col gap-3 rounded-xl border border-white/5 bg-[#141414] p-4">
+    <div className="mb-5 flex flex-col gap-3 rounded-xl border border-white/5 bg-[#1C1C1C] p-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Name">
           <TextInput
@@ -87,7 +87,7 @@ export function PartnerCreateForm() {
       </div>
       <Field
         label="Notes"
-        hint="Optional — contract terms, handle, anything worth remembering."
+        hint="Optional, contract terms, handle, anything worth remembering."
       >
         <TextArea
           value={form.notes}

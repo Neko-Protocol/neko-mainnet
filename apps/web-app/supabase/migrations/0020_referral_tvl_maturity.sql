@@ -9,7 +9,7 @@
 --
 -- 2. Vault TVL only counts audit_logs rows at least 7 days old. Applied to
 --    both deposit and withdraw rows (not just deposits) so a same-day
---    deposit-then-withdraw never nets negative — it simply doesn't appear
+--    deposit-then-withdraw never nets negative, it simply doesn't appear
 --    until both sides have matured, at which point they net out correctly.
 --    Prevents wash deposits from inflating a referrer's TVL the moment a
 --    referred wallet touches a vault.

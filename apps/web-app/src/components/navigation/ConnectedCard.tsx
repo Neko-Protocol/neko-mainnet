@@ -72,7 +72,7 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
 
       {/* NotificationCenter anchors its tray to this relative wrapper. In
           basic mode the cart moves in from its own floating badge to sit
-          beside notifications instead — both icon-only there since they're
+          beside notifications instead, both icon-only there since they're
           paired; expert mode has notifications alone, so it spells itself
           out. */}
       <div className="relative flex items-stretch gap-2 pt-2">
