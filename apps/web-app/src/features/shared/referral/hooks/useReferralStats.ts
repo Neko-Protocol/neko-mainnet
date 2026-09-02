@@ -11,6 +11,10 @@ export function useReferralStats() {
     queryKey: ["referral-me", address],
     queryFn: () => referralsService.getMe(address!),
     enabled: Boolean(address),
-    staleTime: 60_000,
+    // Always revalidate on mount: whether this wallet has a referrer can
+    // change from outside this session (an admin revoking a partner code
+    // deletes the referral row), so a cached "confirmed" from before that
+    // must never be trusted without a fresh check.
+    staleTime: 0,
   });
 }

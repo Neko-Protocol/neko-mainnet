@@ -10,11 +10,18 @@ import type { ReferredBy } from "../services/referrals.service";
 
 export interface ReferralCodeClaimProps {
   referredBy: ReferredBy | null;
+  /** True while the underlying stats query is (re)validating. A cached
+   * "confirmed" can be stale (e.g. an admin just revoked the code), so the
+   * badge waits for a fresh answer instead of showing it optimistically. */
+  isRefreshing?: boolean;
 }
 
 /** "Have a code?", either the claim form, or the locked-in code once one
  * is already attributed (a wallet can only ever have one). */
-export function ReferralCodeClaim({ referredBy }: ReferralCodeClaimProps) {
+export function ReferralCodeClaim({
+  referredBy,
+  isRefreshing = false,
+}: ReferralCodeClaimProps) {
   const t = useTranslations("sharedReferral.settings");
   const errorMessage = useApiErrorMessage();
   const { addNotification } = useToast();
@@ -43,7 +50,9 @@ export function ReferralCodeClaim({ referredBy }: ReferralCodeClaimProps) {
       <span className="mb-2 block text-sm font-semibold text-white">
         {t("haveCode")}
       </span>
-      {referredBy ? (
+      {referredBy && isRefreshing ? (
+        <div className="h-11 animate-pulse rounded-xl bg-[#2A2A2A]" />
+      ) : referredBy ? (
         <div className="flex items-center justify-between gap-3 rounded-xl bg-[#2A2A2A] px-4 py-3">
           <span className="font-mono text-sm text-white/80">
             {referredBy.code}
