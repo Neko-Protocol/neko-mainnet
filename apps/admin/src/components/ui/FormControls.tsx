@@ -34,7 +34,15 @@ export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
 }
 
 export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={CONTROL_CLASS} />;
+  return (
+    <div className="relative">
+      <select {...props} className={`${CONTROL_CLASS} appearance-none pr-9`} />
+      <ChevronDown
+        className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-white/40"
+        aria-hidden
+      />
+    </div>
+  );
 }
 
 export function Button({

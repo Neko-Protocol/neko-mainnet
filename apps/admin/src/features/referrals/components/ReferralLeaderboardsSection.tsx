@@ -38,7 +38,7 @@ function metricColumns<T extends ReferralMetrics>(): Column<T>[] {
       render: (row) => formatCurrency(row.swap_volume_usd + row.vault_tvl_usd),
     },
     {
-      header: "Swaps/Purchases",
+      header: "Swaps",
       render: (row) => formatCurrency(row.swap_volume_usd),
     },
     {
