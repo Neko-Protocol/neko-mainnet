@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { Check, Copy } from "lucide-react";
 import { formatCurrency } from "@/lib/helpers/currency";
 import { truncateAddress } from "@/lib/helpers/addressUtils";
@@ -62,6 +63,7 @@ function LeaderboardCard<T>({
   rowKey,
   open,
   onToggle,
+  onRowClick,
 }: {
   title: string;
   rows: T[] | undefined;
@@ -72,6 +74,8 @@ function LeaderboardCard<T>({
   rowKey: (row: T) => string;
   open: boolean;
   onToggle: () => void;
+  /** Navigates to that referrer's per-wallet volume breakdown. */
+  onRowClick?: (row: T) => void;
 }) {
   return (
     <Card title={title} collapsible open={open} onToggle={onToggle}>
@@ -112,7 +116,10 @@ function LeaderboardCard<T>({
                 rows.map((row) => (
                   <tr
                     key={rowKey(row)}
-                    className="border-b border-white/5 last:border-0 hover:bg-white/[0.04]"
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    className={`border-b border-white/5 last:border-0 hover:bg-white/[0.04] ${
+                      onRowClick ? "cursor-pointer" : ""
+                    }`}
                   >
                     {columns.map((col) => (
                       <td
@@ -134,6 +141,7 @@ function LeaderboardCard<T>({
 }
 
 export function ReferralLeaderboardsSection() {
+  const router = useRouter();
   const users = useUserLeaderboard();
   const partners = usePartnerLeaderboard();
   const { copy, copiedKey } = useCopyToClipboard();
@@ -167,12 +175,20 @@ export function ReferralLeaderboardsSection() {
         rowKey={(row) => row.referrer_wallet}
         open={usersOpen}
         onToggle={() => setUsersOpen((v) => !v)}
+        onRowClick={(row) =>
+          router.push(
+            `/referrals/users/${encodeURIComponent(row.referrer_wallet)}`
+          )
+        }
         columns={[
           {
             header: "Wallet",
             render: (row) => (
               <button
-                onClick={() => copy(row.referrer_wallet, row.referrer_wallet)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copy(row.referrer_wallet, row.referrer_wallet);
+                }}
                 className="group flex items-center gap-1.5 text-white/70 transition-colors hover:text-white"
               >
                 {truncateAddress(row.referrer_wallet)}
@@ -205,6 +221,11 @@ export function ReferralLeaderboardsSection() {
         rowKey={(row) => row.partner_id}
         open={companiesOpen}
         onToggle={() => setCompaniesOpen((v) => !v)}
+        onRowClick={(row) =>
+          router.push(
+            `/referrals/partners/${row.partner_id}?name=${encodeURIComponent(row.name)}`
+          )
+        }
         columns={partnerColumns}
       />
 
@@ -217,6 +238,11 @@ export function ReferralLeaderboardsSection() {
         rowKey={(row) => row.partner_id}
         open={influencersOpen}
         onToggle={() => setInfluencersOpen((v) => !v)}
+        onRowClick={(row) =>
+          router.push(
+            `/referrals/partners/${row.partner_id}?name=${encodeURIComponent(row.name)}`
+          )
+        }
         columns={partnerColumns}
       />
     </div>
