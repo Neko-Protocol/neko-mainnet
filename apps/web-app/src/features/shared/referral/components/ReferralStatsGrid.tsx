@@ -38,6 +38,8 @@ export function ReferralStatsGrid({
 
   return (
     <div className="flex flex-col gap-2">
+      <p className="mt-1 text-xs text-white/40">{t("statsTitle")}</p>
+
       <div className="rounded-xl bg-[#2A2A2A] px-4 py-5">
         <p className="mb-1 text-xs font-medium uppercase tracking-wide text-white/40">
           {t("vaultTvl")}
