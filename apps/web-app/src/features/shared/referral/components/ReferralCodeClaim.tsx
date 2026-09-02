@@ -46,18 +46,8 @@ export function ReferralCodeClaim({ referredBy }: ReferralCodeClaimProps) {
           <span className="font-mono text-sm text-white/80">
             {referredBy.code}
           </span>
-          <span
-            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-              referredBy.status === "confirmed"
-                ? "bg-emerald-500/15 text-emerald-400"
-                : "bg-amber-500/15 text-amber-400"
-            }`}
-          >
-            {t(
-              referredBy.status === "confirmed"
-                ? "statusConfirmed"
-                : "statusPending"
-            )}
+          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400">
+            {t("statusConfirmed")}
           </span>
         </div>
       ) : (
