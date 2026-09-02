@@ -40,7 +40,9 @@ export function ReferralCodeClaim({ referredBy }: ReferralCodeClaimProps) {
 
   return (
     <div className="mt-1 border-t border-white/5 pt-4">
-      <span className="mb-2 block text-xs text-white/40">{t("haveCode")}</span>
+      <span className="mb-2 block text-sm font-semibold text-white">
+        {t("haveCode")}
+      </span>
       {referredBy ? (
         <div className="flex items-center justify-between gap-3 rounded-xl bg-[#2A2A2A] px-4 py-3">
           <span className="font-mono text-sm text-white/80">
