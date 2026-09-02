@@ -50,10 +50,12 @@ export function ReferralStatsGrid({
       <div className="grid grid-cols-3 gap-2">
         {tiles.map((tile) => (
           <div key={tile.key} className="rounded-xl bg-[#2A2A2A] px-3 py-3">
-            <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-white/40">
+            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-white/40">
               {tile.label}
             </p>
-            <p className="text-base font-semibold text-white">{tile.value}</p>
+            <p className="text-2xl font-bold tabular-nums text-white">
+              {tile.value}
+            </p>
           </div>
         ))}
       </div>
