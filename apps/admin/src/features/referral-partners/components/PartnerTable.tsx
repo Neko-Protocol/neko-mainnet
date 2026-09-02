@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Check, Copy, Link2, Trash2 } from "lucide-react";
 import type { ReferralPartner, ReferralPartnerType } from "@neko/api-contracts";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -39,6 +40,7 @@ export function PartnerTable({
   deleteError,
   onRequestDelete,
 }: PartnerTableProps) {
+  const router = useRouter();
   const { copy, copiedKey } = useCopyToClipboard();
   const [tab, setTab] = useState<FilterTab>("all");
 
@@ -100,7 +102,12 @@ export function PartnerTable({
               {visible.map((p) => (
                 <tr
                   key={p.id}
-                  className="border-b border-white/5 last:border-0 hover:bg-white/[0.04]"
+                  onClick={() =>
+                    router.push(
+                      `/referrals/partners/${p.id}?name=${encodeURIComponent(p.name)}`
+                    )
+                  }
+                  className="cursor-pointer border-b border-white/5 last:border-0 hover:bg-white/[0.04]"
                 >
                   <td className="px-4 py-3 text-white">{p.name}</td>
                   <td className="px-4 py-3">
@@ -112,7 +119,10 @@ export function PartnerTable({
                   </td>
                   <td className="px-4 py-3">
                     <button
-                      onClick={() => copy(p.id, p.code)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copy(p.id, p.code);
+                      }}
                       className="group flex items-center gap-1.5 font-mono text-white/70 transition-colors hover:text-white"
                     >
                       {p.code}
@@ -136,7 +146,10 @@ export function PartnerTable({
                       const key = `${p.id}-link`;
                       return (
                         <button
-                          onClick={() => copy(key, link)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copy(key, link);
+                          }}
                           className="group flex items-center gap-1.5 text-white/70 transition-colors hover:text-white"
                         >
                           <Link2 className="h-3.5 w-3.5 text-white/40 group-hover:text-white/70" />
@@ -165,7 +178,10 @@ export function PartnerTable({
                       type="button"
                       variant="danger"
                       disabled={deletePending}
-                      onClick={() => onRequestDelete(p)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRequestDelete(p);
+                      }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       Delete
