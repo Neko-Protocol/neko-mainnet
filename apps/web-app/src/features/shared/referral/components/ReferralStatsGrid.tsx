@@ -38,11 +38,11 @@ export function ReferralStatsGrid({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="rounded-xl bg-emerald-500/10 px-4 py-3 ring-1 ring-emerald-500/20">
+      <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3">
         <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-emerald-400/70">
           {t("vaultTvl")}
         </p>
-        <p className="text-2xl font-bold tabular-nums text-emerald-400">
+        <p className="text-3xl font-bold tabular-nums text-emerald-400">
           {formatCurrency(vaultTvlUsd, "USD", SUMMARY_DISPLAY_DECIMALS)}
         </p>
       </div>
