@@ -31,10 +31,8 @@
       "appliedToast": "¡Código de referido aplicado!"
     },
     "capture": {
-      "toast": "Código de referido guardado — empezará a funcionar cuando conectes tu wallet. Podés verlo cuando quieras en Configuración → Referidos.",
-      "alreadyReferredToast": "Ya tenés un código de referido aplicado — este nuevo no puede reemplazarlo.",
-      "readyToApplyToast": "Código de referido guardado — andá a Configuración → Referidos para aplicarlo.",
-      "savedToast": "Código de referido guardado. Revisá Configuración → Referidos para aplicarlo."
+      "toast": "Código de referido guardado, se aplicará automáticamente cuando conectes tu wallet.",
+      "alreadyReferredToast": "Ya tenés un código de referido aplicado, este nuevo no puede reemplazarlo."
     }
   }
 }

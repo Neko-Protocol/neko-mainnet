@@ -31,10 +31,8 @@
       "appliedToast": "Referral code applied!"
     },
     "capture": {
-      "toast": "Referral code saved — it'll start working once you connect your wallet. You can check it anytime in Settings → Referrals.",
-      "alreadyReferredToast": "You already have a referral code applied — this new one can't replace it.",
-      "readyToApplyToast": "Referral code saved — go to Settings → Referrals to apply it.",
-      "savedToast": "Referral code saved. Check Settings → Referrals to apply it."
+      "toast": "Referral code saved, it'll apply automatically once you connect your wallet.",
+      "alreadyReferredToast": "You already have a referral code applied, this new one can't replace it."
     }
   }
 }

@@ -12,7 +12,7 @@ export interface ReferralCodeClaimProps {
   referredBy: ReferredBy | null;
 }
 
-/** "Have a code?" — either the claim form, or the locked-in code once one
+/** "Have a code?", either the claim form, or the locked-in code once one
  * is already attributed (a wallet can only ever have one). */
 export function ReferralCodeClaim({ referredBy }: ReferralCodeClaimProps) {
   const t = useTranslations("sharedReferral.settings");
