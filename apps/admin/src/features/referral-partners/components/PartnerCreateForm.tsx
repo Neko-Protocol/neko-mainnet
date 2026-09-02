@@ -44,7 +44,7 @@ export function PartnerCreateForm() {
   }
 
   return (
-    <div className="mb-5 flex flex-col gap-3 rounded-xl border border-white/5 bg-[#141414] p-4">
+    <div className="mb-5 flex flex-col gap-3 rounded-xl border border-white/5 bg-white/5 p-4">
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Name">
           <TextInput
