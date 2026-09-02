@@ -78,7 +78,7 @@ function LeaderboardCard<T>({
       {isError ? (
         <AnalyticsErrorState />
       ) : (
-        <div className="overflow-x-auto">
+        <div className="-mx-4 overflow-x-auto sm:-mx-5">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-white/5 text-white/40">

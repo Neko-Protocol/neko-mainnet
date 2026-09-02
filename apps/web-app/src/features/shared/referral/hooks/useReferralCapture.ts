@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useReferralStore } from "../stores/referral.store";
@@ -18,13 +18,6 @@ import { useToast } from "@/hooks/useToast";
  *  - connected, unreferred (or the status check itself failed): saved, and
  *    useAutoApplyReferral claims it right away since a wallet is already
  *    on hand, no manual trip to Settings > Referrals needed
- *
- * Guarded by a ref so this only runs once per distinct code: addNotification
- * is a new function identity every render (useToast() isn't memoized), which
- * would otherwise re-run this effect on unrelated re-renders, e.g. the one
- * caused by useAutoApplyReferral's own successful claim, re-checking
- * getMe() and wrongly firing "already referred" for a referral this same
- * link just created.
  */
 export function useReferralCapture() {
   const searchParams = useSearchParams();
@@ -32,12 +25,10 @@ export function useReferralCapture() {
   const address = useStellarWalletStore((s) => s.address);
   const { addNotification } = useToast();
   const t = useTranslations("sharedReferral.capture");
-  const processedRef = useRef<string | null>(null);
 
   useEffect(() => {
     const ref = searchParams.get("ref")?.trim();
-    if (!ref || processedRef.current === ref) return;
-    processedRef.current = ref;
+    if (!ref) return;
 
     if (!address) {
       setRefCode(ref);
