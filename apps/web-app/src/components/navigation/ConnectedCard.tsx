@@ -84,7 +84,7 @@ export function ConnectedCard({ address, onDisconnect }: ConnectedCardProps) {
                 ? t("nav.cartAriaLabelWithCount", { count: cartCount })
                 : t("nav.cartAriaLabel")
             }
-            className="relative flex flex-1 items-center justify-center rounded-full bg-[#229EDF] py-3 text-white transition-colors hover:bg-[#1e8bc9]"
+            className="relative flex flex-1 items-center justify-center rounded-full bg-[#229EDF]! py-3 text-white transition-colors hover:bg-[#1e8bc9]!"
           >
             <ShoppingBag className="h-5 w-5 shrink-0" />
             {cartCount > 0 && (

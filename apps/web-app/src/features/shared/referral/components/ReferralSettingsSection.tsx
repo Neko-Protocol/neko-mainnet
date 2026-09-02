@@ -25,7 +25,7 @@ export function ReferralSettingsSection({
 }: ReferralSettingsSectionProps) {
   const t = useTranslations("sharedReferral.settings");
   const { isConnected } = useStellarWallet();
-  const { data, isPending, isError } = useReferralStats();
+  const { data, isPending, isError, isFetching } = useReferralStats();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   function copy(key: string, value: string) {
@@ -96,7 +96,10 @@ export function ReferralSettingsSection({
             vaultTvlUsd={data.vault_tvl_usd}
           />
 
-          <ReferralCodeClaim referredBy={data.referred_by} />
+          <ReferralCodeClaim
+            referredBy={data.referred_by}
+            isRefreshing={isFetching}
+          />
         </>
       )}
     </SectionCard>
