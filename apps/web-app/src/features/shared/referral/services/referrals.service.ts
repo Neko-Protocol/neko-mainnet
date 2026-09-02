@@ -2,7 +2,6 @@ import { backendClient } from "@/lib/services/backend-client";
 
 export interface ReferredBy {
   code: string;
-  status: "pending" | "confirmed";
 }
 
 export interface ReferralMe {
