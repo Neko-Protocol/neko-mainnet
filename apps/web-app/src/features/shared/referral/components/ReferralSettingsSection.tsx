@@ -10,8 +10,7 @@ import { referralLink } from "../utils/referralLink";
 import { ReferralStatsGrid } from "./ReferralStatsGrid";
 import { ReferralCodeClaim } from "./ReferralCodeClaim";
 
-const TITLE_CLASSNAME =
-  "text-base font-semibold uppercase tracking-widest text-white";
+const TITLE_CLASSNAME = "text-base font-semibold text-white/60";
 
 export interface ReferralSettingsSectionProps {
   open?: boolean;
