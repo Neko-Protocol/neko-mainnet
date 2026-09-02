@@ -5,7 +5,7 @@ import type { ReactNode, SelectHTMLAttributes } from "react";
 import type { InputHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 const CONTROL_CLASS =
-  "w-full rounded-lg border border-white/10 bg-[#141414] px-3 py-2 text-sm text-white placeholder:text-white/25 outline-none transition-colors focus:border-[#229EDF] disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-white/25 outline-none transition-colors focus:border-[#229EDF] disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Field({
   label,
