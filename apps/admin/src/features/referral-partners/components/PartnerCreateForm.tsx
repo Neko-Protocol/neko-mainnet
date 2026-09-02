@@ -87,7 +87,7 @@ export function PartnerCreateForm() {
       </div>
       <Field
         label="Notes"
-        hint="Optional — contract terms, handle, anything worth remembering."
+        hint="Optional, contract terms, handle, anything worth remembering."
       >
         <TextArea
           value={form.notes}
