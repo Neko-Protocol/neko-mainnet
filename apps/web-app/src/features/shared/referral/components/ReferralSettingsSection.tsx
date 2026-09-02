@@ -88,7 +88,7 @@ export function ReferralSettingsSection({
 
           <ReferralStatsGrid
             referredConfirmed={data.referred_confirmed}
-            swapVolumeUsd={data.swap_volume_usd}
+            purchasesSwapsUsd={data.swap_volume_usd}
             vaultTvlUsd={data.vault_tvl_usd}
           />
 
