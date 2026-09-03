@@ -3,7 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import {
   ADMIN_SESSION_COOKIE,
-  isAdminSessionExpired,
+  deleteAdminSession,
+  isAdminSessionValid,
 } from "@/lib/admin-session";
 
 const PUBLIC_PATHS = ["/login"];
@@ -49,13 +50,15 @@ export async function middleware(request: NextRequest) {
 
   if (!isPublicPath) {
     // Supabase's own session time-box/inactivity controls need the Pro
-    // plan, so a hard 1-hour session cap is enforced with this cookie
-    // instead: it's set at login and checked against real elapsed time, so
-    // the (still technically valid, auto-refreshing) Supabase session is
-    // force-signed-out once it's past the cap regardless.
-    if (
-      isAdminSessionExpired(request.cookies.get(ADMIN_SESSION_COOKIE)?.value)
-    ) {
+    // plan, so a hard 1-hour session cap is enforced instead by checking
+    // this cookie's id against admin_sessions.expires_at (the actual
+    // source of truth — the cookie itself carries no data an attacker with
+    // write access to it could forge into a valid, unexpired session). The
+    // underlying Supabase session, which would otherwise keep silently
+    // auto-refreshing forever, is force-signed-out once it's past the cap.
+    const sessionId = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
+    if (!(await isAdminSessionValid(sessionId))) {
+      await deleteAdminSession(sessionId);
       await supabase.auth.signOut();
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = "/login";

@@ -10,6 +10,7 @@ import {
 import {
   ADMIN_SESSION_COOKIE,
   ADMIN_SESSION_MAX_AGE_SECONDS,
+  createAdminSession,
 } from "@/lib/admin-session";
 
 export interface AuthActionResult {
@@ -86,8 +87,13 @@ export async function verifyCode(
     return { ok: false, message: "Invalid or expired code." };
   }
 
+  const sessionId = await createAdminSession(email);
+  if (!sessionId) {
+    return { ok: false, message: "Couldn't start a session. Try again." };
+  }
+
   const cookieStore = await cookies();
-  cookieStore.set(ADMIN_SESSION_COOKIE, Date.now().toString(), {
+  cookieStore.set(ADMIN_SESSION_COOKIE, sessionId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

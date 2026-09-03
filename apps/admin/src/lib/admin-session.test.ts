@@ -1,36 +1,117 @@
-import { describe, expect, it } from "vitest";
-import {
-  ADMIN_SESSION_MAX_AGE_SECONDS,
-  isAdminSessionExpired,
-} from "./admin-session";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-describe("isAdminSessionExpired", () => {
-  it("treats a missing cookie as expired", () => {
-    expect(isAdminSessionExpired(undefined)).toBe(true);
+const { mockFrom, mockGetSupabaseAdmin } = vi.hoisted(() => ({
+  mockFrom: vi.fn(),
+  mockGetSupabaseAdmin: vi.fn(),
+}));
+
+vi.mock("@/lib/supabase/admin", () => ({
+  getSupabaseAdmin: mockGetSupabaseAdmin,
+}));
+
+// Minimal fake matching just the .from().select/insert/delete().eq()... chain
+// shape these functions actually use, queued one response per call.
+function fakeAdminClient(response: unknown) {
+  const builder: Record<string, unknown> = {};
+  const chain = () => builder;
+  builder.select = vi.fn(chain);
+  builder.insert = vi.fn(chain);
+  builder.delete = vi.fn(chain);
+  builder.eq = vi.fn(chain);
+  builder.single = vi.fn(() => Promise.resolve(response));
+  builder.maybeSingle = vi.fn(() => Promise.resolve(response));
+  builder.then = (resolve: (v: unknown) => unknown) =>
+    Promise.resolve(response).then(resolve);
+  mockFrom.mockReturnValue(builder);
+  return { from: mockFrom };
+}
+
+beforeEach(() => {
+  mockFrom.mockReset();
+  mockGetSupabaseAdmin.mockReset();
+});
+
+describe("createAdminSession", () => {
+  it("returns the new row's id", async () => {
+    mockGetSupabaseAdmin.mockReturnValue(
+      fakeAdminClient({ data: { id: "session-1" }, error: null })
+    );
+    const { createAdminSession } = await import("./admin-session");
+
+    await expect(createAdminSession("Admin@Example.com")).resolves.toBe(
+      "session-1"
+    );
+    expect(mockFrom).toHaveBeenCalledWith("admin_sessions");
   });
 
-  it("treats a non-numeric value as expired", () => {
-    expect(isAdminSessionExpired("not-a-timestamp")).toBe(true);
+  it("returns null when the insert fails", async () => {
+    mockGetSupabaseAdmin.mockReturnValue(
+      fakeAdminClient({ data: null, error: { message: "boom" } })
+    );
+    const { createAdminSession } = await import("./admin-session");
+
+    await expect(createAdminSession("admin@example.com")).resolves.toBeNull();
   });
 
-  it("is not expired right after login", () => {
-    expect(isAdminSessionExpired(Date.now().toString())).toBe(false);
+  it("returns null when Supabase env vars are missing", async () => {
+    mockGetSupabaseAdmin.mockReturnValue(null);
+    const { createAdminSession } = await import("./admin-session");
+
+    await expect(createAdminSession("admin@example.com")).resolves.toBeNull();
+  });
+});
+
+describe("isAdminSessionValid", () => {
+  it("is false with no session id (nothing to look up)", async () => {
+    const { isAdminSessionValid } = await import("./admin-session");
+    await expect(isAdminSessionValid(undefined)).resolves.toBe(false);
+    expect(mockFrom).not.toHaveBeenCalled();
   });
 
-  it("is not expired just under the cap", () => {
-    const startedAt =
-      Date.now() - (ADMIN_SESSION_MAX_AGE_SECONDS * 1000 - 5000);
-    expect(isAdminSessionExpired(startedAt.toString())).toBe(false);
+  it("is false when the session id doesn't exist", async () => {
+    mockGetSupabaseAdmin.mockReturnValue(
+      fakeAdminClient({ data: null, error: null })
+    );
+    const { isAdminSessionValid } = await import("./admin-session");
+    await expect(isAdminSessionValid("unknown")).resolves.toBe(false);
   });
 
-  it("is expired once past the cap, even if the cookie's own expiry was tampered with", () => {
-    const startedAt =
-      Date.now() - (ADMIN_SESSION_MAX_AGE_SECONDS * 1000 + 5000);
-    expect(isAdminSessionExpired(startedAt.toString())).toBe(true);
+  it("is false once past the row's expires_at", async () => {
+    mockGetSupabaseAdmin.mockReturnValue(
+      fakeAdminClient({
+        data: { expires_at: new Date(Date.now() - 1000).toISOString() },
+        error: null,
+      })
+    );
+    const { isAdminSessionValid } = await import("./admin-session");
+    await expect(isAdminSessionValid("expired")).resolves.toBe(false);
   });
 
-  it("rejects a forged future timestamp instead of treating it as never-expiring", () => {
-    const forgedStartedAt = Date.now() + 1_000_000_000;
-    expect(isAdminSessionExpired(forgedStartedAt.toString())).toBe(true);
+  it("is true before the row's expires_at", async () => {
+    mockGetSupabaseAdmin.mockReturnValue(
+      fakeAdminClient({
+        data: { expires_at: new Date(Date.now() + 60_000).toISOString() },
+        error: null,
+      })
+    );
+    const { isAdminSessionValid } = await import("./admin-session");
+    await expect(isAdminSessionValid("fresh")).resolves.toBe(true);
+  });
+});
+
+describe("deleteAdminSession", () => {
+  it("no-ops with no session id", async () => {
+    const { deleteAdminSession } = await import("./admin-session");
+    await deleteAdminSession(undefined);
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it("deletes the row by id", async () => {
+    mockGetSupabaseAdmin.mockReturnValue(
+      fakeAdminClient({ data: null, error: null })
+    );
+    const { deleteAdminSession } = await import("./admin-session");
+    await deleteAdminSession("session-1");
+    expect(mockFrom).toHaveBeenCalledWith("admin_sessions");
   });
 });
