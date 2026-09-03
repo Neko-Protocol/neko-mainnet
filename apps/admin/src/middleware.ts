@@ -9,6 +9,12 @@ import {
 
 const PUBLIC_PATHS = ["/login"];
 
+function redirectToLogin(request: NextRequest): NextResponse {
+  const loginUrl = request.nextUrl.clone();
+  loginUrl.pathname = "/login";
+  return NextResponse.redirect(loginUrl);
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -43,9 +49,7 @@ export async function middleware(request: NextRequest) {
 
   if (!user) {
     if (isPublicPath) return response;
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/login";
-    return NextResponse.redirect(loginUrl);
+    return redirectToLogin(request);
   }
 
   if (!isPublicPath) {
@@ -60,9 +64,7 @@ export async function middleware(request: NextRequest) {
     if (!(await isAdminSessionValid(sessionId))) {
       await deleteAdminSession(sessionId);
       await supabase.auth.signOut();
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = "/login";
-      return NextResponse.redirect(loginUrl);
+      return redirectToLogin(request);
     }
 
     const email = user.email?.toLowerCase();
@@ -78,10 +80,13 @@ export async function middleware(request: NextRequest) {
         : { data: null };
 
     if (!allowed) {
+      // Revokes the DB-backed session too, not just the Supabase one: a
+      // revoked admin's session row would otherwise sit there reading as
+      // "valid" until it naturally expires, if anything ever checked
+      // isAdminSessionValid() without also re-checking admin_emails.
+      await deleteAdminSession(sessionId);
       await supabase.auth.signOut();
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = "/login";
-      return NextResponse.redirect(loginUrl);
+      return redirectToLogin(request);
     }
   }
 
