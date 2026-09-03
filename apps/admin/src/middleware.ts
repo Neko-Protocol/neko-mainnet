@@ -9,9 +9,10 @@ import {
 
 const PUBLIC_PATHS = ["/login"];
 
-function redirectToLogin(request: NextRequest): NextResponse {
+function redirectToLogin(request: NextRequest, reason?: string): NextResponse {
   const loginUrl = request.nextUrl.clone();
   loginUrl.pathname = "/login";
+  if (reason) loginUrl.searchParams.set("reason", reason);
   return NextResponse.redirect(loginUrl);
 }
 
@@ -64,7 +65,7 @@ export async function middleware(request: NextRequest) {
     if (!(await isAdminSessionValid(sessionId))) {
       await deleteAdminSession(sessionId);
       await supabase.auth.signOut();
-      return redirectToLogin(request);
+      return redirectToLogin(request, "session_expired");
     }
 
     const email = user.email?.toLowerCase();
