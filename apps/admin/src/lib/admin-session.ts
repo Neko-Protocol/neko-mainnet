@@ -7,3 +7,15 @@
 // the actual mechanism forcing re-auth, not just a UI nicety.
 export const ADMIN_SESSION_COOKIE = "admin_session_started";
 export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60;
+
+/** Checks the cookie's own timestamp against real elapsed time rather than
+ * just trusting that it's present: the cookie's browser-set expiry can be
+ * edited (e.g. via devtools) without touching the value inside, so presence
+ * alone isn't enough to enforce the cap. */
+export function isAdminSessionExpired(
+  cookieValue: string | undefined
+): boolean {
+  const startedAt = Number(cookieValue);
+  if (!Number.isFinite(startedAt)) return true;
+  return Date.now() - startedAt > ADMIN_SESSION_MAX_AGE_SECONDS * 1000;
+}
