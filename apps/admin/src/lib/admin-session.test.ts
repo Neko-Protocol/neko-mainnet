@@ -28,4 +28,9 @@ describe("isAdminSessionExpired", () => {
       Date.now() - (ADMIN_SESSION_MAX_AGE_SECONDS * 1000 + 5000);
     expect(isAdminSessionExpired(startedAt.toString())).toBe(true);
   });
+
+  it("rejects a forged future timestamp instead of treating it as never-expiring", () => {
+    const forgedStartedAt = Date.now() + 1_000_000_000;
+    expect(isAdminSessionExpired(forgedStartedAt.toString())).toBe(true);
+  });
 });

@@ -11,11 +11,13 @@ export const ADMIN_SESSION_MAX_AGE_SECONDS = 60 * 60;
 /** Checks the cookie's own timestamp against real elapsed time rather than
  * just trusting that it's present: the cookie's browser-set expiry can be
  * edited (e.g. via devtools) without touching the value inside, so presence
- * alone isn't enough to enforce the cap. */
+ * alone isn't enough to enforce the cap. A value in the future is rejected
+ * too — otherwise a forged one would make the elapsed time negative and
+ * never trip the cap. */
 export function isAdminSessionExpired(
   cookieValue: string | undefined
 ): boolean {
   const startedAt = Number(cookieValue);
-  if (!Number.isFinite(startedAt)) return true;
+  if (!Number.isFinite(startedAt) || startedAt > Date.now()) return true;
   return Date.now() - startedAt > ADMIN_SESSION_MAX_AGE_SECONDS * 1000;
 }
