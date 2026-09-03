@@ -1,11 +1,16 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
   backendClient,
   type BackendResult,
 } from "@/lib/services/backend-client";
+import {
+  ADMIN_SESSION_COOKIE,
+  ADMIN_SESSION_MAX_AGE_SECONDS,
+} from "@/lib/admin-session";
 
 export interface AuthActionResult {
   ok: boolean;
@@ -80,6 +85,15 @@ export async function verifyCode(
   if (error) {
     return { ok: false, message: "Invalid or expired code." };
   }
+
+  const cookieStore = await cookies();
+  cookieStore.set(ADMIN_SESSION_COOKIE, Date.now().toString(), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
+    path: "/",
+  });
 
   redirect("/analytics");
 }
