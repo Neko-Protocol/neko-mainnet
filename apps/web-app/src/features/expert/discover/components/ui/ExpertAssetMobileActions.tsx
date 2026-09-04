@@ -9,19 +9,26 @@ import type { AssetInfo } from "@/features/shared/discover/types/discover";
 interface ExpertAssetMobileActionsProps {
   symbolUpper: string;
   stockInfo: AssetInfo;
+  isSwappable: boolean;
 }
 
 export function ExpertAssetMobileActions({
   symbolUpper,
   stockInfo,
+  isSwappable,
 }: ExpertAssetMobileActionsProps) {
   const t = useTranslations("expert.discover");
   const isInstitutional = Boolean(stockInfo.taxonomy?.institutional);
-  const buyLabel = isInstitutional ? t("discoverMoreOn") : t("buyOn");
+  const buyLabel =
+    isInstitutional ||
+    !isSwappable ||
+    stockInfo.buyInfo?.actionLabel === "discover"
+      ? t("discoverMoreOn")
+      : t("buyOn");
 
   return (
     <div className="flex w-full justify-center gap-3">
-      {!isInstitutional && (
+      {!isInstitutional && isSwappable && (
         <Link
           href={`/swap?to=${symbolUpper}`}
           className="flex flex-1 min-w-0 items-center justify-center gap-2 px-3 py-3 rounded-xl bg-[#229EDF] text-white font-semibold text-sm text-center hover:bg-[#1a8bc7] transition-colors border border-[#229EDF]/50"
