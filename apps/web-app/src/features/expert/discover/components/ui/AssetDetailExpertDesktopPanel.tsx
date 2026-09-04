@@ -9,19 +9,26 @@ import type { AssetInfo } from "@/features/shared/discover/types/discover";
 interface AssetDetailExpertDesktopPanelProps {
   symbol: string;
   stockInfo: AssetInfo;
+  isSwappable: boolean;
 }
 
 export function AssetDetailExpertDesktopPanel({
   symbol,
   stockInfo,
+  isSwappable,
 }: AssetDetailExpertDesktopPanelProps) {
   const t = useTranslations("expert.discover");
   const isInstitutional = Boolean(stockInfo.taxonomy?.institutional);
-  const buyLabel = isInstitutional ? t("discoverMoreOn") : t("buyOn");
+  const buyLabel =
+    isInstitutional ||
+    !isSwappable ||
+    stockInfo.buyInfo?.actionLabel === "discover"
+      ? t("discoverMoreOn")
+      : t("buyOn");
 
   return (
     <div className="p-6 flex flex-col gap-3 rounded-2xl lg:rounded-none">
-      {!isInstitutional && (
+      {!isInstitutional && isSwappable && (
         <Link
           href={`/swap?to=${symbol}`}
           className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-[#229EDF] text-white font-semibold text-sm hover:bg-[#1a8bc7] transition-colors border border-[#229EDF]/50"

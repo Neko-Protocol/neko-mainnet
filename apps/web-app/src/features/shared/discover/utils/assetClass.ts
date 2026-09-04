@@ -12,6 +12,12 @@ export const ASSET_TAXONOMY: Record<string, AssetTaxonomy> = {
     issuer: "Circle",
     peg: "USD",
   },
+  USDT0: {
+    class: "stablecoin",
+    classLabel: "Stablecoin",
+    issuer: "Tether",
+    peg: "USD",
+  },
   EURC: {
     class: "stablecoin",
     classLabel: "Stablecoin",

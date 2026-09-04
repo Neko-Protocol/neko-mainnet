@@ -125,6 +125,14 @@
           "Natively redeemable through Circle Mint for verified institutional accounts"
         ]
       },
+      "USDT0": {
+        "description": "Omnichain US dollar stablecoin connected to Tether's unified USDT supply",
+        "summary": "USDT0 brings Tether's USDT liquidity to Stellar through LayerZero's Omnichain Fungible Token standard. USDT is locked in the adapter on Ethereum and an equivalent amount of USDT0 is minted on the destination network, keeping one unified supply instead of creating isolated wrapped liquidity. On Stellar, USDT0 is a native classic asset with a Stellar Asset Contract interface.",
+        "highlights": [
+          "Backed 1:1 by USDT held through the USDT0 adapter on Ethereum",
+          "Moves between Stellar and supported networks through LayerZero's OFT standard"
+        ]
+      },
       "EURC": {
         "description": "Euro-backed stablecoin issued by Circle, pegged 1:1 to EUR",
         "summary": "EURC is Circle's MiCA-compliant euro stablecoin, fully backed 1:1 by euro-denominated reserves held in regulated financial institutions. It is redeemable at par and subject to monthly attestations. On Stellar, EURC enables low-cost euro payments and settlements across the global Stellar network.",

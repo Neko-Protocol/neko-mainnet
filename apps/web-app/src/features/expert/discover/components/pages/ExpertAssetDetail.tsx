@@ -7,16 +7,18 @@ import { ExpertAssetMobileActions } from "../ui/ExpertAssetMobileActions";
 export function ExpertAssetDetail() {
   return (
     <AssetDetailLayout
-      renderRightPanel={({ symbolUpper, stockInfo }) => (
+      renderRightPanel={({ symbolUpper, stockInfo, assetConfig }) => (
         <AssetDetailExpertDesktopPanel
           symbol={symbolUpper}
           stockInfo={stockInfo}
+          isSwappable={assetConfig.isSwappable !== false}
         />
       )}
-      renderMobileActions={({ symbolUpper, stockInfo }) => (
+      renderMobileActions={({ symbolUpper, stockInfo, assetConfig }) => (
         <ExpertAssetMobileActions
           symbolUpper={symbolUpper}
           stockInfo={stockInfo}
+          isSwappable={assetConfig.isSwappable !== false}
         />
       )}
     />
