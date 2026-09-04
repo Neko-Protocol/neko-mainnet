@@ -29,6 +29,25 @@ const RAW: Record<string, AssetInfo> = {
       "Natively redeemable through Circle Mint for verified institutional accounts",
     ],
   },
+  USDT0: {
+    logo: "/assets/usdt0-logo.png",
+    name: "USDT0",
+    description:
+      "Omnichain US dollar stablecoin connected to Tether's unified USDT supply",
+    summary:
+      "USDT0 brings Tether's USDT liquidity to Stellar through LayerZero's Omnichain Fungible Token standard. USDT is locked in the adapter on Ethereum and an equivalent amount of USDT0 is minted on the destination network, keeping one unified supply instead of creating isolated wrapped liquidity. On Stellar, USDT0 is a native classic asset with a Stellar Asset Contract interface.",
+    highlights: [
+      "Backed 1:1 by USDT held through the USDT0 adapter on Ethereum",
+      "Moves between Stellar and supported networks through LayerZero's OFT standard",
+    ],
+    buyInfo: {
+      platform: "USDT0",
+      url: "https://usdt0.to/transfer",
+      actionLabel: "discover",
+      description:
+        "Transfer USDT between supported EVM networks and Stellar using the official USDT0 interface.",
+    },
+  },
   EURC: {
     logo: "/assets/eurc-logo.png",
     name: "Euro Coin",
