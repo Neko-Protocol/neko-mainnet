@@ -26,6 +26,12 @@ describe("assets config (parameterized)", () => {
     const cfg = getAssetsConfig(networkId);
     expect(Object.keys(cfg).length).toBeGreaterThan(0);
     expect(cfg.USDC).toBeDefined();
+    expect(cfg.USDT0).toMatchObject({
+      contract: "CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF",
+      decimals: 7,
+      isStablecoin: true,
+      isSwappable: false,
+    });
     expect(cfg.XLM?.reflectorAsset?.tag).toBe("Stellar");
   });
 
@@ -48,6 +54,7 @@ describe("assets config (parameterized)", () => {
     expect(getReflectorAssetForToken(networkId, "USDC")?.tag).toBe("Stellar");
     expect(getRwaTokenCodes(networkId)).toContain("CETES");
     expect(getStablecoinCodes(networkId)).toContain("USDC");
+    expect(getStablecoinCodes(networkId)).toContain("USDT0");
     expect(getTokenIconMap(networkId).XLM).toMatch(/xlm/i);
     const contractMap = getContractToCodeMap(networkId);
     expect(Object.values(contractMap)).toContain("XLM");

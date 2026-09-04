@@ -72,8 +72,6 @@ export async function submitHorizonTransaction(
   }
 }
 
-const TRUST_LIMIT_MAX = "9223372036854775807";
-
 export async function buildAddClassicTrustlinesTxXdr(
   publicKey: string,
   missing: ClassicAssetRef[]
@@ -94,7 +92,6 @@ export async function buildAddClassicTrustlinesTxXdr(
     builder = builder.addOperation(
       Operation.changeTrust({
         asset: new Asset(code, issuer),
-        limit: TRUST_LIMIT_MAX,
       })
     );
   }

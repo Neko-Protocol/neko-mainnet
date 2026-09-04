@@ -12,7 +12,7 @@ export function BasicAssetDetail() {
 
   return (
     <AssetDetailLayout
-      renderRightPanel={({ symbolUpper, stockInfo }) =>
+      renderRightPanel={({ symbolUpper, stockInfo, assetConfig }) =>
         stockInfo.taxonomy?.institutional ? (
           <div className="p-6 flex flex-col gap-4">
             <div className="flex items-center gap-3">
@@ -36,12 +36,39 @@ export function BasicAssetDetail() {
               </Link>
             )}
           </div>
+        ) : assetConfig.isSwappable === false ? (
+          <div className="p-6 flex flex-col gap-4">
+            {stockInfo.buyInfo && (
+              <Link
+                href={stockInfo.buyInfo.url}
+                className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold text-sm transition-colors border border-white/20"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {t("discoverMoreOn", { platform: stockInfo.buyInfo.platform })}
+              </Link>
+            )}
+          </div>
         ) : (
-          <BasicBuyForm symbol={symbolUpper} />
+          <>
+            <BasicBuyForm symbol={symbolUpper} />
+            {stockInfo.buyInfo?.actionLabel === "discover" && (
+              <div className="px-6 pb-6">
+                <Link
+                  href={stockInfo.buyInfo.url}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-semibold text-sm transition-colors border border-white/20"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {t("discoverMoreOn", {
+                    platform: stockInfo.buyInfo.platform,
+                  })}
+                </Link>
+              </div>
+            )}
+          </>
         )
       }
-      renderMobilePanelLabel={({ symbolUpper, stockInfo }) =>
-        stockInfo.taxonomy?.institutional
+      renderMobilePanelLabel={({ symbolUpper, stockInfo, assetConfig }) =>
+        stockInfo.taxonomy?.institutional || assetConfig.isSwappable === false
           ? t("mobilePanelDiscover", { symbol: symbolUpper })
           : t("mobilePanelBuy", { symbol: symbolUpper })
       }

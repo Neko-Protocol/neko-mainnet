@@ -55,6 +55,7 @@ export function BasicAssetPriceCard({
   const taxonomy = assetInfo?.taxonomy ?? getAssetTaxonomy(codeUpper);
   const accent = taxonomy ? CLASS_ACCENT[taxonomy.class] : undefined;
   const isInstitutional = Boolean(taxonomy?.institutional);
+  const isDiscoverOnly = isInstitutional || assetConfig?.isSwappable === false;
 
   const displayName = assetInfo?.name ?? assetConfig?.name ?? codeUpper;
   const logoSrc = assetInfo?.logo ?? assetConfig?.icon;
@@ -143,7 +144,7 @@ export function BasicAssetPriceCard({
 
         {/* Two-button CTA  stopPropagation so clicks don't navigate the card */}
         <div
-          className={`mt-4 grid gap-2 ${isInstitutional ? "grid-cols-1" : "grid-cols-2"}`}
+          className={`mt-4 grid gap-2 ${isDiscoverOnly ? "grid-cols-1" : "grid-cols-2"}`}
           onClick={(e) => e.stopPropagation()}
           onKeyDown={(e) => e.stopPropagation()}
         >
@@ -152,9 +153,9 @@ export function BasicAssetPriceCard({
             className="flex items-center justify-center rounded-xl border border-[#229EDF]/20 bg-[#229EDF]/10 px-2 py-1.5 text-xs font-semibold text-[#229EDF] transition-colors hover:bg-[#229EDF]/20 sm:px-3 sm:py-2.5 sm:text-sm"
             onClick={(e) => e.stopPropagation()}
           >
-            {isInstitutional ? t("discoverMore") : t("buyAsset")}
+            {isDiscoverOnly ? t("discoverMore") : t("buyAsset")}
           </Link>
-          {!isInstitutional && (
+          {!isDiscoverOnly && (
             <button
               type="button"
               onClick={() => setModalOpen(true)}

@@ -44,6 +44,9 @@ export interface AssetInfo {
     platform: string;
     url: string;
 
+    /** Override the external CTA wording when it is informational. */
+    actionLabel?: "buy" | "discover";
+
     description?: string;
   };
 }

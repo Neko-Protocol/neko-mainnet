@@ -27,6 +27,7 @@ import type { AssetInfo } from "../../types/discover";
 import { PageContainer } from "@/components/ui/PageContainer";
 import { ROUTES } from "../../constants/discover";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
+import type { AssetConfig } from "@/lib/constants/assets.config";
 import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useFxRate } from "@/hooks/useFxRate";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";
@@ -102,6 +103,7 @@ interface ChartPoint {
 export interface AssetDetailContext {
   symbolUpper: string;
   stockInfo: AssetInfo;
+  assetConfig: AssetConfig;
 }
 
 export interface AssetDetailLayoutProps {
@@ -333,7 +335,11 @@ export function AssetDetailLayout({
     );
   }
 
-  const ctx: AssetDetailContext = { symbolUpper, stockInfo };
+  const ctx: AssetDetailContext = {
+    symbolUpper,
+    stockInfo,
+    assetConfig: cfg!,
+  };
   const mobilePanelLabel = renderMobilePanelLabel?.(ctx);
   const hasMobileTabs = Boolean(mobilePanelLabel);
 
