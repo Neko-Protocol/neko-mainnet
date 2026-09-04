@@ -9,6 +9,8 @@ export interface AssetConfig {
   code: string;
   name: string;
   contract: string;
+  /** Issuer for assets backed by a classic Stellar trustline (SAC). */
+  issuer?: string;
   decimals: number;
   icon: string;
   priceSource: AssetPriceSource;
@@ -158,6 +160,20 @@ const ASSETS_BY_NETWORK: Record<NetworkId, Record<string, AssetConfig>> = {
         tag: "Stellar",
         value: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
       },
+    },
+    USDT0: {
+      code: "USDT0",
+      name: "USDT0",
+      // SAC for USDT0-GATISXX6BZ6NC7IKQBY37CJD4SOZL3CYZJWXEDG6JVIY4WBS6KXJHN6Q.
+      // Canonical contract currently listed by the xBull Swap API.
+      contract: "CBSJZEIO5C7KC2SF3MKSNXXJSW5G3VTNBX4ATMKUI3B2MR4JKM4R26YF",
+      issuer: "GATISXX6BZ6NC7IKQBY37CJD4SOZL3CYZJWXEDG6JVIY4WBS6KXJHN6Q",
+      decimals: 7,
+      icon: "/assets/usdt0-logo.png",
+      priceSource: "coingecko",
+      isStablecoin: true,
+      isSwappable: false,
+      coinGeckoId: "usdt0",
     },
     XLM: {
       code: "XLM",
