@@ -1,10 +1,27 @@
 "use client";
 
 import Image from "next/image";
-import { useActionState, useState } from "react";
+import { Suspense, useActionState, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { requestCode, verifyCode, type AuthActionResult } from "./actions";
 
 const initialState: AuthActionResult = { ok: false, message: "" };
+
+const REASON_MESSAGES: Record<string, string> = {
+  session_expired: "Your session expired after 1 hour. Sign in again.",
+};
+
+// useSearchParams() needs a Suspense boundary.
+function SessionReasonBanner() {
+  const reason = useSearchParams().get("reason");
+  const message = reason ? REASON_MESSAGES[reason] : undefined;
+  if (!message) return null;
+  return (
+    <p className="mb-4 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-center text-xs text-amber-400">
+      {message}
+    </p>
+  );
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -46,6 +63,10 @@ export default function LoginPage() {
           />
           <h1 className="text-xl font-bold text-white">Neko Admin</h1>
         </div>
+
+        <Suspense fallback={null}>
+          <SessionReasonBanner />
+        </Suspense>
 
         {step === "email" ? (
           <>
