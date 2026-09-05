@@ -21,7 +21,11 @@ import {
   extractContractErrorOrNull,
   getGenericErrorCode,
 } from "@neko/orchestrator";
-import { toSmallestUnit, fromSmallestUnit } from "@neko/orchestrator";
+import {
+  toSmallestUnit,
+  fromSmallestUnit,
+  withResourceFeeBuffer,
+} from "@neko/orchestrator";
 import {
   applySlippageBps,
   decimalToAtomic,
@@ -248,10 +252,8 @@ export function useVaultAction(
           { timeoutInSeconds: 7200 }
         );
 
-        console.log("[VaultAction] unsigned XDR:", depositTx.toXDR());
-
         const result = await signAndSubmit(
-          depositTx.toXDR(),
+          withResourceFeeBuffer(depositTx.toXDR(), passphrase),
           passphrase,
           signTransaction,
           address,
@@ -432,7 +434,7 @@ export function useVaultAction(
         );
 
         const result = await signAndSubmit(
-          withdrawTx.toXDR(),
+          withResourceFeeBuffer(withdrawTx.toXDR(), passphrase),
           passphrase,
           signTransaction,
           address,
@@ -618,7 +620,7 @@ export function useVaultAction(
         );
 
         const result = await signAndSubmit(
-          withdrawTx.toXDR(),
+          withResourceFeeBuffer(withdrawTx.toXDR(), passphrase),
           passphrase,
           signTransaction,
           address,

@@ -5,6 +5,7 @@ import {
   TokenMetadata,
   type Request,
 } from "@blend-capital/blend-sdk";
+import { withResourceFeeBuffer } from "../stellar/transaction.js";
 import { TransactionBuilder, rpc, xdr } from "@stellar/stellar-sdk";
 
 import {
@@ -585,7 +586,10 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         from: userAddress,
         invest: false,
       });
-      return { xdr: tx.toXDR(), networkPassphrase: this.networkPassphrase };
+      return {
+        xdr: withResourceFeeBuffer(tx.toXDR(), this.networkPassphrase),
+        networkPassphrase: this.networkPassphrase,
+      };
     }
 
     return this.buildSubmitTx(rawId, userAddress, amount, "deposit");
@@ -647,7 +651,10 @@ export class BlendPoolAdapter implements BasePoolAdapter {
         min_amounts_out: [applySlippageBps(expectedOut, WITHDRAW_SLIPPAGE_BPS)],
         from: userAddress,
       });
-      return { xdr: tx.toXDR(), networkPassphrase: this.networkPassphrase };
+      return {
+        xdr: withResourceFeeBuffer(tx.toXDR(), this.networkPassphrase),
+        networkPassphrase: this.networkPassphrase,
+      };
     }
 
     const network = getBlendNetwork(this.config.network);
@@ -928,7 +935,7 @@ export class BlendPoolAdapter implements BasePoolAdapter {
     const prepared = await server.prepareTransaction(tx);
 
     return {
-      xdr: prepared.toXDR(),
+      xdr: withResourceFeeBuffer(prepared.toXDR(), this.networkPassphrase),
       networkPassphrase: this.networkPassphrase,
     };
   }
