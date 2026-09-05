@@ -10,7 +10,7 @@ import {
   TransactionBuilder,
   xdr,
 } from "@stellar/stellar-sdk";
-import { withResourceFeeBuffer } from "../src/stellar/transaction.js";
+import { withFeeHeadroom } from "../src/stellar/transaction.js";
 
 const PASSPHRASE = "Public Global Stellar Network ; September 2015";
 const SOURCE = "GDCK6VGEMRV52C6UO7Q4FJDFDF5AHKA3SWTSAHJNS3QIKRW6U5L7XYMJ";
@@ -51,10 +51,10 @@ const read = (x: string) => {
   };
 };
 
-describe("withResourceFeeBuffer", () => {
+describe("withFeeHeadroom", () => {
   it("leaves headroom above the simulated resource fee", () => {
     const before = read(assembled(22_704n));
-    const after = read(withResourceFeeBuffer(assembled(22_704n), PASSPHRASE));
+    const after = read(withFeeHeadroom(assembled(22_704n), PASSPHRASE));
 
     expect(before.resourceFee).toBe(22_704n);
     expect(after.resourceFee).toBe(27_244n); // +20%
@@ -63,14 +63,39 @@ describe("withResourceFeeBuffer", () => {
 
   // The builder adds the resource fee on top of whatever fee it is given, so
   // handing it the total would charge for the work twice.
-  it("carries the inclusion fee across without doubling it", () => {
-    const after = read(withResourceFeeBuffer(assembled(22_704n), PASSPHRASE));
-    expect(after.fee - after.resourceFee).toBe(BigInt(BASE_FEE));
+  // The bug: the network wanted 101 and the SDK's BASE_FEE offered 100, on a
+  // transaction whose resource fee was never in question.
+  it("lifts the inclusion fee off the base, which is what was failing", () => {
+    const before = read(assembled(47_826n));
+    const after = read(withFeeHeadroom(assembled(47_826n), PASSPHRASE));
+
+    expect(before.fee - before.resourceFee).toBe(100n);
+    expect(after.fee - after.resourceFee).toBe(10_000n);
+  });
+
+  it("covers the exact submission the network refused", () => {
+    // Offered 47,926 against a required 47,927 — short by one stroop.
+    const after = read(withFeeHeadroom(assembled(47_826n), PASSPHRASE));
+    expect(after.fee).toBeGreaterThanOrEqual(47_826n + 101n);
+  });
+
+  // The builder adds the resource fee on top of whatever fee it is given, so
+  // handing it the total would charge for the work twice.
+  it("does not charge for the resources twice", () => {
+    const after = read(withFeeHeadroom(assembled(22_704n), PASSPHRASE));
+    expect(after.fee - after.resourceFee).toBe(10_000n);
+  });
+
+  it("leaves an inclusion fee that already exceeds the floor alone", () => {
+    const after = read(
+      withFeeHeadroom(assembled(22_704n, 50_000n), PASSPHRASE)
+    );
+    expect(after.fee - after.resourceFee).toBe(50_000n);
   });
 
   it("keeps the operation, its auth and the sequence", () => {
     const before = read(assembled(22_704n));
-    const after = read(withResourceFeeBuffer(assembled(22_704n), PASSPHRASE));
+    const after = read(withFeeHeadroom(assembled(22_704n), PASSPHRASE));
 
     expect(after.tx.operations).toHaveLength(1);
     expect(after.tx.operations[0].type).toBe("invokeHostFunction");
@@ -92,16 +117,14 @@ describe("withResourceFeeBuffer", () => {
       .build()
       .toXDR();
 
-    expect(withResourceFeeBuffer(classic, PASSPHRASE)).toBe(classic);
-    expect(withResourceFeeBuffer("not-xdr", PASSPHRASE)).toBe("not-xdr");
-    expect(withResourceFeeBuffer(assembled(0n), PASSPHRASE)).toBe(
-      assembled(0n)
-    );
+    expect(withFeeHeadroom(classic, PASSPHRASE)).toBe(classic);
+    expect(withFeeHeadroom("not-xdr", PASSPHRASE)).toBe("not-xdr");
+    expect(withFeeHeadroom(assembled(0n), PASSPHRASE)).toBe(assembled(0n));
   });
 
   it("survives the drift that broke production", () => {
     // Observed: 47,823 required, then 47,927 minutes later.
-    const after = read(withResourceFeeBuffer(assembled(47_823n), PASSPHRASE));
+    const after = read(withFeeHeadroom(assembled(47_823n), PASSPHRASE));
     expect(after.resourceFee).toBeGreaterThan(47_927n);
   });
 });

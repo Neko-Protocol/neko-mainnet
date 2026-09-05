@@ -24,7 +24,7 @@ import {
 import {
   toSmallestUnit,
   fromSmallestUnit,
-  withResourceFeeBuffer,
+  withFeeHeadroom,
 } from "@neko/orchestrator";
 import {
   applySlippageBps,
@@ -253,7 +253,7 @@ export function useVaultAction(
         );
 
         const result = await signAndSubmit(
-          withResourceFeeBuffer(depositTx.toXDR(), passphrase),
+          withFeeHeadroom(depositTx.toXDR(), passphrase),
           passphrase,
           signTransaction,
           address,
@@ -434,7 +434,7 @@ export function useVaultAction(
         );
 
         const result = await signAndSubmit(
-          withResourceFeeBuffer(withdrawTx.toXDR(), passphrase),
+          withFeeHeadroom(withdrawTx.toXDR(), passphrase),
           passphrase,
           signTransaction,
           address,
@@ -620,7 +620,7 @@ export function useVaultAction(
         );
 
         const result = await signAndSubmit(
-          withResourceFeeBuffer(withdrawTx.toXDR(), passphrase),
+          withFeeHeadroom(withdrawTx.toXDR(), passphrase),
           passphrase,
           signTransaction,
           address,

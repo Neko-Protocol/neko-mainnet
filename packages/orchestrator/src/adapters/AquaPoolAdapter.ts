@@ -8,7 +8,7 @@ import {
   TransactionBuilder,
   Account,
 } from "@stellar/stellar-sdk";
-import { withResourceFeeBuffer } from "../stellar/transaction.js";
+import { withFeeHeadroom } from "../stellar/transaction.js";
 
 import type { OrchestratorConfig } from "../config.js";
 import type { BasePoolAdapter } from "../types/adapter.types.js";
@@ -381,7 +381,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
 
       const preparedTx = await sorobanServer.prepareTransaction(tx);
       return {
-        xdr: withResourceFeeBuffer(preparedTx.toXDR(), this.networkPassphrase),
+        xdr: withFeeHeadroom(preparedTx.toXDR(), this.networkPassphrase),
         networkPassphrase: this.networkPassphrase,
       };
     } catch (error) {
@@ -506,7 +506,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
 
       const preparedTx = await sorobanServer.prepareTransaction(tx);
       return {
-        xdr: withResourceFeeBuffer(preparedTx.toXDR(), this.networkPassphrase),
+        xdr: withFeeHeadroom(preparedTx.toXDR(), this.networkPassphrase),
         networkPassphrase: this.networkPassphrase,
       };
     } catch (error) {
@@ -544,7 +544,7 @@ export class AquaPoolAdapter implements BasePoolAdapter {
 
       const preparedTx = await sorobanServer.prepareTransaction(tx);
       return {
-        xdr: withResourceFeeBuffer(preparedTx.toXDR(), this.networkPassphrase),
+        xdr: withFeeHeadroom(preparedTx.toXDR(), this.networkPassphrase),
         networkPassphrase: this.networkPassphrase,
       };
     } catch (error) {
