@@ -197,6 +197,7 @@ export function useVaultAction(
         queryClient.invalidateQueries({
           queryKey: ["backend-dashboard-vault-positions"],
         }),
+        queryClient.invalidateQueries({ queryKey: ["balances"] }),
       ]),
     [queryClient]
   );
