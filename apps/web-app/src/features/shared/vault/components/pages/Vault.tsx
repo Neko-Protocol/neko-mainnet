@@ -148,6 +148,7 @@ const Vault: React.FC = () => {
           contractId: v.detail.contracts.vault,
           rpcUrl,
           networkPassphrase,
+          ...(address && { publicKey: address }),
           ...(allowHttpForSoroban && { allowHttp: true }),
         });
         const tx = await client.balance({ id: address }, { simulate: true });
