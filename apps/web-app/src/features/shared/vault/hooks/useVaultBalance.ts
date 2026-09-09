@@ -18,10 +18,11 @@ export function useVaultBalance(contractId: string | null | undefined) {
             contractId,
             rpcUrl,
             networkPassphrase,
+            ...(address && { publicKey: address }),
             ...(allowHttpForSoroban && { allowHttp: true }),
           })
         : null,
-    [contractId]
+    [contractId, address]
   );
 
   const {

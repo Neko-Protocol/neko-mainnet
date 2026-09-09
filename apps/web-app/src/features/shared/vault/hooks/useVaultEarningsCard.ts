@@ -117,6 +117,7 @@ export function useVaultEarningsCard(
           contractId: v.id,
           rpcUrl,
           networkPassphrase,
+          ...(address && { publicKey: address }),
           ...(allowHttpForSoroban && { allowHttp: true }),
         });
         const [totalManagedTx, totalSupplyTx] = await Promise.all([
