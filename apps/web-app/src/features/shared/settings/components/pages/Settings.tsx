@@ -9,6 +9,7 @@ import {
   Network,
   LifeBuoy,
   Gift,
+  Scale,
 } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -22,6 +23,7 @@ import { SettingsPreferencesSection } from "../ui/SettingsPreferencesSection";
 import { SettingsUIModeSection } from "../ui/SettingsUIModeSection";
 import { SettingsEmailSection } from "../ui/SettingsEmailSection";
 import { SettingsSupportSection } from "../ui/SettingsSupportSection";
+import { SettingsLegalSection } from "../ui/SettingsLegalSection";
 
 type SectionId =
   | "wallet"
@@ -30,7 +32,8 @@ type SectionId =
   | "uiMode"
   | "referrals"
   | "network"
-  | "support";
+  | "support"
+  | "legal";
 
 const VALID_SECTION_IDS: SectionId[] = [
   "preferences",
@@ -40,6 +43,7 @@ const VALID_SECTION_IDS: SectionId[] = [
   "referrals",
   "network",
   "support",
+  "legal",
 ];
 
 const TABS: { id: SectionId; labelKey: string; Icon: React.ElementType }[] = [
@@ -50,6 +54,7 @@ const TABS: { id: SectionId; labelKey: string; Icon: React.ElementType }[] = [
   { id: "referrals", labelKey: "tabReferrals", Icon: Gift },
   { id: "network", labelKey: "tabNetwork", Icon: Network },
   { id: "support", labelKey: "tabSupport", Icon: LifeBuoy },
+  { id: "legal", labelKey: "tabLegal", Icon: Scale },
 ];
 
 export default function Settings() {
@@ -146,6 +151,7 @@ export default function Settings() {
         {active === "support" && (
           <SettingsSupportSection icon={LifeBuoy} open />
         )}
+        {active === "legal" && <SettingsLegalSection icon={Scale} open />}
       </div>
     </PageContainer>
   );

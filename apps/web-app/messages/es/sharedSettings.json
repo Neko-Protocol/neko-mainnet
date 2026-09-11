@@ -12,7 +12,8 @@
       "tabWallet": "Wallet",
       "tabReferrals": "Referidos",
       "tabNetwork": "Red",
-      "tabSupport": "Soporte"
+      "tabSupport": "Soporte",
+      "tabLegal": "Legal"
     },
     "preferences": {
       "title": "Preferencias"
@@ -65,6 +66,11 @@
     "support": {
       "title": "Soporte",
       "notice": "¿Necesitas ayuda o encontraste un error? Envíanos un correo e incluye cualquier detalle que pueda ayudarnos a investigarlo."
+    },
+    "legal": {
+      "title": "Legal",
+      "privacyPolicy": "Política de Privacidad",
+      "termsOfService": "Términos de Servicio"
     },
     "clipboard": {
       "copiedToast": "Copiado al portapapeles"
