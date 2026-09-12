@@ -16,6 +16,16 @@ export interface UserPublic {
   email_verified_at: string | null;
   created_at: string;
   preferences: UserPreferences;
+  terms_accepted_at: string | null;
+  terms_version: string | null;
+  privacy_accepted_at: string | null;
+  privacy_version: string | null;
+}
+
+export interface AcceptLegalRequest {
+  wallet_address: string;
+  terms_version: string;
+  privacy_version: string;
 }
 
 export interface EmailStartRequest {

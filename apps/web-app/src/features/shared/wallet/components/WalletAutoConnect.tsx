@@ -6,6 +6,7 @@ import { getStellarWalletKit } from "@/lib/helpers/stellar/wallet";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 import { useUserSync } from "@/features/shared/wallet/hooks/useUserSync";
 import { usePreferencesSync } from "@/features/shared/wallet/hooks/usePreferencesSync";
+import { useLegalConsentSync } from "@/features/shared/legal-consent";
 
 /**
  * Silently auto-connects when the dApp is opened inside a wallet's in-app
@@ -25,6 +26,7 @@ export function WalletAutoConnect() {
   const attempted = useRef(false);
   useUserSync();
   usePreferencesSync();
+  useLegalConsentSync();
 
   useEffect(() => {
     if (address || attempted.current) return;

@@ -41,6 +41,14 @@
       "stellarWalletDescription": "Freighter o Stellar Wallets Kit",
       "referralCodeApplied": "El código {code} se aplicará al conectar."
     },
+    "legalConsent": {
+      "title": "Antes de continuar",
+      "body": "Revisa y acepta nuestra Política de Privacidad y Términos de Servicio para seguir usando Neko.",
+      "checkboxLabel": "He leído y acepto la <privacy>Política de Privacidad</privacy> y los <terms>Términos de Servicio</terms>",
+      "accept": "Aceptar y continuar",
+      "submitting": "Guardando…",
+      "error": "Algo salió mal. Intenta de nuevo."
+    },
     "uiMode": {
       "title": "Elige tu experiencia",
       "subtitle": "¿Cómo te gustaría usar Neko?",

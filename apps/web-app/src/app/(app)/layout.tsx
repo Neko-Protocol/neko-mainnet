@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { WalletAutoConnect } from "@/features/shared/wallet/components/WalletAutoConnect";
 import { PendingMultisigTxsWatcher } from "@/features/shared/wallet/components/PendingMultisigTxsWatcher";
 import { CurrencyRateSync } from "@/features/shared/currency/components/CurrencyRateSync";
+import { LegalConsentModalController } from "@/features/shared/legal-consent";
 import { UIModeModalController } from "@/features/shared/ui-mode/components/UIModeModalController";
 import { ConditionalLayout } from "./ConditionalLayout";
 
@@ -11,6 +12,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <WalletAutoConnect />
       <PendingMultisigTxsWatcher />
       <CurrencyRateSync />
+      <LegalConsentModalController />
       <UIModeModalController />
       <ConditionalLayout>{children}</ConditionalLayout>
     </div>

@@ -18,6 +18,7 @@ import { NotificationsService } from "@domains/platform/notifications/notificati
 import { EmailConfirmDto } from "./dto/email-confirm.dto";
 import { EmailStartDto } from "./dto/email-start.dto";
 import { RegisterUserDto } from "./dto/register-user.dto";
+import { AcceptLegalDto } from "./dto/accept-legal.dto";
 import { UpdatePreferencesDto } from "./dto/update-preferences.dto";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -124,7 +125,7 @@ export class UsersService {
       const { data, error } = await this.supabase.client
         .from("users")
         .select(
-          "wallet_address, wallet_provider, email, email_verified_at, created_at, preferences"
+          "wallet_address, wallet_provider, email, email_verified_at, terms_accepted_at, terms_version, privacy_accepted_at, privacy_version, created_at, preferences"
         )
         .eq("wallet_address", trimmed)
         .maybeSingle();
@@ -136,6 +137,10 @@ export class UsersService {
         wallet_provider: data.wallet_provider ?? null,
         email: data.email ?? null,
         email_verified_at: data.email_verified_at ?? null,
+        terms_accepted_at: data.terms_accepted_at ?? null,
+        terms_version: data.terms_version ?? null,
+        privacy_accepted_at: data.privacy_accepted_at ?? null,
+        privacy_version: data.privacy_version ?? null,
         created_at: data.created_at,
         preferences: (data.preferences as UserPreferences) ?? {},
       };
@@ -169,6 +174,29 @@ export class UsersService {
       return { ok: true };
     } catch (err) {
       this.logger.error("updatePreferences unexpected error", err);
+      return { ok: true };
+    }
+  }
+
+  async acceptLegal(dto: AcceptLegalDto): Promise<{ ok: true }> {
+    try {
+      const wallet = dto.wallet_address?.trim();
+      if (!wallet) return { ok: true };
+
+      const now = new Date().toISOString();
+      await this.supabase.client
+        .from("users")
+        .update({
+          terms_accepted_at: now,
+          terms_version: dto.terms_version,
+          privacy_accepted_at: now,
+          privacy_version: dto.privacy_version,
+        })
+        .eq("wallet_address", wallet);
+
+      return { ok: true };
+    } catch (err) {
+      this.logger.error("acceptLegal unexpected error", err);
       return { ok: true };
     }
   }
