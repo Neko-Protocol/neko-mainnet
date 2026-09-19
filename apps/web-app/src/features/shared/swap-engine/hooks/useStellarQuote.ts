@@ -16,7 +16,8 @@ export interface StellarQuoteResult {
 export function useStellarQuote(
   amountIn: string,
   tokenIn: Token | string,
-  tokenOut: Token | string
+  tokenOut: Token | string,
+  sourceAddress?: string
 ): {
   fetchStellarQuote: () => Promise<StellarQuoteResult>;
   cancelStellarQuote: () => void;
@@ -50,6 +51,7 @@ export function useStellarQuote(
           amount: trimmedAmount,
           tradeType: "EXACT_IN",
           slippageBps: DEFAULT_SLIPPAGE_BPS,
+          ...(sourceAddress ? { sourceAddress } : {}),
         };
 
         const quote = await getQuote(quoteRequest);
@@ -99,7 +101,15 @@ export function useStellarQuote(
           error: errorCode ? getErrorMessage(errorCode) : t("failedToGetQuote"),
         };
       }
-    }, [amountIn, tokenIn, tokenOut, cancelStellarQuote, getErrorMessage, t]);
+    }, [
+      amountIn,
+      tokenIn,
+      tokenOut,
+      sourceAddress,
+      cancelStellarQuote,
+      getErrorMessage,
+      t,
+    ]);
 
   return { fetchStellarQuote, cancelStellarQuote };
 }

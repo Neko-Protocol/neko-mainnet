@@ -11,7 +11,8 @@
       "walletNotConnected": "Wallet no conectada",
       "noLiquidityRetry": "No se encontró liquidez para este par — intenta con otra combinación de tokens",
       "swapFailedOnChain": "El swap falló en la blockchain (estado: {status})",
-      "transactionFailed": "La transacción falló"
+      "transactionFailed": "La transacción falló",
+      "trustlineReserveRequired": "No hay suficiente XLM para aceptar {code}. Agregar un trustline bloquea 0.5 XLM en reserva — agrega un poco más de XLM e intenta de nuevo."
     }
   }
 }

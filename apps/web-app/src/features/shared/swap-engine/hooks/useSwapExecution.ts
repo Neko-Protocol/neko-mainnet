@@ -16,6 +16,7 @@ import {
 import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";
 import { useWallet } from "@/hooks/useWallet";
 import { auditService } from "@/lib/services/audit.service";
+import { ensureTrustlineForSwapToken } from "@/lib/helpers/stellar/trustline";
 import { extractSignedTxXdr } from "@neko/orchestrator";
 
 export interface SwapExecutionParams {
@@ -24,6 +25,7 @@ export interface SwapExecutionParams {
   tokenOut: Token | string;
   address: string | undefined;
   networkPassphrase: string | undefined;
+  onStage?: (stage: "trustline" | "swap") => void;
 }
 
 export interface SwapExecutionResult {
@@ -37,7 +39,7 @@ export function useSwapExecution() {
 
   const executeSwap = useCallback(
     async (params: SwapExecutionParams): Promise<SwapExecutionResult> => {
-      const { amountIn, tokenIn, tokenOut, address } = params;
+      const { amountIn, tokenIn, tokenOut, address, onStage } = params;
 
       if (!amountIn || parseFloat(amountIn) <= 0 || !address) {
         throw new Error(t("invalidAmountOrAddress"));
@@ -47,17 +49,37 @@ export function useSwapExecution() {
         throw new Error(t("walletNotConnected"));
       }
 
+      /**
+       * An account can only receive a classic asset it trusts, and the router
+       * refuses to build a swap into an untrusted one. Settle the trustline
+       * first, then quote: doing it the other way round burns the quote, since
+       * a quote expires in well under the time two wallet approvals take.
+       */
+      await ensureTrustlineForSwapToken({
+        token: tokenOut,
+        walletAddress: address,
+        signTransaction,
+        onTrustlineNeeded: () => onStage?.("trustline"),
+        insufficientReserveMessage: (code) =>
+          t("trustlineReserveRequired", { code }),
+      });
+
+      onStage?.("swap");
+
       const quoteRequest: QuoteRequest = {
         assetIn: tokenIn as Token | string,
         assetOut: tokenOut as Token | string,
         amount: amountIn,
         tradeType: "EXACT_IN",
         slippageBps: DEFAULT_SLIPPAGE_BPS,
+        // Oppia binds an executable quote to its source account at quote time,
+        // rather than accepting one at build time.
+        sourceAddress: address,
       };
 
       const newQuote = await getQuote(quoteRequest);
 
-      if (!newQuote) {
+      if (!newQuote?.sourceAddress) {
         throw new Error(t("noLiquidityRetry"));
       }
 

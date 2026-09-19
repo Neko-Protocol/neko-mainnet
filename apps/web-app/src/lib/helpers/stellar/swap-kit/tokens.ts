@@ -10,6 +10,7 @@ export type TokenInfo = Pick<
   | "name"
   | "contract"
   | "code"
+  | "issuer"
   | "decimals"
   | "icon"
   | "isInstitutional"
