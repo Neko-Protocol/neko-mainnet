@@ -37,7 +37,8 @@ export function useSwapQuote(
   const { fetchStellarQuote, cancelStellarQuote } = useStellarQuote(
     amountIn,
     tokenIn,
-    tokenOut
+    tokenOut,
+    address
   );
 
   const fetchLiveQuote = useCallback(async () => {
