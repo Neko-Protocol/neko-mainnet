@@ -11,7 +11,8 @@
       "walletNotConnected": "Wallet not connected",
       "noLiquidityRetry": "No liquidity found for this pair — try a different token combination",
       "swapFailedOnChain": "Swap failed on-chain (status: {status})",
-      "transactionFailed": "Transaction failed"
+      "transactionFailed": "Transaction failed",
+      "trustlineReserveRequired": "Not enough XLM to accept {code}. Adding a trustline locks 0.5 XLM in reserve — fund the account with a little more XLM and try again."
     }
   }
 }
