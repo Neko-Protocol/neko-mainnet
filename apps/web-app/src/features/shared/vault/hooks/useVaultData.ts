@@ -8,6 +8,7 @@ import {
 } from "@/lib/constants/network";
 import { fromSmallestUnit } from "@neko/orchestrator";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
+import { useWallet } from "@/hooks/useWallet";
 import type { VaultLiveStats } from "../types/vault";
 
 const ONE_SHARE = 1_000_000_000_000n;
@@ -42,6 +43,8 @@ function unwrapResult<T>(result: unknown, fallback: T): T {
 }
 
 export function useVaultData(contractId: string | null | undefined) {
+  const { address } = useWallet();
+
   const client = useMemo(
     () =>
       contractId
@@ -49,10 +52,11 @@ export function useVaultData(contractId: string | null | undefined) {
             contractId,
             rpcUrl,
             networkPassphrase,
+            ...(address && { publicKey: address }),
             ...(allowHttpForSoroban && { allowHttp: true }),
           })
         : null,
-    [contractId]
+    [contractId, address]
   );
 
   return useQuery<VaultLiveStats & { tvlFormatted: string }>({

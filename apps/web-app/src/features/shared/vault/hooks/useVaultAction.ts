@@ -191,6 +191,13 @@ export function useVaultAction(
         queryClient.invalidateQueries({ queryKey: ["bearingYieldBalance"] }),
         queryClient.invalidateQueries({ queryKey: ["defindex-vaults"] }),
         queryClient.invalidateQueries({ queryKey: ["vaultAuditActivity"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["backend-dashboard-positions"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["backend-dashboard-vault-positions"],
+        }),
+        queryClient.invalidateQueries({ queryKey: ["balances"] }),
       ]),
     [queryClient]
   );

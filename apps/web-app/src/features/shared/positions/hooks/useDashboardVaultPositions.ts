@@ -42,6 +42,7 @@ export function useDashboardVaultPositions() {
           contractId: vault.id,
           rpcUrl,
           networkPassphrase,
+          ...(address && { publicKey: address }),
           ...(allowHttpForSoroban && { allowHttp: true }),
         });
         const tx = await client.balance({ id: address }, { simulate: true });
