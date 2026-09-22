@@ -1,6 +1,6 @@
 "use client";
 
-import type { EtherfuseYieldEntry } from "@neko/api-contracts";
+import type { EtherfuseYieldEntry } from "@neko-protocol/api-contracts";
 import { useQuery } from "@tanstack/react-query";
 import { getBondYields } from "@/features/shared/yields/services/etherfuse.api";
 

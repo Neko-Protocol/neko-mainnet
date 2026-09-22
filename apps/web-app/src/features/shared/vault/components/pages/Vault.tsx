@@ -19,7 +19,7 @@ import { VaultGrid } from "../ui/VaultGrid";
 import { VaultTabs, type VaultTabKey } from "../ui/VaultTabs";
 import MyVaultPositions from "../ui/MyVaultPositions";
 import PortfolioSummaryCard from "../ui/PortfolioSummaryCard";
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 import { useDefindexVaults } from "../../hooks/useDefindexVaults";
 import {
   rpcUrl,

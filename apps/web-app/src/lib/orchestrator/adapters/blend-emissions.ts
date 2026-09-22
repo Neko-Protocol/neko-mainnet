@@ -2,4 +2,4 @@ export {
   getBlndPriceUsd,
   computeBlendEmissionsApy,
   type PoolReserve,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";

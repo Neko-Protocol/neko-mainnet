@@ -14,7 +14,7 @@
 import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { getAssetsConfig, parseAllVaultIds } from "@neko/keeper";
+import { getAssetsConfig, parseAllVaultIds } from "@neko-protocol/keeper";
 import {
   Account,
   Address,

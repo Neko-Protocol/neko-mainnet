@@ -10,7 +10,7 @@ import {
   extractContractError,
   getGenericErrorCode,
   isUserCancellationError,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";
 import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 
 interface SimulatorDepositConfirmModalProps {

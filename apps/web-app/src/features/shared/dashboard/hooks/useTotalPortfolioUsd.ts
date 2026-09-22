@@ -7,7 +7,7 @@ import {
   type PricedResult,
 } from "@/lib/services/stellar-price.service";
 import { parseBalance } from "@/lib/helpers/formatUtils";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 import { usePortfolioValue } from "./usePortfolioValue";
 import { useDashboardPositions } from "@/features/shared/positions/hooks/useDashboardPositions";
 import { useVaultsTotalUsd } from "@/features/shared/positions/hooks/useVaultsTotalUsd";

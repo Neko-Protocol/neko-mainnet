@@ -22,7 +22,7 @@ import { getPoolTokenIcon } from "@/features/shared/pools/utils/poolTokenIcons";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
 import { safeParseFloat } from "@/lib/helpers/formatUtils";
-import { atomicToDecimal } from "@neko/orchestrator";
+import { atomicToDecimal } from "@neko-protocol/orchestrator";
 import { stellarPriceService } from "@/lib/services/stellar-price.service";
 import { BLEND_VAULT_ONLY_RESERVES } from "@/lib/orchestrator/adapters/blend-config";
 import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";

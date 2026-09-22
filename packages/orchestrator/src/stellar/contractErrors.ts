@@ -1,4 +1,4 @@
-import { ErrorCode } from "@neko/api-contracts";
+import { ErrorCode } from "@neko-protocol/api-contracts";
 import {
   CONTRACT_ERRORS,
   ContractErrorCode,

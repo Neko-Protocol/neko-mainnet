@@ -10,4 +10,4 @@ export type {
   PoolActionResult,
   PoolActionAuditContext,
   PoolActionParams,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";

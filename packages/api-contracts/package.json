@@ -1,7 +1,7 @@
 {
-  "name": "@neko/api-contracts",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@neko-protocol/api-contracts",
+  "version": "0.1.0",
+  "private": false,
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,6 +12,18 @@
       "require": "./dist/index.js",
       "default": "./dist/index.js"
     }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Neko-Protocol/neko-mainnet.git",
+    "directory": "packages/api-contracts"
   },
   "scripts": {
     "build": "tsc",

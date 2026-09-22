@@ -1,4 +1,4 @@
-# @neko/defindex-vault
+# @neko-protocol/defindex-vault
 
 Generated TypeScript bindings for the external **DeFindex Vault** Soroban contract (SEP-40-adjacent vault interface), consumed read-only and for user-signed deposit/withdraw actions across the Neko dApp.
 
@@ -19,7 +19,7 @@ stellar contract bindings ts \
 ## Usage
 
 ```ts
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 
 const contract = new DefindexVaultClient({
   contractId: "...",

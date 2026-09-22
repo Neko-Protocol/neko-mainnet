@@ -1,6 +1,6 @@
 "use server";
 
-import type { ReferralPartner, ReferralPartnerType } from "@neko/api-contracts";
+import type { ReferralPartner, ReferralPartnerType } from "@neko-protocol/api-contracts";
 import { fetchFromBackend, mutateBackend } from "@/lib/services/backend-client";
 import { getActingAdminEmail } from "@/features/mailing/actingAdmin";
 

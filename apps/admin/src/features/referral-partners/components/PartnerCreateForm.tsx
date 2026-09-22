@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import type { ReferralPartnerType } from "@neko/api-contracts";
+import type { ReferralPartnerType } from "@neko-protocol/api-contracts";
 import { useCreateReferralPartner } from "../hooks/useReferralPartners";
 import {
   Button,

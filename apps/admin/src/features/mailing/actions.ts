@@ -12,7 +12,7 @@ import type {
   MailingStats,
   MailingTemplate,
   MailingTrigger,
-} from "@neko/api-contracts";
+} from "@neko-protocol/api-contracts";
 import { fetchFromBackend, mutateBackend } from "@/lib/services/backend-client";
 import { getActingAdminEmail } from "./actingAdmin";
 

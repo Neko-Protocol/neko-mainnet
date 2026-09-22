@@ -1,7 +1,7 @@
 import type {
   Client as ReflectorClient,
   Asset as ReflectorClientAsset,
-} from "@neko/reflector";
+} from "@neko-protocol/reflector";
 import type {
   AssetConfig,
   AssetPriceSource,

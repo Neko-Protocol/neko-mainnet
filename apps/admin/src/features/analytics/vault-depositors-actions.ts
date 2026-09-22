@@ -1,6 +1,6 @@
 "use server";
 
-import type { VaultDepositorsGroup } from "@neko/api-contracts";
+import type { VaultDepositorsGroup } from "@neko-protocol/api-contracts";
 import { fetchFromBackend } from "@/lib/services/backend-client";
 
 export async function fetchVaultDepositors(): Promise<VaultDepositorsGroup[]> {

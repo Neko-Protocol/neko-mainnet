@@ -34,7 +34,7 @@ import {
   getBlndPriceUsd,
   computeBlendEmissionsApy,
 } from "./blend-emissions.js";
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 
 type SdkResultLike = {
   tag?: string;

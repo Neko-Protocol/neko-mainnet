@@ -16,7 +16,7 @@ import {
   MAX_POLL_DURATION_MS,
 } from "../constants/ramp.config";
 import { TERMINAL_STATUSES } from "../types/ramp";
-import { extractSignedTxXdr, type SignTransactionFn } from "@neko/orchestrator";
+import { extractSignedTxXdr, type SignTransactionFn } from "@neko-protocol/orchestrator";
 
 type OffRampPhase =
   | "idle"

@@ -2,7 +2,7 @@ import {
   getTokenBalanceFromContract as getTokenBalanceFromContractOrchestrator,
   getBatchedTokenBalances as getBatchedTokenBalancesOrchestrator,
   type BatchTokenInput,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";
 import { rpcUrl, networkPassphrase, horizonUrl } from "@/lib/constants/network";
 
 const sorobanBalanceNetwork = {

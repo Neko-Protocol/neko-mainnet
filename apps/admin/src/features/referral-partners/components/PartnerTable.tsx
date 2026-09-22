@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Copy, Link2, Trash2 } from "lucide-react";
-import type { ReferralPartner, ReferralPartnerType } from "@neko/api-contracts";
+import type { ReferralPartner, ReferralPartnerType } from "@neko-protocol/api-contracts";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { Button, ErrorNote } from "@/components/ui/FormControls";
 import { formatDate, referralLink } from "../utils";

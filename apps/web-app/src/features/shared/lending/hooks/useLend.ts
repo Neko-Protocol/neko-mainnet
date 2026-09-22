@@ -10,12 +10,12 @@ import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import {
   extractContractErrorOrNull,
   getGenericErrorCode,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";
 import { usePools, usePoolAction } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
 import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
-import { fromSmallestUnit } from "@neko/orchestrator";
-import { decimalToAtomic } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
+import { decimalToAtomic } from "@neko-protocol/orchestrator";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolData } from "../types/lending";
 import {

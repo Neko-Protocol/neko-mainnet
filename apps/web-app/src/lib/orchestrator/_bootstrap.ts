@@ -3,7 +3,7 @@ import {
   setContractErrorExtractor,
   type OrchestratorTokenInfo,
   type StellarNetworkId,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";
 import {
   allowHttpForSoroban,
   horizonUrl,
@@ -15,7 +15,7 @@ import {
   getAssetsConfig,
   getContractToCodeMap,
 } from "@/lib/constants/assets.config";
-import { extractContractError } from "@neko/orchestrator";
+import { extractContractError } from "@neko-protocol/orchestrator";
 
 export function mapNetworkId(raw: string): StellarNetworkId {
   const n = raw.toUpperCase();

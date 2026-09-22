@@ -4,7 +4,7 @@ import { Check, Copy } from "lucide-react";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { truncateAddress } from "@/lib/helpers/addressUtils";
 import { formatCurrency } from "@/lib/helpers/currency";
-import type { VaultDepositor } from "@neko/api-contracts";
+import type { VaultDepositor } from "@neko-protocol/api-contracts";
 
 export function VaultDepositorRow({
   depositor,

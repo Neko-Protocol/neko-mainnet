@@ -1,6 +1,6 @@
 "use server";
 
-import type { AdminEmail } from "@neko/api-contracts";
+import type { AdminEmail } from "@neko-protocol/api-contracts";
 import { fetchFromBackend, mutateBackend } from "@/lib/services/backend-client";
 import { getActingAdminEmail } from "@/features/mailing/actingAdmin";
 

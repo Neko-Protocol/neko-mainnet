@@ -23,8 +23,8 @@ not a Neko smart-contract repo:
 - For DeFindex vault onboarding or strategy wiring in the web app, read
   `apps/web-app/.claude/skills/vault/SKILL.md` after this skill.
 - For app-side Stellar flows, prefer existing application packages:
-  `@neko/orchestrator`, `@neko/keeper`, `@neko/stellar-wallet`, and
-  `@neko/api-contracts`. These are not Neko smart contracts.
+  `@neko-protocol/orchestrator`, `@neko-protocol/keeper`, `@neko-protocol/stellar-wallet`, and
+  `@neko-protocol/api-contracts`. These are not Neko smart contracts.
 
 ## What this Skill is for
 
