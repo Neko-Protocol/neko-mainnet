@@ -8,7 +8,7 @@ import { useTokenPrice } from "@/hooks/useTokenPrice";
 import { useVaultData } from "@/features/shared/vault/hooks/useVaultData";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 import type { BearingYieldPosition } from "../../hooks/useBearingYieldPositions";
 import type { VaultPositionEntry } from "../../hooks/useDashboardVaultPositions";
 

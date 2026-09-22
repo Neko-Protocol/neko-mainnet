@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import type { MailingMessage } from "@neko/api-contracts";
+import type { MailingMessage } from "@neko-protocol/api-contracts";
 import {
   useAudiences,
   useMessages,

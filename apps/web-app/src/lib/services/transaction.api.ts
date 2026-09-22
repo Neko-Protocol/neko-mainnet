@@ -3,7 +3,7 @@ import type {
   PrepareTransactionResponse,
   SubmitTransactionRequest,
   TransactionStatusResponse,
-} from "@neko/api-contracts";
+} from "@neko-protocol/api-contracts";
 import { backendClient } from "./backend-client";
 
 export type {
@@ -12,7 +12,7 @@ export type {
   SubmitTransactionRequest,
   TransactionStatus,
   TransactionStatusResponse,
-} from "@neko/api-contracts";
+} from "@neko-protocol/api-contracts";
 
 export const txApi = {
   prepare: (req: PrepareTransactionRequest) =>

@@ -4,7 +4,7 @@ import type {
   NotificationMessage,
   NotificationStats,
   NotificationTriggerCoverage,
-} from "@neko/api-contracts";
+} from "@neko-protocol/api-contracts";
 import { fetchFromBackend, mutateBackend } from "@/lib/services/backend-client";
 import { getActingAdminEmail } from "@/features/mailing/actingAdmin";
 

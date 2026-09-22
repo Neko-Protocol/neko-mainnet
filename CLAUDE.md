@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Neko DApp is an RWA aggregator (capital routing layer) application that aggregates external protocols and services: DeFindex vaults, Reflector oracle data, Blend/Aquarius market integrations, xBull Swap routing, wallet flows, and on/off-ramp flows. It is a **Turborepo + npm workspaces monorepo** with two apps and shared packages.
 
-**Neko-owned smart contracts are not used in this repo.** The only generated Soroban bindings consumed here are external integrations: `@neko/defindex-vault` and `@neko/reflector`.
+**Neko-owned smart contracts are not used in this repo.** The only generated Soroban bindings consumed here are external integrations: `@neko-protocol/defindex-vault` and `@neko-protocol/reflector`.
 
 ## Monorepo Structure
 
@@ -22,8 +22,8 @@ packages/
   orchestrator/   # External market orchestration across Blend and Aquarius
   stellar-wallet/ # Freighter + Stellar Wallets Kit Zustand integration
   contracts/      # Auto-generated TS bindings for external deployed contracts only
-    reflector/    # @neko/reflector (SEP-40 oracle)
-    defindex-vault/ # @neko/defindex-vault
+    reflector/    # @neko-protocol/reflector (SEP-40 oracle)
+    defindex-vault/ # @neko-protocol/defindex-vault
 ```
 
 Workspaces declared in root `package.json`: `apps/*`, `packages/*`, `packages/contracts/*`.
@@ -93,7 +93,7 @@ stores/               # Zustand stores
 **Providers (`src/providers/`):**
 
 - `ToastProvider.tsx` — toast notifications
-- Wallet connection state is centralized in `@neko/stellar-wallet` and consumed through hooks/stores; do not add a second wallet state layer.
+- Wallet connection state is centralized in `@neko-protocol/stellar-wallet` and consumed through hooks/stores; do not add a second wallet state layer.
 
 ### Data flow
 
@@ -140,17 +140,17 @@ This repo consumes only these generated Soroban bindings:
 
 | Package                | Role                                       |
 | ---------------------- | ------------------------------------------ |
-| `@neko/defindex-vault` | Generated DeFindex vault bindings          |
-| `@neko/reflector`      | Generated SEP-40 Reflector oracle bindings |
+| `@neko-protocol/defindex-vault` | Generated DeFindex vault bindings          |
+| `@neko-protocol/reflector`      | Generated SEP-40 Reflector oracle bindings |
 
 Other `@neko/*` packages are application libraries, not Neko smart contracts:
 
-- `@neko/orchestrator` — external market orchestration for Blend, Aquarius, and Stellar RPC.
-- `@neko/keeper` — vault keeper configuration, asset registry, DeFindex helpers, price services, and rebalance planning.
-- `@neko/stellar-wallet` — Freighter/Stellar Wallets Kit connection and signing state.
-- `@neko/api-contracts` — shared API DTOs.
+- `@neko-protocol/orchestrator` — external market orchestration for Blend, Aquarius, and Stellar RPC.
+- `@neko-protocol/keeper` — vault keeper configuration, asset registry, DeFindex helpers, price services, and rebalance planning.
+- `@neko-protocol/stellar-wallet` — Freighter/Stellar Wallets Kit connection and signing state.
+- `@neko-protocol/api-contracts` — shared API DTOs.
 
-Web-app reads network config from `apps/web-app/src/lib/config/stellar.config.ts`, Reflector constants from `apps/web-app/src/lib/constants/contracts.ts`, and vault IDs from `apps/web-app/src/lib/defindex/vaultIds.ts` (re-exported from `@neko/keeper`).
+Web-app reads network config from `apps/web-app/src/lib/config/stellar.config.ts`, Reflector constants from `apps/web-app/src/lib/constants/contracts.ts`, and vault IDs from `apps/web-app/src/lib/defindex/vaultIds.ts` (re-exported from `@neko-protocol/keeper`).
 
 Each `packages/contracts/<name>/src/index.ts` is generated via `soroban contract bindings ts` and built with `tsc` into `dist/`. **Do not hand-edit these files**. If DeFindex or Reflector bindings drift, regenerate them from the external artifact/source for that integration.
 

@@ -1,4 +1,4 @@
-import type { Instruction } from "@neko/defindex-vault";
+import type { Instruction } from "@neko-protocol/defindex-vault";
 import type { VaultRebalanceConfig } from "./rebalanceConfig.js";
 
 export const REBALANCE_THRESHOLD_STROOPS = 10_000_000n;

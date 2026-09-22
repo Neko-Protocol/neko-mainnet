@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ErrorCode } from "@neko/api-contracts";
+import { ErrorCode } from "@neko-protocol/api-contracts";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;

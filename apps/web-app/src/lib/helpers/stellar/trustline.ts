@@ -11,7 +11,7 @@ import {
   networkPassphrase,
   rpcUrl,
 } from "@/lib/constants/network";
-import { extractSignedTxXdr, type SignTransactionFn } from "@neko/orchestrator";
+import { extractSignedTxXdr, type SignTransactionFn } from "@neko-protocol/orchestrator";
 import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit/tokens";
 import type { Token } from "@/lib/types/swapTypes";
 import {

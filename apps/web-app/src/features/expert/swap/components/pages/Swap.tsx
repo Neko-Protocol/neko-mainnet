@@ -14,7 +14,7 @@ import {
   getSwappableTokens,
   type Token,
 } from "@/lib/helpers/stellar/swap-kit";
-import { extractContractError, getGenericErrorCode } from "@neko/orchestrator";
+import { extractContractError, getGenericErrorCode } from "@neko-protocol/orchestrator";
 import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { formatAmount } from "@/lib/helpers/formatUtils";
 import {

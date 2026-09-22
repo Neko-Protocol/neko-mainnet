@@ -10,7 +10,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import type { NotificationMessage } from "@neko/api-contracts";
+import type { NotificationMessage } from "@neko-protocol/api-contracts";
 import {
   Button,
   Card,

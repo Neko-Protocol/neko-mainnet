@@ -13,7 +13,7 @@ import {
 import { Info, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AppTooltip } from "@/components/ui/AppTooltip";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 import { formatCurrency } from "@/lib/helpers/currency";
 import { useLocaleFormatter } from "@/lib/helpers/useLocaleFormatter";
 import type { SupportedCurrency } from "@/stores/currency.store";

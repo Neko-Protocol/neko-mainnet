@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { ReferralPartner } from "@neko/api-contracts";
+import type { ReferralPartner } from "@neko-protocol/api-contracts";
 import {
   useDeleteReferralPartner,
   useReferralPartners,

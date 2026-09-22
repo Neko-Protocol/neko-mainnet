@@ -5,7 +5,7 @@ import { getTokens, getAvailableTokens } from "@/lib/helpers/stellar/swap-kit";
 import { getTokenAddress } from "@/lib/helpers/stellar/swap-kit";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 import { spendableNativeStroops } from "@/lib/helpers/stellar/stellarAccountReserve";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 
 const BASE_RESERVE = 0.5;
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
-import type { AuditActionType, TransactionRow } from "@neko/api-contracts";
+import type { AuditActionType, TransactionRow } from "@neko-protocol/api-contracts";
 import { useTransactions } from "../hooks/useTransactions";
 import { truncateAddress } from "@/lib/helpers/addressUtils";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
