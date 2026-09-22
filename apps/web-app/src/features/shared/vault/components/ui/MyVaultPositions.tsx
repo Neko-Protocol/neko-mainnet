@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 import { getTokenIconFitClass } from "@/lib/helpers/tokenDisplay";
 import { Wallet, Coins, Info } from "lucide-react";
 import { useWallet } from "@/hooks/useWallet";

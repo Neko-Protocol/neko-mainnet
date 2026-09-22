@@ -2,14 +2,14 @@
 
 import { useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 import {
   rpcUrl,
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
 import { useWallet } from "@/hooks/useWallet";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import {
   stellarPriceService,

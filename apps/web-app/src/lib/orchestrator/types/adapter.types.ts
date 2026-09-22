@@ -1,1 +1,1 @@
-export type { BasePoolAdapter } from "@neko/orchestrator";
+export type { BasePoolAdapter } from "@neko-protocol/orchestrator";

@@ -1,6 +1,6 @@
 {
-  "name": "@neko/keeper",
-  "version": "0.0.0",
+  "name": "@neko-protocol/keeper",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -21,8 +21,8 @@
   },
   "dependencies": {
     "@defindex/sdk": "^0.3.0",
-    "@neko/defindex-vault": "0.0.0",
-    "@neko/reflector": "0.0.0"
+    "@neko-protocol/defindex-vault": "0.1.0",
+    "@neko-protocol/reflector": "0.1.0"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

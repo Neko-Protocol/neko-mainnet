@@ -8,14 +8,14 @@ import {
   getStablecoinCodes as pkgGetStablecoinCodes,
   getTokenIconMap as pkgGetTokenIconMap,
   getContractToCodeMap as pkgGetContractToCodeMap,
-} from "@neko/keeper";
+} from "@neko-protocol/keeper";
 
 export type {
   AssetConfig,
   AssetPriceSource,
   ReflectorAsset,
   NetworkId,
-} from "@neko/keeper";
+} from "@neko-protocol/keeper";
 
 const currentNetworkId = () => pkgGetCurrentNetworkId(stellarNetwork);
 

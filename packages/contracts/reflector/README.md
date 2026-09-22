@@ -1,4 +1,4 @@
-# @neko/reflector
+# @neko-protocol/reflector
 
 Generated TypeScript bindings for the external **Reflector** SEP-40 oracle Soroban contract, consumed read-only for asset price data across the Neko dApp.
 
@@ -19,7 +19,7 @@ stellar contract bindings ts \
 ## Usage
 
 ```ts
-import { Client as ReflectorClient } from "@neko/reflector";
+import { Client as ReflectorClient } from "@neko-protocol/reflector";
 
 const oracle = new ReflectorClient({
   contractId: "...",

@@ -11,7 +11,7 @@ import { useTokenBalance } from "@/hooks/useTokenBalance";
 import { useToast } from "@/hooks/useToast";
 import { getPaymentTokenForAsset } from "@/lib/constants/buy.config";
 import { sanitizeAmountInput } from "@/lib/helpers/tokenDisplay";
-import { extractContractError, getGenericErrorCode } from "@neko/orchestrator";
+import { extractContractError, getGenericErrorCode } from "@neko-protocol/orchestrator";
 import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 import { AssetIcon } from "./AssetIcon";
 import { VaultDepositorRow } from "./VaultDepositorRow";
-import type { VaultDepositorsGroup } from "@neko/api-contracts";
+import type { VaultDepositorsGroup } from "@neko-protocol/api-contracts";
 
 export function VaultCard({ group }: { group: VaultDepositorsGroup }) {
   const [isOpen, setIsOpen] = useState(false);

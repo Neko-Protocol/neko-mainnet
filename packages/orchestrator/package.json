@@ -1,6 +1,6 @@
 {
-  "name": "@neko/orchestrator",
-  "version": "0.0.0",
+  "name": "@neko-protocol/orchestrator",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
@@ -21,8 +21,8 @@
   },
   "dependencies": {
     "@blend-capital/blend-sdk": "^3.2.2",
-    "@neko/api-contracts": "*",
-    "@neko/defindex-vault": "0.0.0",
+    "@neko-protocol/api-contracts": "0.1.0",
+    "@neko-protocol/defindex-vault": "0.1.0",
     "@stellar/stellar-sdk": "^14.5.0"
   },
   "devDependencies": {

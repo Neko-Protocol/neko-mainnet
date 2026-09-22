@@ -10,7 +10,7 @@ import {
 import { getEtherfuseAssets } from "../utils/rampApi";
 import { networkPassphrase, horizonUrl } from "@/lib/constants/network";
 import type { AnchorProvider } from "@/features/shared/on-off-ramps/types/anchors";
-import { extractSignedTxXdr, type SignTransactionFn } from "@neko/orchestrator";
+import { extractSignedTxXdr, type SignTransactionFn } from "@neko-protocol/orchestrator";
 
 export function useEtherfuseTrustline(
   provider: AnchorProvider,

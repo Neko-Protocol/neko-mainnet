@@ -1,4 +1,4 @@
-import type { ListTransactionsFilters } from "@neko/api-contracts";
+import type { ListTransactionsFilters } from "@neko-protocol/api-contracts";
 
 export const analyticsKeys = {
   overview: ["analytics", "overview"] as const,

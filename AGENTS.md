@@ -29,10 +29,10 @@ Use workspace commands from the target package when possible, for example
   recreate `apps/contracts/`, Rust contracts, Foundry projects, or EVM code.
 - This repo is Stellar/Soroban only. There is no viem, wagmi, RainbowKit, or
   Solidity workflow here.
-- The only generated contract bindings in use are `@neko/defindex-vault` and
-  `@neko/reflector`. Do not hand-edit generated binding files.
-- `@neko/orchestrator`, `@neko/keeper`, `@neko/stellar-wallet`, and
-  `@neko/api-contracts` are application libraries, not Neko smart contracts.
+- The only generated contract bindings in use are `@neko-protocol/defindex-vault` and
+  `@neko-protocol/reflector`. Do not hand-edit generated binding files.
+- `@neko-protocol/orchestrator`, `@neko-protocol/keeper`, `@neko-protocol/stellar-wallet`, and
+  `@neko-protocol/api-contracts` are application libraries, not Neko smart contracts.
 - Server state uses TanStack Query v5; do not introduce SWR unless the app
   deliberately changes data-fetching strategy.
 - Don't invent new colors or fonts outside the documented `neko-*`/`wallet-*`

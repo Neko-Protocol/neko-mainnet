@@ -12,9 +12,9 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: [
     "@defindex/sdk",
-    "@neko/defindex-vault",
-    "@neko/reflector",
-    "@neko/stellar-wallet",
+    "@neko-protocol/defindex-vault",
+    "@neko-protocol/reflector",
+    "@neko-protocol/stellar-wallet",
   ],
 };
 

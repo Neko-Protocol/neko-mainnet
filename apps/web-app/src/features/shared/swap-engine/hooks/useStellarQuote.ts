@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import type { Token } from "@/lib/helpers/stellar/swap-kit";
 import { getQuote, type QuoteRequest } from "@/lib/helpers/stellar/swap-kit";
 import { formatAmount } from "@/lib/helpers/formatUtils";
-import { fromSmallestUnit, getGenericErrorCode } from "@neko/orchestrator";
+import { fromSmallestUnit, getGenericErrorCode } from "@neko-protocol/orchestrator";
 import { resolveDecimalsForSwapToken } from "@/lib/helpers/auditAssetAmounts";
 import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { DEFAULT_SLIPPAGE_BPS } from "@/features/shared/swap-engine/constants/swapConfig";

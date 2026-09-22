@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { usePoolInfo } from "@/lib/orchestrator";
 import type { PoolInfo } from "@/lib/orchestrator";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import type { PoolDetailView } from "../types/pools";
 

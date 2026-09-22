@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type {
   MailingAudienceId,
   MailingMessageKind,
-} from "@neko/api-contracts";
+} from "@neko-protocol/api-contracts";
 import {
   fetchAudiencePreview,
   fetchAudiences,

@@ -5,7 +5,7 @@ import type {
   ListTransactionsResult,
   OverviewStats,
   UserStats,
-} from "@neko/api-contracts";
+} from "@neko-protocol/api-contracts";
 import { fetchFromBackend } from "@/lib/services/backend-client";
 
 export async function fetchOverview(): Promise<OverviewStats> {

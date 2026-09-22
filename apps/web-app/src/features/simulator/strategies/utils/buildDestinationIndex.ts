@@ -1,7 +1,7 @@
 import type { PoolInfo } from "@/lib/orchestrator/types/pool.types";
 import type { VaultView } from "@/features/shared/vault/types/vault";
 import { getAssetsConfig } from "@/lib/constants/assets.config";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 import {
   getPoolProtocolLabel,
   getPoolStrategyLabels,

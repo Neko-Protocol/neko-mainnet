@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueries } from "@tanstack/react-query";
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 import {
   rpcUrl,
   networkPassphrase,

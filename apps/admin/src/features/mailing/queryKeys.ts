@@ -1,7 +1,7 @@
 import type {
   MailingAudienceId,
   MailingMessageKind,
-} from "@neko/api-contracts";
+} from "@neko-protocol/api-contracts";
 
 export const mailingKeys = {
   audiences: ["mailing", "audiences"] as const,

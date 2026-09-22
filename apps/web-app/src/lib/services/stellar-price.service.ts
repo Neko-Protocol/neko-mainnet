@@ -1,4 +1,4 @@
-import type { PriceSource, PricedResult } from "@neko/keeper";
+import type { PriceSource, PricedResult } from "@neko-protocol/keeper";
 import { backendClient } from "@/lib/services/backend-client";
 
 export type { PriceSource, PricedResult };

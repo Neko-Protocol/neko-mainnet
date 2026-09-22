@@ -1,6 +1,6 @@
 "use server";
 
-import type { WalletVaultPosition } from "@neko/api-contracts";
+import type { WalletVaultPosition } from "@neko-protocol/api-contracts";
 import { fetchFromBackend } from "@/lib/services/backend-client";
 
 export async function fetchWalletPositions(

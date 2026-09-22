@@ -10,7 +10,7 @@ import {
   UserMinus,
   Zap,
 } from "lucide-react";
-import type { MailingKindStats } from "@neko/api-contracts";
+import type { MailingKindStats } from "@neko-protocol/api-contracts";
 import { useMailingStats } from "../hooks/useMailingQueries";
 import { Card, ErrorNote } from "./MailingFormControls";
 

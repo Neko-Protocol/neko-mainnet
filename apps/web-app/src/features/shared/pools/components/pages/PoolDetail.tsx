@@ -12,12 +12,12 @@ import {
   usePoolAction,
   usePools,
 } from "@/lib/orchestrator";
-import { fromSmallestUnit, toSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit, toSmallestUnit } from "@neko-protocol/orchestrator";
 import {
   atomicToDecimal,
   decimalToAtomic,
   reserveStroopsFromApiString,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";
 import type { PoolAction, PoolInfo } from "@/lib/orchestrator";
 import { useWallet } from "@/hooks/useWallet";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
@@ -46,7 +46,7 @@ function calculateBorrowLimit(
   return collateralAmount * (collateralFactorPct / 100);
 }
 import { useToast } from "@/hooks/useToast";
-import { isUserCancellationError } from "@neko/orchestrator";
+import { isUserCancellationError } from "@neko-protocol/orchestrator";
 import { useFxRate } from "@/hooks/useFxRate";
 import { useCurrencyStore } from "@/stores/currency.store";
 import { convertUsdToSelected, formatCurrency } from "@/lib/helpers/currency";

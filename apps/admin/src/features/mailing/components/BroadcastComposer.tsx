@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Send, TestTube2, Users } from "lucide-react";
-import type { MailingAudienceId } from "@neko/api-contracts";
+import type { MailingAudienceId } from "@neko-protocol/api-contracts";
 import {
   useAudiencePreview,
   useAudiences,

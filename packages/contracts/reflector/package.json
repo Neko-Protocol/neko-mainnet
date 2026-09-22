@@ -1,6 +1,6 @@
 {
-  "version": "0.0.0",
-  "name": "@neko/reflector",
+  "version": "0.1.0",
+  "name": "@neko-protocol/reflector",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

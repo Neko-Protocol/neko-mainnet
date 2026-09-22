@@ -3,7 +3,7 @@ import type { Network } from "@blend-capital/blend-sdk";
 import {
   getBlendNetwork as pkgGetBlendNetwork,
   getBlendPoolIds as pkgGetBlendPoolIds,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";
 import {
   allowHttpForSoroban,
   networkPassphrase,
@@ -30,4 +30,4 @@ export {
   BLEND_ASSET_CODES,
   BLEND_VAULT_ONLY_RESERVES,
   BLEND_POOL_VAULTS,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";

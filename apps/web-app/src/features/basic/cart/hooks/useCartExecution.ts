@@ -11,7 +11,7 @@ import {
   useCartStore,
   type CartItem,
 } from "@/features/basic/cart/stores/cart.store";
-import { extractContractError, getGenericErrorCode } from "@neko/orchestrator";
+import { extractContractError, getGenericErrorCode } from "@neko-protocol/orchestrator";
 import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import { TOAST_CONFIG } from "@/lib/constants/toast.config";
 

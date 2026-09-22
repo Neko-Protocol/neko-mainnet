@@ -1,4 +1,4 @@
-import { Client as ReflectorClient } from "@neko/reflector";
+import { Client as ReflectorClient } from "@neko-protocol/reflector";
 import { REFLECTOR_CONTRACT_ID } from "@/lib/constants/contracts";
 import {
   allowHttpForSoroban,
