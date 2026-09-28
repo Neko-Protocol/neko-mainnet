@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — Neko",
+  title: "Privacy Policy | Neko",
   description:
     "How Neko collects, uses, and protects information when you use the Service.",
   robots: { index: true, follow: true },
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
           Neko Privacy Policy
         </h1>
         <p className="mt-2 text-sm text-neko-muted">
-          Last Updated: [DATE — TO BE SET AT PUBLIC LAUNCH]
+          Last Updated: September 27, 2026
         </p>
 
         <div className="mt-12 space-y-10">
@@ -44,8 +44,11 @@ export default function PrivacyPage() {
               collection and use of information as described here.
             </p>
             <p className="mt-3 leading-relaxed text-neko-muted">
-              Neko is operated by [NEKO LEGAL ENTITY NAME — ENTITY NOT YET
-              FORMED; PLACEHOLDER PENDING INCORPORATION].
+              Neko has not yet formed a legal entity. The Service is currently
+              developed and operated by its founding team, which acts as the
+              party responsible for the information described in this Privacy
+              Policy. Once a legal entity is formed, we will update this Privacy
+              Policy to identify it.
             </p>
           </section>
 
@@ -74,8 +77,8 @@ export default function PrivacyPage() {
               deposits/withdrawals, swaps, vault activity, lending/borrowing
               positions). Because the Stellar network is a public,
               permissionless blockchain, this wallet address and transaction
-              data is publicly visible and permanently recorded on the ledger —
-              it is not private, and we cannot alter, redact, or delete it.
+              data is publicly visible and permanently recorded on the ledger,
+              and it is not private; we cannot alter, redact, or delete it.
             </p>
 
             <h3 className="mt-6 text-lg font-medium text-neko-cream">
@@ -133,7 +136,7 @@ export default function PrivacyPage() {
               improve the Service; authenticate your account; process and
               display your on-chain and fiat-ramp activity within the Interface;
               attribute referral rewards; communicate with you (including
-              service, security, and — where you have not opted out — product
+              service, security, and, where you have not opted out, product
               updates); detect, prevent, and investigate fraud, abuse, and
               violations of our Terms of Service; and comply with legal
               obligations, including sanctions screening requirements described
@@ -259,8 +262,8 @@ export default function PrivacyPage() {
             <p className="mt-3 leading-relaxed text-neko-muted">
               We use commercially reasonable technical and organizational
               measures to protect information in our systems. No method of
-              transmission or storage is completely secure, and — because the
-              Service is non-custodial — you are solely responsible for the
+              transmission or storage is completely secure, and, because the
+              Service is non-custodial, you are solely responsible for the
               security of your own wallet, private keys, and seed phrase; Neko
               never has access to them and can never recover them on your
               behalf.

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — Neko",
+  title: "Terms of Service | Neko",
   description:
     "Terms governing your access to and use of the Neko website and interface.",
   robots: { index: true, follow: true },
@@ -23,13 +23,12 @@ export default function TermsPage() {
           Neko Terms of Service
         </h1>
         <p className="mt-2 text-sm text-neko-muted">
-          Last Updated: [DATE — TO BE SET AT PUBLIC LAUNCH]
+          Last Updated: September 27, 2026
         </p>
 
         <p className="mt-6 leading-relaxed text-neko-muted">
           PLEASE READ THESE TERMS CAREFULLY. THEY INCLUDE IMPORTANT DISCLAIMERS,
-          RISK WARNINGS, AND (IN SECTION 15) AN AGREEMENT TO RESOLVE DISPUTES BY
-          BINDING ARBITRATION AND A WAIVER OF CLASS ACTIONS.
+          RISK WARNINGS, AND LIMITATIONS OF LIABILITY.
         </p>
 
         <div className="mt-12 space-y-10">
@@ -40,12 +39,18 @@ export default function TermsPage() {
             <p className="mt-3 leading-relaxed text-neko-muted">
               These Terms of Service (&quot;Terms&quot;) govern your access to
               and use of the Neko website, interface, and related services
-              (collectively, the &quot;Service&quot;), provided by [NEKO LEGAL
-              ENTITY NAME — ENTITY NOT YET FORMED; PLACEHOLDER PENDING
-              INCORPORATION] (&quot;Neko,&quot; &quot;we,&quot; &quot;us&quot;).
+              (collectively, the &quot;Service&quot;), provided by the Neko
+              founding team (&quot;Neko,&quot; &quot;we,&quot; &quot;us&quot;).
               By accessing or using the Service, you agree to be bound by these
               Terms and by our Privacy Policy. If you do not agree, do not use
               the Service.
+            </p>
+            <p className="mt-3 leading-relaxed text-neko-muted">
+              Neko has not yet formed a legal entity. The Service is currently
+              developed and operated by its founding team. Once a legal entity
+              is formed, we will update these Terms to identify it as the
+              operator of the Service, and it will assume the rights and
+              obligations described here.
             </p>
           </section>
 
@@ -107,7 +112,7 @@ export default function TermsPage() {
               your own wallet; Neko merely provides software that helps you
               construct and submit those transactions. You are solely
               responsible for the security of your wallet, private keys, and
-              seed phrase, and for the accuracy of any transaction you submit —
+              seed phrase, and for the accuracy of any transaction you submit;
               blockchain transactions are generally irreversible. Neko is not a
               party to, and does not guarantee the performance of, any smart
               contract, and cannot reverse, refund, or recover a transaction
@@ -280,30 +285,21 @@ export default function TermsPage() {
               14. Governing Law
             </h2>
             <p className="mt-3 leading-relaxed text-neko-muted">
-              [PLACEHOLDER — GOVERNING LAW AND VENUE TO BE FINALIZED ONCE
-              NEKO&apos;S OPERATING ENTITY IS INCORPORATED. TO BE COMPLETED WITH
-              COUNSEL.]
+              These Terms, and any dispute arising out of or relating to them or
+              the Service, are governed by the laws of the Republic of Costa
+              Rica, without regard to its conflict-of-law rules. Subject to any
+              mandatory rights you may have under the laws of your country of
+              residence, you agree that the courts located in San José, Costa
+              Rica will have exclusive jurisdiction over any such dispute.
+              Before filing any claim, you agree to first contact us at the
+              email in Section 18 and attempt in good faith to resolve the
+              dispute informally for at least 30 days.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-neko-cream">
-              15. Dispute Resolution; Arbitration; Class Action Waiver
-            </h2>
-            <p className="mt-3 leading-relaxed text-neko-muted">
-              [PLACEHOLDER — Neko intends to include a binding individual
-              arbitration clause and class-action/jury-trial waiver here,
-              consistent with the governing law selected in Section 14. THIS
-              SECTION MUST BE DRAFTED BY A LICENSED ATTORNEY IN THE SELECTED
-              JURISDICTION BEFORE PUBLICATION, as enforceability requirements
-              (e.g., opt-out rights, arbitration provider, notice-and-cure
-              periods) vary by law and are easy to get wrong.]
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold text-neko-cream">
-              16. Modifications to the Service and These Terms
+              15. Modifications to the Service and These Terms
             </h2>
             <p className="mt-3 leading-relaxed text-neko-muted">
               We may modify or discontinue the Service, in whole or in part, at
@@ -316,7 +312,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-neko-cream">
-              17. Termination
+              16. Termination
             </h2>
             <p className="mt-3 leading-relaxed text-neko-muted">
               We may suspend or terminate your access to the Service at any
@@ -330,7 +326,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-neko-cream">
-              18. Miscellaneous
+              17. Miscellaneous
             </h2>
             <p className="mt-3 leading-relaxed text-neko-muted">
               If any provision of these Terms is found unenforceable, the
@@ -342,7 +338,7 @@ export default function TermsPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-neko-cream">
-              19. Contact Us
+              18. Contact Us
             </h2>
             <p className="mt-3 leading-relaxed text-neko-muted">
               Questions about these Terms can be sent to: santiago@oppialabs.com
