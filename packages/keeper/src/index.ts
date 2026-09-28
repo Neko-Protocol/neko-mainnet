@@ -1,4 +1,4 @@
-export const PACKAGE_NAME = "@neko/keeper";
+export const PACKAGE_NAME = "@neko-protocol/keeper";
 
 export {
   getAssetsConfig,

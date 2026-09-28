@@ -8,7 +8,7 @@ export {
   PoolNotFoundError,
   AdapterError,
   UnsupportedActionError,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";
 
 export {
   usePools,
@@ -31,4 +31,4 @@ export type {
   PoolActionResult,
   PoolActionOptions,
   BasePoolAdapter,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";

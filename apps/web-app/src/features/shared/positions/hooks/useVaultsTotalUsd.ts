@@ -2,13 +2,14 @@
 
 import { useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 import {
   rpcUrl,
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { useWallet } from "@/hooks/useWallet";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import {
   stellarPriceService,
@@ -43,12 +44,14 @@ function unwrapResult<T>(result: unknown, fallback: T): T {
 
 // Shared queryFn — identical return type to useVaultData so React Query cache is shared.
 async function fetchVaultLiveStats(
-  contractId: string
+  contractId: string,
+  address: string | undefined
 ): Promise<VaultLiveStats & { tvlFormatted: string }> {
   const client = new DefindexVaultClient({
     contractId,
     rpcUrl,
     networkPassphrase,
+    ...(address && { publicKey: address }),
     ...(allowHttpForSoroban && { allowHttp: true }),
   });
   const [totalManagedTx, totalSupplyTx] = await Promise.all([
@@ -72,6 +75,7 @@ async function fetchVaultLiveStats(
 }
 
 export function useVaultsTotalUsd() {
+  const { address } = useWallet();
   const { positions, isLoading: isLoadingPositions } =
     useDashboardVaultPositions();
 
@@ -104,7 +108,7 @@ export function useVaultsTotalUsd() {
       queryKey: ["vaultData", vault.id],
       queryFn: async () => {
         if (i > 0) await new Promise((r) => setTimeout(r, i * 400));
-        return fetchVaultLiveStats(vault.id);
+        return fetchVaultLiveStats(vault.id, address);
       },
       enabled: true,
       staleTime: 5 * 60_000,

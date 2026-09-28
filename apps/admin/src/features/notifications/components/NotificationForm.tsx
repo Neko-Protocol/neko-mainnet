@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   NOTIFICATION_CATEGORIES,
   type NotificationMessage,
-} from "@neko/api-contracts";
+} from "@neko-protocol/api-contracts";
 import {
   Button,
   ErrorNote,

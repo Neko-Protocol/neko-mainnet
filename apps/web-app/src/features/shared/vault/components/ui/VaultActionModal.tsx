@@ -15,7 +15,7 @@ import {
   atomicToDecimal,
   decimalToAtomic,
   mulDivFloor,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";
 import { useQuery } from "@tanstack/react-query";
 import { getTokenBalanceFromContract } from "@/lib/helpers/stellar/sorobanBalance";
 import { useVaultApy } from "../../hooks/useVaultApy";

@@ -1,13 +1,13 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 import {
   rpcUrl,
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
 import { useWallet } from "@/hooks/useWallet";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 export function useVaultBalance(contractId: string | null | undefined) {
   const { address } = useWallet();
 
@@ -18,10 +18,11 @@ export function useVaultBalance(contractId: string | null | undefined) {
             contractId,
             rpcUrl,
             networkPassphrase,
+            ...(address && { publicKey: address }),
             ...(allowHttpForSoroban && { allowHttp: true }),
           })
         : null,
-    [contractId]
+    [contractId, address]
   );
 
   const {

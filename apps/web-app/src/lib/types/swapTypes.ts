@@ -1,3 +1,10 @@
+import type {
+  Fee,
+  ProviderId,
+  ProviderIssue,
+  SwapResult,
+} from "oppia-swap-kit";
+
 export interface Token {
   type: "native" | "contract";
   code?: string;
@@ -9,8 +16,9 @@ export interface QuoteRequest {
   assetIn: Token | string;
   assetOut: Token | string;
   amount: string;
-  tradeType: "EXACT_IN" | "EXACT_OUT";
+  tradeType: "EXACT_IN";
   slippageBps?: number;
+  sourceAddress?: string;
 }
 
 export interface QuoteResponse {
@@ -19,6 +27,12 @@ export interface QuoteResponse {
   route: string;
   minToReceive: string;
   platformFee: string;
+  sourceAddress: string | null;
+  provider: ProviderId;
+  expiresAt: number;
+  fees: readonly Fee[];
+  issues: ProviderIssue[];
+  complete: boolean;
 }
 
 export interface BuildRequest {
@@ -29,6 +43,7 @@ export interface BuildRequest {
 
 export interface BuildResponse {
   xdr: string;
+  swap: SwapResult;
 }
 
 export interface SendRequest {

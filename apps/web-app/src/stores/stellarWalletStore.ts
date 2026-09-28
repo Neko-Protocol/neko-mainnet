@@ -1,4 +1,4 @@
 export {
   useStellarWalletStore,
   type StellarWalletState,
-} from "@neko/stellar-wallet";
+} from "@neko-protocol/stellar-wallet";

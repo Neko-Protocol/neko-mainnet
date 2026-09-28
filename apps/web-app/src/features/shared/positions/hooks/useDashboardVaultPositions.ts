@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueries } from "@tanstack/react-query";
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 import {
   rpcUrl,
   networkPassphrase,
@@ -42,6 +42,7 @@ export function useDashboardVaultPositions() {
           contractId: vault.id,
           rpcUrl,
           networkPassphrase,
+          ...(address && { publicKey: address }),
           ...(allowHttpForSoroban && { allowHttp: true }),
         });
         const tx = await client.balance({ id: address }, { simulate: true });

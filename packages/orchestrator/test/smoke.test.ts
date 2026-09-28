@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { PACKAGE_NAME } from "../src/index";
-describe("@neko/orchestrator", () => {
+describe("@neko-protocol/orchestrator", () => {
   it("exposes a package marker", () => {
-    expect(PACKAGE_NAME).toBe("@neko/orchestrator");
+    expect(PACKAGE_NAME).toBe("@neko-protocol/orchestrator");
   });
 });

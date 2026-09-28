@@ -21,7 +21,7 @@ The vault feature is a **DeFindex integration**, not a bespoke contract. Everyth
 
 1. **NestJS backend endpoints** reached by the web app through `apps/web-app/src/app/api/backend-proxy/[...path]/route.ts` and `backendClient`. The current public reads are `/v1/defindex/vaults`, `/v1/vault/apy?vault=...`, and `/v1/vault-pps/:vaultId`; the keeper trigger is `POST /v1/vault-invest/run-now`.
 2. **DeFindex HTTP API** (via `@defindex/sdk`) catalog-style metadata. Called server-side from `apps/backend/src/domains/investing/defindex/defindex.service.ts` with `DEFINDEX_API_KEY`.
-3. **DeFindex Vault Soroban contract** live on-chain numbers (TVL, shares, allocations, idle) and user actions (deposit/withdraw/rebalance/fees). Called via the generated typed client `new Client(...)` from `@neko/defindex-vault` (package is `packages/contracts/defindex-vault`).
+3. **DeFindex Vault Soroban contract** live on-chain numbers (TVL, shares, allocations, idle) and user actions (deposit/withdraw/rebalance/fees). Called via the generated typed client `new Client(...)` from `@neko-protocol/defindex-vault` (package is `packages/contracts/defindex-vault`).
 4. **Per-strategy APY sources** each external strategy (Blend, Aquarius AMM, SoroSwap, DeFindex-provided data, or partner APIs) has its own APY source. These are aggregated in `apps/backend/src/domains/investing/vault-apy/vault-apy.service.ts`.
 
 Two flows to keep straight:
@@ -64,7 +64,7 @@ apps/web-app/src/
 │       ├── vault.ts                           # resolveAssetIcon
 │       ├── vaultAssetArt.ts                   # symbol → icon asset paths
 │       ├── mapToVaultView.ts                  # VaultInfoResponse → VaultView
-│       └── vaultIds.ts                        # Re-exports vault id helpers from @neko/keeper
+│       └── vaultIds.ts                        # Re-exports vault id helpers from @neko-protocol/keeper
 
 apps/backend/src/domains/investing/
 ├── defindex/                                  # GET /v1/defindex/vaults
@@ -78,10 +78,10 @@ packages/keeper/src/
 └── defindex/                                  # DeFindex SDK/network/rebalance helpers
 ```
 
-Contract client package: `@neko/defindex-vault` (aliased in `apps/web-app/package.json` to workspace package `packages/contracts/defindex-vault`). Import as:
+Contract client package: `@neko-protocol/defindex-vault` (aliased in `apps/web-app/package.json` to workspace package `packages/contracts/defindex-vault`). Import as:
 
 ```ts
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 ```
 
 ---
@@ -96,7 +96,7 @@ surface that owns the behavior.
 `apps/web-app/src/features/shared/vault/utils/vaultIds.ts`
 
 ```ts
-// Re-exported from @neko/keeper. Add the source id in:
+// Re-exported from @neko-protocol/keeper. Add the source id in:
 // packages/keeper/src/defindex/vaultIds.ts
 const MAINNET_VAULT_IDS = [
   "CB3FUMFGCF6DHSFK6N2TOKHRMYXS34HFKQR45UKVORCRUM35AF3ES7WQ", // EURC

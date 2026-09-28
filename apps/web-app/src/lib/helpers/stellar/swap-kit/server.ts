@@ -1,96 +1,113 @@
-import { Networks } from "@stellar/stellar-sdk";
-import { SwapKit } from "@xbullcorp/swap-kit";
-import {
-  allowHttpForSoroban,
-  networkPassphrase,
-  rpcUrl,
-} from "@/lib/constants/network";
-import { resolveDecimalsForSwapToken } from "@/lib/helpers/auditAssetAmounts";
+import "server-only";
+import { OppiaSwapServer } from "oppia-swap-kit/server";
+import type { ServerQuoteRequest } from "oppia-swap-kit/server";
+import { horizonUrl, rpcUrl } from "@/lib/constants/network";
 import type {
   BuildRequest,
   BuildResponse,
   QuoteRequest,
   QuoteResponse,
 } from "../../../types/swapTypes";
-import { getTokenAddress } from "./tokens";
+import { getSwapNetwork, getSwapTokenCatalog } from "./catalog";
 
-const swapKit = new SwapKit({
-  rpcUrl,
-  allowHttp: allowHttpForSoroban,
-  passphrase: networkPassphrase as Networks,
-});
+/**
+ * Neko's historical xBull `feePercentage` of `20_000n` used xBull's
+ * 10,000,000 denominator, i.e. 20 basis points. Oppia takes basis points
+ * directly, so the rate is unchanged.
+ */
+const REFERRAL_FEE_BPS = 20;
 
-const REFERRAL_FEE_PERCENTAGE = 20_000n;
-
-function getReferralFees() {
-  const referral = process.env.SWAP_REFERRAL_ADDRESS?.trim();
-  if (!referral) {
-    throw new Error("Missing SWAP_REFERRAL_ADDRESS for xBull referral fees");
-  }
-
-  return [{ referral, feePercentage: REFERRAL_FEE_PERCENTAGE }];
+function requireEnv(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) throw new Error(`Missing ${name} for swap routing`);
+  return value;
 }
 
-function toAtomicUnits(amount: string, decimals: number): bigint {
-  const value = amount.trim();
-  if (!/^\d+(\.\d*)?$/.test(value)) {
-    throw new Error("Swap amount must be a positive number");
+/**
+ * `NEXT_PUBLIC_SOROSWAP_API_KEY` is accepted for continuity with the existing
+ * deployment, but the prefix is wrong for a credential: it inlines the key
+ * into the client bundle for anything that reads it in a browser. Only this
+ * server module reads it, and `SOROSWAP_API_KEY` should replace it.
+ */
+function soroswapApiKey(): string {
+  const key = (
+    process.env.SOROSWAP_API_KEY ?? process.env.NEXT_PUBLIC_SOROSWAP_API_KEY
+  )?.trim();
+  if (!key) throw new Error("Missing SOROSWAP_API_KEY for swap routing");
+  return key;
+}
+
+function createSwapServer(): OppiaSwapServer {
+  const secret = requireEnv("OPPIA_QUOTE_SECRET");
+  if (!/^[0-9a-f]{64}$/i.test(secret)) {
+    throw new Error("OPPIA_QUOTE_SECRET must be 32 random bytes as hex");
   }
 
-  const [whole, fraction = ""] = value.split(".");
-  const atomic = `${whole}${fraction.padEnd(decimals, "0").slice(0, decimals)}`;
-  return BigInt(atomic || "0");
+  return new OppiaSwapServer({
+    network: getSwapNetwork(),
+    rpcUrl,
+    horizonUrl,
+    quoteSecret: Buffer.from(secret, "hex"),
+    // Bound into every quote token; bumping it invalidates outstanding quotes.
+    quoteScope: `neko-${getSwapNetwork()}-v1`,
+    referral: {
+      address: requireEnv("SWAP_REFERRAL_ADDRESS"),
+      feeBps: REFERRAL_FEE_BPS,
+      /**
+       * `required: false` (re-quote without the fee rather than drop the
+       * provider) is the behavior we want, but it is held back by an Oppia
+       * build bug: Soroswap reports `otherAmountThreshold === amountOut` on
+       * aggregator routes and applies slippage only at build, so the kit
+       * rejects its own route with "Soroswap invocation weakens minimum
+       * output". Requiring the referral confines Soroswap to SDEX routes,
+       * which validate correctly — and SDEX covers every pair Neko can
+       * currently swap. Flip this to false once that build check is fixed.
+       */
+      required: true,
+    },
+    /**
+     * Soroswap aggregates soroswap/aqua/phoenix/sdex, and direct SDEX covers
+     * classic order books it may miss. Aquarius is omitted because its
+     * referrals need a deployed fee-collector contract, and xBull because its
+     * public build endpoint rejects every request with an opaque 400 —
+     * confirmed against the live endpoint, not just taken from Oppia's docs.
+     */
+    providers: [
+      { type: "soroswap", apiKey: soroswapApiKey() },
+      { type: "sdex" },
+    ],
+    tokens: getSwapTokenCatalog(),
+  });
 }
+
+let swapServer: OppiaSwapServer | undefined;
+const server = () => (swapServer ??= createSwapServer());
 
 export async function getQuoteServer(
   request: QuoteRequest
 ): Promise<QuoteResponse> {
-  if (request.tradeType !== "EXACT_IN") {
-    throw new Error("xBull Swap currently supports exact-input swaps only");
-  }
-
-  const decimals = resolveDecimalsForSwapToken(request.assetIn) ?? 7;
-  const amount = toAtomicUnits(request.amount, decimals);
-  if (amount <= 0n) throw new Error("Swap amount must be greater than zero");
-
-  const slippageBps = BigInt(request.slippageBps ?? 500);
-  if (slippageBps < 0n || slippageBps >= 10_000n) {
-    throw new Error("Slippage must be between 0 and 9999 basis points");
-  }
-
-  const quote = await swapKit.quote({
-    fromAsset: getTokenAddress(request.assetIn),
-    toAsset: getTokenAddress(request.assetOut),
-    amount,
-    referralFees: getReferralFees(),
-  });
-  const amountOut =
-    quote.toAmount - quote.fee.platformFee - quote.fee.referralsFee;
-  if (amountOut <= 0n) {
-    throw new Error("Swap output is insufficient after fees");
-  }
-  const minToReceive = (amountOut * (10_000n - slippageBps)) / 10_000n;
-
-  return {
-    amountIn: quote.fromAmount.toString(),
-    amountOut: amountOut.toString(),
-    route: quote.route,
-    minToReceive: minToReceive.toString(),
-    platformFee: quote.fee.platformFee.toString(),
+  const oppiaRequest: ServerQuoteRequest = {
+    assetIn: request.assetIn,
+    assetOut: request.assetOut,
+    amount: request.amount,
+    tradeType: request.tradeType,
+    slippageBps: request.slippageBps,
+    // Omitted for price cards and the simulator: the response prices the pair,
+    // reports `sourceAddress: null`, and is refused by the build endpoint.
+    ...(request.sourceAddress ? { sourceAddress: request.sourceAddress } : {}),
   };
+
+  return server().getQuote(oppiaRequest);
 }
 
 export async function buildTransactionServer(
   request: BuildRequest
 ): Promise<BuildResponse> {
-  const result = await swapKit.strictSend({
-    source: request.from,
+  const result = await server().buildTransaction({
+    quote: request.quote,
     from: request.from,
     to: request.to ?? request.from,
-    route: request.quote.route,
-    amount: request.quote.amountIn,
-    minToReceive: request.quote.minToReceive,
-    referralFees: getReferralFees(),
   });
-  return { xdr: result.transactionXDR };
+
+  return { xdr: result.xdr, swap: result.swap };
 }

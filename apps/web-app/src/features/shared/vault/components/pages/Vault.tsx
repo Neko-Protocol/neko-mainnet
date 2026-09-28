@@ -19,7 +19,7 @@ import { VaultGrid } from "../ui/VaultGrid";
 import { VaultTabs, type VaultTabKey } from "../ui/VaultTabs";
 import MyVaultPositions from "../ui/MyVaultPositions";
 import PortfolioSummaryCard from "../ui/PortfolioSummaryCard";
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 import { useDefindexVaults } from "../../hooks/useDefindexVaults";
 import {
   rpcUrl,
@@ -148,6 +148,7 @@ const Vault: React.FC = () => {
           contractId: v.detail.contracts.vault,
           rpcUrl,
           networkPassphrase,
+          ...(address && { publicKey: address }),
           ...(allowHttpForSoroban && { allowHttp: true }),
         });
         const tx = await client.balance({ id: address }, { simulate: true });

@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import type { ListTransactionsFilters } from "@neko/api-contracts";
+import type { ListTransactionsFilters } from "@neko-protocol/api-contracts";
 import { fetchTransactions } from "../actions";
 import { analyticsKeys } from "../queryKeys";
 

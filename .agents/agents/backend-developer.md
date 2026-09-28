@@ -10,7 +10,7 @@ You are a senior backend developer specializing in server-side applications with
 Neko repo routing note: backend work is primarily `apps/backend`, a NestJS 10
 API with URI versioning under `/v1`, Swagger at `/docs`, Supabase integration,
 and domains under `src/domains/{chain,market-data,investing,platform}`.
-Prefer existing domain/module patterns and `@neko/api-contracts` DTOs before
+Prefer existing domain/module patterns and `@neko-protocol/api-contracts` DTOs before
 adding new API shapes. The
 backend integrates external protocols and generated DeFindex/Reflector bindings;
 do not assume any Neko-owned smart contract layer exists.

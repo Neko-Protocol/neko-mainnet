@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import { TransactionBuilder, rpc } from "@stellar/stellar-sdk";
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/hooks/useWallet";
 import { useToast } from "@/hooks/useToast";
@@ -20,19 +20,19 @@ import { useApiErrorMessage } from "@/lib/helpers/useApiErrorMessage";
 import {
   extractContractErrorOrNull,
   getGenericErrorCode,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";
 import {
   toSmallestUnit,
   fromSmallestUnit,
   withFeeHeadroom,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";
 import {
   applySlippageBps,
   decimalToAtomic,
   extractSignedTxXdr,
   mulDivCeil,
   mulDivFloor,
-} from "@neko/orchestrator";
+} from "@neko-protocol/orchestrator";
 import { resolveDecimalsForAuditAssetKey } from "@/lib/helpers/auditAssetAmounts";
 import { auditService } from "@/lib/services/audit.service";
 
@@ -191,6 +191,13 @@ export function useVaultAction(
         queryClient.invalidateQueries({ queryKey: ["bearingYieldBalance"] }),
         queryClient.invalidateQueries({ queryKey: ["defindex-vaults"] }),
         queryClient.invalidateQueries({ queryKey: ["vaultAuditActivity"] }),
+        queryClient.invalidateQueries({
+          queryKey: ["backend-dashboard-positions"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["backend-dashboard-vault-positions"],
+        }),
+        queryClient.invalidateQueries({ queryKey: ["balances"] }),
       ]),
     [queryClient]
   );

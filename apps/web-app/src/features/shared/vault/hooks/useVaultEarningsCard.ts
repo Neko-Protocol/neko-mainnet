@@ -1,12 +1,12 @@
 import { useMemo } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { Client as DefindexVaultClient } from "@neko/defindex-vault";
+import { Client as DefindexVaultClient } from "@neko-protocol/defindex-vault";
 import {
   rpcUrl,
   networkPassphrase,
   allowHttpForSoroban,
 } from "@/lib/constants/network";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 import { auditService } from "@/lib/services/audit.service";
 import { useWallet } from "@/hooks/useWallet";
 import type { AuditLog } from "@/lib/types/audit.types";
@@ -117,6 +117,7 @@ export function useVaultEarningsCard(
           contractId: v.id,
           rpcUrl,
           networkPassphrase,
+          ...(address && { publicKey: address }),
           ...(allowHttpForSoroban && { allowHttp: true }),
         });
         const [totalManagedTx, totalSupplyTx] = await Promise.all([

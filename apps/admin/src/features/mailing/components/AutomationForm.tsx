@@ -4,7 +4,7 @@ import type {
   MailingAudience,
   MailingAudienceId,
   MailingTrigger,
-} from "@neko/api-contracts";
+} from "@neko-protocol/api-contracts";
 import {
   Button,
   ErrorNote,

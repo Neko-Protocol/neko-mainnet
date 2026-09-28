@@ -11,7 +11,13 @@ import {
   networkPassphrase,
   rpcUrl,
 } from "@/lib/constants/network";
-import { extractSignedTxXdr, type SignTransactionFn } from "@neko/orchestrator";
+import { extractSignedTxXdr, type SignTransactionFn } from "@neko-protocol/orchestrator";
+import { getAvailableTokens } from "@/lib/helpers/stellar/swap-kit/tokens";
+import type { Token } from "@/lib/types/swapTypes";
+import {
+  horizonNativeBalanceToStroops,
+  ledgerMinBalanceStroops,
+} from "./stellarAccountReserve";
 
 export interface ClassicAssetRef {
   code: string;
@@ -210,4 +216,92 @@ export async function ensureTrustlineForSAC(
     await signTransaction(xdr, { networkPassphrase })
   );
   await submitHorizonTransaction(signedTxXdr);
+}
+
+/** One trustline is one subentry, and each subentry locks a base reserve. */
+const TRUSTLINE_RESERVE_STROOPS = 5_000_000n;
+
+/**
+ * The classic identity of a swap token, taken from the asset registry.
+ *
+ * Every swappable asset there carries a verified issuer, so this resolves
+ * without a network round trip. XLM is native and pure Soroban tokens hold
+ * balances in contract storage, so neither can be trusted and both return
+ * null.
+ */
+export function resolveClassicAssetForSwapToken(
+  token: Token | string
+): ClassicAssetRef | null {
+  const tokens = getAvailableTokens();
+  const code = typeof token === "string" ? token : token.code;
+  const contract = typeof token === "string" ? token : token.contract;
+
+  const config =
+    (code ? tokens[code.toUpperCase()] : undefined) ??
+    Object.values(tokens).find((info) => info.contract === contract);
+
+  if (!config?.issuer || config.code === "XLM") return null;
+  return { code: config.code, issuer: config.issuer };
+}
+
+export interface EnsureSwapTrustlineParams {
+  token: Token | string;
+  walletAddress: string;
+  signTransaction: SignTransactionFn;
+  /** Called only when a trustline is actually needed, before the wallet prompt. */
+  onTrustlineNeeded?: (asset: ClassicAssetRef) => void;
+  /** Raised when the account cannot cover another subentry's reserve. */
+  insufficientReserveMessage: (code: string) => string;
+}
+
+/**
+ * Adds the trustline a swap's output asset needs, if it is missing.
+ *
+ * The swap cannot carry this itself: the router refuses to build a swap into
+ * an asset the account does not trust, and the route it would have built is
+ * sealed and opaque, so there is no envelope to prepend an operation to. The
+ * trustline settles in its own transaction first, and the swap is quoted
+ * fresh afterwards against an account that can now receive the asset.
+ *
+ * Returns true when a trustline was created, false when none was needed.
+ */
+export async function ensureTrustlineForSwapToken({
+  token,
+  walletAddress,
+  signTransaction,
+  onTrustlineNeeded,
+  insufficientReserveMessage,
+}: EnsureSwapTrustlineParams): Promise<boolean> {
+  const asset = resolveClassicAssetForSwapToken(token);
+  if (!asset) return false;
+
+  const missing = await getMissingClassicTrustlines(walletAddress, [
+    `${asset.code}:${asset.issuer}`,
+  ]);
+  if (missing.length === 0) return false;
+
+  // Checked before the wallet prompt: a reserve shortfall would otherwise
+  // reach the user as Horizon's raw `op_low_reserve`, after they had signed.
+  const server = new Horizon.Server(horizonUrl);
+  const account = await server.loadAccount(walletAddress);
+  const native = account.balances.find(
+    (balance) => balance.asset_type === "native"
+  );
+  const available =
+    horizonNativeBalanceToStroops(native?.balance ?? "0") -
+    ledgerMinBalanceStroops(account.subentry_count);
+  if (available < TRUSTLINE_RESERVE_STROOPS) {
+    throw new Error(insufficientReserveMessage(asset.code));
+  }
+
+  onTrustlineNeeded?.(asset);
+
+  const xdr = await buildAddClassicTrustlinesTxXdr(walletAddress, missing);
+  const signedTxXdr = extractSignedTxXdr(
+    await signTransaction(xdr, { networkPassphrase })
+  );
+  // Horizon's submit endpoint returns once the transaction is in a ledger, so
+  // the trustline is live by the time this resolves and the swap can quote.
+  await submitHorizonTransaction(signedTxXdr);
+  return true;
 }

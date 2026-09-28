@@ -4,7 +4,7 @@ import { orchestrator } from "@/lib/orchestrator/core/Orchestrator";
 import { POOLS_QUERY_KEY } from "@/lib/orchestrator/hooks/usePools";
 import type { PoolInfo } from "@/lib/orchestrator";
 import type { PoolData } from "@/features/shared/lending/types/lending";
-import { fromSmallestUnit } from "@neko/orchestrator";
+import { fromSmallestUnit } from "@neko-protocol/orchestrator";
 import { SUMMARY_DISPLAY_DECIMALS } from "@/lib/constants/display";
 import { formatLiquidity } from "@/lib/helpers/formatUtils";
 import { USE_BACKEND_DASHBOARD } from "./useBackendDashboardPositions";

@@ -1,6 +1,7 @@
 {
-  "version": "0.0.0",
-  "name": "@neko/reflector",
+  "version": "0.1.0",
+  "name": "@neko-protocol/reflector",
+  "private": false,
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -14,6 +15,18 @@
     }
   },
   "typings": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "restricted"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Neko-Protocol/neko-mainnet.git",
+    "directory": "packages/contracts/reflector"
+  },
   "scripts": {
     "build": "tsc && esbuild src/index.ts --bundle --platform=node --format=cjs --target=node22 --external:@stellar/stellar-sdk --external:buffer --outfile=dist/index.cjs"
   },

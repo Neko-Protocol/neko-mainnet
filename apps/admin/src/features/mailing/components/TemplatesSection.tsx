@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
-import type { MailingTemplate } from "@neko/api-contracts";
+import type { MailingTemplate } from "@neko-protocol/api-contracts";
 import { useTemplates } from "../hooks/useMailingQueries";
 import {
   useCreateTemplate,

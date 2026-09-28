@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Megaphone } from "lucide-react";
-import { NOTIFICATION_CATEGORIES } from "@neko/api-contracts";
+import { NOTIFICATION_CATEGORIES } from "@neko-protocol/api-contracts";
 import {
   Button,
   Card,
