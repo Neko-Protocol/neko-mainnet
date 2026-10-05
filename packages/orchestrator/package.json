@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@blend-capital/blend-sdk": "^3.2.2",
-    "@neko-protocol/api-contracts": "0.2.0",
+    "@neko-protocol/api-contracts": "0.2.1",
     "@neko-protocol/defindex-vault": "0.1.0",
     "@stellar/stellar-sdk": "^14.5.0"
   },
