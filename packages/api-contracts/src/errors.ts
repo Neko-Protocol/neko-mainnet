@@ -87,6 +87,17 @@ export const ErrorCode = {
   AUTH_FAILED: "AUTH_FAILED",
   SOROBAN_UNKNOWN_ERROR: "SOROBAN_UNKNOWN_ERROR",
 
+  // ─── platform/accounts + chain/sponsor (Privy smart wallet) ─────────────
+  PRIVY_TOKEN_INVALID: "PRIVY_TOKEN_INVALID",
+  PRIVY_NOT_CONFIGURED: "PRIVY_NOT_CONFIGURED",
+  ACCOUNT_NOT_FOUND: "ACCOUNT_NOT_FOUND",
+  WALLET_NOT_FOUND: "WALLET_NOT_FOUND",
+  ALREADY_ACTIVATED: "ALREADY_ACTIVATED",
+  SPONSOR_UNAVAILABLE: "SPONSOR_UNAVAILABLE",
+  ACTIVATION_TX_MISMATCH: "ACTIVATION_TX_MISMATCH",
+  WALLET_NOT_ACTIVATED: "WALLET_NOT_ACTIVATED",
+  SPONSOR_FEE_TOO_HIGH: "SPONSOR_FEE_TOO_HIGH",
+
   // ─── packages/orchestrator client-side contract-error classifier
   //     (user-facing — see contractErrors.ts extractContractError) ────────
   USER_CANCELLED: "USER_CANCELLED",
