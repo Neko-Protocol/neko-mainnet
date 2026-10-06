@@ -1,6 +1,8 @@
 export interface UserPreferences {
   currency?: string;
   ui_mode?: string | null;
+  /** Expo push tokens, one per device the user installed the mobile app on. */
+  push_tokens?: string[];
 }
 
 export interface UserConnectEvent {
