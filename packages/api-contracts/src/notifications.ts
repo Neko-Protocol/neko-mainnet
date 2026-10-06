@@ -1,10 +1,14 @@
 /**
  * Shared contracts for in-app notifications.
  *
- * The second delivery channel next to email. Trigger ids are deliberately the
- * same as `MAILING_TRIGGER_IDS`, because one event drives both channels; the
- * admin console pairs them per trigger. Audience ids are reused from
- * `mailing.ts` rather than redeclared.
+ * The second delivery channel next to email. The shared trigger ids match
+ * `MAILING_TRIGGER_IDS`, because one event drives both channels; the admin
+ * console pairs them per trigger. Audience ids are reused from `mailing.ts`
+ * rather than redeclared.
+ *
+ * `tx_confirmed`, `vault_run` and `portfolio_valuation` exist only here: they
+ * are on-chain outcomes delivered in-app and by push to the mobile app, not by
+ * email.
  */
 
 import type { MailingAudienceId } from "./mailing.js";
@@ -16,6 +20,9 @@ export const NOTIFICATION_TRIGGER_IDS = [
   "inactivity",
   "referral_confirmed",
   "admin_wallet_low_balance",
+  "tx_confirmed",
+  "vault_run",
+  "portfolio_valuation",
 ] as const;
 
 export type NotificationTriggerId = (typeof NOTIFICATION_TRIGGER_IDS)[number];
