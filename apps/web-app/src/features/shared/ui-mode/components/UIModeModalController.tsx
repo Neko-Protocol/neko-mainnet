@@ -1,5 +1,6 @@
 "use client";
 
+import { useLegalConsentStore } from "@/features/shared/legal-consent";
 import { useStellarWalletStore } from "@/stores/stellarWalletStore";
 import { useUIModeStore } from "../stores/ui-mode.store";
 import { UIModeModal } from "./UIModeModal";
@@ -15,8 +16,10 @@ export function UIModeModalController() {
   const isConnected = useStellarWalletStore((s) => Boolean(s.address));
   const hasSelectedMode = useUIModeStore((s) => s.hasSelectedMode);
   const setMode = useUIModeStore((s) => s.setMode);
+  const legalStatus = useLegalConsentStore((s) => s.status);
 
-  if (!isConnected || hasSelectedMode) return null;
+  if (!isConnected || hasSelectedMode || legalStatus !== "accepted")
+    return null;
 
   return <UIModeModal onSelect={setMode} />;
 }

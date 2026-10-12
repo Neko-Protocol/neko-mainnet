@@ -18,6 +18,7 @@ import { SkipThrottle, Throttle } from "@nestjs/throttler";
 import type { Response } from "express";
 import type { UserPublic } from "@neko-protocol/api-contracts";
 import { SkipAuth } from "@common/decorators/skip-auth.decorator";
+import { AcceptLegalDto } from "./dto/accept-legal.dto";
 import { EmailConfirmDto } from "./dto/email-confirm.dto";
 import { EmailStartDto } from "./dto/email-start.dto";
 import { RegisterUserDto } from "./dto/register-user.dto";
@@ -53,6 +54,17 @@ export class UsersController {
   @Throttle({ default: { limit: 30, ttl: 60_000 } })
   updatePreferences(@Body() dto: UpdatePreferencesDto) {
     return this.svc.updatePreferences(dto);
+  }
+
+  @Post("legal")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      "Record acceptance of the current Privacy Policy and Terms of Service.",
+  })
+  @Throttle({ default: { limit: 30, ttl: 60_000 } })
+  acceptLegal(@Body() dto: AcceptLegalDto) {
+    return this.svc.acceptLegal(dto);
   }
 
   @Post("email/start")

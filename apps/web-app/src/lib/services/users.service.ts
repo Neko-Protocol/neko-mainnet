@@ -39,6 +39,23 @@ class UsersService {
     }
   }
 
+  async acceptLegal(
+    wallet: string,
+    termsVersion: string,
+    privacyVersion: string
+  ): Promise<{ ok: boolean }> {
+    try {
+      await backendClient.post("/users/legal", {
+        wallet_address: wallet,
+        terms_version: termsVersion,
+        privacy_version: privacyVersion,
+      });
+      return { ok: true };
+    } catch {
+      return { ok: false };
+    }
+  }
+
   async startEmailVerification(
     wallet: string,
     email: string
