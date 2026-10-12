@@ -5,6 +5,7 @@ import type {
   ModuleInterface,
   Networks,
 } from "@creit.tech/stellar-wallets-kit/types";
+import type { StellarWalletKitOptions } from "./types";
 
 type Kit = typeof StellarWalletsKitClass;
 
@@ -37,22 +38,7 @@ let modules: ModuleInterface[] = [];
 let basePromise: Promise<Kit> | null = null;
 let bridgePromise: Promise<Kit> | null = null;
 
-export interface StellarWalletKitOptions {
-  networkPassphrase?: string;
-  /**
-   * Whether to load the WalletConnect bridge module.
-   *
-   * It is the most expensive thing the kit pulls in — WalletConnect drags in
-   * `@reown/appkit` and `viem` behind it — and it is only ever needed once the
-   * user is actually choosing or using a wallet.
-   *
-   * Defaults to true so that every existing caller keeps the full module list.
-   * Opt out only where the bridge provably cannot be the answer; the in-app
-   * browser probe is the one such caller, and it already refuses to
-   * auto-connect a BRIDGE_WALLET.
-   */
-  includeBridge?: boolean;
-}
+export type { StellarWalletKitOptions };
 
 export function getConfiguredNetworkPassphrase(): string {
   return (

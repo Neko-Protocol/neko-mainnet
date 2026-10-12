@@ -1,6 +1,6 @@
 {
   "name": "@neko-protocol/stellar-wallet",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": false,
   "type": "module",
   "main": "./src/index.ts",
@@ -22,9 +22,20 @@
   },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "^2.1.0",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.2",
+    "@walletconnect/sign-client": "2.23.10"
   },
   "peerDependencies": {
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "react-native": "*",
+    "@react-native-async-storage/async-storage": "*"
+  },
+  "peerDependenciesMeta": {
+    "react-native": {
+      "optional": true
+    },
+    "@react-native-async-storage/async-storage": {
+      "optional": true
+    }
   }
 }

@@ -2,13 +2,9 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { StellarWalletState } from "./types";
 
-export interface StellarWalletState {
-  address: string | null;
-  walletName: string | null;
-  setWallet: (payload: { address: string; walletName: string }) => void;
-  clearWallet: () => void;
-}
+export type { StellarWalletState };
 
 export const useStellarWalletStore = create<StellarWalletState>()(
   persist(
