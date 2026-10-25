@@ -2,7 +2,7 @@
 
 - **Started:** 2026-10-25 10:53 WET
 - **Ended:** 2026-10-25 13:15 WET (approximate)
-- **People:** Santiago Villarreal, Kevin Latino, Fabián Sánchez, Matías Aguilar [confirm]
+- **People:** Santiago Villarreal, Kevin Latino, Fabián Sánchez, Matías Aguilar
 - **Goal:** agree on the problem, who it is for and what we build, before writing any code.
 
 ## What we did
